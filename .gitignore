@@ -1,0 +1,92 @@
+# ==============================================================================
+# Projeto Olympos — Regras Oficiais de Ignorância Git (.gitignore)
+# Secretaria Municipal de Educacao Basica (SMEB) de Ceara-Mirim / RN
+# ==============================================================================
+
+# Credenciais, Segredos, Tokens e Variaveis de Ambiente
+.env
+.env.*
+*.env
+*.env.local
+*.env.production
+secrets.json
+credentials.json
+service_account.json
+*.key
+*.pem
+*.pfx
+*.p12
+*.cert
+*.crt
+
+# Arquivos Temporarios de Sistema Operacional e Editores
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python, Interpretadores e Ambientes Virtuais
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node.js e Gerenciadores de Pacotes Frontend
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Bloqueio de Repositorios Git Aninhados (Submodulos orfaos)
+**/fogo-de-prometheus/**/.git/
+**/papiro-de-cadmo/**/.git/
+**/.git_nested/
+
+# Arquivos Temporarios de Execucao e Backups
+tmp/
+temp/
+*.tmp
+*.bak
+data/raw/
+
+# ==============================================================================
+# Isolamento de Pastas Internas (Repositorio Publico Apenas com o Essencial)
+# Mantidas localmente no disco, excluidas do versionamento publico no GitHub
+# ==============================================================================
+1_google_apps_script/
+3_skills_personas/
+4_relatorios_implementacao/
+5_manuais_instalacao/
+tests/
+2_github_pages_actions/supabase/
+2_github_pages_actions/workflows_mirror/
+2_github_pages_actions/engines/fogo_de_prometheus/gas_receiver/
+2_github_pages_actions/**/README.md

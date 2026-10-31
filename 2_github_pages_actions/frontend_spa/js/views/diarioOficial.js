@@ -1,0 +1,192 @@
+/**
+ * Hub Olympos V2.1 — Página Modular 6: Diário Oficial FEMURN (Fogo de Prometheus — 2 Frentes)
+ */
+window.OlymposViews = window.OlymposViews || {};
+
+window.OlymposViews.diarioOficial = (function() {
+  let publicacoesUnificadas = [];
+  let isLoaded = false;
+
+  function init() {
+    bindEvents();
+    if (!isLoaded) {
+      carregarPainel();
+    }
+  }
+
+  function bindEvents() {
+    const bind = function(id, evt, fn) {
+      const el = document.getElementById(id);
+      if (el && !el._bound) {
+        el._bound = true;
+        el.addEventListener(evt, fn);
+      }
+    };
+
+    bind('prometheusSyncBtn', 'click', sincronizarMemoriaManual);
+    bind('prometheusChatSummaryBtn', 'click', dispararResumoChat);
+    bind('prometheusTriggerActionBtn', 'click', dispararColetaGitHubActions);
+    bind('prometheusSectorFilter', 'change', renderizarTabela);
+    bind('prometheusSearchInput', 'input', renderizarTabela);
+  }
+
+  function carregarPainel() {
+    window.OlymposApi.chamar('prometheus_status', {}, function(res) {
+      const data = (res && res.data) ? res.data : res;
+      if (!data) return;
+      isLoaded = true;
+
+      const sw = (typeof data.statusWebhook === 'object' && data.statusWebhook) ? data.statusWebhook : {};
+      const stElem = document.getElementById('promWebhookStatus');
+      const lrElem = document.getElementById('promLastRun');
+      const sheetBtn = document.getElementById('promSheetLinkBtn');
+
+      if (stElem) {
+        stElem.textContent = sw.webhookAtivo
+          ? 'Webhook Autenticado & Cron Diário Ativo (07:00 BRT)'
+          : 'Receptor GAS Pronto • Aguardando Token Secreto ou 1º Disparo';
+      }
+      if (lrElem) {
+        lrElem.textContent = 'Última recepção: ' + (sw.ultimaExecucao || 'Sem disparos recentes') +
+          (sw.totalSalvos !== undefined ? (' • ' + sw.totalSalvos + ' ato(s) na última edição') : '');
+      }
+      if (sheetBtn && data.planilhaOficialUrl) {
+        sheetBtn.href = data.planilhaOficialUrl;
+      }
+
+      // Mescla publicações ricas com NER do último webhook + arquivos reais das pastas 2026
+      const itens = [];
+      const urlsVistas = new Set();
+
+      (sw.publicacoes || []).forEach(function(p) {
+        const url = p.urlDrive || p.url || '';
+        if (url) urlsVistas.add(url);
+        let setor = 'Gabinete 2026';
+        if (p.categoria === 'PORTARIA') setor = 'Portarias 2026';
+        else if (String(p.entidade || '').includes('Câmara')) setor = 'Assessoria Jurídica 2026';
+
+        itens.push({
+          data: p.data || sw.dataReferencia || '--',
+          setor: setor,
+          categoria: p.categoria || 'ATO_OFICIAL',
+          titulo: p.titulo || 'Publicação FEMURN',
+          codigo: p.codigo || '',
+          servidores: p.servidores || [],
+          matriculas: p.matriculas || [],
+          url: url
+        });
+      });
+
+      (data.arquivosDrive || []).forEach(function(arq) {
+        if (arq.url && urlsVistas.has(arq.url)) return;
+        itens.push({
+          data: arq.dataCriacao || '--',
+          setor: arq.setor || 'Gabinete 2026',
+          categoria: arq.setor && arq.setor.includes('Portarias') ? 'PORTARIA' : 'ARQUIVO_DRIVE',
+          titulo: arq.nome || 'Documento PDF',
+          codigo: '',
+          servidores: [],
+          matriculas: [],
+          url: arq.url || ''
+        });
+      });
+
+      publicacoesUnificadas = itens;
+      renderizarTabela();
+    }, function(err) {
+      console.warn('Painel Fogo de Prometheus indisponível no momento:', err);
+    });
+  }
+
+  function renderizarTabela() {
+    const tbody = document.getElementById('prometheusTableBody');
+    if (!tbody) return;
+
+    const sectorFilter = document.getElementById('prometheusSectorFilter').value;
+    const termFilter = document.getElementById('prometheusSearchInput').value.toLowerCase().trim();
+
+    const filtered = publicacoesUnificadas.filter(function(p) {
+      const matchSector = (sectorFilter === 'TODOS' || p.setor === sectorFilter);
+      const blob = [p.titulo, p.codigo, p.categoria, (p.servidores || []).join(' '), (p.matriculas || []).join(' ')].join(' ').toLowerCase();
+      const matchTerm = (!termFilter || blob.includes(termFilter));
+      return matchSector && matchTerm;
+    });
+
+    tbody.innerHTML = '';
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" class="text-muted text-center" style="padding: 28px;">Nenhuma publicação localizada para os filtros aplicados.</td></tr>';
+      return;
+    }
+
+    filtered.forEach(function(item) {
+      const tr = document.createElement('tr');
+      const nerBadges = [];
+      if (item.codigo) nerBadges.push('Cód. ' + item.codigo);
+      if (item.servidores && item.servidores.length) nerBadges.push('Servidor(es): ' + item.servidores.join(', '));
+      if (item.matriculas && item.matriculas.length) nerBadges.push('Mat.: ' + item.matriculas.join(', '));
+
+      tr.innerHTML =
+        '<td style="font-family:var(--font-mono); font-size:12px;">' + window.OlymposApp.escapeHtml(item.data) + '</td>' +
+        '<td>' +
+          '<span class="pill-badge pill-blue">' + window.OlymposApp.escapeHtml(item.setor) + '</span>' +
+        '</td>' +
+        '<td>' +
+          '<div style="font-weight:600; color:var(--text-main);">' + window.OlymposApp.escapeHtml(item.titulo) + '</div>' +
+          (nerBadges.length ? '<div style="font-size:11.5px; color:var(--text-muted); margin-top:3px;">' + window.OlymposApp.escapeHtml(nerBadges.join(' • ')) + '</div>' : '') +
+        '</td>' +
+        '<td class="text-right">' +
+          (item.url
+            ? '<a href="' + window.OlymposApp.escapeHtml(item.url) + '" target="_blank" rel="noopener" class="btn btn-primary btn-sm">Abrir PDF ↗</a>'
+            : '<span class="text-muted">--</span>') +
+        '</td>';
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  function sincronizarMemoriaManual() {
+    window.OlymposApp.showToast('Sincronizando documentos 2026 com _memoria_helio.md...');
+    window.OlymposApi.chamar('prometheus_sync_manual', {}, function(res) {
+      if (res && res.ok) {
+        window.OlymposApp.showToast(res.mensagem || 'Memória de Hélio sincronizada!');
+        carregarPainel();
+      } else {
+        window.OlymposApp.showToast((res && res.mensagem) || 'Falha ao sincronizar.', true);
+      }
+    });
+  }
+
+  function dispararResumoChat() {
+    window.OlymposApp.showToast('Enviando resumo executivo ao Google Chat / E-mail...');
+    window.OlymposApi.chamar('prometheus_resumo_chat', {}, function(res) {
+      if (res && res.ok) {
+        window.OlymposApp.showToast(res.mensagem || 'Resumo processado com sucesso!');
+      } else {
+        window.OlymposApp.showToast((res && res.mensagem) || 'Falha ao enviar resumo.', true);
+      }
+    });
+  }
+
+  function dispararColetaGitHubActions() {
+    const dt = prompt('Data opcional para varredura na FEMURN (DD/MM/AAAA). Deixe vazio para coletar a edição de hoje:', '');
+    if (dt === null) return;
+
+    window.OlymposApp.showToast('Solicitando disparo do workflow Fogo de Prometheus...');
+    window.OlymposApi.chamar('prometheus_disparar_coleta', {
+      dataInicio: dt.trim(),
+      dataFim: dt.trim()
+    }, function(res) {
+      if (res && res.ok) {
+        window.OlymposApp.showToast(res.mensagem || 'Solicitação enviada ao GitHub Actions!');
+      } else {
+        window.OlymposApp.showToast((res && res.mensagem) || 'Não foi possível disparar remotamente.', true);
+      }
+    }, function(err) {
+      window.OlymposApp.showToast('Erro: ' + err.message, true);
+    });
+  }
+
+  return {
+    init: init
+  };
+})();
