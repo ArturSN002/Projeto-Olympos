@@ -115,8 +115,10 @@ window.OlymposApp = (function() {
   };
 
   async function handleLoginSubmit() {
-    const userInput = document.getElementById('loginUserInput').value.trim();
-    const passInput = document.getElementById('loginPasswordInput').value.trim();
+    const userInputEl = document.getElementById('loginUserInput') || document.getElementById('loginEmail');
+    const passInputEl = document.getElementById('loginPasswordInput') || document.getElementById('loginSenha');
+    const userInput = userInputEl ? userInputEl.value.trim() : '';
+    const passInput = passInputEl ? passInputEl.value.trim() : '';
     const btn = document.getElementById('loginSubmitBtn');
 
     if (!userInput || !passInput) {
@@ -208,6 +210,10 @@ window.OlymposApp = (function() {
     }
     localStorage.removeItem('olympos_session');
     currentUserSession = null;
+    const blocoGestao = document.getElementById('blocoGestaoUsuarios');
+    if (blocoGestao) blocoGestao.classList.add('hidden');
+    const topNovoUsuarioBtn = document.getElementById('topNovoUsuarioBtn');
+    if (topNovoUsuarioBtn) topNovoUsuarioBtn.classList.add('hidden');
     showToast('Sessão encerrada.');
     solicitarLogin();
   }
@@ -251,10 +257,44 @@ window.OlymposApp = (function() {
         link.classList.add('hidden');
       }
     });
+
+    // Controle de Visibilidade RBAC para Moderador (ADMIN_GABINETE)
+    const isAdmin = Boolean(sessao.perfil && (sessao.perfil.id === 'ADMIN_GABINETE' || sessao.perfil.nome === 'ADMIN_GABINETE'));
+    const blocoGestao = document.getElementById('blocoGestaoUsuarios');
+    if (blocoGestao) {
+      if (isAdmin) {
+        blocoGestao.classList.remove('hidden');
+      } else {
+        blocoGestao.classList.add('hidden');
+      }
+    }
+    const topNovoUsuarioBtn = document.getElementById('topNovoUsuarioBtn');
+    if (topNovoUsuarioBtn) {
+      if (isAdmin) {
+        topNovoUsuarioBtn.classList.remove('hidden');
+      } else {
+        topNovoUsuarioBtn.classList.add('hidden');
+      }
+    }
   }
 
   function getSession() {
     return currentUserSession;
+  }
+
+  function getSessaoAtual() {
+    return currentUserSession;
+  }
+
+  function atualizarTokenSessao(novoToken) {
+    if (!novoToken) return;
+    if (currentUserSession) {
+      currentUserSession.token = novoToken;
+      currentUserSession.access_token = novoToken;
+      try {
+        localStorage.setItem('olympos_session', JSON.stringify(currentUserSession));
+      } catch (e) {}
+    }
   }
 
   // =========================================================================
@@ -299,6 +339,7 @@ window.OlymposApp = (function() {
       link.addEventListener('click', function(e) {
         e.preventDefault();
         const page = link.getAttribute('data-page');
+        document.body.classList.remove('nav-drawer-open');
         window.OlymposRouter.navegarPara(page);
       });
     });
@@ -306,6 +347,7 @@ window.OlymposApp = (function() {
     document.querySelectorAll('[data-nav-target]').forEach(function(el) {
       el.addEventListener('click', function() {
         const target = el.getAttribute('data-nav-target');
+        document.body.classList.remove('nav-drawer-open');
         if (target) window.OlymposRouter.navegarPara(target);
       });
     });
@@ -358,6 +400,33 @@ window.OlymposApp = (function() {
 
     const btnSaveMem = document.getElementById('saveMemoriaBtn');
     if (btnSaveMem) btnSaveMem.addEventListener('click', salvarMemoriaMd);
+
+    // Modal de Cadastro de Novo Usuário (Exclusivo ADMIN_GABINETE)
+    const btnOpenNovoUser = document.getElementById('btnAbrirModalNovoUsuario');
+    if (btnOpenNovoUser) btnOpenNovoUser.addEventListener('click', abrirModalNovoUsuario);
+
+    const btnTopNovoUser = document.getElementById('topNovoUsuarioBtn');
+    if (btnTopNovoUser) btnTopNovoUser.addEventListener('click', abrirModalNovoUsuario);
+
+    const btnCloseNovoUser = document.getElementById('closeModalNovoUsuarioBtn');
+    if (btnCloseNovoUser) btnCloseNovoUser.addEventListener('click', fecharModalNovoUsuario);
+
+    const btnCancelNovoUser = document.getElementById('btnCancelarNovoUsuario');
+    if (btnCancelNovoUser) btnCancelNovoUser.addEventListener('click', fecharModalNovoUsuario);
+
+    const btnGenPass = document.getElementById('btnGerarSenhaNovoUsuario');
+    if (btnGenPass) btnGenPass.addEventListener('click', gerarSenhaParaFormularioNovoUsuario);
+
+    const btnTogglePass = document.getElementById('btnToggleVisibilidadeSenha');
+    if (btnTogglePass) btnTogglePass.addEventListener('click', toggleVisibilidadeSenhaNovoUsuario);
+
+    const formNovoUser = document.getElementById('formNovoUsuario');
+    if (formNovoUser) {
+      formNovoUser.addEventListener('submit', function(e) {
+        e.preventDefault();
+        handleNovoUsuarioSubmit(e);
+      });
+    }
   }
 
   function verificarStatusConexaoInicial() {
@@ -552,6 +621,165 @@ window.OlymposApp = (function() {
       .replace(/'/g, '&#39;');
   }
 
+  // =========================================================================
+  // GESTÃO DE USUÁRIOS E MODAL NOVO USUÁRIO (EXCLUSIVO ADMIN_GABINETE)
+  // =========================================================================
+  function abrirModalNovoUsuario() {
+    const sessao = currentUserSession;
+    const role = sessao && sessao.perfil && (sessao.perfil.id || sessao.perfil.nome);
+    if (role !== 'ADMIN_GABINETE') {
+      showToast('Acesso restrito ao Moderador do Gabinete (ADMIN_GABINETE).', true);
+      return;
+    }
+    const modal = document.getElementById('modalNovoUsuario');
+    if (modal) {
+      modal.classList.remove('hidden');
+      const inNome = document.getElementById('novoUsuarioNome');
+      if (inNome) inNome.focus();
+    }
+  }
+
+  function fecharModalNovoUsuario() {
+    const modal = document.getElementById('modalNovoUsuario');
+    if (modal) modal.classList.add('hidden');
+    const feedback = document.getElementById('novoUsuarioFeedback');
+    if (feedback) {
+      feedback.classList.add('hidden');
+      feedback.innerHTML = '';
+    }
+  }
+
+  function gerarSenhaSeguraAleatoria() {
+    const maiusculas = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    const minusculas = 'abcdefghijkmnopqrstuvwxyz';
+    const numeros = '23456789';
+    const simbolos = '!@#$%&*';
+    const todos = maiusculas + minusculas + numeros + simbolos;
+
+    let senha = '';
+    senha += maiusculas.charAt(Math.floor(Math.random() * maiusculas.length));
+    senha += minusculas.charAt(Math.floor(Math.random() * minusculas.length));
+    senha += numeros.charAt(Math.floor(Math.random() * numeros.length));
+    senha += simbolos.charAt(Math.floor(Math.random() * simbolos.length));
+
+    for (let i = 4; i < 14; i++) {
+      senha += todos.charAt(Math.floor(Math.random() * todos.length));
+    }
+    return senha.split('').sort(function() { return 0.5 - Math.random(); }).join('');
+  }
+
+  function gerarSenhaParaFormularioNovoUsuario() {
+    const inSenha = document.getElementById('novoUsuarioSenha');
+    if (inSenha) {
+      inSenha.value = gerarSenhaSeguraAleatoria();
+      inSenha.type = 'text';
+      const btnToggle = document.getElementById('btnToggleVisibilidadeSenha');
+      if (btnToggle) btnToggle.textContent = '🔒';
+      showToast('Senha segura gerada com sucesso!');
+    }
+  }
+
+  function toggleVisibilidadeSenhaNovoUsuario() {
+    const inSenha = document.getElementById('novoUsuarioSenha');
+    const btnToggle = document.getElementById('btnToggleVisibilidadeSenha');
+    if (!inSenha) return;
+    if (inSenha.type === 'password') {
+      inSenha.type = 'text';
+      if (btnToggle) btnToggle.textContent = '🔒';
+    } else {
+      inSenha.type = 'password';
+      if (btnToggle) btnToggle.textContent = '👁️';
+    }
+  }
+
+  function exibirFeedbackNovoUsuario(msg, tipo) {
+    const fb = document.getElementById('novoUsuarioFeedback');
+    if (!fb) return;
+    fb.classList.remove('hidden');
+    let cor = 'var(--text-primary)';
+    if (tipo === 'erro') cor = 'var(--danger, #e53935)';
+    else if (tipo === 'sucesso') cor = 'var(--success, #43a047)';
+    else if (tipo === 'info') cor = 'var(--accent-gold, #c99738)';
+    fb.innerHTML = '<span style="color:' + cor + '; font-weight:600;">' + escapeHtml(msg) + '</span>';
+  }
+
+  async function handleNovoUsuarioSubmit(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const sessao = currentUserSession;
+    const role = sessao && sessao.perfil && (sessao.perfil.id || sessao.perfil.nome);
+    if (role !== 'ADMIN_GABINETE') {
+      showToast('Ação restrita ao Moderador do Gabinete.', true);
+      return;
+    }
+
+    const inNome = document.getElementById('novoUsuarioNome');
+    const inEmail = document.getElementById('novoUsuarioEmail');
+    const inRole = document.getElementById('novoUsuarioRole');
+    const inDepto = document.getElementById('novoUsuarioDepartamento');
+    const inSenha = document.getElementById('novoUsuarioSenha');
+    const btnSubmit = document.getElementById('btnSalvarNovoUsuario');
+
+    const nome = inNome ? inNome.value.trim() : '';
+    const email = inEmail ? inEmail.value.trim() : '';
+    const papel = inRole ? inRole.value.trim() : '';
+    const departamento = inDepto ? inDepto.value.trim() : 'Secretaria Municipal de Educacao';
+    const senha = inSenha ? inSenha.value.trim() : '';
+
+    if (!nome || !email || !papel || !senha) {
+      exibirFeedbackNovoUsuario('Preencha todos os campos obrigatórios (*).', 'erro');
+      return;
+    }
+
+    if (senha.length < 8) {
+      exibirFeedbackNovoUsuario('A senha temporária deve conter no mínimo 8 caracteres.', 'erro');
+      return;
+    }
+
+    if (btnSubmit) {
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = 'Cadastrando...';
+    }
+    exibirFeedbackNovoUsuario('Provisionando operador no Supabase Auth...', 'info');
+
+    const payload = {
+      nome: nome,
+      email: email,
+      role: papel,
+      departamento: departamento,
+      senhaTemporaria: senha
+    };
+
+    try {
+      const res = await window.OlymposApi.criarUsuario(payload);
+      if (res && res.ok) {
+        exibirFeedbackNovoUsuario(res.mensagem || 'Usuário cadastrado com sucesso!', 'sucesso');
+        showToast('Usuário ' + email + ' cadastrado com sucesso!');
+        const form = document.getElementById('formNovoUsuario');
+        if (form) form.reset();
+        setTimeout(function() {
+          fecharModalNovoUsuario();
+          if (btnSubmit) {
+            btnSubmit.disabled = false;
+            btnSubmit.textContent = 'Criar Usuário';
+          }
+        }, 1500);
+      } else {
+        exibirFeedbackNovoUsuario((res && res.mensagem) || 'Falha ao cadastrar usuário.', 'erro');
+        if (btnSubmit) {
+          btnSubmit.disabled = false;
+          btnSubmit.textContent = 'Criar Usuário';
+        }
+      }
+    } catch (err) {
+      console.error('[handleNovoUsuarioSubmit] Erro:', err);
+      exibirFeedbackNovoUsuario('Erro de comunicação: ' + (err.message || 'Falha de rede.'), 'erro');
+      if (btnSubmit) {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'Criar Usuário';
+      }
+    }
+  }
+
   return {
     showToast: showToast,
     copiarTexto: copiarTexto,
@@ -559,12 +787,16 @@ window.OlymposApp = (function() {
     renderizarItensLinksGerados: renderizarItensLinksGerados,
     abrirModalContadores: abrirModalContadores,
     abrirModalMemoria: abrirModalMemoria,
+    abrirModalNovoUsuario: abrirModalNovoUsuario,
+    fecharModalNovoUsuario: fecharModalNovoUsuario,
     solicitarLogin: solicitarLogin,
     handleLoginSubmit: handleLoginSubmit,
     fazerLogout: fazerLogout,
     definirTema: definirTema,
     atualizarStatusConexao: atualizarStatusConexao,
     getSession: getSession,
+    getSessaoAtual: getSessaoAtual,
+    atualizarTokenSessao: atualizarTokenSessao,
     escapeHtml: escapeHtml
   };
 })();

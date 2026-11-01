@@ -126,6 +126,26 @@ window.OlymposApi = (function() {
       });
   }
 
+  /**
+   * Provisiona novo usuário administrativo através do Gateway GAS intermediando o Supabase Auth.
+   * Suporta tanto padrão assíncrono via Promise quanto callbacks tradicionais (onSuccess, onError).
+   * @param {Object} dados Dados cadastrais { email, nome, role, departamento, senhaTemporaria }.
+   * @param {Function} [onSuccess] Callback de sucesso.
+   * @param {Function} [onError] Callback de erro.
+   * @returns {Promise<Object>}
+   */
+  function criarUsuario(dados, onSuccess, onError) {
+    return new Promise(function(resolve, reject) {
+      chamar('usuario_criar', { dados: dados }, function(res) {
+        if (onSuccess) onSuccess(res);
+        resolve(res);
+      }, function(err) {
+        if (onError) onError(err);
+        reject(err);
+      });
+    });
+  }
+
   return {
     getApiUrl: getApiUrl,
     setApiUrl: setApiUrl,
@@ -133,6 +153,7 @@ window.OlymposApi = (function() {
     getSession: getSession,
     getJwtToken: getJwtToken,
     chamar: chamar,
+    criarUsuario: criarUsuario,
     testarConexao: testarConexao
   };
 })();

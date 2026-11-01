@@ -4,6 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Olympos — Inteligência Documental SMEB Ceará-Mirim</title>
+    <!-- Favicon Oficial Olympos (SVG em Data URI para zero 404s + Fallback Físico) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230B1120'/%3E%3Cpath d='M8 22h16M10 22V12m4 10V12m4 10V12m4 10V12M7 12l9-6 9 6H7z' stroke='%23F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E" />
+    <link rel="alternate icon" href="favicon.ico" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -24,11 +27,11 @@
           <form id="loginForm">
             <div class="field-group" style="margin-bottom: 14px;">
               <label for="loginUserInput">Identificador ou E-mail Institucional</label>
-              <input type="text" id="loginUserInput" class="input-clean" placeholder="Ex: admin, rh, pedagogico, juridico" required autocomplete="username" />
+              <input type="text" id="loginUserInput" name="loginEmail" class="input-clean" placeholder="Ex: admin, rh, pedagogico, juridico" required autocomplete="username" />
             </div>
             <div class="field-group" style="margin-bottom: 20px;">
               <label for="loginPasswordInput">Senha de Acesso</label>
-              <input type="password" id="loginPasswordInput" class="input-clean" placeholder="••••••••" required autocomplete="current-password" />
+              <input type="password" id="loginPasswordInput" name="loginSenha" class="input-clean" placeholder="••••••••" required autocomplete="current-password" />
             </div>
 
             <button type="submit" id="loginSubmitBtn" class="btn btn-primary" style="width: 100%; padding: 12px 20px;">
@@ -75,6 +78,10 @@
           </div>
 
           <button id="themeToggleBtn" class="icon-capsule-btn" title="Alternar Modo Claro / Modo Escuro" aria-label="Alternar Tema"></button>
+
+          <button id="topNovoUsuarioBtn" class="btn btn-primary btn-sm hidden" title="Cadastrar Novo Usuário (Exclusivo Gabinete)" style="font-size: 0.76rem; padding: 6px 12px; display: inline-flex; align-items: center; gap: 4px;">
+            <span>+ Novo Usuário</span>
+          </button>
 
           <button id="userSessionBtn" class="user-capsule-btn" title="Perfil RBAC Ativo (Clique para encerrar ou trocar sessão)">
             <span class="user-avatar-dot" id="userAvatarInitials">GB</span>
@@ -737,7 +744,7 @@
               </div>
             </div>
 
-            <div class="controls-grid" style="grid-template-columns: 3fr 1fr auto; align-items: end; margin-bottom: 14px;">
+            <div class="controls-grid search-controls-responsive" style="align-items: end; margin-bottom: 14px;">
               <div class="field-group">
                 <label for="pageBuscaInput">Termo de Pesquisa (Servidor, Matrícula, Nº do Ato ou * para listar recentes)</label>
                 <input type="search" id="pageBuscaInput" class="input-clean" placeholder="Ex: Portaria 163, Ofício 155, Permuta, Maria..." />
@@ -800,7 +807,7 @@
               </div>
             </div>
 
-            <div class="controls-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
+            <div class="controls-grid config-grid-responsive" style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 24px;">
               <div>
                 <h3 style="font-size: 1.05rem; margin-bottom: 12px;">Endpoint do Gateway Google Apps Script</h3>
                 <div class="field-group" style="margin-bottom: 14px;">
@@ -833,6 +840,20 @@
                     <option value="dark">Modo Escuro — DeepMind Midnight (60% Obsidiana, 30% Alabastro, 10% Ouro Luminoso)</option>
                   </select>
                 </div>
+              </div>
+            </div>
+
+            <!-- PAINEL DE GESTÃO DE USUÁRIOS RBAC (EXCLUSIVO ADMIN_GABINETE) -->
+            <div id="blocoGestaoUsuarios" class="surface-card hidden" style="margin-top: 24px; border: 1px solid var(--border-hairline); background: var(--surface-secondary, rgba(255,255,255,0.02));">
+              <div class="card-header-row" style="margin-bottom: 8px;">
+                <div>
+                  <span class="section-eyebrow">MODERAÇÃO DE ACESSOS • GABINETE</span>
+                  <h3 class="section-title" style="font-size: 1.15rem;">Gestão de Operadores &amp; Papéis RBAC</h3>
+                  <p class="section-desc" style="margin-bottom: 0;">Cadastre novos operadores institucionais com papéis e permissões segmentadas no Supabase Auth.</p>
+                </div>
+                <button type="button" id="btnAbrirModalNovoUsuario" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;">
+                  <span>+ Novo Usuário</span>
+                </button>
               </div>
             </div>
           </div>
@@ -930,7 +951,7 @@
 
             <div class="field-group" style="margin-bottom: 14px;">
               <label for="setupSupabaseAnonKey">Chave Pública Anônima (Anon / Public Key)</label>
-              <input type="password" id="setupSupabaseAnonKey" class="input-clean" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." required />
+              <input type="password" id="setupSupabaseAnonKey" class="input-clean" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." required autocomplete="new-password" />
               <small style="color: var(--text-muted); font-size: 0.75rem;">Disponível em Project Settings &gt; API &gt; Project API keys (anon public)</small>
             </div>
 
@@ -947,6 +968,79 @@
             </div>
           </form>
         </div>
+      </div>
+    </div>
+
+    <!-- =========================================================================
+         MODAL DE CADASTRO DE NOVO USUÁRIO (EXCLUSIVO ADMIN_GABINETE)
+         ========================================================================= -->
+    <div id="modalNovoUsuario" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalNovoUsuarioTitulo">
+      <div class="modal-card" style="max-width: 560px; width: 92%;">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <span class="badge badge-purple" style="font-size: 0.72rem; margin-bottom: 4px;">Moderação de Acessos • Gabinete</span>
+            <h3 id="modalNovoUsuarioTitulo" style="margin: 0; font-size: 1.22rem; font-weight: 700;">Adicionar Novo Usuário</h3>
+          </div>
+          <button id="closeModalNovoUsuarioBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal">&times;</button>
+        </div>
+
+        <form id="formNovoUsuario">
+          <div class="modal-body" style="padding: 20px 24px;">
+            <p class="section-desc" style="margin-top: 0; margin-bottom: 16px;">
+              O usuário será provisionado no <strong>Supabase Auth</strong> e sincronizado com as permissões da função designada.
+            </p>
+
+            <!-- Campo: Nome Completo -->
+            <div class="field-group" style="margin-bottom: 14px;">
+              <label for="novoUsuarioNome">Nome Completo *</label>
+              <input type="text" id="novoUsuarioNome" class="input-clean" placeholder="Ex: Maria Helena dos Santos" required autocomplete="name" />
+            </div>
+
+            <!-- Campo: Email Institucional -->
+            <div class="field-group" style="margin-bottom: 14px;">
+              <label for="novoUsuarioEmail">Email Institucional *</label>
+              <input type="email" id="novoUsuarioEmail" class="input-clean" placeholder="servidor@smeb.cearamirim.rn.gov.br" required autocomplete="email" />
+            </div>
+
+            <!-- Campo: Papel (select) -->
+            <div class="field-group" style="margin-bottom: 14px;">
+              <label for="novoUsuarioRole">Papel (Perfil RBAC) *</label>
+              <select id="novoUsuarioRole" class="input-clean" required>
+                <option value="RH_COMISSAO">RH_COMISSAO (RH &amp; Comissão de Portarias)</option>
+                <option value="PEDAGOGICO_EVENTOS">PEDAGOGICO_EVENTOS (Pedagógico &amp; Eventos)</option>
+                <option value="JURIDICO">JURIDICO (Assessoria Jurídica)</option>
+                <option value="ADMIN_GABINETE">ADMIN_GABINETE (Gabinete &amp; Governança Total - Moderador)</option>
+              </select>
+            </div>
+
+            <!-- Campo: Departamento -->
+            <div class="field-group" style="margin-bottom: 14px;">
+              <label for="novoUsuarioDepartamento">Departamento / Lotação</label>
+              <input type="text" id="novoUsuarioDepartamento" class="input-clean" value="Secretaria Municipal de Educacao" />
+            </div>
+
+            <!-- Campo: Senha Temporária -->
+            <div class="field-group" style="margin-bottom: 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <label for="novoUsuarioSenha" style="margin-bottom: 0;">Senha Temporária *</label>
+                <button type="button" id="btnGerarSenhaNovoUsuario" class="btn-mini" style="font-size: 0.74rem;">🎲 Gerar Senha Segura</button>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <input type="password" id="novoUsuarioSenha" class="input-clean" style="font-family: var(--font-mono); font-size: 13px;" placeholder="Mínimo 8 caracteres" required autocomplete="new-password" />
+                <button type="button" id="btnToggleVisibilidadeSenha" class="btn btn-secondary btn-sm" style="white-space: nowrap; padding: 0 12px;" title="Alternar visibilidade da senha">👁️</button>
+              </div>
+              <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 4px; display: block;">Mínimo de 8 caracteres. O usuário poderá alterar em seu próximo acesso.</small>
+            </div>
+
+            <!-- Área de feedback / Mensagem -->
+            <div id="novoUsuarioFeedback" class="output-panel hidden" style="margin-bottom: 14px; font-size: 12.5px;"></div>
+          </div>
+
+          <div class="modal-footer" style="padding: 14px 24px; border-top: 1px solid var(--border-hairline); display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" id="btnCancelarNovoUsuario" class="btn btn-secondary btn-sm">Cancelar</button>
+            <button type="submit" id="btnSalvarNovoUsuario" class="btn btn-primary btn-sm">Criar Usuário</button>
+          </div>
+        </form>
       </div>
     </div>
 

@@ -8,10 +8,24 @@
 window.OlymposSupabase = (function() {
   let supabaseInstance = null;
   let cachedProfile = null;
+  let activeUrl = null;
+  let activeKey = null;
+
+  function normalizeSupabaseUrl(rawUrl) {
+    return String(rawUrl || '')
+      .trim()
+      .replace(/\/+$/, '')
+      .replace(/\/(rest|auth)\/v1(\/.*)?$/i, '');
+  }
 
   function getConfig() {
+    const rawUrl = localStorage.getItem('olympos_supabase_url') || '';
+    const cleanUrl = normalizeSupabaseUrl(rawUrl);
+    if (rawUrl && cleanUrl && rawUrl !== cleanUrl) {
+      localStorage.setItem('olympos_supabase_url', cleanUrl);
+    }
     return {
-      url: (localStorage.getItem('olympos_supabase_url') || '').trim(),
+      url: cleanUrl,
       anonKey: (localStorage.getItem('olympos_supabase_anon_key') || '').trim()
     };
   }
@@ -21,7 +35,7 @@ window.OlymposSupabase = (function() {
     return Boolean(cfg.url && cfg.anonKey && cfg.url.startsWith('https://') && cfg.anonKey.length > 20);
   }
 
-  function init() {
+  function init(force) {
     const cfg = getConfig();
 
     if (!isConfigured()) {
@@ -44,6 +58,18 @@ window.OlymposSupabase = (function() {
       return null;
     }
 
+    // Padrão Singleton Estrito: Reutiliza instância ativa se URL e Chave forem idênticas
+    if (supabaseInstance && !force && activeUrl === cfg.url && activeKey === cfg.anonKey) {
+      return supabaseInstance;
+    }
+
+    // Se já havia instância ativa mas credenciais mudaram ou force=true, encerra auto-refresh anterior
+    if (supabaseInstance && supabaseInstance.auth && typeof supabaseInstance.auth.stopAutoRefreshToken === 'function') {
+      try {
+        supabaseInstance.auth.stopAutoRefreshToken();
+      } catch (eStop) {}
+    }
+
     try {
       supabaseInstance = window.supabase.createClient(cfg.url, cfg.anonKey, {
         auth: {
@@ -52,7 +78,19 @@ window.OlymposSupabase = (function() {
           detectSessionInUrl: true
         }
       });
-      console.log('[OlymposSupabase] Cliente Supabase inicializado com sucesso.');
+      activeUrl = cfg.url;
+      activeKey = cfg.anonKey;
+      console.log('[OlymposSupabase] Cliente Supabase inicializado com sucesso (Singleton).');
+
+      // Escuta renovação automática de token e sincroniza sessão do app
+      if (supabaseInstance.auth && typeof supabaseInstance.auth.onAuthStateChange === 'function') {
+        supabaseInstance.auth.onAuthStateChange(function(event, session) {
+          if (event === 'TOKEN_REFRESHED' && session && window.OlymposApp && typeof window.OlymposApp.atualizarTokenSessao === 'function') {
+            window.OlymposApp.atualizarTokenSessao(session.access_token);
+          }
+        });
+      }
+
       return supabaseInstance;
     } catch (err) {
       console.error('[OlymposSupabase] Erro ao instanciar createClient:', err);

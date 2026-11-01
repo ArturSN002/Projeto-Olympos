@@ -71,9 +71,19 @@ window.OlymposSetupModal = (function() {
     }
   }
 
+  function normalizeUrl(rawUrl) {
+    return String(rawUrl || '')
+      .trim()
+      .replace(/\/+$/, '')
+      .replace(/\/(rest|auth)\/v1(\/.*)?$/i, '');
+  }
+
   async function testarConexao() {
     const el = getElements();
-    const url = (el.inputUrl ? el.inputUrl.value : '').trim();
+    const url = normalizeUrl(el.inputUrl ? el.inputUrl.value : '');
+    if (el.inputUrl && url) {
+      el.inputUrl.value = url;
+    }
     const key = (el.inputKey ? el.inputKey.value : '').trim();
 
     if (!url || !url.startsWith('https://')) {
@@ -117,7 +127,10 @@ window.OlymposSetupModal = (function() {
     if (e && e.preventDefault) e.preventDefault();
     const el = getElements();
 
-    const url = (el.inputUrl ? el.inputUrl.value : '').trim();
+    const url = normalizeUrl(el.inputUrl ? el.inputUrl.value : '');
+    if (el.inputUrl && url) {
+      el.inputUrl.value = url;
+    }
     const key = (el.inputKey ? el.inputKey.value : '').trim();
     const gas = (el.inputGas ? el.inputGas.value : '').trim();
 
@@ -137,9 +150,9 @@ window.OlymposSetupModal = (function() {
         localStorage.setItem('olympos_api_url', gas);
       }
 
-      // Reinicializa o cliente Supabase se estiver carregado
+      // Reinicializa o cliente Supabase forçando atualização de credenciais
       if (window.OlymposSupabase && typeof window.OlymposSupabase.init === 'function') {
-        window.OlymposSupabase.init();
+        window.OlymposSupabase.init(true);
       }
 
       exibirFeedback('Configurações salvas no localStorage com sucesso!', 'sucesso');

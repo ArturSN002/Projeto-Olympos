@@ -37,6 +37,20 @@ window.OlymposViews.visaoGeral = (function() {
   }
 
   function carregarDados() {
+    // Verifica se há sessão institucional ou token configurado antes de chamar endpoint protegido
+    const sessao = (window.OlymposApp && typeof window.OlymposApp.getSession === 'function')
+      ? window.OlymposApp.getSession()
+      : null;
+    const jwtToken = (window.OlymposApi && typeof window.OlymposApi.getJwtToken === 'function')
+      ? window.OlymposApi.getJwtToken()
+      : null;
+
+    // Se não há sessão autenticada, renderiza o catálogo local das 17 personas sem emitir erro de rede
+    if (!sessao && !jwtToken) {
+      renderizarConstelacao17Personas(lastOverviewData ? lastOverviewData.memorias : null);
+      return;
+    }
+
     window.OlymposApi.chamar('overview_get', {}, function(res) {
       const data = (res && res.data) ? res.data : res;
       if (data && (data.numeracao || data.memorias)) {
@@ -46,7 +60,8 @@ window.OlymposViews.visaoGeral = (function() {
         isLoaded = true;
       }
     }, function(err) {
-      console.warn('Visão Geral usando catálogo local das 17 personas:', err);
+      // Degradação graciosa para catálogo local sem poluir o console com advertências
+      renderizarConstelacao17Personas(lastOverviewData ? lastOverviewData.memorias : null);
     });
   }
 
