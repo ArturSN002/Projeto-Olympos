@@ -1,6 +1,6 @@
 /**
  * @fileoverview Módulo 4 — Olho de Apolo & Gerenciador de Contadores/Parâmetros em Arquivo .md no Google Drive.
- * Fonte da Verdade: _memoria_apolo (ID Fixo: 1wGlcqqTuWAyy-2VRO_QqyyMcKHb4AmRn) na pasta 00_Memorias_MD (1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu).
+ * Fonte da Verdade: _memoria_apolo (ID Oficial: 1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_) na pasta 00_Memorias_MD (1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu).
  * Valores Iniciais Oficiais 2026: Próximo Ofício = 155 (Último = 154) | Próxima Portaria = 163 (Última = 162).
  */
 
@@ -27,7 +27,7 @@ function obterPisoPadraoApolo2026_() {
 
 /**
  * Localiza o arquivo .md vinculado para armazenar a numeração de Ofícios, Portarias e Parâmetros Globais.
- * Prioriza ScriptProperty 'OLYMPOS_CONTADORES_MD_ID', depois OLYMPOS_IDS.ESTADO_GLOBAL_MD.ARQUIVO_CONTADORES_ID (1wGlcqqTuWAyy-2VRO_QqyyMcKHb4AmRn).
+ * Prioriza ScriptProperty 'OLYMPOS_CONTADORES_MD_ID', depois OLYMPOS_IDS.ESTADO_GLOBAL_MD.ARQUIVO_CONTADORES_ID (1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_).
  */
 function obterArquivoContadoresMdApolo_() {
   let idAlvo = '';
@@ -41,7 +41,7 @@ function obterArquivoContadoresMdApolo_() {
     idAlvo = OLYMPOS_IDS.ESTADO_GLOBAL_MD.ARQUIVO_CONTADORES_ID;
   }
   if (!idAlvo) {
-    idAlvo = '1wGlcqqTuWAyy-2VRO_QqyyMcKHb4AmRn';
+    idAlvo = '1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_';
   }
 
   if (idAlvo && typeof DriveApp !== 'undefined' && DriveApp.getFileById) {
@@ -171,7 +171,7 @@ function extrairEstadoNumeracaoDeTextoMd_(conteudoMd) {
 
 /**
  * Atualiza a seção "## 1. Estado Atual e Contadores Ativos (2026)" dentro de _memoria_apolo.md
- * (ID: 1wGlcqqTuWAyy-2VRO_QqyyMcKHb4AmRn) preservando alertas e pendências e registrando trilha no Rolling Log.
+ * (ID: 1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_) preservando alertas e pendências e registrando trilha no Rolling Log.
  */
 function gravarEstadoNumeracaoNoArquivoMd_(novosValores, notaHistoricoOpt) {
   const agora = Utilities.formatDate(new Date(), 'America/Fortaleza', 'yyyy-MM-dd HH:mm');
@@ -204,7 +204,7 @@ function gravarEstadoNumeracaoNoArquivoMd_(novosValores, notaHistoricoOpt) {
   if (!arquivo && typeof obterOuCriarPastaMemoriasOlympos === 'function') {
     // Tenta pelo ID fixo oficial sem criar arquivos duplicados
     try {
-      arquivo = DriveApp.getFileById('1wGlcqqTuWAyy-2VRO_QqyyMcKHb4AmRn');
+      arquivo = DriveApp.getFileById('1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_');
     } catch (e) {
       console.error('Falha crítica ao recuperar arquivo de contadores Apolo por ID fixo:', e);
     }
@@ -261,8 +261,8 @@ function gravarEstadoNumeracaoNoArquivoMd_(novosValores, notaHistoricoOpt) {
   }
 
   const resultado = {
-    arquivoId: arquivo && typeof arquivo.getId === 'function' ? arquivo.getId() : '1wGlcqqTuWAyy-2VRO_QqyyMcKHb4AmRn',
-    arquivoUrl: arquivo && typeof arquivo.getUrl === 'function' ? arquivo.getUrl() : 'https://drive.google.com/file/d/1wGlcqqTuWAyy-2VRO_QqyyMcKHb4AmRn/view',
+    arquivoId: arquivo && typeof arquivo.getId === 'function' ? arquivo.getId() : '1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_',
+    arquivoUrl: arquivo && typeof arquivo.getUrl === 'function' ? arquivo.getUrl() : 'https://drive.google.com/file/d/1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_/view',
     ultimoOficio2026: estadoAtual.ultimoOficio2026,
     proximoOficio2026: estadoAtual.proximoOficio2026,
     ultimaPortaria2026: estadoAtual.ultimaPortaria2026,
@@ -284,15 +284,15 @@ function gravarEstadoNumeracaoNoArquivoMd_(novosValores, notaHistoricoOpt) {
 }
 
 /**
- * Lê o estado atual de numeração diretamente do arquivo .md no Google Drive (1wGlcqqTuWAyy-2VRO_QqyyMcKHb4AmRn).
+ * Lê o estado atual de numeração diretamente do arquivo .md no Google Drive (1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_).
  * Se o arquivo ainda não contiver as chaves de numeração 2026, inicializa com Ofício 155 e Portaria 163.
  */
 function lerEstadoNumeracaoDoArquivoMd_() {
   const arquivo = obterArquivoContadoresMdApolo_();
   if (!arquivo) {
     return Object.assign(obterPisoPadraoApolo2026_(), {
-      arquivoId: '1wGlcqqTuWAyy-2VRO_QqyyMcKHb4AmRn',
-      arquivoUrl: 'https://drive.google.com/file/d/1wGlcqqTuWAyy-2VRO_QqyyMcKHb4AmRn/view',
+      arquivoId: '1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_',
+      arquivoUrl: 'https://drive.google.com/file/d/1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_/view',
       sincronizadoEm: Utilities.formatDate(new Date(), 'America/Fortaleza', 'dd/MM/yyyy HH:mm:ss')
     });
   }
@@ -308,8 +308,8 @@ function lerEstadoNumeracaoDoArquivoMd_() {
   }
 
   const resultado = {
-    arquivoId: typeof arquivo.getId === 'function' ? arquivo.getId() : '1wGlcqqTuWAyy-2VRO_QqyyMcKHb4AmRn',
-    arquivoUrl: typeof arquivo.getUrl === 'function' ? arquivo.getUrl() : 'https://drive.google.com/file/d/1wGlcqqTuWAyy-2VRO_QqyyMcKHb4AmRn/view',
+    arquivoId: typeof arquivo.getId === 'function' ? arquivo.getId() : '1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_',
+    arquivoUrl: typeof arquivo.getUrl === 'function' ? arquivo.getUrl() : 'https://drive.google.com/file/d/1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_/view',
     ultimoOficio2026: extraido.ultimoOficio2026,
     proximoOficio2026: extraido.proximoOficio2026,
     ultimaPortaria2026: extraido.ultimaPortaria2026,
@@ -333,7 +333,7 @@ function lerEstadoNumeracaoDoArquivoMd_() {
 /**
  * Varre automaticamente as pastas Ofícios de 2026 e Portarias de 2026,
  * reconcilia de forma inteligente (Smart Reconcile — sem regredir valores manuais já salvos no .md)
- * e atualiza _memoria_apolo.md (1wGlcqqTuWAyy-2VRO_QqyyMcKHb4AmRn).
+ * e atualiza _memoria_apolo.md (1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_).
  */
 function sincronizarNumeracaoApolo2026() {
   const piso = obterPisoPadraoApolo2026_();
@@ -374,7 +374,7 @@ function sincronizarNumeracaoApolo2026() {
 }
 
 /**
- * Retorna a numeração lendo prioritariamente o arquivo .md no Google Drive (1wGlcqqTuWAyy-2VRO_QqyyMcKHb4AmRn)
+ * Retorna a numeração lendo prioritariamente o arquivo .md no Google Drive (1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_)
  * para refletir imediatamente qualquer edição manual feita pelo usuário no arquivo .md ou no Hub.
  * Se forcarVarredura = true, varre também as pastas do Drive e reconcilia.
  */
@@ -387,7 +387,7 @@ function obterOuSincronizarNumeracaoApolo(forcarVarredura) {
 
 /**
  * Permite ao usuário ajustar manualmente o Próximo Número de Ofício, Portaria (ou outros contadores e Signatário)
- * diretamente pelo Hub Olympos, gravando o novo valor no arquivo .md (1wGlcqqTuWAyy-2VRO_QqyyMcKHb4AmRn).
+ * diretamente pelo Hub Olympos, gravando o novo valor no arquivo .md (1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_).
  * @param {string} tipoDocumento 'OFICIO', 'PORTARIA', 'MEMORANDO', 'PARECER', 'EDITAL_PSS' ou 'GERAL'.
  * @param {number|Object} novoValor Número inteiro do próximo ato ou objeto completo de parâmetros.
  * @param {string} [motivoOpt] Observação opcional (ex.: "Ofício 155 emitido manualmente para SINFRA").
@@ -456,7 +456,7 @@ function atualizarContadorManualApolo(tipoDocumento, novoValor, motivoOpt) {
 
 /**
  * Reserva atomicamente o número atual de Ofício ou Portaria (para uso manual imediato ou automação),
- * incrementa o contador em +1 no arquivo .md (1wGlcqqTuWAyy-2VRO_QqyyMcKHb4AmRn) e retorna o número reservado.
+ * incrementa o contador em +1 no arquivo .md (1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_) e retorna o número reservado.
  * @param {string} tipoDocumento 'OFICIO' ou 'PORTARIA'.
  * @param {string} [assuntoOuDestinatario] Identificação opcional do documento que consumiu o número.
  */

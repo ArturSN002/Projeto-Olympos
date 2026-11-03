@@ -124,15 +124,36 @@ window.OlymposViews.portarias = (function() {
       '</div>';
 
       if (res.erros && res.erros.length > 0) {
-        html += '<div style="max-height:140px; overflow-y:auto; padding:10px 12px; border-radius:12px; background:var(--danger-soft); color:var(--danger); font-size:12.5px;">';
+        html += '<div style="max-height:140px; overflow-y:auto; padding:10px 12px; border-radius:12px; background:var(--danger-soft); color:var(--danger); font-size:12.5px; margin-bottom:12px;">';
         res.erros.forEach(function(e) {
           html += '<div style="margin-bottom:4px;">• <strong>Linha ' + e.linha + '</strong> (' + window.OlymposApp.escapeHtml(e.servidor || '') + '): ' + window.OlymposApp.escapeHtml(e.motivo) + '</div>';
         });
         html += '</div>';
       } else if (totalPend === 0) {
-        html += '<div style="font-size:13px;">Todas as linhas desta aba já estão com status <strong>Documento Gerado</strong>.</div>';
+        html += '<div style="font-size:13px; margin-bottom:12px;">Todas as linhas desta aba já estão com status <strong>Documento Gerado</strong>.</div>';
       } else {
-        html += '<div style="font-size:13px; color:var(--success); font-weight:600;">Nenhum erro encontrado! Clique em "Gerar Portarias Pendentes" para emitir os documentos.</div>';
+        html += '<div style="font-size:13px; color:var(--success); font-weight:600; margin-bottom:12px;">Nenhum erro de preenchimento encontrado! Clique em "Gerar Portarias Pendentes" para emitir os documentos.</div>';
+      }
+
+      // Tabela de Valores Reais lidos da Planilha Oficial
+      if (res.amostraLinhas && res.amostraLinhas.length > 0) {
+        html += '<div style="margin-top:14px; font-weight:700; font-size:13px; color:var(--text-main); margin-bottom:6px;">Registros Identificados na Planilha (' + res.amostraLinhas.length + ' linhas)</div>';
+        html += '<div class="table-wrapper" style="max-height:260px; overflow-y:auto;">';
+        html += '<table class="clean-table" style="font-size:12px;">';
+        html += '<thead><tr><th>Linha</th><th>Servidor(a)</th><th>Matrícula</th><th>Cargo / Função</th><th>Portaria</th><th>Status</th></tr></thead>';
+        html += '<tbody>';
+        res.amostraLinhas.forEach(function(item) {
+          const badgeClass = item.status === 'DOCUMENTO GERADO' ? 'pill-green' : (item.valida ? 'pill-gold' : 'pill-red');
+          html += '<tr>' +
+            '<td><strong>' + item.linha + '</strong></td>' +
+            '<td>' + window.OlymposApp.escapeHtml(item.servidor) + '</td>' +
+            '<td>' + window.OlymposApp.escapeHtml(item.matricula || '—') + '</td>' +
+            '<td>' + window.OlymposApp.escapeHtml(item.cargo || '—') + '</td>' +
+            '<td>' + window.OlymposApp.escapeHtml(item.portaria || 'Automática') + '</td>' +
+            '<td><span class="pill-badge ' + badgeClass + '" style="font-size:11px; padding:2px 8px;">' + window.OlymposApp.escapeHtml(item.status) + '</span></td>' +
+          '</tr>';
+        });
+        html += '</tbody></table></div>';
       }
 
       out.innerHTML = html;

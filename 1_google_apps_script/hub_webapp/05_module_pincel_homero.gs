@@ -168,15 +168,20 @@ function formatarDataPorExtensoPincel_(dataObjeto, maiuscula) {
 
 /**
  * Lista todas as planilhas e suas abas nas pastas de Licenças ou Readaptações,
- * garantindo o carregamento direto da planilha oficial de Licenças (1agqeKFfubxvmdq2oND3ndykU2037NIuOXBOHVSLS9oc).
+ * garantindo o carregamento direto das planilhas oficiais de Licenças (1agqeKFfubxvmdq2oND3ndykU2037NIuOXBOHVSLS9oc)
+ * e Readaptações Funcionais (1Mz95vIv024qO62nO1USBtY2iQIrVThaeqcWYOcTQ2X0).
  * @param {string} operacao 'LICENCAS' ou 'READAPTACOES'.
  */
 function listarPlanilhasEAbaPincel(operacao) {
-  const folderId = operacao === 'LICENCAS'
-    ? OLYMPOS_IDS.SUBPROJETOS.PINCEL_LICENCAS_PASTA
-    : OLYMPOS_IDS.SUBPROJETOS.PINCEL_READAPT_PASTA;
+  const opClean = String(operacao || 'LICENCAS').trim().toUpperCase();
+  const isReadapt = (opClean === 'READAPTACOES' || opClean === 'READAPTACAO');
 
-  const idPlanilhaLicencasOficial = OLYMPOS_IDS.SUBPROJETOS.PINCEL_LICENCAS_PLANILHA || '1agqeKFfubxvmdq2oND3ndykU2037NIuOXBOHVSLS9oc';
+  const folderId = isReadapt
+    ? (OLYMPOS_IDS.SUBPROJETOS.PINCEL_READAPT_PASTA || OLYMPOS_IDS.SETORES_2026.PORTARIAS_READAPTACOES || '174FW9KKkpfRY8NDOydG1rDGlZnnXUkxQ')
+    : (OLYMPOS_IDS.SUBPROJETOS.PINCEL_LICENCAS_PASTA || OLYMPOS_IDS.SETORES_2026.PORTARIAS_LICENCAS || '1So_-b_tFmr_nL2VwsbMaRCz_lUzvBUnj');
+
+  const idPlanilhaLicencasOficial = OLYMPOS_IDS.SUBPROJETOS.PINCEL_LICENCAS_PLANILHA || OLYMPOS_IDS.SETORES_2026.PLANILHA_CONTROLE_LICENCAS || '1agqeKFfubxvmdq2oND3ndykU2037NIuOXBOHVSLS9oc';
+  const idPlanilhaReadaptOficial = OLYMPOS_IDS.SUBPROJETOS.PINCEL_READAPT_PLANILHA || OLYMPOS_IDS.SETORES_2026.PLANILHA_CONTROLE_READAPTACOES || '1Mz95vIv024qO62nO1USBtY2iQIrVThaeqcWYOcTQ2X0';
   const planilhas = [];
   const idsAdicionados = new Set();
 
@@ -195,16 +200,18 @@ function listarPlanilhasEAbaPincel(operacao) {
       });
       idsAdicionados.add(sheetId);
     } catch (e) {
-      console.warn(`Aviso ao abrir planilha ${sheetId}:`, e);
+      console.warn(`[Pincel Homero] Aviso ao abrir planilha ${sheetId}:`, e);
     }
   }
 
-  // 1. Se a modalidade for LICENCAS, carrega prioritariamente a planilha oficial 1agqeKFfubxvmdq2oND3ndykU2037NIuOXBOHVSLS9oc
-  if (operacao === 'LICENCAS') {
+  // 1. Carrega prioritariamente a planilha oficial vinculada à modalidade
+  if (isReadapt) {
+    adicionarPlanilhaPorId(idPlanilhaReadaptOficial);
+  } else {
     adicionarPlanilhaPorId(idPlanilhaLicencasOficial);
   }
 
-  // 2. Varre também a pasta operacional correspondente por planilhas adicionais
+  // 2. Varre também a pasta operacional correspondente por planilhas adicionais do setor
   try {
     const folder = DriveApp.getFolderById(folderId);
     if (folder && typeof folder.getFilesByType === 'function') {
@@ -212,17 +219,17 @@ function listarPlanilhasEAbaPincel(operacao) {
       while (files.hasNext()) {
         const file = files.next();
         const fId = file.getId();
-        // Evita misturar a planilha de Licenças quando estiver na visão de Readaptações
-        if (operacao === 'READAPTACOES' && fId === idPlanilhaLicencasOficial) continue;
+        if (isReadapt && fId === idPlanilhaLicencasOficial) continue;
+        if (!isReadapt && fId === idPlanilhaReadaptOficial) continue;
         adicionarPlanilhaPorId(fId);
       }
     }
   } catch (e) {
-    console.warn(`Aviso ao listar pasta ${folderId}:`, e);
+    console.warn(`[Pincel Homero] Aviso ao listar pasta ${folderId}:`, e);
   }
 
   return {
-    operacao: operacao,
+    operacao: opClean,
     folderId: folderId,
     planilhas: planilhas
   };
@@ -301,7 +308,7 @@ function validarLinhaPincel_(rowData, tipo, col, permitirAutoNumApolo) {
 }
 
 /**
- * Sugestão 3.1.1 no Hub: Aloca o próximo número sequencial de Portaria via Olho de Apolo (.md 1wGlcqqTuWAyy-2VRO_QqyyMcKHb4AmRn)
+ * Sugestão 3.1.1 no Hub: Aloca o próximo número sequencial de Portaria via Olho de Apolo (.md 1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_)
  * quando vazio em Readaptações ou Licenças, persistindo imediatamente o incremento no arquivo .md no Drive.
  */
 function alocarProximoNumeroPortariaPincelApolo_(allValues, colPortaria) {
@@ -374,57 +381,187 @@ function registrarRevogacaoCruzadaPincel_(ss, portariaAnuladaRaw, parecerJuridic
 }
 
 /**
- * 1. Diagnóstico Pré-Voo (Dry-Run): Varre a aba selecionada e lista qualquer linha com "?", "??" ou vazia.
+ * 1. Diagnóstico Pré-Voo (Dry-Run): Varre a aba selecionada e lista qualquer linha com "?", "??" ou vazia,
+ * retornando a amostra de valores reais da planilha para visualização imediata no Hub Olympos.
  */
 function executarDiagnosticoPincelHomero(spreadsheetId, sheetName, operacao) {
-  const ss = SpreadsheetApp.openById(spreadsheetId);
-  const sheet = ss.getSheetByName(sheetName);
-  if (!sheet) throw new Error(`Aba "${sheetName}" não encontrada.`);
+  const opClean = String(operacao || 'LICENCAS').trim().toUpperCase();
+  const isReadapt = (opClean === 'READAPTACOES' || opClean === 'READAPTACAO');
 
-  const { tipo, col } = obterColunasPincel_(operacao, sheetName);
+  const defaultSheetId = isReadapt
+    ? (OLYMPOS_IDS.SUBPROJETOS.PINCEL_READAPT_PLANILHA || '1Mz95vIv024qO62nO1USBtY2iQIrVThaeqcWYOcTQ2X0')
+    : (OLYMPOS_IDS.SUBPROJETOS.PINCEL_LICENCAS_PLANILHA || '1agqeKFfubxvmdq2oND3ndykU2037NIuOXBOHVSLS9oc');
+
+  const sheetIdAlvo = spreadsheetId || defaultSheetId;
+  const ss = SpreadsheetApp.openById(sheetIdAlvo);
+
+  let targetSheetName = sheetName;
+  if (!targetSheetName) {
+    const abas = ss.getSheets().map(s => s.getName()).filter(n => n !== PINCEL_CONSTANTS.CONFIG_SHEET);
+    targetSheetName = abas.length > 0 ? abas[0] : '';
+  }
+
+  const sheet = ss.getSheetByName(targetSheetName);
+  if (!sheet) throw new Error(`Aba "${targetSheetName}" não encontrada na planilha "${ss.getName()}".`);
+
+  const { tipo, col } = obterColunasPincel_(opClean, targetSheetName);
   const lastRow = sheet.getLastRow();
   const lastCol = Math.max(sheet.getLastColumn(), col.STATUS || 12);
 
   if (lastRow < 2) {
-    return { totalPendentes: 0, validas: 0, invalidas: 0, erros: [] };
+    return {
+      planilha: ss.getName(),
+      planilhaId: sheetIdAlvo,
+      aba: targetSheetName,
+      operacao: opClean,
+      totalPendentes: 0,
+      validas: 0,
+      invalidas: 0,
+      erros: [],
+      amostraLinhas: []
+    };
   }
 
   const allValues = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
   const erros = [];
+  const amostraLinhas = [];
   let totalPendentes = 0;
   let validas = 0;
 
   allValues.forEach((row, idx) => {
     const numLinha = idx + 2;
-    const idCol = (col.NOME || col.PORTARIA_ANULAR) - 1;
+    const idCol = (col.NOME || col.PORTARIA_ANULAR || 1) - 1;
+    const matCol = (col.MATRICULA || 2) - 1;
+    const cargoCol = (col.CARGO || 3) - 1;
+    const statusCol = (col.STATUS || 12) - 1;
+    const portCol = (col.PORTARIA || col.PARECER || 11) - 1;
+
     const identificador = limparTextoOlympos(row[idCol]);
-    const statusAtual = limparTextoOlympos(row[col.STATUS - 1]).toUpperCase();
+    const matriculaVal = limparTextoOlympos(row[matCol]);
+    const cargoVal = limparTextoOlympos(row[cargoCol]);
+    const portariaAtual = limparTextoOlympos(row[portCol]);
+    const statusAtual = limparTextoOlympos(row[statusCol]).toUpperCase();
 
-    if (!identificador && !limparTextoOlympos(row[(col.PORTARIA || col.PARECER) - 1])) return;
-    if (statusAtual === PINCEL_CONSTANTS.STATUS_GENERATED.toUpperCase()) return;
+    if (!identificador && !portariaAtual) return;
 
-    totalPendentes++;
-    try {
-      const permiteAutoNum = (tipo === 'READAPTACAO' || tipo === 'PREMIO' || tipo === 'NAO_REMUNERADA');
-      validarLinhaPincel_(row, tipo, col, permiteAutoNum);
-      validas++;
-    } catch (e) {
-      erros.push({
+    const isGerada = (statusAtual === PINCEL_CONSTANTS.STATUS_GENERATED.toUpperCase());
+    let motivoErro = null;
+
+    if (!isGerada) {
+      totalPendentes++;
+      try {
+        const permiteAutoNum = (tipo === 'READAPTACAO' || tipo === 'PREMIO' || tipo === 'NAO_REMUNERADA');
+        validarLinhaPincel_(row, tipo, col, permiteAutoNum);
+        validas++;
+      } catch (e) {
+        motivoErro = e.message;
+        erros.push({
+          linha: numLinha,
+          servidor: identificador || '(Sem nome)',
+          motivo: e.message
+        });
+      }
+    }
+
+    if (amostraLinhas.length < 50) {
+      amostraLinhas.push({
         linha: numLinha,
-        servidor: identificador || '(Sem nome)',
-        motivo: e.message
+        servidor: identificador || '(Sem identificação)',
+        matricula: matriculaVal,
+        cargo: cargoVal,
+        portaria: portariaAtual,
+        status: statusAtual || (motivoErro ? 'Inconsistência' : 'Pendente'),
+        valida: !motivoErro,
+        motivo: motivoErro
       });
     }
   });
 
   return {
     planilha: ss.getName(),
-    aba: sheetName,
-    operacao: operacao,
+    planilhaId: sheetIdAlvo,
+    aba: targetSheetName,
+    operacao: opClean,
+    totalLinhasAba: lastRow - 1,
     totalPendentes: totalPendentes,
     validas: validas,
     invalidas: erros.length,
-    erros: erros
+    erros: erros,
+    amostraLinhas: amostraLinhas
+  };
+}
+
+/**
+ * Lê os registros completos da planilha oficial para renderização detalhada na interface.
+ */
+function obterDadosLinhasPlanilhaPincel(spreadsheetId, sheetName, operacao, limiteLinhas) {
+  const opClean = String(operacao || 'LICENCAS').trim().toUpperCase();
+  const isReadapt = (opClean === 'READAPTACOES' || opClean === 'READAPTACAO');
+
+  const defaultSheetId = isReadapt
+    ? (OLYMPOS_IDS.SUBPROJETOS.PINCEL_READAPT_PLANILHA || '1Mz95vIv024qO62nO1USBtY2iQIrVThaeqcWYOcTQ2X0')
+    : (OLYMPOS_IDS.SUBPROJETOS.PINCEL_LICENCAS_PLANILHA || '1agqeKFfubxvmdq2oND3ndykU2037NIuOXBOHVSLS9oc');
+
+  const sheetIdAlvo = spreadsheetId || defaultSheetId;
+  const ss = SpreadsheetApp.openById(sheetIdAlvo);
+
+  let targetSheetName = sheetName;
+  if (!targetSheetName) {
+    const abas = ss.getSheets().map(s => s.getName()).filter(n => n !== PINCEL_CONSTANTS.CONFIG_SHEET);
+    targetSheetName = abas.length > 0 ? abas[0] : '';
+  }
+
+  const sheet = ss.getSheetByName(targetSheetName);
+  if (!sheet) throw new Error(`Aba "${targetSheetName}" não encontrada na planilha "${ss.getName()}".`);
+
+  const { tipo, col } = obterColunasPincel_(opClean, targetSheetName);
+  const lastRow = sheet.getLastRow();
+  const lastCol = Math.max(sheet.getLastColumn(), col.STATUS || 12);
+  const maxL = parseInt(limiteLinhas, 10) || 60;
+
+  if (lastRow < 2) {
+    return {
+      planilha: ss.getName(),
+      planilhaId: sheetIdAlvo,
+      aba: targetSheetName,
+      operacao: opClean,
+      totalLinhas: 0,
+      cabecalhos: [],
+      linhas: []
+    };
+  }
+
+  const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0].map(h => String(h || '').trim());
+  const numRowsToRead = Math.min(lastRow - 1, maxL);
+  const rawValues = sheet.getRange(2, 1, numRowsToRead, lastCol).getValues();
+
+  const linhas = rawValues.map((row, idx) => {
+    const numLinha = idx + 2;
+    const nomeCol = (col.NOME || col.PORTARIA_ANULAR || 1) - 1;
+    const matCol = (col.MATRICULA || 2) - 1;
+    const cargoCol = (col.CARGO || 3) - 1;
+    const statusCol = (col.STATUS || 12) - 1;
+    const portariaCol = (col.PORTARIA || col.PARECER || 11) - 1;
+
+    return {
+      linha: numLinha,
+      servidor: limparTextoOlympos(row[nomeCol]) || '(Sem identificação)',
+      matricula: limparTextoOlympos(row[matCol]),
+      cargo: limparTextoOlympos(row[cargoCol]),
+      status: limparTextoOlympos(row[statusCol]) || 'Pendente',
+      numeroPortaria: limparTextoOlympos(row[portariaCol]),
+      valores: row.slice(0, lastCol).map(v => String(v || '').trim())
+    };
+  });
+
+  return {
+    planilha: ss.getName(),
+    planilhaId: sheetIdAlvo,
+    aba: targetSheetName,
+    operacao: opClean,
+    totalLinhas: lastRow - 1,
+    cabecalhos: headers,
+    linhas: linhas
   };
 }
 
@@ -503,7 +640,7 @@ function processarLotePincelHomero() {
     const cfgRow = configSheet.getRange('A2:D2').getValues()[0];
     const templatePadrao = state.operacao === 'LICENCAS'
       ? (OLYMPOS_IDS.MODELOS_DOCS && OLYMPOS_IDS.MODELOS_DOCS.LICENCA) || '1AwMpqn0RUP9uDw7YPcPP0TsZ5MZ71Nr2gSlbRRXZ7iw'
-      : (OLYMPOS_IDS.MODELOS_DOCS && OLYMPOS_IDS.MODELOS_DOCS.READAPTACAO) || '1jgr9XX2vdePD_S2C0kd3rWwJLYBm63rs8kgOt8kce54';
+      : (OLYMPOS_IDS.MODELOS_DOCS && OLYMPOS_IDS.MODELOS_DOCS.READAPTACAO) || '1jgr9XX2vdePD_S2C0kd3rWwJLYBm63rs8kgOt8kce5';
     const pastaPadrao = state.operacao === 'LICENCAS'
       ? OLYMPOS_IDS.SUBPROJETOS.PINCEL_LICENCAS_PASTA
       : OLYMPOS_IDS.SUBPROJETOS.PINCEL_READAPT_PASTA;
@@ -830,7 +967,7 @@ function limparGatilhosPincel_() {
 /**
  * Gera um Ofício Oficial individual na pasta Ofícios de 2026 (1H4bJXClx66Mr5PmRmSQBQLHDpAaKwdab)
  * a partir do Modelo Oficial de Ofício no Google Docs (1HgPOD0BzOO3t33eN2DuRjrH64vnuoJnxyp5VX6ec8Xw),
- * consumindo e atualizando automaticamente o contador Proximo_Oficio_2026 no arquivo .md (1wGlcqqTuWAyy-2VRO_QqyyMcKHb4AmRn).
+ * consumindo e atualizando automaticamente o contador Proximo_Oficio_2026 no arquivo .md (1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_).
  */
 function gerarOficioPadraoHomero(dadosOficio) {
   const estadoApolo = obterOuSincronizarNumeracaoApolo(false);
@@ -885,7 +1022,7 @@ function gerarOficioPadraoHomero(dadosOficio) {
   const url = newFile.getUrl();
   const agora = Utilities.formatDate(hoje, 'America/Fortaleza', 'yyyy-MM-dd HH:mm');
 
-  // Avança automaticamente o contador Proximo_Oficio_2026 no arquivo .md (1wGlcqqTuWAyy-2VRO_QqyyMcKHb4AmRn)
+  // Avança automaticamente o contador Proximo_Oficio_2026 no arquivo .md (1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_)
   const novoProximoOficio = Math.max(estadoApolo.proximoOficio2026, numInt) + 1;
   let numeracaoAtualizada = estadoApolo;
   if (typeof gravarEstadoNumeracaoNoArquivoMd_ === 'function') {

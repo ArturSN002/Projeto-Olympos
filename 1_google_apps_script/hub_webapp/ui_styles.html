@@ -166,6 +166,48 @@ a {
   color: var(--danger);
 }
 
+/* Utilidade de Acessibilidade: Invisível na tela, lido por leitores de tela e gerenciadores DOM */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* Utilidades e Aliases de Layout & Acessibilidade */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+}
+
+.sidebar {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.3s ease;
+}
+
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 17, 32, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 190;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+body.nav-drawer-open .sidebar-backdrop,
+.sidebar-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 /* ==========================================================================
    TOPBAR EDITORIAL TRANSLÚCIDA (DEEPMIND.GOOGLE + BLOG.GOOGLE)
    ========================================================================== */
@@ -852,7 +894,7 @@ a {
 /* Cards Completos na Página #personas */
 .memorias-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
   gap: 18px;
 }
 
@@ -1070,7 +1112,11 @@ a {
 }
 
 .btn-mini {
-  padding: 4px 10px;
+  padding: 5px 11px;
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: var(--radius-pill);
   font-family: var(--font-display);
   font-size: 11.5px;
@@ -1248,6 +1294,7 @@ a {
    ========================================================================== */
 .table-wrapper {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border: 1px solid var(--border-hairline);
   border-radius: 18px;
   background: var(--bg-elevated);
@@ -1336,17 +1383,19 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 16px;
+  overflow-y: auto;
 }
 
 .modal-card {
   width: 100%;
   max-width: 660px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
   background: var(--bg-elevated);
   border: 1px solid var(--border-hairline);
   border-radius: 28px;
   box-shadow: var(--shadow-modal);
-  overflow: hidden;
 }
 
 .modal-header {
@@ -1417,12 +1466,27 @@ a {
   color: #FFFFFF;
 }
 
+/* Controles de Busca Responsivos */
+.search-controls-responsive {
+  display: grid;
+  grid-template-columns: 3fr 1fr auto;
+  gap: 14px;
+}
+
 /* ==========================================================================
-   RESPONSIVIDADE MOBILE
+   RESPONSIVIDADE APRIMORADA — BREAKPOINTS DEFENSIVOS OLYMPOS
+   Suporte Completo: Mobile (320px, 375px, 480px, 640px), Tablets (768px, 860px),
+   Desktop (1024px, 1280px) e Ultra-Wides (1920px, 2560px, 3440px)
    ========================================================================== */
+
+/* Drawer Header (visível apenas na gaveta mobile) */
+.drawer-header {
+  display: none;
+}
+
 @media (max-width: 860px) {
   .quick-search-pill {
-    min-width: 150px;
+    display: none;
   }
   .kbd-hint,
   .user-capsule-role,
@@ -1430,33 +1494,523 @@ a {
     display: none;
   }
   .mobile-menu-btn {
-    display: inline-flex;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
   }
   .masthead-nav-rail {
     display: none;
   }
-  body.nav-drawer-open .masthead-nav-rail {
-    display: block;
-    border-top: 1px solid var(--border-hairline);
-    background: var(--bg-elevated);
+}
+
+/* Telas Tablet e Mobile (<= 768px) — Gaveta Lateral Deslizante & Grid Vertical */
+@media (max-width: 768px) {
+  .top-masthead,
+  .topbar {
+    max-width: 100vw;
+    overflow-x: clip;
   }
-  body.nav-drawer-open .nav-rail-inner {
-    flex-direction: column;
-    align-items: stretch;
-    padding: 12px 16px 18px;
+
+  .masthead-upper {
+    padding: 10px 14px;
+    gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
-  body.nav-drawer-open .nav-divider-dot {
-    display: none;
+
+  .brand-lockup {
+    gap: 7px;
+  }
+  .brand-mark {
+    width: 28px;
+    height: 28px;
+  }
+  .brand-mark svg {
+    width: 22px;
+    height: 22px;
+  }
+  .brand-wordmark {
+    font-size: 1.08rem;
+  }
+  .brand-edition-pill {
+    display: none !important;
+  }
+
+  .masthead-controls {
+    gap: 6px;
+    margin-left: auto;
+  }
+
+  .user-capsule-meta {
+    display: none !important;
+  }
+  .user-capsule-btn {
+    padding: 3px 4px;
+    border-radius: var(--radius-pill);
+  }
+  .status-pill {
+    display: none !important;
+  }
+
+  /* Gaveta Lateral Deslizante */
+  .sidebar,
+  .masthead-nav-rail {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    width: min(300px, 84vw) !important;
+    max-width: 320px !important;
+    z-index: 300 !important;
+    background: var(--bg-elevated) !important;
+    box-shadow: var(--shadow-modal) !important;
+    transform: translateX(-100%) !important;
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    display: flex !important;
+    flex-direction: column !important;
+    border-right: 1px solid var(--border-hairline) !important;
+    border-top: none !important;
+  }
+
+  body.nav-drawer-open .sidebar,
+  body.nav-drawer-open .masthead-nav-rail,
+  .sidebar.open,
+  .sidebar.active {
+    transform: translateX(0) !important;
+  }
+
+  .drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px 12px;
+    border-bottom: 1px solid var(--border-hairline);
+    margin-bottom: 8px;
+  }
+  .drawer-title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--text-main);
+  }
+  .drawer-close-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid var(--border-hairline);
+    background: var(--bg-surface);
+    color: var(--text-secondary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+  }
+
+  .nav-rail-inner {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 12px 14px 28px !important;
+    gap: 6px !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
+
+  .nav-link {
+    width: 100% !important;
+    padding: 10px 14px !important;
+    font-size: 13.5px !important;
+    border-radius: 12px !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
+  }
+
+  .nav-divider-dot {
+    display: none !important;
+  }
+
+  /* Hero & Conteúdo Editorial */
+  .editorial-hero {
+    padding: 24px 14px 20px !important;
+  }
+  .hero-display-title {
+    font-size: clamp(1.45rem, 6vw, 2.2rem) !important;
+    line-height: 1.18 !important;
+    margin: 8px 0 !important;
+  }
+  .hero-lead-subtitle {
+    font-size: 13.5px !important;
+    line-height: 1.5 !important;
+    margin-bottom: 14px !important;
+  }
+  .hero-shortcuts-bar {
+    gap: 6px !important;
+  }
+  .folder-chip {
+    padding: 5px 11px !important;
+    font-size: 11.5px !important;
+  }
+
+  /* Bento Grid / Cartões de Apolo e Orfeu */
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+  .stat-card {
+    padding: 16px 14px !important;
+    border-radius: 20px !important;
+  }
+  .stat-top {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+  .stat-actions {
+    width: 100% !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+  .stat-actions .btn-mini {
+    flex: 1 1 auto !important;
+    min-height: 34px !important;
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+    justify-content: center !important;
+  }
+  .stat-number {
+    font-size: clamp(2.1rem, 10vw, 2.85rem) !important;
+    margin: 4px 0 8px !important;
+  }
+  .stat-foot {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    font-size: 12px !important;
+  }
+
+  /* Grades de Formulário e Controles */
+  .controls-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+  .search-controls-responsive,
+  #page-busca .controls-grid,
+  .config-grid-responsive,
+  #page-configuracoes .controls-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .search-controls-responsive button,
+  #page-busca .controls-grid button {
+    width: 100% !important;
+  }
+
+  .memorias-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .button-group {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+  .button-group .btn {
+    flex: 1 1 auto !important;
+    min-height: 40px !important;
+    justify-content: center !important;
+  }
+
+  .table-wrapper,
+  .table-responsive {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    width: 100% !important;
+    display: block !important;
+  }
+
+  .clean-table th,
+  .clean-table td {
+    padding: 8px 10px !important;
+    font-size: 12px !important;
+    white-space: nowrap;
+  }
+
+  .app-main {
+    padding: 16px 12px 60px !important;
+  }
+
+  .surface-card {
+    padding: 18px 14px !important;
+    border-radius: 18px !important;
+  }
+
+  .modal-card {
+    width: min(95vw, 560px) !important;
+    max-width: 95vw !important;
+    max-height: calc(100vh - 20px) !important;
+    margin: 8px auto !important;
+    border-radius: 20px !important;
+  }
+  .modal-body {
+    padding: 16px 14px !important;
   }
 }
 
+/* Telas Médias e Tablets (<= 560px) */
 @media (max-width: 560px) {
   .quick-search-pill {
+    display: none;
+  }
+  .brand-edition-pill {
+    display: none;
+  }
+  .user-capsule-role {
     display: none;
   }
   .demo-profiles-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Telas Compactas e Smartphones (<= 480px) */
+@media (max-width: 480px) {
+  .brand-edition-pill {
+    display: none !important;
+  }
+  .user-capsule-meta {
+    display: none !important;
+  }
+
+  .masthead-upper {
+    padding: 8px 10px !important;
+    gap: 6px !important;
+  }
+
+  .brand-lockup {
+    gap: 5px !important;
+  }
+  .brand-mark {
+    width: 24px !important;
+    height: 24px !important;
+  }
+  .brand-mark svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+  .brand-wordmark {
+    font-size: 1rem !important;
+  }
+
+  #themeToggleBtn {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+  }
+  #themeToggleBtn svg {
+    width: 15px !important;
+    height: 15px !important;
+  }
+
+  #topNovoUsuarioBtn {
+    padding: 4px 8px !important;
+    font-size: 0.72rem !important;
+    min-width: 30px !important;
+    height: 32px !important;
+    gap: 0 !important;
+  }
+  #topNovoUsuarioBtn span {
+    display: none !important;
+  }
+  #topNovoUsuarioBtn::before {
+    content: '+' !important;
+    font-size: 1.05rem !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+  }
+
+  .user-capsule-btn {
+    padding: 2px !important;
+    border: none !important;
+    background: transparent !important;
+  }
+  .user-avatar-dot {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 11px !important;
+  }
+
+  .editorial-hero {
+    padding: 18px 10px 16px !important;
+  }
+  .hero-display-title {
+    font-size: 1.4rem !important;
+  }
+  .hero-shortcuts-bar {
+    gap: 5px !important;
+  }
+  .folder-chip {
+    padding: 4px 9px !important;
+    font-size: 11px !important;
+  }
+
+  .stat-card {
+    padding: 14px 12px !important;
+  }
+  .stat-number {
+    font-size: 2.2rem !important;
+  }
+
+  .quick-alert-bar,
+  .quick-alert-bar-responsive {
+    min-width: 0 !important;
+    width: 100% !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+  .quick-alert-bar select,
+  .quick-alert-bar input,
+  .quick-alert-bar button {
+    max-width: 100% !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .app-main {
+    padding: 12px 8px 60px !important;
+  }
+  .surface-card {
+    padding: 14px 10px !important;
+  }
+}
+
+/* Telas Extremamente Compactas (<= 375px / 320px) */
+@media (max-width: 375px) {
+  .brand-lockup {
+    gap: 5px !important;
+  }
+  .brand-mark {
+    width: 22px !important;
+    height: 22px !important;
+  }
+  .brand-wordmark {
+    font-size: 0.94rem !important;
+  }
+  .app-main {
+    padding: 12px 8px 60px !important;
+  }
+  .surface-card {
+    padding: 14px 10px !important;
+  }
+  .modal-card {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    margin: 4px auto !important;
+  }
+}
+
+/* Telas Extremamente Estreitas (<= 340px) */
+@media (max-width: 340px) {
+  .brand-wordmark {
+    font-size: 0.88rem !important;
+  }
+  .masthead-upper {
+    padding: 6px 8px !important;
+  }
+}
+
+/* ==========================================================================
+   BREAKPOINTS ULTRA-WIDE E TELAS DE ALTA RESOLUÇÃO (1600px+)
+   Design Defensivo para Monitores 2K, 4K, 21:9 e 32:9
+   ========================================================================== */
+@media (min-width: 1600px) {
+  :root,
+  [data-theme="light"],
+  [data-theme="dark"] {
+    --container-max: 1540px;
+  }
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+  .memorias-grid {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+  }
+  .quick-modules-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+}
+
+@media (min-width: 1920px) {
+  :root,
+  [data-theme="light"],
+  [data-theme="dark"] {
+    --container-max: 1840px;
+  }
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+  }
+  .memorias-grid {
+    grid-template-columns: repeat(auto-fill, minmax(330px, 1fr));
+    gap: 22px;
+  }
+}
+
+@media (min-width: 2560px) {
+  :root,
+  [data-theme="light"],
+  [data-theme="dark"] {
+    --container-max: 2240px;
+  }
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 26px;
+  }
+  .memorias-grid {
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 26px;
+  }
+}
+
+@media (min-width: 3440px) {
+  :root,
+  [data-theme="light"],
+  [data-theme="dark"] {
+    --container-max: 2800px;
+  }
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+  }
+  .memorias-grid {
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 30px;
+  }
+}
+
+/* Limites Ergonômicos de Leitura em Telas Ultra-Largas */
+.surface-card form,
+.surface-card .controls-grid,
+.hero-lead-subtitle,
+.section-desc {
+  max-width: 1600px;
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.editorial-hero,
+.editorial-shell,
+.app-main,
+.top-masthead {
+  box-sizing: border-box;
 }
 
 </style>

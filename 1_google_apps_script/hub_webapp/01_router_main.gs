@@ -185,6 +185,9 @@ function rotearAcaoGatewayHub(payload) {
       return normalizarRespostaGateway_(listarPlanilhasEAbaPincel(payload.operacao));
     case 'portarias_dry_run':
       return normalizarRespostaGateway_(executarDiagnosticoPincelHomero(payload.spreadsheetId, payload.sheetName, payload.operacao));
+    case 'portarias_ler_planilha':
+    case 'portarias_obter_dados':
+      return normalizarRespostaGateway_(obterDadosLinhasPlanilhaPincel(payload.spreadsheetId, payload.sheetName, payload.operacao, payload.limiteLinhas));
     case 'portarias_gerar_lote':
       return normalizarRespostaGateway_(iniciarGeracaoLotePincelHomero(payload.spreadsheetId, payload.sheetName, payload.operacao));
     case 'portarias_status_lote':
@@ -432,7 +435,7 @@ function autenticarUsuarioHub(usuario, senha) {
     return { ok: false, mensagem: 'Credenciais inválidas. Verifique seu e-mail e senha cadastrados no Supabase Auth.' };
   }
 
-  // 3. Emissão de Token de Sessão em CacheService (6 horas)
+  // 3. Emissão de Token de Sessão em CacheService (6 horas com chave segura <= 250 chars)
   const sessionToken = usuarioAutenticado.jwtToken || ('tok_' + Utilities.getUuid().replace(/-/g, ''));
   const perfilInfo = OLYMPOS_IDS.PERFIS_RBAC[usuarioAutenticado.perfilId] || OLYMPOS_IDS.PERFIS_RBAC.ADMIN_GABINETE;
 
@@ -443,8 +446,13 @@ function autenticarUsuarioHub(usuario, senha) {
     emitidoEm: new Date().toISOString()
   };
 
-  const cache = CacheService.getScriptCache();
-  cache.put(sessionToken, JSON.stringify(dadosSessao), 21600); // 6 horas
+  try {
+    const cacheKey = gerarCacheKeyToken_(sessionToken);
+    const cache = CacheService.getScriptCache();
+    cache.put(cacheKey, JSON.stringify(dadosSessao), 21600); // 6 horas
+  } catch (eCache) {
+    console.warn('[autenticarUsuarioHub] Aviso ao armazenar sessão no CacheService:', eCache);
+  }
 
   return {
     ok: true,
@@ -457,17 +465,37 @@ function autenticarUsuarioHub(usuario, senha) {
 }
 
 /**
+ * Gera chave segura para CacheService (limite do Google Apps Script: 250 caracteres).
+ * Para tokens extensos (ex.: JWT Supabase de 800+ caracteres), gera digest SHA-256 de 64 caracteres.
+ */
+function gerarCacheKeyToken_(token) {
+  if (!token) return '';
+  const str = String(token).trim();
+  if (str.length <= 150) {
+    return str;
+  }
+  try {
+    const raw = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, str);
+    return 'jwt_' + raw.map(b => ('0' + (b & 0xFF).toString(16)).slice(-2)).join('');
+  } catch (e) {
+    return 'tok_' + str.substring(0, 40) + '_' + str.length;
+  }
+}
+
+/**
  * Valida o Token de Sessão no CacheService ou via Supabase JWT.
+ * Previne rigorosamente o erro GAS "Argumento grande demais: key".
  */
 function validarSessaoHub(token) {
-  if (!token) return { ok: false };
+  if (!token) return { ok: false, mensagem: 'Token não fornecido.' };
   const cleanToken = String(token).trim();
 
-  // 1. Verificação primária no CacheService
-  const cache = CacheService.getScriptCache();
-  const raw = cache.get(cleanToken);
-  if (raw) {
-    try {
+  // 1. Verificação primária no CacheService com chave encurtada/segura
+  try {
+    const cacheKey = gerarCacheKeyToken_(cleanToken);
+    const cache = CacheService.getScriptCache();
+    const raw = cache.get(cacheKey);
+    if (raw) {
       const dados = JSON.parse(raw);
       return {
         ok: true,
@@ -475,24 +503,36 @@ function validarSessaoHub(token) {
         nome: dados.nome,
         perfil: dados.perfil
       };
-    } catch (e) {
-      // continua para fallback JWT
     }
+  } catch (eCache) {
+    // Continua para verificação direta via Supabase Auth
   }
 
   // 2. Validação direta via Supabase Auth (se for JWT ou contingência)
   if (typeof SupabaseGasClient !== 'undefined' && (cleanToken.startsWith('eyJ') || cleanToken.indexOf('.') !== -1)) {
-    const resJwt = SupabaseGasClient.verifyToken(cleanToken);
-    if (resJwt && resJwt.ok) {
-      const role = (resJwt.perfil && (resJwt.perfil.role || resJwt.perfil.perfilId)) || 'RH_COMISSAO';
-      const perfilInfo = OLYMPOS_IDS.PERFIS_RBAC[role] || OLYMPOS_IDS.PERFIS_RBAC.RH_COMISSAO;
-      return {
-        ok: true,
-        usuario: resJwt.email,
-        nome: (resJwt.perfil && (resJwt.perfil.full_name || resJwt.perfil.nome_completo)) || resJwt.email,
-        perfil: perfilInfo,
-        userId: resJwt.userId
-      };
+    try {
+      const resJwt = SupabaseGasClient.verifyToken(cleanToken);
+      if (resJwt && resJwt.ok) {
+        const role = (resJwt.perfil && (resJwt.perfil.role || resJwt.perfil.perfilId)) || 'RH_COMISSAO';
+        const perfilInfo = OLYMPOS_IDS.PERFIS_RBAC[role] || OLYMPOS_IDS.PERFIS_RBAC.RH_COMISSAO;
+        const infoSessao = {
+          ok: true,
+          usuario: resJwt.email,
+          nome: (resJwt.perfil && (resJwt.perfil.full_name || resJwt.perfil.nome_completo)) || resJwt.email,
+          perfil: perfilInfo,
+          userId: resJwt.userId
+        };
+
+        // Cacheia resultado com chave segura para evitar roundtrips excessivos
+        try {
+          const cacheKey = gerarCacheKeyToken_(cleanToken);
+          CacheService.getScriptCache().put(cacheKey, JSON.stringify(infoSessao), 3600); // 1 hora
+        } catch (ePut) {}
+
+        return infoSessao;
+      }
+    } catch (eJwt) {
+      console.warn('[validarSessaoHub] Erro ao validar JWT no Supabase:', eJwt);
     }
   }
 

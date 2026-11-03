@@ -256,6 +256,48 @@ class TestCanonicalIdsAndCorsArchitecture(unittest.TestCase):
         self.assertIn(memorias_pasta_id, manual_code,
                       f"manual_operacao_skills_personas.md deve referenciar a pasta de memórias '{memorias_pasta_id}'")
 
+    def test_09_cache_key_safe_hash_and_no_oversized_keys_in_gas(self):
+        """Assegura blindagem contra 'Argumento grande demais: key' no Google Apps Script (limite de 250 chars)."""
+        router_code = ROUTER_MAIN_GS.read_text(encoding="utf-8")
+
+        # Função de geração de chave segura com digest SHA-256 para JWTs extensos
+        self.assertIn("gerarCacheKeyToken_", router_code, "01_router_main.gs deve conter gerarCacheKeyToken_")
+        self.assertIn("Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256", router_code,
+                      "gerarCacheKeyToken_ deve computar SHA-256 para tokens extensos")
+        self.assertIn("jwt_", router_code, "Prefixo jwt_ deve ser usado para chaves sintetizadas")
+
+        # CacheService.put e get devem usar a chave segura
+        self.assertIn("gerarCacheKeyToken_(sessionToken)", router_code)
+        self.assertIn("gerarCacheKeyToken_(cleanToken)", router_code)
+
+    def test_10_pincel_licencas_and_readaptacoes_planilhas_integration(self):
+        """Valida que o Pincel de Homero carrega as planilhas oficiais de Licenças e Readaptações e expõe valores reais."""
+        pincel_gs = GAS_HUB_DIR / "05_module_pincel_homero.gs"
+        self.assertTrue(pincel_gs.exists(), "05_module_pincel_homero.gs não encontrado")
+        pincel_code = pincel_gs.read_text(encoding="utf-8")
+
+        # 1. Carregamento da planilha oficial de Readaptações (1Mz95vIv024qO62nO1USBtY2iQIrVThaeqcWYOcTQ2X0)
+        self.assertIn("1Mz95vIv024qO62nO1USBtY2iQIrVThaeqcWYOcTQ2X0", pincel_code,
+                      "Planilha de Readaptações 1Mz95vIv024qO62nO1USBtY2iQIrVThaeqcWYOcTQ2X0 deve estar presente no Pincel")
+        self.assertIn("1agqeKFfubxvmdq2oND3ndykU2037NIuOXBOHVSLS9oc", pincel_code,
+                      "Planilha de Licenças 1agqeKFfubxvmdq2oND3ndykU2037NIuOXBOHVSLS9oc deve estar presente no Pincel")
+
+        # 2. Modelo de Portaria de Readaptação exato (1jgr9XX2vdePD_S2C0kd3rWwJLYBm63rs8kgOt8kce5) sem '4' no final
+        self.assertNotIn("1jgr9XX2vdePD_S2C0kd3rWwJLYBm63rs8kgOt8kce54", pincel_code,
+                         "ID com dígito espúrio '4' ainda presente em 05_module_pincel_homero.gs")
+
+        # 3. Retorno de amostras de valores reais para renderização direta na UI
+        self.assertIn("amostraLinhas", pincel_code,
+                      "executarDiagnosticoPincelHomero deve retornar amostraLinhas com registros da planilha")
+        self.assertIn("obterDadosLinhasPlanilhaPincel", pincel_code,
+                      "05_module_pincel_homero.gs deve conter obterDadosLinhasPlanilhaPincel")
+
+        # 4. Erradicação universal do ID antigo de Apolo 1wGlcqqTuWAyy em todos os scripts GAS
+        for gs_file in GAS_HUB_DIR.glob("*.gs"):
+            code = gs_file.read_text(encoding="utf-8")
+            self.assertNotIn("1wGlcqqTuWAyy", code,
+                             f"ID legado 1wGlcqqTuWAyy ainda presente em {gs_file.name}")
+
 
 if __name__ == "__main__":
     unittest.main()

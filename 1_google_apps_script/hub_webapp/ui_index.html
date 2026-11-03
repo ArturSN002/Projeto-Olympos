@@ -83,8 +83,15 @@
         </div>
       </div>
 
+      <!-- BACKDROP OVERLAY PARA SIDEBAR/DRAWER NO MOBILE -->
+      <div id="sidebarBackdrop" class="sidebar-backdrop" onclick="document.body.classList.remove('nav-drawer-open')" aria-hidden="true"></div>
+
       <!-- TRILHO DE NAVEGAÇÃO MODULAR (1 BLOCO = 1 PÁGINA) -->
-      <nav class="masthead-nav-rail" aria-label="Navegação modular do Hub Olympos">
+      <nav class="masthead-nav-rail sidebar" aria-label="Navegação modular do Hub Olympos">
+        <div class="drawer-header">
+          <span class="drawer-title">Navegação Olympos</span>
+          <button class="drawer-close-btn" onclick="document.body.classList.remove('nav-drawer-open')" aria-label="Fechar menu">✕</button>
+        </div>
         <div class="nav-rail-inner">
           <a href="#visao-geral" class="nav-link active" data-page="visao-geral">Visão Geral</a>
           <span class="nav-divider-dot" aria-hidden="true"></span>

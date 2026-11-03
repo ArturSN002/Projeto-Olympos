@@ -74,7 +74,7 @@ window.OlymposViews.visaoGeral = (function() {
       const ptVal = n.proximaPortaria2026 !== undefined ? n.proximaPortaria2026 : (n.proximaPortaria || 163);
       const ultOf = n.ultimoOficio2026 !== undefined ? n.ultimoOficio2026 : (ofVal - 1);
       const ultPt = n.ultimaPortaria2026 !== undefined ? n.ultimaPortaria2026 : (ptVal - 1);
-      const memUrl = n.arquivoUrl || 'https://drive.google.com/file/d/1wGlcqqTuWAyy-2VRO_QqyyMcKHb4AmRn/view';
+      const memUrl = n.arquivoUrl || 'https://drive.google.com/file/d/1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_/view';
 
       const elOf = document.getElementById('kpiProximoOficio');
       const elUltOf = document.getElementById('kpiUltimoOficio');
