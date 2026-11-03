@@ -1,0 +1,403 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Módulo de Testes: test_ui_responsiveness.py
+Projeto Olympos — Secretaria Municipal de Educação Básica (SMEB)
+
+Validação automatizada de integridade da interface Frontend SPA:
+- Meta tag viewport para responsividade mobile-first
+- Media queries CSS (@media) e breakpoints para telas móveis e tablets
+- Containers Flexbox e CSS Grid para layouts responsivos fluidos
+- Variáveis CSS (Custom Properties) para temas Light e Dark (proporção 60-30-10)
+- Estrutura acessível do Setup Modal (labels, inputs e botões de ação)
+- Camada de resiliência e fallback do cliente Supabase no navegador
+- Breakpoints defensivos para mobile pequeno (<= 480px, <= 560px) e recolhimento de masthead
+- Segurança geométrica de grids CSS (minmax fluido sem transbordamento)
+- Adaptabilidade mobile do grid de busca acervo (colapso em 1 coluna)
+- Fechamento automático do drawer de navegação mobile ao navegar
+- Rolagem vertical em modais (overflow-y e max-height para teclado virtual)
+- Acessibilidade de alvos de toque (touch targets) e inércia em tabelas
+- Integridade de favicons (SVG Data URI + favicon.ico binário válido)
+- Conformidade DOM de atributos autocomplete e padrão Singleton do cliente GoTrue
+"""
+
+import re
+import unittest
+from pathlib import Path
+
+OLYMPOS_ROOT = Path(__file__).resolve().parent.parent
+SPA_DIR = OLYMPOS_ROOT / "2_github_pages_actions" / "frontend_spa"
+CSS_FILE = SPA_DIR / "styles.css"
+CSS_MIRROR = SPA_DIR / "css" / "style.css"
+HTML_INDEX = SPA_DIR / "index.html"
+SETUP_MODAL_JS = SPA_DIR / "js" / "setup_modal.js"
+SUPABASE_CLIENT_JS = SPA_DIR / "js" / "supabase_client.js"
+APP_JS = SPA_DIR / "js" / "app.js"
+FAVICON_ICO = SPA_DIR / "favicon.ico"
+FAVICON_SVG = SPA_DIR / "assets" / "favicon.svg"
+
+
+class TestUiResponsivenessAndDesignSystem(unittest.TestCase):
+    """Bateria de testes para responsividade, design system editorial e acessibilidade da SPA."""
+
+    def test_01_viewport_meta_tag_present_in_index_html(self):
+        """Assegura a presença da meta tag de viewport responsivo para renderização móvel correta."""
+        self.assertTrue(HTML_INDEX.exists(), f"index.html não encontrado: {HTML_INDEX}")
+        html = HTML_INDEX.read_text(encoding="utf-8")
+
+        viewport_regex = re.compile(
+            r'<meta\s+name=["\']viewport["\']\s+content=["\'][^"\']*width=device-width[^"\']*initial-scale=1(?:\.0)?["\']',
+            re.IGNORECASE
+        )
+        self.assertRegex(html, viewport_regex, "Meta tag viewport ausente ou incorreta em index.html")
+
+    def test_02_css_files_exist_in_primary_and_css_paths(self):
+        """Valida que o arquivo de folha de estilos existe nos caminhos canônicos (styles.css e css/style.css)."""
+        self.assertTrue(CSS_FILE.exists(), f"styles.css ausente: {CSS_FILE}")
+        self.assertTrue(CSS_MIRROR.exists(), f"css/style.css ausente: {CSS_MIRROR}")
+
+    def test_03_css_custom_properties_light_and_dark_themes(self):
+        """Verifica a paleta de variáveis CSS no padrão editorial 60-30-10 para os modos claro e escuro."""
+        css_text = CSS_FILE.read_text(encoding="utf-8")
+
+        # Variáveis essenciais do Design System Olympos
+        essential_vars = [
+            "--bg-canvas",
+            "--bg-surface",
+            "--bg-tonal",
+            "--text-main",
+            "--text-secondary",
+            "--text-muted",
+            "--accent-gold",
+            "--accent-gold-bright",
+            "--border-hairline",
+            "--border-strong"
+        ]
+
+        for var_name in essential_vars:
+            self.assertIn(var_name, css_text, f"Variável CSS essencial '{var_name}' não definida no CSS")
+
+        # Modo Escuro: presença de seletor [data-theme="dark"]
+        self.assertIn('[data-theme="dark"]', css_text, "Seletor de tema escuro [data-theme=\"dark\"] não encontrado")
+
+        # Verifica sobrescrita de variáveis no modo escuro
+        dark_section = re.search(r'\[data-theme="dark"\]\s*\{([^}]+)\}', css_text)
+        self.assertIsNotNone(dark_section, "Bloco [data-theme=\"dark\"] não localizado no CSS")
+        dark_body = dark_section.group(1)
+        self.assertIn("--bg-canvas", dark_body, "--bg-canvas não redefinida no tema escuro")
+        self.assertIn("--text-main", dark_body, "--text-main não redefinida no tema escuro")
+
+    def test_04_responsive_media_queries(self):
+        """Valida a existência de regras de @media query com breakpoints para mobile e tablet."""
+        css_text = CSS_FILE.read_text(encoding="utf-8")
+
+        # Busca declarações de media queries
+        media_queries = re.findall(r"@media\s*\([^)]+\)", css_text)
+        self.assertGreaterEqual(len(media_queries), 3, "Poucas media queries responsivas encontradas no CSS")
+
+        # Breakpoint clássico para telas menores (860px ou 560px)
+        has_mobile_breakpoint = any("860px" in mq or "768px" in mq or "560px" in mq or "480px" in mq for mq in media_queries)
+        self.assertTrue(has_mobile_breakpoint, "Nenhuma media query para dispositivos móveis localizada")
+
+    def test_05_flexbox_and_grid_containers_usage(self):
+        """Assegura a ampla utilização de CSS Flexbox e Grid para layout fluido e adaptável."""
+        css_text = CSS_FILE.read_text(encoding="utf-8")
+
+        flex_count = len(re.findall(r"display\s*:\s*flex\b", css_text, re.IGNORECASE))
+        grid_count = len(re.findall(r"display\s*:\s*grid\b", css_text, re.IGNORECASE))
+
+        self.assertGreater(flex_count, 10, f"Poucos containers Flexbox detectados ({flex_count})")
+        self.assertGreater(grid_count, 3, f"Poucos containers Grid detectados ({grid_count})")
+        self.assertIn("grid-template-columns", css_text, "grid-template-columns deve ser utilizada no CSS")
+
+    def test_06_setup_modal_dom_structure_and_accessibility(self):
+        """Valida a acessibilidade e completude estrutural do modal interativo de setup do Supabase."""
+        html = HTML_INDEX.read_text(encoding="utf-8")
+
+        # Elementos essenciais do Setup Modal
+        self.assertIn('id="supabaseSetupModal"', html, "Modal supabaseSetupModal não encontrado no index.html")
+        self.assertIn('id="supabaseSetupForm"', html, "Formulário supabaseSetupForm não encontrado")
+        self.assertIn('id="setupSupabaseUrl"', html, "Campo de entrada setupSupabaseUrl não encontrado")
+        self.assertIn('id="setupSupabaseAnonKey"', html, "Campo de entrada setupSupabaseAnonKey não encontrado")
+
+        # Labels associados aos inputs para acessibilidade
+        self.assertIn('for="setupSupabaseUrl"', html, "Label for='setupSupabaseUrl' ausente")
+        self.assertIn('for="setupSupabaseAnonKey"', html, "Label for='setupSupabaseAnonKey' ausente")
+
+        # Botões de ação do modal
+        self.assertIn('id="testSupabaseConnectionBtn"', html, "Botão de teste de conexão ausente")
+        self.assertIn('id="saveSupabaseConfigBtn"', html, "Botão de salvar configuração ausente")
+        self.assertIn('id="closeSetupModalBtn"', html, "Botão de fechar modal ausente")
+
+    def test_07_javascript_client_resilience_and_fallback(self):
+        """Assegura que o cliente Supabase e o Setup Modal tratam ausência de credenciais sem quebrar a página."""
+        self.assertTrue(SETUP_MODAL_JS.exists(), "setup_modal.js não encontrado")
+        self.assertTrue(SUPABASE_CLIENT_JS.exists(), "supabase_client.js não encontrado")
+
+        client_code = SUPABASE_CLIENT_JS.read_text(encoding="utf-8")
+        modal_code = SETUP_MODAL_JS.read_text(encoding="utf-8")
+
+        # Resilience Layer: verifica se abre o modal caso não esteja configurado
+        self.assertIn("isConfigured", client_code)
+        self.assertIn("abrirModal", client_code)
+        self.assertIn("localStorage.getItem('olympos_supabase_url')", client_code)
+        self.assertIn("localStorage.getItem('olympos_supabase_anon_key')", client_code)
+
+        # Modal JS: salva exclusivamente no localStorage sem expor ao backend
+        self.assertIn("localStorage.setItem('olympos_supabase_url'", modal_code)
+        self.assertIn("localStorage.setItem('olympos_supabase_anon_key'", modal_code)
+
+    def test_08_mobile_breakpoint_and_header_collapse(self):
+        """Valida a presença de media query defensiva para mobile (<= 480px / 560px) e recolhimento do masthead."""
+        css_text = CSS_FILE.read_text(encoding="utf-8")
+
+        self.assertIn("max-width: 480px", css_text, "Breakpoint defensivo max-width: 480px não encontrado no CSS")
+        self.assertIn("max-width: 560px", css_text, "Breakpoint max-width: 560px não encontrado no CSS")
+
+        # Em telas <= 560px e <= 480px, elementos secundários da barra devem ser ocultados para evitar overflow
+        self.assertIn(".brand-edition-pill", css_text, ".brand-edition-pill deve estar presente no CSS")
+        self.assertIn(".user-capsule-meta", css_text, ".user-capsule-meta deve estar presente no CSS")
+
+        # Extrai o bloco de @media (max-width: 480px)
+        pos = css_text.find("max-width: 480px")
+        self.assertNotEqual(pos, -1, "max-width: 480px não localizado")
+        mq_480_text = css_text[pos:pos + 1200]
+        self.assertIn(".brand-edition-pill", mq_480_text, ".brand-edition-pill deve ser ocultado no mobile <= 480px")
+        self.assertIn(".user-capsule-meta", mq_480_text, ".user-capsule-meta deve ser ocultado no mobile <= 480px")
+
+    def test_09_css_grid_minmax_mobile_safety(self):
+        """Assegura que grades de memórias e configurações utilizam minmax fluido sem estouro de largura."""
+        css_text = CSS_FILE.read_text(encoding="utf-8")
+        html_text = HTML_INDEX.read_text(encoding="utf-8")
+
+        # .memorias-grid deve usar minmax(min(100%, 280px), 1fr) ou colapso em 1fr no mobile
+        self.assertIn("minmax(min(100%, 280px), 1fr)", css_text, "memorias-grid deve usar minmax fluido com min(100%, 280px)")
+
+        # #page-configuracoes controls-grid deve usar minmax seguro ou classe responsiva
+        self.assertIn("minmax(min(100%, 280px), 1fr)", html_text, "configuracoes grid no index.html deve usar minmax fluido")
+
+        # Verifica colapso para 1 coluna em telas menores
+        self.assertIn(".memorias-grid", css_text)
+        self.assertIn("grid-template-columns: 1fr !important", css_text, "Grids devem colapsar para 1 coluna em mobile")
+
+    def test_10_search_grid_mobile_adaptability(self):
+        """Assegura que o grid de controles de busca global colapsa graciosamente em telas móveis."""
+        css_text = CSS_FILE.read_text(encoding="utf-8")
+        html_text = HTML_INDEX.read_text(encoding="utf-8")
+
+        self.assertIn("search-controls-responsive", html_text, "Classe search-controls-responsive ausente no index.html")
+        self.assertIn(".search-controls-responsive", css_text, "Classe .search-controls-responsive ausente no CSS")
+
+        # Verifica regra de colapso de coluna para busca em mobile
+        mq_match = re.search(r"\.search-controls-responsive[^{]*\{[^}]*grid-template-columns:\s*1fr\s*!important", css_text)
+        self.assertIsNotNone(mq_match, "Regra de colapso para 1 coluna em busca mobile não encontrada")
+
+    def test_11_nav_drawer_auto_close_on_navigation(self):
+        """Valida que cliques em links de navegação fecham automaticamente o drawer no mobile."""
+        self.assertTrue(APP_JS.exists(), f"app.js ausente: {APP_JS}")
+        app_code = APP_JS.read_text(encoding="utf-8")
+
+        self.assertIn("nav-drawer-open", app_code, "Classe nav-drawer-open não encontrada em app.js")
+        self.assertIn("document.body.classList.remove('nav-drawer-open')", app_code,
+                      "app.js deve remover 'nav-drawer-open' ao navegar para fechar o drawer mobile")
+
+    def test_12_modal_backdrop_scrollability_and_clipping(self):
+        """Verifica que o backdrop e os cards de modal possuem rolagem vertical defensiva contra clipping."""
+        css_text = CSS_FILE.read_text(encoding="utf-8")
+
+        backdrop_match = re.search(r"\.modal-backdrop\s*\{([^}]+)\}", css_text)
+        self.assertIsNotNone(backdrop_match, "Seletor .modal-backdrop não encontrado no CSS")
+        backdrop_body = backdrop_match.group(1)
+        self.assertIn("overflow-y: auto", backdrop_body, ".modal-backdrop deve ter overflow-y: auto para evitar corte de conteúdo")
+
+        card_match = re.search(r"\.modal-card\s*\{([^}]+)\}", css_text)
+        self.assertIsNotNone(card_match, "Seletor .modal-card não encontrado no CSS")
+        card_body = card_match.group(1)
+        self.assertIn("max-height", card_body, ".modal-card deve ter max-height proporcional à viewport")
+        self.assertIn("overflow-y: auto", card_body, ".modal-card deve ter overflow-y: auto")
+
+    def test_13_touch_targets_and_table_touch_scroll(self):
+        """Valida que elementos mini respeitam alvo de toque e tabelas usam aceleração de toque."""
+        css_text = CSS_FILE.read_text(encoding="utf-8")
+
+        # .btn-mini deve possuir altura mínima e respiro adequado
+        mini_match = re.search(r"\.btn-mini\s*\{([^}]+)\}", css_text)
+        self.assertIsNotNone(mini_match, ".btn-mini ausente no CSS")
+        mini_body = mini_match.group(1)
+        self.assertIn("min-height", mini_body, ".btn-mini deve definir min-height para acessibilidade touch")
+
+        # .table-wrapper deve possuir rolagem por toque inercial
+        table_match = re.search(r"\.table-wrapper\s*\{([^}]+)\}", css_text)
+        self.assertIsNotNone(table_match, ".table-wrapper ausente no CSS")
+        table_body = table_match.group(1)
+        self.assertIn("-webkit-overflow-scrolling: touch", table_body, "table-wrapper deve ter -webkit-overflow-scrolling: touch")
+
+    def test_14_favicon_and_head_assets_integrity(self):
+        """Valida a presença de favicons oficiais (Data URI no HTML e arquivos físicos .ico e .svg)."""
+        html_text = HTML_INDEX.read_text(encoding="utf-8")
+
+        # Declarações no <head>
+        self.assertIn('rel="icon"', html_text, "Tag link rel='icon' ausente no head do index.html")
+        self.assertIn("data:image/svg+xml", html_text, "Favicon SVG Data URI ausente no head do index.html")
+        self.assertIn("favicon.ico", html_text, "Referência a favicon.ico ausente no head do index.html")
+
+        # Arquivos físicos
+        self.assertTrue(FAVICON_ICO.exists(), f"favicon.ico não encontrado em: {FAVICON_ICO}")
+        self.assertTrue(FAVICON_SVG.exists(), f"assets/favicon.svg não encontrado em: {FAVICON_SVG}")
+
+        # Validação do cabeçalho binário do favicon.ico
+        ico_bytes = FAVICON_ICO.read_bytes()
+        self.assertGreater(len(ico_bytes), 100, "favicon.ico deve ser um arquivo binário válido com conteúdo real")
+        self.assertEqual(ico_bytes[:4], b"\x00\x00\x01\x00", "favicon.ico deve possuir cabeçalho canônico ICO (00 00 01 00)")
+
+    def test_15_dom_input_autocomplete_and_supabase_singleton(self):
+        """Assegura conformidade DOM de autocomplete e padrão Singleton do cliente GoTrue."""
+        html_text = HTML_INDEX.read_text(encoding="utf-8")
+        client_code = SUPABASE_CLIENT_JS.read_text(encoding="utf-8")
+
+        # Autocomplete nos inputs de credenciais
+        self.assertRegex(html_text, r'id="setupSupabaseAnonKey"[^>]*autocomplete="new-password"',
+                         "setupSupabaseAnonKey deve conter autocomplete='new-password'")
+        self.assertRegex(html_text, r'id="novoUsuarioSenha"[^>]*autocomplete="new-password"',
+                         "novoUsuarioSenha deve conter autocomplete='new-password'")
+        self.assertIn('autocomplete="username"', html_text, "Campo de identificador de login deve conter autocomplete='username'")
+        self.assertIn('autocomplete="current-password"', html_text, "Campo de senha de login deve conter autocomplete='current-password'")
+
+        # Singleton no cliente Supabase: reutiliza instância se URL e chave já coincidem
+        self.assertIn("activeUrl", client_code, "supabase_client.js deve rastrear activeUrl para padrão Singleton")
+        self.assertIn("activeKey", client_code, "supabase_client.js deve rastrear activeKey para padrão Singleton")
+        self.assertIn("normalizeSupabaseUrl", client_code, "supabase_client.js deve normalizar a URL removendo /rest/v1")
+
+    def test_16_breakpoint_responsiveness_matrix_mobile_and_ultrawide(self):
+        """Valida sistematicamente a matriz completa de viewports: 320px, 375px, 480px, 768px, 1600px, 1920px, 2560px e 3440px."""
+        css_text = CSS_FILE.read_text(encoding="utf-8")
+        css_mirror = CSS_MIRROR.read_text(encoding="utf-8")
+
+        for code, fname in [(css_text, "styles.css"), (css_mirror, "css/style.css")]:
+            # Breakpoints Mobile & Compact (320px - 768px)
+            self.assertIn("max-width: 375px", code, f"Breakpoint max-width: 375px ausente em {fname}")
+            self.assertIn("max-width: 480px", code, f"Breakpoint max-width: 480px ausente em {fname}")
+            self.assertIn("max-width: 768px", code, f"Breakpoint max-width: 768px ausente em {fname}")
+
+            # Breakpoints Ultra-Wide & Monitores Largos (1600px - 3440px+)
+            self.assertIn("min-width: 1600px", code, f"Breakpoint min-width: 1600px ausente em {fname}")
+            self.assertIn("min-width: 1920px", code, f"Breakpoint min-width: 1920px ausente em {fname}")
+            self.assertIn("min-width: 2560px", code, f"Breakpoint min-width: 2560px ausente em {fname}")
+            self.assertIn("min-width: 3440px", code, f"Breakpoint min-width: 3440px ausente em {fname}")
+
+            # Escalonamento progressivo da variável --container-max
+            self.assertIn("--container-max: 1540px", code, f"--container-max: 1540px ausente em {fname}")
+            self.assertIn("--container-max: 1840px", code, f"--container-max: 1840px ausente em {fname}")
+            self.assertIn("--container-max: 2240px", code, f"--container-max: 2240px ausente em {fname}")
+            self.assertIn("--container-max: 2800px", code, f"--container-max: 2800px ausente em {fname}")
+
+            # Limite ergonômico de legibilidade de 1600px para formulários e blocos editoriais
+            self.assertIn("max-width: 1600px", code, f"Restrição de legibilidade max-width: 1600px ausente em {fname}")
+            self.assertIn(".surface-card form", code, f"Seletor .surface-card form ausente em {fname}")
+            self.assertIn(".surface-card .controls-grid", code, f"Seletor .surface-card .controls-grid ausente em {fname}")
+
+    def test_17_mobile_layout_elements_safety_topbar_alert_grid_sidebar(self):
+        """Verifica regras CSS de segurança contra overflow em 320px: topbar, quick-alert-bar, controls-grid e sidebar drawer."""
+        css_text = CSS_FILE.read_text(encoding="utf-8")
+
+        # Topbar / Top-masthead: contenção de largura em viewports móveis
+        self.assertRegex(css_text, r"\.top-masthead[^{]*\{[^}]*overflow-x:\s*clip",
+                         "Cabeçalho deve possuir contenção de overflow-x para mobile <= 480px")
+
+        # #topNovoUsuarioBtn: no mobile <= 480px, texto longo do span é ocultado e botão reduz para evitar estouro de 336px em 320px
+        self.assertRegex(css_text, r"#topNovoUsuarioBtn\s+span\s*\{[^}]*display:\s*none\s*!important",
+                         "#topNovoUsuarioBtn span deve possuir display: none !important no mobile")
+        self.assertIn("min-width: 0", css_text, "Regras de min-width: 0 devem ser aplicadas a botões e controles compactos")
+
+        # .quick-alert-bar: deve possuir min-width: 0 e largura 100% para não vazar os 292px do card em 320px
+        self.assertRegex(css_text, r"\.quick-alert-bar[^{]*\{[^}]*min-width:\s*0\s*!important",
+                         ".quick-alert-bar deve ter min-width: 0 !important no mobile")
+        self.assertRegex(css_text, r"\.quick-alert-bar[^{]*\{[^}]*flex-direction:\s*column\s*!important",
+                         ".quick-alert-bar deve empilhar verticalmente em telas <= 480px")
+
+        # .controls-grid: colapso universal em coluna única no mobile <= 768px
+        self.assertRegex(css_text, r"\.controls-grid\s*\{[^}]*grid-template-columns:\s*1fr\s*!important",
+                         ".controls-grid deve colapsar universalmente para 1fr no mobile <= 768px")
+
+        # .sidebar / .masthead-nav-rail: drawer móvel off-screen por padrão
+        self.assertRegex(css_text, r"\.sidebar[^{]*\{[^}]*transform:\s*translateX\(-100%\)",
+                         ".sidebar deve iniciar retraída fora da tela (translateX(-100%)) no mobile")
+        self.assertRegex(css_text, r"body\.nav-drawer-open\s+\.sidebar[^{]*\{[^}]*transform:\s*translateX\(0\)",
+                         ".sidebar deve deslizar para translateX(0) quando body possuir nav-drawer-open")
+
+    def test_18_dom_accessibility_modal_novo_usuario_autocomplete(self):
+        """Assegura conformidade WHATWG de autocomplete em #modalNovoUsuario para eliminar avisos Chromium de username ausente."""
+        html_text = HTML_INDEX.read_text(encoding="utf-8")
+
+        # #modalNovoUsuario / #formNovoUsuario
+        self.assertIn('id="modalNovoUsuario"', html_text)
+        self.assertIn('id="formNovoUsuario"', html_text)
+
+        # Departamento com autocomplete='organization'
+        self.assertRegex(
+            html_text,
+            r'id="novoUsuarioDepartamento"[^>]*autocomplete="organization"',
+            "#novoUsuarioDepartamento deve conter autocomplete='organization' para sanar o alerta [DOM]"
+        )
+
+        # Nome completo com autocomplete='name'
+        self.assertRegex(
+            html_text,
+            r'id="novoUsuarioNome"[^>]*autocomplete="name"',
+            "#novoUsuarioNome deve conter autocomplete='name'"
+        )
+
+        # Email com autocomplete='email username'
+        self.assertRegex(
+            html_text,
+            r'id="novoUsuarioEmail"[^>]*autocomplete="[^"]*username[^"]*"',
+            "#novoUsuarioEmail deve incluir 'username' em seu autocomplete para servir como identificador"
+        )
+
+        # Senha com autocomplete='new-password'
+        self.assertRegex(
+            html_text,
+            r'id="novoUsuarioSenha"[^>]*autocomplete="new-password"',
+            "#novoUsuarioSenha deve conter autocomplete='new-password'"
+        )
+
+    def test_19_dom_accessibility_password_forms_have_username_fields(self):
+        """Garante que 100% dos formulários com campos de senha no DOM possuem campo de username associado (W3C/WCAG 2.2)."""
+        html_text = HTML_INDEX.read_text(encoding="utf-8")
+        css_text = CSS_FILE.read_text(encoding="utf-8")
+        css_mirror = CSS_MIRROR.read_text(encoding="utf-8")
+
+        # #supabaseSetupForm deve conter campo username oculto acessível
+        self.assertRegex(
+            html_text,
+            r'<form\s+id="supabaseSetupForm"[^>]*>[\s\S]*?<input[^>]+name="username"[^>]+autocomplete="username"[^>]+class="[^"]*sr-only[^"]*"',
+            "#supabaseSetupForm deve conter campo de username com classe .sr-only e autocomplete='username'"
+        )
+
+        # Varre todos os <form> do index.html para certificar zero formulários de senha sem username
+        form_pattern = re.compile(r'<form\b([^>]*)>([\s\S]*?)</form>', re.IGNORECASE)
+        forms = form_pattern.findall(html_text)
+        self.assertGreaterEqual(len(forms), 3, "Devem existir ao menos 3 formulários estruturados no index.html")
+
+        for attrs, body in forms:
+            has_password = 'type="password"' in body
+            if has_password:
+                has_username = bool(re.search(r'autocomplete=["\'][^"\']*\busername\b[^"\']*["\']', body, re.IGNORECASE)) or bool(re.search(r'name=["\']username["\']', body, re.IGNORECASE))
+                form_id_match = re.search(r'id=["\']([^"\']+)["\']', attrs)
+                form_id = form_id_match.group(1) if form_id_match else "form-sem-id"
+                self.assertTrue(has_username, f"Formulário '{form_id}' contém campo de senha mas não possui campo de username!")
+
+        # Classe .sr-only deve estar definida em ambos os arquivos CSS com clip: rect(...)
+        for code, fname in [(css_text, "styles.css"), (css_mirror, "css/style.css")]:
+            self.assertIn(".sr-only", code, f"Classe .sr-only ausente em {fname}")
+            sr_match = re.search(r"\.sr-only\s*\{([^}]+)\}", code)
+            self.assertIsNotNone(sr_match, f"Regra .sr-only não localizada em {fname}")
+            sr_body = sr_match.group(1)
+            self.assertIn("position: absolute", sr_body, f".sr-only deve ter position: absolute em {fname}")
+            self.assertIn("width: 1px", sr_body, f".sr-only deve ter width: 1px em {fname}")
+            self.assertIn("clip: rect(0, 0, 0, 0)", sr_body, f".sr-only deve ter clip: rect(0, 0, 0, 0) em {fname}")
+
+
+if __name__ == "__main__":
+    unittest.main()
+

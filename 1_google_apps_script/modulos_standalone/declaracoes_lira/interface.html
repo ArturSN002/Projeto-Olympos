@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <base target="_top">
+    <?!= HtmlService.createHtmlOutputFromFile('style').getContent(); ?>
+  </head>
+  <body>
+    <div class="container">
+      <div class="sidebar-header">
+        <span class="badge-tag">SMEB • Lira de Orfeu</span>
+        <h3>🎵 Certificados e Declarações</h3>
+      </div>
+
+      <div class="quota-banner" aria-live="polite">
+        <span><strong>Cota Diária MailApp:</strong></span>
+        <span id="quotaBadge" style="font-weight: 700; color: #1967d2;">Consultando...</span>
+      </div>
+
+      <div id="main-controls">
+        <div class="action-block">
+          <h4><span class="step-pill">Config</span> Evento &amp; Modalidade</h4>
+          <p>Selecione a aba do evento e a modalidade do documento.</p>
+          <select id="sheetSelector" class="button" style="margin-bottom: 8px;" aria-label="Selecionar aba do evento"></select>
+          <select id="modalitySelector" class="button" aria-label="Selecionar modalidade">
+            <option value="DECLARACAO">Modo: Declaração de Participação</option>
+            <option value="CERTIFICADO">Modo: Certificado de Participação</option>
+          </select>
+        </div>
+
+        <div class="action-block">
+          <h4><span class="step-pill">Passo 1</span> Higienização Pré-Voo</h4>
+          <p>Remove invisíveis (<code>\u2060</code>), corrige <code>@gamil.com</code>, padroniza nomes e checa duplicatas.</p>
+          <button id="checkBtn" class="button">1. Higienizar Aba &amp; Checar Duplicatas</button>
+        </div>
+
+        <div class="action-block">
+          <h4><span class="step-pill">Passo 2</span> Geração de PDFs</h4>
+          <p>Inicia a geração em segundo plano conforme a modalidade selecionada.</p>
+          <button id="generateBtn" class="button button-secondary">2. Iniciar Geração de PDFs</button>
+        </div>
+
+        <div class="action-block">
+          <h4><span class="step-pill">Passo 3</span> Disparo de E-mails</h4>
+          <p>Envia os documentos em lotes de 25 respeitando a trava de cota diária (&gt; 3).</p>
+          <button id="sendBtn" class="button button-primary">3. Enviar por E-mail</button>
+        </div>
+      </div>
+
+      <div id="progress-container" class="action-block hidden" aria-live="polite">
+        <h4>Status do Processo</h4>
+        <p>A geração de documentos está em andamento. Você pode fechar esta janela.</p>
+        <div class="progress-bar-container">
+          <progress id="progress-bar" value="0" max="100"></progress>
+          <span id="progress-text">0 / 0 Gerados (0%)</span>
+        </div>
+        <button id="stopBtn" class="button button-danger">⏹ Parar Processo</button>
+      </div>
+
+      <div id="status" class="status info" aria-live="polite">
+        Pronto para começar.
+      </div>
+    </div>
+
+    <?!= HtmlService.createHtmlOutputFromFile('scripts').getContent(); ?>
+  </body>
+</html>

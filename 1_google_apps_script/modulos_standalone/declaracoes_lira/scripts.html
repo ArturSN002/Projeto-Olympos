@@ -1,0 +1,197 @@
+<script>
+  const sheetSelector = document.getElementById('sheetSelector');
+  const modalitySelector = document.getElementById('modalitySelector');
+  const quotaBadge = document.getElementById('quotaBadge');
+  const checkButton = document.getElementById('checkBtn');
+  const generateButton = document.getElementById('generateBtn');
+  const sendButton = document.getElementById('sendBtn');
+  const stopButton = document.getElementById('stopBtn');
+  const statusDiv = document.getElementById('status');
+  const mainControls = document.getElementById('main-controls');
+  const progressContainer = document.getElementById('progress-container');
+  const progressBar = document.getElementById('progress-bar');
+  const progressText = document.getElementById('progress-text');
+
+  let pollingInterval = null;
+
+  document.addEventListener('DOMContentLoaded', loadSidebar);
+  generateButton.addEventListener('click', handleGenerateClick);
+  stopButton.addEventListener('click', handleStopClick);
+  checkButton.addEventListener('click', handleCheckClick);
+  sendButton.addEventListener('click', handleSendClick);
+
+  function updateUIState(state) {
+    const allElements = [sheetSelector, modalitySelector, checkButton, generateButton, sendButton, stopButton];
+    allElements.forEach(el => el.disabled = true);
+
+    mainControls.classList.add('hidden');
+    progressContainer.classList.add('hidden');
+
+    switch (state) {
+      case 'IDLE':
+        mainControls.classList.remove('hidden');
+        sheetSelector.disabled = false;
+        modalitySelector.disabled = false;
+        checkButton.disabled = false;
+        generateButton.disabled = false;
+        sendButton.disabled = false;
+        break;
+
+      case 'GENERATING':
+        progressContainer.classList.remove('hidden');
+        stopButton.disabled = false;
+        break;
+
+      case 'LOADING':
+      case 'STOPPING':
+        progressContainer.classList.add('hidden');
+        mainControls.classList.remove('hidden');
+        break;
+    }
+  }
+
+  function loadSidebar() {
+    updateUIState('LOADING');
+    setStatus('info', 'Carregando...');
+    google.script.run.withSuccessHandler(onSheetNamesSuccess).withFailureHandler(onFailure).getSheetNames();
+    pollStatus();
+  }
+
+  function onSheetNamesSuccess(sheetNames) {
+    sheetSelector.innerHTML = "";
+    sheetNames.forEach(name => {
+      const option = document.createElement('option');
+      option.value = name;
+      option.textContent = name;
+      sheetSelector.appendChild(option);
+    });
+  }
+
+  function pollStatus() {
+    google.script.run.withSuccessHandler(updateUIFromStatus).withFailureHandler(onFailure).getBatchProcessStatus();
+  }
+
+  function updateQuotaDisplay(quota) {
+    if (quota === undefined || quota === null) return;
+    quotaBadge.textContent = `${quota} envios restantes`;
+    quotaBadge.style.color = quota <= 3 ? '#c5221f' : '#155724';
+  }
+
+  function updateUIFromStatus(status) {
+    updateQuotaDisplay(status.remainingQuota);
+
+    if (status.isRunning) {
+      updateUIState('GENERATING');
+      if (!pollingInterval) {
+        pollingInterval = setInterval(pollStatus, 4000);
+      }
+      const processedCount = status.processedCount !== undefined
+        ? status.processedCount
+        : Math.max(0, status.lastRow - status.startRow);
+      const total = status.total > 0 ? status.total : 1;
+      const pct = Math.min(100, Math.round((processedCount / total) * 100));
+
+      progressBar.value = processedCount;
+      progressBar.max = total;
+      progressText.textContent = `${processedCount} / ${total} Gerados (${pct}% • ${status.modality || 'DECLARACAO'})`;
+      setStatus('info', `Processando a aba "${status.sheetName}"...`);
+    } else {
+      updateUIState('IDLE');
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+        pollingInterval = null;
+      }
+      setStatus('success', 'Pronto para iniciar. Selecione uma ação.');
+    }
+  }
+
+  function handleCheckClick() {
+    const selectedSheet = sheetSelector.value;
+    updateUIState('LOADING');
+    setStatus('info', `Higienizando e verificando duplicatas em "${selectedSheet}"...`);
+    google.script.run
+      .withSuccessHandler(onCheckSuccess)
+      .withFailureHandler(onFailure)
+      .higienizarAbaParticipantes(selectedSheet);
+  }
+
+  function onCheckSuccess(report) {
+    let message = `<strong>Higienização concluída em "${report.aba}":</strong><br>`;
+    message += `• Nomes padronizados (sem invisíveis / Title Case): <strong>${report.nomesHigienizados}</strong><br>`;
+    message += `• E-mails corrigidos (ex: @gamil.com): <strong>${report.emailsCorrigidos}</strong><br>`;
+
+    const temDuplicatas = report.emails.length > 0 || report.names.length > 0;
+    const temInvalidos = report.emailsInvalidos && report.emailsInvalidos.length > 0;
+
+    if (!temDuplicatas && !temInvalidos) {
+      message += '✅ Nenhuma duplicata ou e-mail inválido encontrado.';
+      setStatus('success', message);
+    } else {
+      if (report.emails.length > 0) message += `⚠️ <strong>E-mails duplicados:</strong> ${report.emails.join(', ')}<br>`;
+      if (report.names.length > 0) message += `⚠️ <strong>Nomes duplicados:</strong> ${report.names.join(', ')}<br>`;
+      if (temInvalidos) message += `❌ <strong>E-mails inválidos:</strong> ${report.emailsInvalidos.join(', ')}`;
+      setStatus('error', message);
+    }
+    updateUIState('IDLE');
+  }
+
+  function handleSendClick() {
+    const selectedSheet = sheetSelector.value;
+    const selectedModality = modalitySelector.value;
+    updateUIState('LOADING');
+    setStatus('info', `Enviando lote de e-mails (${selectedModality}) para "${selectedSheet}"...`);
+    google.script.run
+      .withSuccessHandler(onSendSuccess)
+      .withFailureHandler(onFailure)
+      .sendCertificates(selectedSheet, selectedModality);
+  }
+
+  function onSendSuccess(message) {
+    setStatus('success', message);
+    pollStatus();
+  }
+
+  function handleGenerateClick() {
+    const selectedSheet = sheetSelector.value;
+    const selectedModality = modalitySelector.value;
+    updateUIState('LOADING');
+    setStatus('info', `Iniciando a geração (${selectedModality}) para "${selectedSheet}"...`);
+    google.script.run
+      .withSuccessHandler(onGenerationStart)
+      .withFailureHandler(onFailure)
+      .startCertificateGeneration(selectedSheet, selectedModality);
+  }
+
+  function onGenerationStart(result) {
+    if (result.started) {
+      pollStatus();
+    } else {
+      updateUIState('IDLE');
+      setStatus('error', result.message);
+    }
+  }
+
+  function handleStopClick() {
+    updateUIState('STOPPING');
+    setStatus('info', 'Interrompendo o processo...');
+    google.script.run
+      .withSuccessHandler(onStopSuccess)
+      .withFailureHandler(onFailure)
+      .resetBatchProcess(true);
+  }
+
+  function onStopSuccess(result) {
+    setStatus('success', result.message);
+    pollStatus();
+  }
+
+  function onFailure(error) {
+    updateUIState('IDLE');
+    setStatus('error', 'Erro: ' + error.message);
+  }
+
+  function setStatus(type, message) {
+    statusDiv.className = 'status ' + type;
+    statusDiv.innerHTML = message;
+  }
+</script>

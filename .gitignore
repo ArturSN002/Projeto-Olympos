@@ -78,15 +78,4 @@ temp/
 data/raw/
 
 # ==============================================================================
-# Isolamento de Pastas Internas (Repositorio Publico Apenas com o Essencial)
-# Mantidas localmente no disco, excluidas do versionamento publico no GitHub
 # ==============================================================================
-1_google_apps_script/
-3_skills_personas/
-4_relatorios_implementacao/
-5_manuais_instalacao/
-tests/
-2_github_pages_actions/supabase/
-2_github_pages_actions/workflows_mirror/
-2_github_pages_actions/engines/fogo_de_prometheus/gas_receiver/
-2_github_pages_actions/**/README.md

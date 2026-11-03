@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Olympos — Inteligência Documental SMEB Ceará-Mirim</title>
+    <?!= include('ui_styles'); ?>
+  </head>
+  <body>
+    <!-- =========================================================================
+         TELA DE LOGIN EDITORIAL (IDENTIFICAÇÃO DE PERFIL RBAC & HASH SHA-256)
+         ========================================================================= -->
+    <div id="loginScreen" class="modal-backdrop hidden">
+      <div class="modal-card" style="max-width: 450px;">
+        <div class="modal-body" style="padding: 34px 32px 28px;">
+          <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 10px; margin-bottom: 22px;">
+            <span class="eyebrow-pill" style="margin-bottom: 2px;">ACESSO INSTITUCIONAL • SMEB</span>
+            <h2 style="font-size: 1.65rem; font-weight: 700; letter-spacing: -0.03em;">Entrar no Hub Olympos</h2>
+            <p style="margin: 0; font-size: 13.5px; color: var(--text-secondary);">
+              Identifique seu perfil setorial para carregar os módulos autorizados de governança e automação.
+            </p>
+          </div>
+
+          <form id="loginForm">
+            <div class="field-group" style="margin-bottom: 14px;">
+              <label for="loginUserInput">Identificador ou E-mail Institucional</label>
+              <input type="text" id="loginUserInput" class="input-clean" placeholder="Ex: admin, rh, pedagogico, juridico" required autocomplete="username" />
+            </div>
+            <div class="field-group" style="margin-bottom: 20px;">
+              <label for="loginPasswordInput">Senha de Acesso</label>
+              <input type="password" id="loginPasswordInput" class="input-clean" placeholder="••••••••" required autocomplete="current-password" />
+            </div>
+
+            <button type="submit" id="loginSubmitBtn" class="btn btn-primary" style="width: 100%; padding: 12px 20px;">
+              Acessar Ambiente Olympos
+            </button>
+          </form>
+
+          <div style="margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--border-hairline); text-align: center;">
+            <p class="stat-label" style="font-size: 0.82rem; color: var(--text-muted); margin: 0; line-height: 1.5;">
+              Autenticação corporativa protegida via <strong>Supabase Auth &amp; RBAC</strong>.<br />
+              Utilize seu e-mail institucional e senha cadastrados no sistema.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================================
+         MASTHEAD EDITORIAL TRANSLÚCIDA (REFERÊNCIA DEEPMIND.GOOGLE & BLOG.GOOGLE)
+         ========================================================================= -->
+    <header class="top-masthead">
+      <div class="masthead-upper">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button id="mobileMenuToggleBtn" class="icon-capsule-btn mobile-menu-btn" aria-label="Alternar navegação"></button>
+          <div class="brand-lockup" id="brandHomeLink">
+            <span class="brand-mark" id="brandMarkSvg" aria-hidden="true"></span>
+            <span class="brand-wordmark">Olympos</span>
+            <span class="brand-edition-pill">SMEB 2026</span>
+          </div>
+        </div>
+
+        <div class="masthead-controls">
+          <div class="quick-search-pill">
+            <button id="topQuickSearchBtn" class="btn-search-trigger" title="Pesquisar no acervo" aria-label="Pesquisar"></button>
+            <input type="search" id="topQuickSearchInput" placeholder="Pesquisar ato, servidor ou portaria..." />
+            <span class="kbd-hint">/</span>
+          </div>
+
+          <div id="apiStatusPill" class="status-pill status-online" title="Conectividade com o Gateway Google Apps Script">
+            <span>Gateway Online</span>
+          </div>
+
+          <button id="themeToggleBtn" class="icon-capsule-btn" title="Alternar Modo Claro / Modo Escuro" aria-label="Alternar Tema"></button>
+
+          <button id="userSessionBtn" class="user-capsule-btn" title="Perfil RBAC Ativo (Clique para encerrar ou trocar sessão)">
+            <span class="user-avatar-dot" id="userAvatarInitials">GB</span>
+            <span class="user-capsule-meta">
+              <span id="userBadgeName" class="user-capsule-name">Gabinete</span>
+              <span id="userBadgeRole" class="user-capsule-role">Governança Total</span>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <!-- TRILHO DE NAVEGAÇÃO MODULAR (1 BLOCO = 1 PÁGINA) -->
+      <nav class="masthead-nav-rail" aria-label="Navegação modular do Hub Olympos">
+        <div class="nav-rail-inner">
+          <a href="#visao-geral" class="nav-link active" data-page="visao-geral">Visão Geral</a>
+          <span class="nav-divider-dot" aria-hidden="true"></span>
+          <a href="#oficios" class="nav-link" data-page="oficios">Ofícios</a>
+          <a href="#portarias" class="nav-link" data-page="portarias">Portarias em Lote</a>
+          <a href="#licencas" class="nav-link" data-page="licencas">Licenças</a>
+          <a href="#certificados" class="nav-link" data-page="certificados">Certificados</a>
+          <span class="nav-divider-dot" aria-hidden="true"></span>
+          <a href="#diario-oficial" class="nav-link" data-page="diario-oficial">Diário Oficial</a>
+          <a href="#papiro-cadmo" class="nav-link" data-page="papiro-cadmo">Papiro de Cadmo</a>
+          <a href="#personas" class="nav-link" data-page="personas">Personas &amp; Memórias</a>
+          <a href="#busca" class="nav-link" data-page="busca">Busca no Acervo</a>
+          <span class="nav-divider-dot" aria-hidden="true"></span>
+          <a href="#configuracoes" class="nav-link" data-page="configuracoes">Ajustes</a>
+        </div>
+      </nav>
+    </header>
+
+    <!-- =========================================================================
+         HERO EDITORIAL CONTEXTUAL + ATALHOS OFICIAIS (SEM IDS TÉCNICOS VISÍVEIS)
+         ========================================================================= -->
+    <div class="editorial-shell">
+      <section class="editorial-hero">
+        <div id="pageHeaderEyebrow" class="eyebrow-pill">GOVERNANÇA EXECUTIVA • SMEB 2026</div>
+        <h1 id="pageHeaderTitle" class="hero-display-title">Inteligência documental e governança pública.</h1>
+        <p id="pageHeaderSubtitle" class="hero-lead-subtitle">
+          Painel central da Secretaria Municipal de Educação Básica de Ceará-Mirim: numeração sequencial oficial, atalhos operacionais e constelação das 17 personas Olympos.
+        </p>
+
+        <div class="hero-shortcuts-bar">
+          <a href="https://drive.google.com/drive/folders/1W9mGmQCrX8BRPsGcK_vqUwfXw1dRmSya" target="_blank" rel="noopener" class="folder-chip">Pasta Central Olympo ↗</a>
+          <a href="https://drive.google.com/drive/folders/1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu" target="_blank" rel="noopener" class="folder-chip">Memórias Operacionais (.md) ↗</a>
+          <a href="https://drive.google.com/drive/folders/1qGq5uqxOtN_V63itUheYatLIcj5R86O3" target="_blank" rel="noopener" class="folder-chip">Portarias 2026 ↗</a>
+          <a href="https://drive.google.com/drive/folders/1H4bJXClx66Mr5PmRmSQBQLHDpAaKwdab" target="_blank" rel="noopener" class="folder-chip">Ofícios 2026 ↗</a>
+          <a href="https://docs.google.com/spreadsheets/d/1AIncS3ITYx_kT_tmfkAL5cYnw7nnuMAAUgiCd2lluqY/edit" target="_blank" rel="noopener" class="folder-chip">Planilha Diário Oficial ↗</a>
+          <a href="https://drive.google.com/drive/folders/1VxVVONEJya4XqI2GfxHK7AFqk8dpwX9I" target="_blank" rel="noopener" class="folder-chip">Acervo Papiro de Cadmo ↗</a>
+        </div>
+      </section>
+
+      <!-- =========================================================================
+           CONTAINER DE PÁGINAS MODULARES INDEPENDENTES
+           ========================================================================= -->
+      <main class="app-main">
+        <div id="globalToast" class="toast hidden" role="status" aria-live="polite"></div>
+
+        <!-- =========================================================================
+             PÁGINA 1: VISÃO GERAL (MÉTRICAS APOLO + BENTO + 17 PERSONAS COM ÍCONES ÚNICOS)
+             ========================================================================= -->
+        <section class="page-view active" id="page-visao-geral">
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-top">
+                <span class="stat-label">Olho de Apolo • Próximo Ofício</span>
+                <div class="stat-actions">
+                  <button id="copyOficioBtn" class="btn-mini" title="Copiar número">Copiar</button>
+                  <button id="reserveOficioBtn" class="btn-mini btn-mini-accent" title="Reservar número atual e avançar +1">+1 Reservar</button>
+                  <button id="editOficioBtn" class="btn-mini" title="Ajustar contador oficial">Ajustar</button>
+                </div>
+              </div>
+              <div class="stat-value" id="kpiProximoOficio">Nº 155</div>
+              <div class="stat-meta" id="kpiUltimoOficio">
+                <span>Último emitido: Nº 154</span>
+                <a href="https://drive.google.com/file/d/1wGlcqqTuWAyy-2VRO_QqyyMcKHb4AmRn/view" target="_blank" rel="noopener" class="folder-chip">Memória de Apolo ↗</a>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-top">
+                <span class="stat-label">Olho de Apolo • Próxima Portaria</span>
+                <div class="stat-actions">
+                  <button id="copyPortariaBtn" class="btn-mini" title="Copiar número">Copiar</button>
+                  <button id="reservePortariaBtn" class="btn-mini btn-mini-accent" title="Reservar número atual e avançar +1">+1 Reservar</button>
+                  <button id="editPortariaBtn" class="btn-mini" title="Ajustar contador oficial">Ajustar</button>
+                </div>
+              </div>
+              <div class="stat-value" id="kpiProximaPortaria">Nº 163</div>
+              <div class="stat-meta" id="kpiUltimaPortaria">
+                <span>Última emitida: Nº 162</span>
+                <a href="https://drive.google.com/file/d/1wGlcqqTuWAyy-2VRO_QqyyMcKHb4AmRn/view" target="_blank" rel="noopener" class="folder-chip">Memória de Apolo ↗</a>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-top">
+                <span class="stat-label">Lira de Orfeu &amp; Prometheus</span>
+                <span class="pill-badge pill-green" id="kpiSyncStatusBadge">2 Frentes Ativas</span>
+              </div>
+              <div class="stat-value" id="kpiCotaEmail">--</div>
+              <div class="stat-meta" id="kpiPrometheusMeta">
+                Cota diária MailApp com trava automática de segurança (&le; 3 envios).
+              </div>
+            </div>
+          </div>
+
+          <!-- FRENTES OPERACIONAIS EM DESTAQUE -->
+          <div class="surface-card">
+            <div class="card-header-row">
+              <div>
+                <span class="section-eyebrow">OPERAÇÕES MODULARES</span>
+                <h2 class="section-title">Frentes de Automação Documental e Inteligência</h2>
+                <p class="section-desc">Cada fluxo opera em página dedicada, desacoplando a experiência visual (GitHub Pages), integrações rápidas (GAS) e pipelines pesados (GitHub Actions).</p>
+              </div>
+            </div>
+
+            <div class="quick-modules-grid">
+              <div class="quick-module-card" data-nav-target="oficios">
+                <div class="qm-icon-badge" data-persona-icon="homero"></div>
+                <div>
+                  <div class="qm-category">Redação Oficial PR/2018</div>
+                  <div class="qm-title">Emissão de Ofícios</div>
+                  <div class="qm-desc">Gere expedientes do Gabinete no Google Docs com atualização imediata da numeração sequencial.</div>
+                </div>
+                <span class="qm-action">Abrir página dedicada →</span>
+              </div>
+
+              <div class="quick-module-card" data-nav-target="portarias">
+                <div class="qm-icon-badge" data-persona-icon="apolo"></div>
+                <div>
+                  <div class="qm-category">O Pincel de Homero</div>
+                  <div class="qm-title">Portarias em Lote</div>
+                  <div class="qm-desc">Validação pré-voo, emissão automatizada e listagem clicável de todos os arquivos gerados.</div>
+                </div>
+                <span class="qm-action">Abrir página dedicada →</span>
+              </div>
+
+              <div class="quick-module-card" data-nav-target="licencas">
+                <div class="qm-icon-badge" data-persona-icon="hera"></div>
+                <div>
+                  <div class="qm-category">Gestão Funcional</div>
+                  <div class="qm-title">Cadastro de Licenças</div>
+                  <div class="qm-desc">Registre Licenças-Prêmio, Sem Remuneração ou Anulações direto no Hub com emissão instantânea.</div>
+                </div>
+                <span class="qm-action">Abrir página dedicada →</span>
+              </div>
+
+              <div class="quick-module-card" data-nav-target="diario-oficial">
+                <div class="qm-icon-badge" data-persona-icon="helio"></div>
+                <div>
+                  <div class="qm-category">GitHub Actions + GAS</div>
+                  <div class="qm-title">Fogo de Prometheus</div>
+                  <div class="qm-desc">Coleta diária FEMURN com OCR/NER indexada exclusivamente na planilha oficial única da SMEB.</div>
+                </div>
+                <span class="qm-action">Abrir página dedicada →</span>
+              </div>
+
+              <div class="quick-module-card" data-nav-target="papiro-cadmo">
+                <div class="qm-icon-badge" data-persona-icon="cadmo"></div>
+                <div>
+                  <div class="qm-category">ETL Intermunicipal RN</div>
+                  <div class="qm-title">O Papiro de Cadmo</div>
+                  <div class="qm-desc">Consolidação mensal de servidores de 15 municípios potiguares e SEEC/RN para permutas.</div>
+                </div>
+                <span class="qm-action">Abrir página dedicada →</span>
+              </div>
+
+              <div class="quick-module-card" data-nav-target="certificados">
+                <div class="qm-icon-badge" data-persona-icon="orfeu"></div>
+                <div>
+                  <div class="qm-category">A Lira de Orfeu</div>
+                  <div class="qm-title">Certificados &amp; Eventos</div>
+                  <div class="qm-desc">Higienização de listas, QR Code SHA-256 de autenticidade e links individuais dos PDFs.</div>
+                </div>
+                <span class="qm-action">Abrir página dedicada →</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- CONSTELAÇÃO DAS 17 PERSONAS NA PÁGINA INICIAL (ÍCONES VETORIAIS ÚNICOS) -->
+          <div class="surface-card">
+            <div class="card-header-row">
+              <div>
+                <span class="section-eyebrow">ECOSSISTEMA COGNITIVO SMEB</span>
+                <h2 class="section-title">Constelação Olympos — 17 Personas Especializadas</h2>
+                <p class="section-desc">Emblemas vetoriais exclusivos para cada persona do ecossistema (11 com memória operacional própria e 6 roteadas por anfitriã, sem criação de arquivos duplicados).</p>
+              </div>
+              <button type="button" class="btn btn-secondary btn-sm" data-nav-target="personas">Gerenciar Memórias .md →</button>
+            </div>
+
+            <div id="homePersonasConstellation" class="home-personas-grid"></div>
+          </div>
+        </section>
+
+        <!-- =========================================================================
+             PÁGINA 2: EMISSÃO DE OFÍCIOS OFICIAIS (PADRÃO PR/2018)
+             ========================================================================= -->
+        <section class="page-view hidden" id="page-oficios">
+          <div class="surface-card">
+            <div class="card-header-row">
+              <div>
+                <span class="section-eyebrow">EXPEDIENTE DE GABINETE</span>
+                <h2 class="section-title">Novo Ofício Oficial (Manual da Presidência PR/2018)</h2>
+                <p class="section-desc">Preenche o modelo institucional no Google Docs, arquiva na pasta oficial de Ofícios 2026 e incrementa a memória de Apolo.</p>
+              </div>
+              <a href="https://drive.google.com/drive/folders/1H4bJXClx66Mr5PmRmSQBQLHDpAaKwdab" target="_blank" rel="noopener" class="folder-chip">
+                Abrir Pasta Ofícios 2026 ↗
+              </a>
+            </div>
+
+            <div class="controls-grid">
+              <div class="field-group">
+                <label for="oficioNumeroInput">Nº do Ofício (Sugerido por Apolo)</label>
+                <input type="text" id="oficioNumeroInput" class="input-clean" placeholder="Ex: 155" />
+              </div>
+              <div class="field-group">
+                <label for="oficioDestinatarioInput">Destinatário / Cargo e Órgão</label>
+                <input type="text" id="oficioDestinatarioInput" class="input-clean" placeholder="Ex: Ao Senhor Secretário Municipal de Infraestrutura" />
+              </div>
+              <div class="field-group">
+                <label for="oficioFechoSelect">Fecho Oficial (PR/2018)</label>
+                <select id="oficioFechoSelect" class="input-clean">
+                  <option value="Atenciosamente,">Atenciosamente, (Mesma hierarquia ou inferior)</option>
+                  <option value="Respeitosamente,">Respeitosamente, (Autoridade superior)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="controls-grid" style="grid-template-columns: 1fr; margin-top: 16px;">
+              <div class="field-group">
+                <label for="oficioAssuntoInput">Assunto do Expediente</label>
+                <input type="text" id="oficioAssuntoInput" class="input-clean" placeholder="Ex: Solicitação de manutenção predial na Escola Municipal..." />
+              </div>
+              <div class="field-group">
+                <label for="oficioCorpoInput">Texto Oficial do Ofício</label>
+                <textarea id="oficioCorpoInput" rows="6" class="input-clean" style="resize: vertical;" placeholder="Redija os parágrafos objetivos do expediente..."></textarea>
+              </div>
+            </div>
+
+            <div class="button-group" style="margin-top: 20px;">
+              <button id="gerarOficioRapidoBtn" class="btn btn-primary">Emitir Ofício no Google Docs</button>
+            </div>
+
+            <div id="oficioRapidoOutput" class="job-result-card hidden"></div>
+          </div>
+        </section>
+
+        <!-- =========================================================================
+             PÁGINA 3: PORTARIAS EM LOTE (O PINCEL DE HOMERO)
+             ========================================================================= -->
+        <section class="page-view hidden" id="page-portarias">
+          <div class="surface-card">
+            <div class="card-header-row">
+              <div>
+                <span class="section-eyebrow">PROCESSAMENTO EM LOTE • FAIL-FAST</span>
+                <h2 class="section-title">Emissão de Portarias (Licenças, Anulações e Readaptações)</h2>
+                <p class="section-desc">Valide inconsistências antes da geração e receba a confirmação de término com links diretos para abrir ou copiar todos os documentos gerados.</p>
+              </div>
+              <a href="https://drive.google.com/drive/folders/1qGq5uqxOtN_V63itUheYatLIcj5R86O3" target="_blank" rel="noopener" class="folder-chip">
+                Abrir Pasta Portarias 2026 ↗
+              </a>
+            </div>
+
+            <div class="controls-grid">
+              <div class="field-group">
+                <label for="pincelOperacaoSelect">1. Modalidade da Portaria</label>
+                <select id="pincelOperacaoSelect" class="input-clean">
+                  <option value="LICENCAS">Licenças (Prêmio, Não Remunerada e Anulação)</option>
+                  <option value="READAPTACOES">Readaptações Funcionais</option>
+                </select>
+              </div>
+              <div class="field-group">
+                <label for="pincelPlanilhaSelect">2. Planilha Oficial de Controle</label>
+                <select id="pincelPlanilhaSelect" class="input-clean"></select>
+              </div>
+              <div class="field-group">
+                <label for="pincelAbaSelect">3. Aba Selecionada</label>
+                <select id="pincelAbaSelect" class="input-clean"></select>
+              </div>
+            </div>
+
+            <div class="button-group" style="margin-top: 20px; margin-bottom: 18px;">
+              <button id="pincelDryRunBtn" class="btn btn-secondary">Diagnóstico Pré-Voo (Dry-Run)</button>
+              <button id="pincelGenerateBtn" class="btn btn-primary">Gerar Portarias Pendentes</button>
+              <button id="pincelStopBtn" class="btn btn-danger hidden">Interromper Lote</button>
+            </div>
+
+            <div id="pincelProgressBox" class="output-panel hidden" style="margin-bottom: 16px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12.5px; font-weight: 600;">
+                <span id="pincelProgressLabel">Processando portarias no Google Drive...</span>
+                <span id="pincelProgressNumbers" style="font-family: var(--font-mono);">0 / 0</span>
+              </div>
+              <div class="progress-track-clean">
+                <div id="pincelProgressFill" class="progress-fill-clean" style="width: 0%;"></div>
+              </div>
+            </div>
+
+            <!-- IDENTIFICAÇÃO DE FINALIZAÇÃO E LINKS VISÍVEIS DOS ARQUIVOS GERADOS -->
+            <div id="pincelCompletedJobBox" class="job-result-card hidden">
+              <div class="job-result-header">
+                <div class="job-result-title">
+                  <span class="job-done-badge" id="pincelDoneCheckSvg"></span>
+                  <span id="jobResultHeading">Finalização Confirmada — Portarias Disponíveis</span>
+                </div>
+                <div class="button-group">
+                  <button id="copyAllJobLinksBtn" class="btn btn-secondary btn-sm">Copiar Todos os Links</button>
+                  <button id="closeJobResultBtn" class="btn btn-ghost btn-sm">Fechar</button>
+                </div>
+              </div>
+              <div id="jobResultSummary" style="font-size: 13.5px; color: var(--text-secondary);"></div>
+              <div class="job-links-list" id="jobLinksList"></div>
+            </div>
+
+            <div id="pincelOutput" class="output-panel">
+              Selecione a modalidade, a planilha oficial e a aba para executar a validação pré-voo ou iniciar a geração em lote.
+            </div>
+          </div>
+        </section>
+
+        <!-- =========================================================================
+             PÁGINA 4: CADASTRO DIRETO DE LICENÇA NO HUB
+             ========================================================================= -->
+        <section class="page-view hidden" id="page-licencas">
+          <div class="surface-card">
+            <div class="card-header-row">
+              <div>
+                <span class="section-eyebrow">REGISTRO FUNCIONAL INTEGRADO</span>
+                <h2 class="section-title">Cadastrar Licença Direto no Hub</h2>
+                <p class="section-desc">Registra o servidor na aba correspondente da planilha oficial de Licenças, calcula automaticamente o término (90 dias ou anos afastados) e emite a Portaria no ato se desejado.</p>
+              </div>
+              <a href="https://docs.google.com/spreadsheets/d/1agqeKFfubxvmdq2oND3ndykU2037NIuOXBOHVSLS9oc/edit" target="_blank" rel="noopener" class="folder-chip">
+                Abrir Planilha Oficial de Licenças ↗
+              </a>
+            </div>
+
+            <form id="formCadastroLicenca">
+              <div class="controls-grid">
+                <div class="field-group">
+                  <label for="licModalidadeSelect">Modalidade da Licença</label>
+                  <select id="licModalidadeSelect" class="input-clean">
+                    <option value="PREMIO">Licença-Prêmio (90 dias corridos)</option>
+                    <option value="NAO_REMUNERADA">Licença Sem Remuneração</option>
+                    <option value="ANULACAO">Portaria de Anulação de Licença</option>
+                  </select>
+                </div>
+
+                <div class="field-group" id="grpLicNome">
+                  <label for="licNomeInput">Nome Completo do(a) Servidor(a)</label>
+                  <input type="text" id="licNomeInput" class="input-clean" placeholder="Ex: MARIA DA SILVA OLIVEIRA" />
+                </div>
+
+                <div class="field-group" id="grpLicMatricula">
+                  <label for="licMatriculaInput">Matrícula Funcional</label>
+                  <input type="text" id="licMatriculaInput" class="input-clean" placeholder="Ex: 123456-7" />
+                </div>
+
+                <div class="field-group" id="grpLicCargo">
+                  <label for="licCargoInput">Cargo / Categoria Funcional</label>
+                  <input type="text" id="licCargoInput" class="input-clean" placeholder="Ex: Professor de Ensino Fundamental" />
+                </div>
+              </div>
+
+              <div class="controls-grid" style="margin-top: 16px;">
+                <div class="field-group" id="grpLicPeriodoAquisitivo">
+                  <label for="licPeriodoInput">Período Aquisitivo (Nº do quinquênio ou intervalo)</label>
+                  <input type="text" id="licPeriodoInput" class="input-clean" placeholder="Ex: 1 (ou 2019/2024)" />
+                </div>
+
+                <div class="field-group hidden" id="grpLicAnosAfastados">
+                  <label for="licAnosInput">Quantidade de Anos Afastados</label>
+                  <input type="number" min="1" max="10" id="licAnosInput" class="input-clean" placeholder="Ex: 2" />
+                </div>
+
+                <div class="field-group hidden" id="grpLicPortariaAnular">
+                  <label for="licPortariaAnularInput">Nº da Portaria a Anular</label>
+                  <input type="text" id="licPortariaAnularInput" class="input-clean" placeholder="Ex: 120/2026" />
+                </div>
+
+                <div class="field-group hidden" id="grpLicParecer">
+                  <label for="licParecerInput">Nº do Parecer Jurídico</label>
+                  <input type="text" id="licParecerInput" class="input-clean" placeholder="Ex: 045/2026-ASJUR" />
+                </div>
+
+                <div class="field-group" id="grpLicDataInicio">
+                  <label for="licDataInicioInput">Data de Início</label>
+                  <input type="date" id="licDataInicioInput" class="input-clean" />
+                </div>
+
+                <div class="field-group" id="grpLicDataTermino">
+                  <label for="licDataTerminoInput">Data de Término (Calculada Automaticamente)</label>
+                  <input type="date" id="licDataTerminoInput" class="input-clean" />
+                </div>
+              </div>
+
+              <div class="controls-grid" style="margin-top: 16px; align-items: end;">
+                <div class="field-group">
+                  <label for="licNumPortariaInput">Nº da Portaria</label>
+                  <input type="text" id="licNumPortariaInput" class="input-clean" value="AUTO" placeholder="AUTO (Alocar via Olho de Apolo)" />
+                </div>
+
+                <div class="field-group">
+                  <label style="display: flex; align-items: center; gap: 9px; cursor: pointer; padding: 10px 0;">
+                    <input type="checkbox" id="licRepublicadoCheck" />
+                    <span>Republicação por incorreção</span>
+                  </label>
+                </div>
+
+                <div class="field-group">
+                  <label style="display: flex; align-items: center; gap: 9px; cursor: pointer; padding: 10px 0;">
+                    <input type="checkbox" id="licRetroativoCheck" />
+                    <span>Efeitos retroativos à data inicial</span>
+                  </label>
+                </div>
+
+                <div class="field-group">
+                  <label style="display: flex; align-items: center; gap: 9px; cursor: pointer; padding: 10px 0; color: var(--accent-gold); font-weight: 700;">
+                    <input type="checkbox" id="licGerarAgoraCheck" checked />
+                    <span>Emitir documento Google Docs agora</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="button-group" style="margin-top: 20px;">
+                <button type="submit" id="btnSalvarLicenca" class="btn btn-primary">Registrar Licença e Gerar Ato</button>
+                <button type="reset" class="btn btn-secondary">Limpar Campos</button>
+              </div>
+            </form>
+
+            <div id="licencaOutputFeedback" class="job-result-card hidden"></div>
+          </div>
+        </section>
+
+        <!-- =========================================================================
+             PÁGINA 5: CERTIFICADOS & DECLARAÇÕES (A LIRA DE ORFEU)
+             ========================================================================= -->
+        <section class="page-view hidden" id="page-certificados">
+          <div class="surface-card">
+            <div class="card-header-row">
+              <div>
+                <span class="section-eyebrow">FORMAÇÃO CONTINUADA • QR CODE SHA-256</span>
+                <h2 class="section-title">Certificados e Declarações (A Lira de Orfeu)</h2>
+                <p class="section-desc">Padronização automática de participantes, gravação de código verificável na aba <code>Registro_Autenticidade</code> e links visíveis de todos os PDFs emitidos.</p>
+              </div>
+              <a href="https://drive.google.com/drive/folders/1XriqpPQsWjQxJROsE_FyaQQpCwybJSUJ" target="_blank" rel="noopener" class="folder-chip">
+                Abrir Pasta A Lira de Orfeu ↗
+              </a>
+            </div>
+
+            <div class="controls-grid">
+              <div class="field-group">
+                <label for="liraModalidadeSelect">1. Modalidade do Documento</label>
+                <select id="liraModalidadeSelect" class="input-clean">
+                  <option value="CERTIFICADO">Certificado de Evento / Formação</option>
+                  <option value="DECLARACAO">Declaração Institucional</option>
+                </select>
+              </div>
+              <div class="field-group">
+                <label for="liraPlanilhaSelect">2. Planilha do Evento</label>
+                <select id="liraPlanilhaSelect" class="input-clean"></select>
+              </div>
+              <div class="field-group">
+                <label for="liraAbaSelect">3. Aba de Participantes</label>
+                <select id="liraAbaSelect" class="input-clean"></select>
+              </div>
+            </div>
+
+            <div class="button-group" style="margin-top: 20px; margin-bottom: 16px;">
+              <button id="liraHigienizarBtn" class="btn btn-secondary">Padronizar Nomes e E-mails</button>
+              <button id="liraExecutarBtn" class="btn btn-primary">Emitir PDFs e Enviar por E-mail</button>
+            </div>
+
+            <div id="liraCompletedJobBox" class="job-result-card hidden"></div>
+
+            <div id="liraOutput" class="output-panel">
+              Selecione a planilha do evento e a aba de participantes para higienizar registros ou iniciar a emissão com QR Code.
+            </div>
+          </div>
+        </section>
+
+        <!-- =========================================================================
+             PÁGINA 6: DIÁRIO OFICIAL FEMURN (FOGO DE PROMETHEUS — 2 FRENTES UNIFICADAS)
+             ========================================================================= -->
+        <section class="page-view hidden" id="page-diario-oficial">
+          <div class="surface-card">
+            <div class="card-header-row">
+              <div>
+                <span class="section-eyebrow">INTEGRAÇÃO UNIFICADA EM 2 FRENTES</span>
+                <h2 class="section-title">Fogo de Prometheus — Monitor Diário FEMURN</h2>
+                <p class="section-desc">Coleta pesada com Chromium + OCR no GitHub Actions conectada diretamente ao receptor único no GAS do Hub Olympos, gravando sempre na planilha oficial fixa (aba <code>Publicações</code>).</p>
+              </div>
+              <div class="button-group">
+                <a id="promSheetLinkBtn" href="https://docs.google.com/spreadsheets/d/1AIncS3ITYx_kT_tmfkAL5cYnw7nnuMAAUgiCd2lluqY/edit" target="_blank" rel="noopener" class="folder-chip">
+                  Abrir Planilha Oficial do Diário ↗
+                </a>
+                <button id="prometheusTriggerActionBtn" class="btn btn-accent btn-sm">Coletar Agora (GitHub Actions)</button>
+                <button id="prometheusChatSummaryBtn" class="btn btn-secondary btn-sm">Enviar Resumo ao Chat</button>
+                <button id="prometheusSyncBtn" class="btn btn-primary btn-sm">Sincronizar Memória de Hélio</button>
+              </div>
+            </div>
+
+            <!-- PAINEL ARQUITETURAL DAS 2 FRENTES (GITHUB + GAS) -->
+            <div class="architecture-banner">
+              <div class="arch-front-col">
+                <span class="pill-badge pill-gold" style="align-self: flex-start;">FRENTE 1 • GITHUB ACTIONS (MOTOR PESADO)</span>
+                <strong style="font-size: 14px;" id="promWebhookStatus">Verificando integração...</strong>
+                <span style="font-size: 12.5px; color: var(--text-secondary);" id="promLastRun">Execução automática seg–sex às 07:00 BRT com Playwright, pypdf e Tesseract OCR.</span>
+              </div>
+              <div class="arch-front-col">
+                <span class="pill-badge pill-green" style="align-self: flex-start;">FRENTE 2 • HUB GAS GATEWAY (RECEPTOR ÚNICO)</span>
+                <strong style="font-size: 14px;">Planilha Oficial Única + LockService Ativo</strong>
+                <span style="font-size: 12.5px; color: var(--text-secondary);">Zero recriação de planilhas: deduplicação por Código FEMURN, extração NER (servidores/matrículas) e despacho para Hélio, Hera, Nike e Têmis.</span>
+              </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+              <strong style="font-family: var(--font-display); font-size: 15px;">Publicações e PDFs Arquivados nas Pastas Oficiais (2026)</strong>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <select id="prometheusSectorFilter" class="input-clean" style="width: auto; padding: 7px 12px; font-size: 13px;">
+                  <option value="TODOS">Todos os Setores</option>
+                  <option value="Portarias 2026">Portarias 2026</option>
+                  <option value="Gabinete 2026">Gabinete 2026</option>
+                  <option value="Assessoria Jurídica 2026">Assessoria Jurídica 2026</option>
+                </select>
+                <input type="search" id="prometheusSearchInput" class="input-clean" style="width: 240px; padding: 7px 12px; font-size: 13px;" placeholder="Filtrar ato, servidor ou código..." />
+              </div>
+            </div>
+
+            <div class="table-wrapper">
+              <table class="clean-table">
+                <thead>
+                  <tr>
+                    <th style="width: 135px;">Data</th>
+                    <th style="width: 175px;">Setor / Categoria</th>
+                    <th>Ato Oficial &amp; Entidades Identificadas (NER)</th>
+                    <th class="text-right" style="width: 130px;">Documento</th>
+                  </tr>
+                </thead>
+                <tbody id="prometheusTableBody">
+                  <tr><td colspan="4" class="text-muted text-center" style="padding: 26px;">Carregando publicações monitoradas...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- =========================================================================
+             PÁGINA 7: O PAPIRO DE CADMO (ETL MENSAL DE PERMUTAS INTERMUNICIPAIS RN)
+             ========================================================================= -->
+        <section class="page-view hidden" id="page-papiro-cadmo">
+          <div class="surface-card">
+            <div class="card-header-row">
+              <div>
+                <span class="section-eyebrow">GOVERNANÇA INTERMUNICIPAL • 16 ENTES MONITORADOS</span>
+                <h2 class="section-title">O Papiro de Cadmo — Coletor Mensal de Servidores (RN)</h2>
+                <p class="section-desc">Motor ETL em Python + Playwright agendado todo dia 12 às 03:00 UTC para validar vínculos ativos de servidores cedidos e permutados entre Ceará-Mirim, 14 municípios potiguares e SEEC/RN.</p>
+              </div>
+              <div class="button-group">
+                <a href="https://drive.google.com/drive/folders/1VxVVONEJya4XqI2GfxHK7AFqk8dpwX9I" target="_blank" rel="noopener" class="folder-chip">
+                  Pasta Setor Pessoal (CSVs) ↗
+                </a>
+                <a href="https://docs.google.com/spreadsheets/d/1fOZHe871yxu6UdF0vsRzjSzQBc7AVFRZZtx3JSCdwCY/edit" target="_blank" rel="noopener" class="folder-chip">
+                  Matriz Oficial de Permutas ↗
+                </a>
+                <button id="cadmoTriggerEtlBtn" class="btn btn-primary btn-sm">Executar Coleta Sob Demanda</button>
+              </div>
+            </div>
+
+            <div class="architecture-banner">
+              <div class="arch-front-col">
+                <span class="pill-badge pill-gold" style="align-self: flex-start;">ÚLTIMA COMPETÊNCIA CONSOLIDADA</span>
+                <strong style="font-size: 15px;" id="cadmoLastCompetencia">Verificando acervo no Drive...</strong>
+                <span style="font-size: 12.5px; color: var(--text-secondary);" id="cadmoLastUploadMeta">Consumo direto por Cadmo (busca cadastral) e Hera (auditoria de permutas).</span>
+              </div>
+              <div class="arch-front-col">
+                <span class="pill-badge pill-blue" style="align-self: flex-start;">ESQUEMA CANÔNICO UNIFICADO (8 COLUNAS)</span>
+                <div class="schema-chips-row">
+                  <span class="schema-chip">ente_origem</span>
+                  <span class="schema-chip">competencia</span>
+                  <span class="schema-chip">matricula</span>
+                  <span class="schema-chip">nome_completo</span>
+                  <span class="schema-chip">cargo_funcao</span>
+                  <span class="schema-chip">carga_horaria</span>
+                  <span class="schema-chip">lotacao_orgao</span>
+                  <span class="schema-chip">situacao_vinculo</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- BASES CSV CONSOLIDADAS NO GOOGLE DRIVE -->
+            <div id="cadmoCsvFilesSection" style="margin-bottom: 24px;">
+              <strong style="font-family: var(--font-display); font-size: 15px; display: block; margin-bottom: 10px;">Arquivos Consolidados Disponíveis no Google Drive</strong>
+              <div id="cadmoCsvFilesList" class="output-panel">Consultando pasta do Setor Pessoal...</div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;">
+              <strong style="font-family: var(--font-display); font-size: 15px;">Portais da Transparência Monitorados (15 Municípios + Estado do RN)</strong>
+              <input type="search" id="cadmoPortalFilterInput" class="input-clean" style="width: 240px; padding: 7px 12px; font-size: 13px;" placeholder="Filtrar município ou tecnologia..." />
+            </div>
+
+            <div id="cadmoPortaisGrid" class="controls-grid" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px;"></div>
+          </div>
+        </section>
+
+        <!-- =========================================================================
+             PÁGINA 8: PERSONAS & MEMÓRIAS OPERACIONAIS (.MD)
+             ========================================================================= -->
+        <section class="page-view hidden" id="page-personas">
+          <div class="surface-card">
+            <div class="card-header-row">
+              <div>
+                <span class="section-eyebrow">VEDAÇÃO DE DUPLICATAS • TETO DE 60 LINHAS</span>
+                <h2 class="section-title">As 17 Personas Olympos &amp; 11 Memórias Operacionais</h2>
+                <p class="section-desc">Todas as personas consultam e editam exclusivamente os arquivos canônicos já existentes na pasta de Memórias, sem jamais recriar arquivos <code>.md</code> duplicados.</p>
+              </div>
+              <div class="button-group">
+                <button id="snapshotDedaloBtn" class="btn btn-secondary btn-sm">Gerar Snapshot (Dédalo)</button>
+                <button id="copyGeminiContextBtn" class="btn btn-secondary btn-sm">Copiar Contexto p/ Gemini</button>
+                <button id="syncApoloBtn" class="btn btn-primary btn-sm">Sincronizar Drive + .md</button>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 22px; flex-wrap: wrap; align-items: center;">
+              <input type="search" id="memoriaSearchInput" class="input-clean" style="max-width: 260px;" placeholder="Filtrar persona ou domínio..." />
+              <div style="display: flex; gap: 8px; flex: 1; min-width: 300px; flex-wrap: wrap;">
+                <select id="quickAlertTargetSelect" class="input-clean" style="max-width: 200px;">
+                  <option value="_memoria_helio.md">Hélio (Diário FEMURN)</option>
+                  <option value="_memoria_apolo.md">Apolo (Numeração 2026)</option>
+                  <option value="_memoria_hera.md">Hera (RH &amp; Permutas)</option>
+                  <option value="_memoria_nike.md">Nike (Seletivos PSS)</option>
+                  <option value="_memoria_temis.md">Têmis (Jurídico)</option>
+                  <option value="_memoria_orfeu.md">Orfeu (Certificados)</option>
+                  <option value="_memoria_homero.md">Homero (Portarias)</option>
+                  <option value="_memoria_hestia.md">Héstia (Gabinete)</option>
+                  <option value="_memoria_dedalo.md">Dédalo (Infra/Backups)</option>
+                  <option value="_memoria_atena.md">Atena (Pedagógico)</option>
+                  <option value="_memoria_hermes.md">Hermes (Transporte)</option>
+                </select>
+                <input type="text" id="quickAlertMessageInput" class="input-clean" style="flex: 1; min-width: 200px;" placeholder="Despachar alerta oficial no Correio do Olimpo..." />
+                <button id="quickAlertSendBtn" class="btn btn-primary btn-sm">Registrar Recado</button>
+              </div>
+            </div>
+
+            <div id="memoriasGrid" class="memorias-grid">
+              <div class="output-panel">Carregando ecossistema de personas e memórias...</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- =========================================================================
+             PÁGINA 9: BUSCA GLOBAL NO ACERVO MULTI-ANO (2025–2026)
+             ========================================================================= -->
+        <section class="page-view hidden" id="page-busca">
+          <div class="surface-card">
+            <div class="card-header-row">
+              <div>
+                <span class="section-eyebrow">MOTOR TOKENIZADO RECURSIVO</span>
+                <h2 class="section-title">Busca Global no Acervo SMEB (2025 e 2026)</h2>
+                <p class="section-desc">Localiza arquivos independentemente de acentos, traços ou ordem das palavras (ex.: pesquisar <code>portaria 163</code> encontra <code>Portaria_Nº163_2026</code> em subpastas setoriais).</p>
+              </div>
+            </div>
+
+            <div class="controls-grid" style="grid-template-columns: 3fr 1fr auto; align-items: end; margin-bottom: 14px;">
+              <div class="field-group">
+                <label for="pageBuscaInput">Termo de Pesquisa (Servidor, Matrícula, Nº do Ato ou * para listar recentes)</label>
+                <input type="search" id="pageBuscaInput" class="input-clean" placeholder="Ex: Portaria 163, Ofício 155, Permuta, Maria..." />
+              </div>
+              <div class="field-group">
+                <label for="pageBuscaAnoSelect">Recorte Temporal</label>
+                <select id="pageBuscaAnoSelect" class="input-clean">
+                  <option value="TODOS">2025 e 2026 (Completo)</option>
+                  <option value="2026">Exercício 2026 (Ativo)</option>
+                  <option value="2025">Acervo 2025 (Histórico)</option>
+                </select>
+              </div>
+              <div>
+                <button id="pageBuscaExecBtn" class="btn btn-primary" style="height: 41px;">Pesquisar Acervo</button>
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
+              <span class="stat-label">Sugestões rápidas:</span>
+              <button type="button" class="btn-mini" data-quick-query="Portaria">Portarias</button>
+              <button type="button" class="btn-mini" data-quick-query="Oficio">Ofícios</button>
+              <button type="button" class="btn-mini" data-quick-query="FEMURN">FEMURN</button>
+              <button type="button" class="btn-mini" data-quick-query="Licenca">Licenças</button>
+              <button type="button" class="btn-mini" data-quick-query="*">Documentos Recentes (*)</button>
+            </div>
+
+            <div id="pageBuscaStatusMsg" style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">
+              Digite um termo ou selecione um filtro rápido para varrer as pastas oficiais.
+            </div>
+
+            <div class="table-wrapper">
+              <table class="clean-table">
+                <thead>
+                  <tr>
+                    <th style="width: 85px;">Ano</th>
+                    <th style="width: 240px;">Setor / Subpasta</th>
+                    <th style="width: 115px;">Criação</th>
+                    <th>Título do Arquivo</th>
+                    <th class="text-right" style="width: 150px;">Acesso</th>
+                  </tr>
+                </thead>
+                <tbody id="pageBuscaTableBody">
+                  <tr><td colspan="5" class="text-muted text-center" style="padding: 28px;">Nenhuma pesquisa executada nesta sessão.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- =========================================================================
+             PÁGINA 10: CONFIGURAÇÕES, GATEWAY GAS & PREFERÊNCIAS 60-30-10
+             ========================================================================= -->
+        <section class="page-view hidden" id="page-configuracoes">
+          <div class="surface-card">
+            <div class="card-header-row">
+              <div>
+                <span class="section-eyebrow">ARQUITETURA DESACOPLADA</span>
+                <h2 class="section-title">Conexão Dual-Front, Sessão RBAC e Aparência</h2>
+                <p class="section-desc">Configure o endpoint do Google Apps Script utilizado pelo GitHub Pages e personalize o modo visual 60-30-10.</p>
+              </div>
+            </div>
+
+            <div class="controls-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
+              <div>
+                <h3 style="font-size: 1.05rem; margin-bottom: 12px;">Endpoint do Gateway Google Apps Script</h3>
+                <div class="field-group" style="margin-bottom: 14px;">
+                  <label for="configGasUrlInput">URL de Implantação Web App (<code>/exec</code>)</label>
+                  <input type="url" id="configGasUrlInput" class="input-clean" style="font-family: var(--font-mono); font-size: 12px;" placeholder="https://script.google.com/macros/s/.../exec" />
+                </div>
+                <div class="button-group" style="margin-bottom: 14px;">
+                  <button id="configTestarApiBtn" class="btn btn-secondary btn-sm">Testar Latência</button>
+                  <button id="configSalvarApiBtn" class="btn btn-primary btn-sm">Salvar Endpoint</button>
+                  <button id="configResetApiBtn" class="btn btn-ghost btn-sm">Restaurar Padrão</button>
+                </div>
+                <div id="configTestResult" class="output-panel" style="font-size: 12.5px;">
+                  Pronto para verificar conectividade com o Gateway GAS.
+                </div>
+              </div>
+
+              <div>
+                <h3 style="font-size: 1.05rem; margin-bottom: 12px;">Identidade RBAC &amp; Tema Visual</h3>
+                <div class="output-panel" style="margin-bottom: 16px;">
+                  <div style="margin-bottom: 6px;">Operador Autenticado: <strong id="configUserLabel">Gabinete SMEB</strong></div>
+                  <div style="margin-bottom: 6px;">Perfil de Acesso: <strong id="configUserRole">Governança Total</strong></div>
+                  <div style="margin-bottom: 12px; font-size: 12px; color: var(--text-muted);">Páginas Habilitadas: <span id="configUserTabs">Todas</span></div>
+                  <button id="configLogoutBtn" class="btn btn-secondary btn-sm">Trocar Usuário / Encerrar Sessão</button>
+                </div>
+
+                <div class="field-group">
+                  <label for="configTemaSelect">Esquema Cromático Editorial (Proporção 60-30-10)</label>
+                  <select id="configTemaSelect" class="input-clean">
+                    <option value="light">Modo Claro — Editorial Paper (60% Branco/Gelo, 30% Obsidiana, 10% Ouro Solar)</option>
+                    <option value="dark">Modo Escuro — DeepMind Midnight (60% Obsidiana, 30% Alabastro, 10% Ouro Luminoso)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- =========================================================================
+         MODAL DE EDIÇÃO DE MEMÓRIA .MD (TETO ESTRITO DE 60 LINHAS)
+         ========================================================================= -->
+    <div id="memoriaModal" class="modal-backdrop hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3 id="modalMemoriaTitle" style="font-size: 1.08rem;">Memória Operacional</h3>
+          <button id="closeModalBtn" class="icon-capsule-btn" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <textarea id="modalMemoriaTextarea" rows="16" class="input-clean" style="font-family: var(--font-mono); font-size: 12.5px; line-height: 1.55;"></textarea>
+        </div>
+        <div class="modal-footer">
+          <span class="pill-badge pill-gold" id="modalLineCounter">0 / 60 linhas</span>
+          <div class="button-group">
+            <button id="saveMemoriaBtn" class="btn btn-primary btn-sm">Salvar no Arquivo Existente</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================================
+         MODAL DE AJUSTE DE CONTADORES SEQUENCIAIS (OLHO DE APOLO)
+         ========================================================================= -->
+    <div id="contadoresModal" class="modal-backdrop hidden">
+      <div class="modal-card" style="max-width: 560px;">
+        <div class="modal-header">
+          <h3 style="font-size: 1.08rem;">Ajuste de Numeração Sequencial 2026 (Apolo)</h3>
+          <button id="closeContadoresModalBtn" class="icon-capsule-btn" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <p class="section-desc" style="margin-bottom: 16px;">
+            Atualiza diretamente a seção de estado oficial em <code>_memoria_apolo.md</code> com registro auditável no histórico.
+          </p>
+          <div class="controls-grid" style="grid-template-columns: repeat(2, 1fr);">
+            <div class="field-group">
+              <label for="inputProximoOficioMd">Próximo Ofício 2026</label>
+              <input type="number" id="inputProximoOficioMd" class="input-clean" min="1" value="155" />
+            </div>
+            <div class="field-group">
+              <label for="inputProximaPortariaMd">Próxima Portaria 2026</label>
+              <input type="number" id="inputProximaPortariaMd" class="input-clean" min="1" value="163" />
+            </div>
+          </div>
+          <div class="controls-grid" style="grid-template-columns: 1fr; margin-top: 14px;">
+            <div class="field-group">
+              <label for="inputSignatarioMd">Signatário Titular da SMEB</label>
+              <input type="text" id="inputSignatarioMd" class="input-clean" placeholder="Nome ou Cargo Oficial do(a) Secretário(a)" />
+            </div>
+            <div class="field-group">
+              <label for="inputMotivoAjusteMd">Justificativa do Ajuste (Rolling Log)</label>
+              <input type="text" id="inputMotivoAjusteMd" class="input-clean" placeholder="Ex: Alinhamento com ato assinado em gabinete" />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <a href="https://drive.google.com/file/d/1wGlcqqTuWAyy-2VRO_QqyyMcKHb4AmRn/view" target="_blank" rel="noopener" class="folder-chip">Abrir Memória no Drive ↗</a>
+          <button id="saveContadoresMdBtn" class="btn btn-primary btn-sm">Gravar Numeração</button>
+        </div>
+      </div>
+    </div>
+
+    <?!= include('ui_scripts'); ?>
+  </body>
+</html>
