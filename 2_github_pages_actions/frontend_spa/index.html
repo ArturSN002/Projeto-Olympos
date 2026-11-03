@@ -55,7 +55,7 @@
     <!-- =========================================================================
          MASTHEAD EDITORIAL TRANSLÚCIDA (REFERÊNCIA DEEPMIND.GOOGLE & BLOG.GOOGLE)
          ========================================================================= -->
-    <header class="top-masthead">
+    <header class="top-masthead topbar">
       <div class="masthead-upper">
         <div style="display: flex; align-items: center; gap: 10px;">
           <button id="mobileMenuToggleBtn" class="icon-capsule-btn mobile-menu-btn" aria-label="Alternar navegação"></button>
@@ -69,7 +69,7 @@
         <div class="masthead-controls">
           <div class="quick-search-pill">
             <button id="topQuickSearchBtn" class="btn-search-trigger" title="Pesquisar no acervo" aria-label="Pesquisar"></button>
-            <input type="search" id="topQuickSearchInput" placeholder="Pesquisar ato, servidor ou portaria..." />
+            <input type="search" id="topQuickSearchInput" placeholder="Pesquisar ato, servidor ou portaria..." autocomplete="off" />
             <span class="kbd-hint">/</span>
           </div>
 
@@ -93,8 +93,11 @@
         </div>
       </div>
 
-      <!-- TRILHO DE NAVEGAÇÃO MODULAR (1 BLOCO = 1 PÁGINA) -->
-      <nav class="masthead-nav-rail" aria-label="Navegação modular do Hub Olympos">
+      <!-- BACKDROP OVERLAY PARA SIDEBAR/DRAWER NO MOBILE -->
+      <div id="sidebarBackdrop" class="sidebar-backdrop" onclick="document.body.classList.remove('nav-drawer-open')" aria-hidden="true"></div>
+
+      <!-- TRILHO DE NAVEGAÇÃO MODULAR (1 BLOCO = 1 PÁGINA / SIDEBAR NO MOBILE) -->
+      <nav class="masthead-nav-rail sidebar" aria-label="Navegação modular do Hub Olympos">
         <div class="nav-rail-inner">
           <a href="#visao-geral" class="nav-link active" data-page="visao-geral">Visão Geral</a>
           <span class="nav-divider-dot" aria-hidden="true"></span>
@@ -610,7 +613,7 @@
               </div>
             </div>
 
-            <div class="table-wrapper">
+            <div class="table-wrapper table-responsive">
               <table class="clean-table">
                 <thead>
                   <tr>
@@ -705,9 +708,9 @@
             </div>
 
             <div style="display: flex; gap: 10px; margin-bottom: 22px; flex-wrap: wrap; align-items: center;">
-              <input type="search" id="memoriaSearchInput" class="input-clean" style="max-width: 260px;" placeholder="Filtrar persona ou domínio..." />
-              <div style="display: flex; gap: 8px; flex: 1; min-width: 300px; flex-wrap: wrap;">
-                <select id="quickAlertTargetSelect" class="input-clean" style="max-width: 200px;">
+              <input type="search" id="memoriaSearchInput" class="input-clean" style="max-width: 260px;" placeholder="Filtrar persona ou domínio..." autocomplete="off" />
+              <div class="quick-alert-bar quick-alert-bar-responsive" style="display: flex; gap: 8px; flex: 1; min-width: 0; width: 100%; flex-wrap: wrap;">
+                <select id="quickAlertTargetSelect" class="input-clean" style="max-width: 200px;" aria-label="Destinatário do Alerta">
                   <option value="_memoria_helio.md">Hélio (Diário FEMURN)</option>
                   <option value="_memoria_apolo.md">Apolo (Numeração 2026)</option>
                   <option value="_memoria_hera.md">Hera (RH &amp; Permutas)</option>
@@ -720,7 +723,7 @@
                   <option value="_memoria_atena.md">Atena (Pedagógico)</option>
                   <option value="_memoria_hermes.md">Hermes (Transporte)</option>
                 </select>
-                <input type="text" id="quickAlertMessageInput" class="input-clean" style="flex: 1; min-width: 200px;" placeholder="Despachar alerta oficial no Correio do Olimpo..." />
+                <input type="text" id="quickAlertMessageInput" class="input-clean" style="flex: 1; min-width: min(100%, 180px);" placeholder="Despachar alerta oficial no Correio do Olimpo..." autocomplete="off" aria-label="Mensagem do Alerta" />
                 <button id="quickAlertSendBtn" class="btn btn-primary btn-sm">Registrar Recado</button>
               </div>
             </div>
@@ -943,9 +946,12 @@
           </p>
 
           <form id="supabaseSetupForm">
+            <!-- Campo de identificador acessível oculto exigido por navegadores Chromium e WCAG para formulários com senha -->
+            <input type="text" name="username" autocomplete="username" class="sr-only" tabindex="-1" aria-hidden="true" value="admin-smeb" />
+
             <div class="field-group" style="margin-bottom: 14px;">
               <label for="setupSupabaseUrl">URL do Projeto Supabase (Endpoint REST)</label>
-              <input type="url" id="setupSupabaseUrl" class="input-clean" placeholder="https://seu-projeto.supabase.co" required />
+              <input type="url" id="setupSupabaseUrl" class="input-clean" value="https://rbwizevjvbvjwtbwwyif.supabase.co" placeholder="https://seu-projeto.supabase.co" required autocomplete="url" />
               <small style="color: var(--text-muted); font-size: 0.75rem;">Disponível em Project Settings &gt; API &gt; Project URL</small>
             </div>
 
@@ -957,7 +963,7 @@
 
             <div class="field-group" style="margin-bottom: 18px;">
               <label for="setupGasWebhookUrl">URL do WebApp Google Apps Script (Opcional - Espelho)</label>
-              <input type="url" id="setupGasWebhookUrl" class="input-clean" placeholder="https://script.google.com/macros/s/.../exec" />
+              <input type="url" id="setupGasWebhookUrl" class="input-clean" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="url" />
             </div>
 
             <div id="setupModalFeedback" style="display: none; padding: 10px; border-radius: 8px; margin-bottom: 14px; font-size: 0.85rem;"></div>
@@ -999,7 +1005,7 @@
             <!-- Campo: Email Institucional -->
             <div class="field-group" style="margin-bottom: 14px;">
               <label for="novoUsuarioEmail">Email Institucional *</label>
-              <input type="email" id="novoUsuarioEmail" class="input-clean" placeholder="servidor@smeb.cearamirim.rn.gov.br" required autocomplete="email" />
+              <input type="email" id="novoUsuarioEmail" class="input-clean" placeholder="servidor@smeb.cearamirim.rn.gov.br" required autocomplete="email username" />
             </div>
 
             <!-- Campo: Papel (select) -->
@@ -1016,7 +1022,7 @@
             <!-- Campo: Departamento -->
             <div class="field-group" style="margin-bottom: 14px;">
               <label for="novoUsuarioDepartamento">Departamento / Lotação</label>
-              <input type="text" id="novoUsuarioDepartamento" class="input-clean" value="Secretaria Municipal de Educacao" />
+              <input type="text" id="novoUsuarioDepartamento" class="input-clean" value="Secretaria Municipal de Educacao" autocomplete="organization" />
             </div>
 
             <!-- Campo: Senha Temporária -->
@@ -1061,6 +1067,7 @@
     <script src="js/views/certificados.js"></script>
     <script src="js/views/diarioOficial.js"></script>
     <script src="js/views/papiroCadmo.js"></script>
+    <script src="js/memorias_catalogo.js"></script>
     <script src="js/views/personas.js"></script>
     <script src="js/views/busca.js"></script>
     <script src="js/views/configuracoes.js"></script>

@@ -18,8 +18,16 @@ window.OlymposSupabase = (function() {
       .replace(/\/(rest|auth)\/v1(\/.*)?$/i, '');
   }
 
+  const DEFAULT_PUBLIC_SUPABASE_URL = 'https://rbwizevjvbvjwtbwwyif.supabase.co';
+
   function getConfig() {
-    const rawUrl = localStorage.getItem('olympos_supabase_url') || '';
+    let rawUrl = localStorage.getItem('olympos_supabase_url');
+    if (!rawUrl) {
+      rawUrl = DEFAULT_PUBLIC_SUPABASE_URL;
+      try {
+        localStorage.setItem('olympos_supabase_url', DEFAULT_PUBLIC_SUPABASE_URL);
+      } catch (e) {}
+    }
     const cleanUrl = normalizeSupabaseUrl(rawUrl);
     if (rawUrl && cleanUrl && rawUrl !== cleanUrl) {
       localStorage.setItem('olympos_supabase_url', cleanUrl);
@@ -39,7 +47,7 @@ window.OlymposSupabase = (function() {
     const cfg = getConfig();
 
     if (!isConfigured()) {
-      console.warn('[OlymposSupabase] Supabase não configurado no localStorage. Abrindo modal de configuração guiada.');
+      console.info('[OlymposSupabase] Inicialização em modo público. Credenciais de autenticação aguardando configuração via Setup Modal.');
       // Evita travar a página: aguarda o DOM e abre o Setup Modal de forma graciosa
       if (window.OlymposSetupModal && typeof window.OlymposSetupModal.abrirModal === 'function') {
         window.OlymposSetupModal.abrirModal();

@@ -19,11 +19,15 @@ window.OlymposViews.personas = (function() {
 
   function init() {
     bindEvents();
-    if (!isLoaded) {
-      carregarMemorias();
-    } else {
+    // Inicialização síncrona imediata a partir do catálogo consolidado embutido
+    if (window.OLYMPOS_MEMORIAS_CATALOGO) {
+      memorias = window.OLYMPOS_MEMORIAS_CATALOGO.listarTodas();
+      personasExtras = window.OLYMPOS_MEMORIAS_CATALOGO.listarExtras();
+      isLoaded = true;
       filtrarMemorias();
     }
+    // Sincronização em background caso o Gateway GAS esteja disponível
+    carregarMemorias(true);
   }
 
   function bindEvents() {
@@ -65,23 +69,58 @@ window.OlymposViews.personas = (function() {
     });
   }
 
-  function carregarMemorias() {
+  function carregarMemorias(silencioso) {
+    if (!isLoaded && window.OLYMPOS_MEMORIAS_CATALOGO) {
+      memorias = window.OLYMPOS_MEMORIAS_CATALOGO.listarTodas();
+      personasExtras = window.OLYMPOS_MEMORIAS_CATALOGO.listarExtras();
+      isLoaded = true;
+      filtrarMemorias();
+    }
+
     window.OlymposApi.chamar('overview_get', {}, function(res) {
       const data = (res && res.data) ? res.data : res;
-      if (data) {
-        memorias = data.memorias || [];
-        personasExtras = (data.personasExtras && data.personasExtras.length) ? data.personasExtras : EXTRAS_DEFAULT;
+      if (data && data.memorias && data.memorias.length) {
+        memorias = data.memorias.map(function(remota) {
+          const catItem = window.OLYMPOS_MEMORIAS_CATALOGO ? window.OLYMPOS_MEMORIAS_CATALOGO.obterPorArquivo(remota.arquivo) : null;
+          const temPendente = window.OLYMPOS_MEMORIAS_CATALOGO ? window.OLYMPOS_MEMORIAS_CATALOGO.temEdicaoLocalPendente(remota.arquivo) : false;
+
+          let conteudo = remota.conteudoCompleto;
+          if (temPendente && catItem) {
+            conteudo = catItem.conteudoCompleto;
+          } else if (!conteudo && catItem) {
+            conteudo = catItem.conteudoCompleto;
+          }
+
+          return Object.assign({}, catItem || {}, remota, {
+            conteudoCompleto: conteudo,
+            totalLinhas: conteudo ? conteudo.split('\n').length : (remota.totalLinhas || (catItem ? catItem.totalLinhas : 0)),
+            deus: remota.deus || (catItem ? catItem.nome : remota.arquivo),
+            edicaoPendente: temPendente
+          });
+        });
+        if (data.personasExtras && data.personasExtras.length) {
+          personasExtras = data.personasExtras;
+        }
         isLoaded = true;
         filtrarMemorias();
       }
     }, function() {
-      // Fallback visual offline com catálogo das 17 personas
-      const cat = window.OlymposIcons ? window.OlymposIcons.getCatalogo17Personas() : [];
-      memorias = cat.filter(function(p) { return p.tipo === 'memoria'; }).map(function(p) {
-        return { deus: p.nome, arquivo: p.arquivo, dominio: p.dominio, icone: p.id, totalLinhas: 24, alertasRecentes: [] };
-      });
-      personasExtras = EXTRAS_DEFAULT;
+      // Fallback offline seguro: mantém o catálogo completo consolidado das memórias
+      if (window.OLYMPOS_MEMORIAS_CATALOGO) {
+        memorias = window.OLYMPOS_MEMORIAS_CATALOGO.listarTodas();
+        personasExtras = window.OLYMPOS_MEMORIAS_CATALOGO.listarExtras();
+      } else {
+        const cat = window.OlymposIcons ? window.OlymposIcons.getCatalogo17Personas() : [];
+        memorias = cat.filter(function(p) { return p.tipo === 'memoria'; }).map(function(p) {
+          return { deus: p.nome, arquivo: p.arquivo, dominio: p.dominio, icone: p.id, totalLinhas: 24, alertasRecentes: [] };
+        });
+        personasExtras = EXTRAS_DEFAULT;
+      }
+      isLoaded = true;
       filtrarMemorias();
+      if (!silencioso && window.OlymposApp) {
+        window.OlymposApp.showToast('Visualização baseada no catálogo local de memórias.');
+      }
     });
   }
 
@@ -253,28 +292,46 @@ window.OlymposViews.personas = (function() {
   }
 
   function abrirEditor(arquivo) {
-    const found = memorias.find(function(m) { return m.arquivo === arquivo; });
+    let found = memorias.find(function(m) { return m.arquivo === arquivo; });
+    if (!found && window.OLYMPOS_MEMORIAS_CATALOGO) {
+      found = window.OLYMPOS_MEMORIAS_CATALOGO.obterPorArquivo(arquivo);
+    }
     if (!found) {
-      window.OlymposApp.showToast('Conecte-se ao Gateway GAS para carregar o conteúdo ao vivo de ' + arquivo + '.', true);
-      return;
+      found = {
+        deus: arquivo,
+        nome: arquivo,
+        arquivo: arquivo,
+        conteudoCompleto: '# ' + arquivo + '\n'
+      };
+    }
+    if (!found.conteudoCompleto && window.OLYMPOS_MEMORIAS_CATALOGO) {
+      const cat = window.OLYMPOS_MEMORIAS_CATALOGO.obterPorArquivo(found.arquivo || arquivo);
+      if (cat && cat.conteudoCompleto) {
+        found.conteudoCompleto = cat.conteudoCompleto;
+      }
     }
     window.OlymposApp.abrirModalMemoria(found);
   }
 
   function copiarPersona(nomeDeus) {
-    const found = memorias.find(function(m) { return m.deus === nomeDeus; });
+    let found = memorias.find(function(m) { return m.deus === nomeDeus || m.nome === nomeDeus; });
+    if (!found && window.OLYMPOS_MEMORIAS_CATALOGO) {
+      found = window.OLYMPOS_MEMORIAS_CATALOGO.obterPorNome(nomeDeus);
+    }
     if (!found) return;
-    const ctx = '### Persona: ' + found.deus + ' (' + found.arquivo + ')\n' +
+    const nome = found.deus || found.nome;
+    const ctx = '### Persona: ' + nome + ' (' + found.arquivo + ')\n' +
       'Domínio: ' + (found.dominio || '') + '\n' +
       'Conteúdo Operacional:\n' + (found.conteudoCompleto || '') + '\n';
-    window.OlymposApp.copiarTexto(ctx, 'Contexto de ' + found.deus);
+    window.OlymposApp.copiarTexto(ctx, 'Contexto de ' + nome);
   }
 
   function copiarContextoCompletoGemini() {
     let ctx = '# Contexto Consolidado das Memórias Operacionais (Hub Olympos SMEB 2026)\n\n';
-    memorias.forEach(function(m) {
-      ctx += '## ' + m.deus + ' (' + m.arquivo + ')\n';
-      ctx += 'Domínio: ' + (m.dominio || '') + ' | Linhas: ' + (m.totalLinhas || 0) + '/60\n';
+    const lista = (memorias && memorias.length) ? memorias : (window.OLYMPOS_MEMORIAS_CATALOGO ? window.OLYMPOS_MEMORIAS_CATALOGO.listarTodas() : []);
+    lista.forEach(function(m) {
+      ctx += '## ' + (m.deus || m.nome) + ' (' + m.arquivo + ')\n';
+      ctx += 'Domínio: ' + (m.dominio || '') + ' | Linhas: ' + (m.totalLinhas || (m.conteudoCompleto ? m.conteudoCompleto.split('\n').length : 0)) + '/60\n';
       if (m.conteudoCompleto) ctx += m.conteudoCompleto + '\n\n';
     });
     window.OlymposApp.copiarTexto(ctx, 'Contexto consolidado das 11 memórias');

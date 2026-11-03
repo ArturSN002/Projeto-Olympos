@@ -1,6 +1,6 @@
 """
 Módulo de Upload do Arquivo Consolidado no Google Drive.
-Destino: Pasta do Setor Pessoal (1VxVVONEJya4XqI2GfxHK7AFqk8dpwX9I).
+Destino: Pasta Oficial das Planilhas dos Portais de Transparência (1dcc_5GcNG0ciVE-i1J6iwtojATk-1utD).
 Suporta autenticação via GCP Service Account (GCP_SA_KEY) e fallback para API do Hub Olympos.
 """
 import os
@@ -12,7 +12,7 @@ from typing import Optional
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("papiro.uploader")
 
-PASTA_DESTINO_PADRAO = "1VxVVONEJya4XqI2GfxHK7AFqk8dpwX9I"
+PASTA_DESTINO_PADRAO = "1dcc_5GcNG0ciVE-i1J6iwtojATk-1utD"
 
 
 def upload_via_service_account(caminho_csv: Path, folder_id: str) -> Optional[str]:

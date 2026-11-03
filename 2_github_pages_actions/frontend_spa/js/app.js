@@ -490,9 +490,19 @@ window.OlymposApp = (function() {
 
   function abrirModalMemoria(memoriaObj) {
     activeMemoriaEditando = memoriaObj;
-    document.getElementById('modalMemoriaTitle').textContent = memoriaObj.deus + ' — ' + memoriaObj.arquivo;
+    const nome = memoriaObj.deus || memoriaObj.nome || memoriaObj.arquivo;
+    document.getElementById('modalMemoriaTitle').textContent = nome + ' — ' + memoriaObj.arquivo;
     const ta = document.getElementById('modalMemoriaTextarea');
-    ta.value = memoriaObj.conteudoCompleto || '';
+
+    // Recupera conteúdo com preferência para edições locais salvas no catálogo
+    let conteudo = memoriaObj.conteudoCompleto || '';
+    if (window.OLYMPOS_MEMORIAS_CATALOGO) {
+      const local = window.OLYMPOS_MEMORIAS_CATALOGO.obterConteudoLocal(memoriaObj.arquivo);
+      if (local !== null && local !== undefined) {
+        conteudo = local;
+      }
+    }
+    ta.value = conteudo;
 
     const atualizarContadorLinhas = function() {
       const l = ta.value.split('\n').length;
@@ -509,20 +519,28 @@ window.OlymposApp = (function() {
   function salvarMemoriaMd() {
     if (!activeMemoriaEditando) return;
     const novoConteudo = document.getElementById('modalMemoriaTextarea').value;
+    const arq = activeMemoriaEditando.arquivo;
     const btn = document.getElementById('saveMemoriaBtn');
 
-    btn.disabled = true;
-    btn.textContent = 'Salvando no Drive...';
+    // 1. Persistência local imediata no browser (localStorage e in-memory)
+    if (window.OLYMPOS_MEMORIAS_CATALOGO) {
+      window.OLYMPOS_MEMORIAS_CATALOGO.salvarLocal(arq, novoConteudo);
+    }
+    activeMemoriaEditando.conteudoCompleto = novoConteudo;
 
-    window.OlymposApi.chamar('memorias_salvar', {
-      arquivo: activeMemoriaEditando.arquivo,
-      conteudo: novoConteudo
-    }, function(res) {
+    btn.disabled = true;
+    btn.textContent = 'Sincronizando no Drive...';
+
+    // 2. Sincronização remota via Gateway GAS (CORS Simple Request)
+    window.OlymposApi.salvarMemoria(arq, novoConteudo, function(res) {
       btn.disabled = false;
       btn.textContent = 'Salvar no Arquivo Existente';
 
       if (res && res.ok) {
-        showToast('Memória ' + activeMemoriaEditando.arquivo + ' atualizada sem criar duplicatas!');
+        if (window.OLYMPOS_MEMORIAS_CATALOGO) {
+          window.OLYMPOS_MEMORIAS_CATALOGO.removerEdicaoLocal(arq);
+        }
+        showToast('Memória ' + arq + ' sincronizada com sucesso no Google Drive!');
         document.getElementById('memoriaModal').classList.add('hidden');
         if (window.OlymposViews && window.OlymposViews.personas) {
           window.OlymposViews.personas.recarregar();
@@ -531,12 +549,21 @@ window.OlymposApp = (function() {
           window.OlymposViews.visaoGeral.recarregar();
         }
       } else {
-        showToast((res && res.mensagem) || 'Falha ao salvar memória.', true);
+        showToast('Salvo localmente no navegador! Sincronização com o Drive pendente (' + ((res && res.mensagem) || 'offline') + ').', false);
+        document.getElementById('memoriaModal').classList.add('hidden');
+        if (window.OlymposViews && window.OlymposViews.personas) {
+          window.OlymposViews.personas.recarregar();
+        }
       }
-    }, function(err) {
+    }, function() {
       btn.disabled = false;
       btn.textContent = 'Salvar no Arquivo Existente';
-      showToast('Erro ao salvar memória: ' + err.message, true);
+      // Modo offline: salvo com sucesso no localStorage, não trava nem perde a edição
+      showToast('Salvo localmente no navegador! Sincronização com o Drive ocorrerá quando o Gateway estiver online.', false);
+      document.getElementById('memoriaModal').classList.add('hidden');
+      if (window.OlymposViews && window.OlymposViews.personas) {
+        window.OlymposViews.personas.recarregar();
+      }
     });
   }
 

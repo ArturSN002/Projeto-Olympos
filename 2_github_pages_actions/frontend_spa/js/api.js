@@ -53,6 +53,7 @@ window.OlymposApi = (function() {
     const bodyData = Object.assign({}, payload || {}, {
       action: action,
       token: token,
+      _token: token,
       sessionToken: token,
       jwtToken: token
     });
@@ -71,24 +72,36 @@ window.OlymposApi = (function() {
       return;
     }
 
-    // Frente 2: Execução desacoplada via GitHub Pages / HTTP Fetch (CORS-safe text/plain)
+    // Frente 2: Execução desacoplada via GitHub Pages / HTTP Fetch
+    // Protocolo estrito de CORS Simple Request:
+    // 1. Método POST
+    // 2. Content-Type: text/plain;charset=utf-8 (evita preflight OPTIONS no GAS)
+    // 3. ZERO headers de autorização HTTP (token trafega no corpo JSON)
+    // 4. redirect: 'follow' explícito para redirecionamentos do script.googleusercontent.com
     const url = getApiUrl();
     fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(bodyData)
+      body: JSON.stringify(bodyData),
+      redirect: 'follow'
     })
       .then(function(res) {
         if (!res.ok) {
-          throw new Error('Falha HTTP ' + res.status + ': ' + res.statusText);
+          throw new Error('Falha HTTP ' + res.status + ': ' + (res.statusText || 'Erro no Gateway'));
         }
-        return res.json();
+        return res.text();
       })
-      .then(function(data) {
+      .then(function(text) {
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          throw new Error('Resposta não-JSON do Gateway GAS: ' + (text ? text.substring(0, 100) : 'vazio'));
+        }
         processarResposta(data, onSuccess, onError);
       })
       .catch(function(err) {
-        console.error('Erro HTTP [' + action + ']:', err);
+        console.warn('Erro de rede/Gateway [' + action + ']:', err.message);
         if (onError) onError(err);
       });
   }
@@ -98,32 +111,77 @@ window.OlymposApi = (function() {
 
     if (typeof google !== 'undefined' && google.script && google.script.run) {
       google.script.run
-        .withSuccessHandler(function() {
-          onResult({
-            ok: true,
-            latency: Math.round(performance.now() - start),
-            data: { sistema: 'Hub Olympos GAS Nativo', versao: '2.1.0' }
-          });
+        .withSuccessHandler(function(data) {
+          if (typeof onResult === 'function') {
+            onResult({
+              ok: true,
+              latency: Math.round(performance.now() - start),
+              data: data || { sistema: 'Hub Olympos GAS Nativo', versao: '2.1.0' }
+            });
+          }
         })
         .withFailureHandler(function(err) {
-          onResult({ ok: false, error: err.message });
+          if (typeof onResult === 'function') {
+            onResult({ ok: false, error: err.message });
+          }
         })
-        .executarAcaoHubClient({ action: 'auth_check', token: '' });
+        .executarAcaoHubClient({ action: 'ping', api: '1', token: '' });
       return;
     }
 
     const url = getApiUrl();
-    const testEndpoint = url + (url.includes('?') ? '&' : '?') + 'api=1';
+    const token = getJwtToken();
+    const pingPayload = {
+      action: 'ping',
+      api: '1',
+      token: token,
+      _token: token
+    };
 
-    fetch(testEndpoint)
-      .then(function(res) { return res.json(); })
-      .then(function(data) {
+    fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(pingPayload),
+      redirect: 'follow'
+    })
+      .then(function(res) {
+        if (!res.ok) {
+          throw new Error('Falha HTTP ' + res.status + ' (' + (res.statusText || 'Offline') + ')');
+        }
+        return res.text();
+      })
+      .then(function(text) {
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          throw new Error('Resposta HTML ou não-JSON recebida. Verifique a implantação pública do Apps Script.');
+        }
         const latency = Math.round(performance.now() - start);
-        onResult({ ok: true, latency: latency, data: data });
+        if (typeof onResult === 'function') {
+          onResult({ ok: true, latency: latency, data: data });
+        }
       })
       .catch(function(err) {
-        onResult({ ok: false, error: err.message });
+        if (typeof onResult === 'function') {
+          onResult({ ok: false, error: err.message || 'Gateway offline ou inacessível' });
+        }
       });
+  }
+
+  /**
+   * Atualiza o conteúdo Markdown de uma memória existente no Google Drive via Gateway GAS.
+   * Modifica in-place sem gerar duplicatas no Drive.
+   * @param {string} arquivo Nome do arquivo canônico (ex: _memoria_hera.md).
+   * @param {string} conteudo Texto consolidado em Markdown.
+   * @param {Function} [onSuccess] Callback de sucesso.
+   * @param {Function} [onError] Callback de erro.
+   */
+  function salvarMemoria(arquivo, conteudo, onSuccess, onError) {
+    return chamar('memorias_salvar', {
+      arquivo: arquivo,
+      conteudo: conteudo
+    }, onSuccess, onError);
   }
 
   /**
@@ -154,6 +212,7 @@ window.OlymposApi = (function() {
     getJwtToken: getJwtToken,
     chamar: chamar,
     criarUsuario: criarUsuario,
+    salvarMemoria: salvarMemoria,
     testarConexao: testarConexao
   };
 })();
