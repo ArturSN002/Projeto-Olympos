@@ -90,6 +90,12 @@ TEST_MODULES = [
         "module": "test_fases_1_a_5_expansion",
         "name": "Bateria Expandida Fases 1 a 5 (Boletim, Gemini, PWA, UI/UX, Permutas e pgvector)",
         "description": "Validação integral e genuína das 5 novas fases: boletim diário editorial, Gemini companion, PWA manifest e SW seguro, UI skeletons e touch targets 44px, permutas Leaflet/Hera e migração pgvector."
+    },
+    {
+        "id": "M9",
+        "module": "test_escolas_map",
+        "name": "Georreferenciamento Cartográfico e Gestão das Escolas Municipais",
+        "description": "Validação integral do catálogo de 20 escolas, bounding box Ceará-Mirim, CRUD de coordenadas, modal acessível e integração ao router."
     }
 ]
 

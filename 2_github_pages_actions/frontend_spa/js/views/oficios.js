@@ -21,8 +21,13 @@ window.OlymposViews.oficios = (function() {
     const kpiElem = document.getElementById('kpiProximoOficio');
     const inputNumero = document.getElementById('oficioNumeroInput');
     if (kpiElem && inputNumero) {
-      const match = kpiElem.textContent.match(/\d+/);
-      if (match) inputNumero.value = match[0];
+      if (kpiElem.textContent.includes('--')) {
+        inputNumero.value = '';
+        inputNumero.placeholder = 'Carregando...';
+      } else {
+        const match = kpiElem.textContent.match(/\d+/);
+        if (match) inputNumero.value = match[0];
+      }
     }
   }
 

@@ -397,7 +397,48 @@ class TestUiResponsivenessAndDesignSystem(unittest.TestCase):
             self.assertIn("width: 1px", sr_body, f".sr-only deve ter width: 1px em {fname}")
             self.assertIn("clip: rect(0, 0, 0, 0)", sr_body, f".sr-only deve ter clip: rect(0, 0, 0, 0) em {fname}")
 
+    def test_20_m3_mobile_responsiveness_and_placeholders(self):
+        """Valida as melhorias M3: Placeholders '--', unificação da navbar (Portarias) e responsividade mobile."""
+        html_text = HTML_INDEX.read_text(encoding="utf-8")
+        css_text = CSS_FILE.read_text(encoding="utf-8")
+        router_text = (SPA_DIR / "js" / "router.js").read_text(encoding="utf-8")
+
+        # 1. Placeholders '--' nos contadores iniciais de memória
+        self.assertRegex(html_text, r'<div[^>]+id="kpiProximoOficio"[^>]*>--</div>')
+        self.assertRegex(html_text, r'<div[^>]+id="kpiProximaPortaria"[^>]*>--</div>')
+        self.assertIn("Último emitido: --", html_text)
+        self.assertIn("Última emitida: --", html_text)
+
+        # 2. Modal de ajuste inicializado com placeholder '--' e value=''
+        self.assertIn('id="inputProximoOficioMd"', html_text)
+        self.assertIn('placeholder="--"', html_text)
+        self.assertIn('id="inputProximaPortariaMd"', html_text)
+
+        # 3. Navbar unificada: Portarias presente, Licenças removida do trilho principal, Escolas presente
+        self.assertIn('data-page="portarias">Portarias</a>', html_text)
+        self.assertNotIn('<a href="#licencas" class="nav-link" data-page="licencas">Licenças</a>', html_text)
+        self.assertIn('data-page="escolas">Escolas</a>', html_text)
+
+        # 4. Sub-abas em pílula dentro de #page-portarias
+        self.assertIn('subnav-tabs-bar', html_text)
+        self.assertIn('subtabBtnPortariasLote', html_text)
+        self.assertIn('subtabBtnPortariasLicencas', html_text)
+        self.assertIn('subpanePortariasLote', html_text)
+        self.assertIn('subpanePortariasLicencas', html_text)
+        self.assertIn('formCadastroLicenca', html_text)
+
+        # 5. CSS Grid de 2 colunas para atalhos do Drive em telas <= 600px e 1 coluna em <= 360px
+        self.assertIn("max-width: 600px", css_text)
+        self.assertIn("max-width: 360px", css_text)
+        self.assertIn(".table-responsive-cards", css_text)
+        self.assertIn("max-width: 680px", css_text)
+
+        # 6. Roteador SPA preserva alias 'licencas' redirecionando para 'portarias'
+        self.assertIn("pageId = 'portarias'", router_text)
+        self.assertIn("targetSubtab = 'licencas'", router_text)
+
 
 if __name__ == "__main__":
     unittest.main()
+
 

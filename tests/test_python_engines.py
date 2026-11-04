@@ -35,7 +35,17 @@ except ImportError as e:
     scraper_femurn = None
 
 try:
-    from pipeline.normalizador import normalizar_dataframe, COLUNAS_PADRAO
+    from pipeline.normalizador import (
+        normalizar_dataframe,
+        COLUNAS_PADRAO,
+        ler_csv_transparencia,
+        extrair_miolo_cpf
+    )
+    from pipeline.cruzador_vinculos import (
+        auditar_acumulacao_cf37,
+        cruzar_vinculos,
+        normalizar_nome
+    )
     from pipeline.upload_supabase import sincronizar_folha_supabase
 except ImportError as e:
     normalizar_dataframe = None
@@ -307,6 +317,46 @@ class TestPapiroDeCadmoEngine(unittest.TestCase):
         with patch.dict(os.environ, fake_env):
             res2 = sincronizar_folha_supabase(Path("caminho_inexistente_12345.csv"))
             self.assertFalse(res2)
+
+    def test_12_normalizador_ler_csv_transparencia_title_rows_and_spaces(self):
+        """Valida que ler_csv_transparencia ignora linhas de título no início e apara espaços nos cabeçalhos."""
+        csv_conteudo = (
+            '"Relatório de Servidores | MUNICÍPIO DE TESTE"\n'
+            '\n'
+            'Matricula ;Nome ;CPF ;OrgaoLotacao ;CargoFuncao;Carga Horaria;Vinculo;Data de InativacaoExoneracao\n'
+            '"0010016";"ODJAIME CAMARA DE ARAUJO";"###.487.734-##";"SMEB";"PROFESSOR NIVEL SUPERIOR";"30h";"ESTATUTARIO";"Ativo"\n'
+        )
+        with tempfile.NamedTemporaryFile(suffix=".csv", mode="w", delete=False, encoding="utf-8-sig") as tmp:
+            tmp.write(csv_conteudo)
+            tmp_path = Path(tmp.name)
+
+        try:
+            df = ler_csv_transparencia(tmp_path)
+            self.assertEqual(len(df), 1)
+            self.assertIn("Matricula", df.columns)
+            self.assertIn("Nome", df.columns)
+            self.assertIn("CPF", df.columns)
+            self.assertEqual(df.iloc[0]["Matricula"], "0010016")
+
+            df_norm = normalizar_dataframe(df, "Ceará-Mirim", "2026-09", manter_cpf=True)
+            self.assertEqual(df_norm.iloc[0]["matricula"], "0010016")
+            self.assertEqual(df_norm.iloc[0]["nome_completo"], "ODJAIME CAMARA DE ARAUJO")
+            self.assertEqual(df_norm.iloc[0]["cpf_miolo"], "487734")
+            self.assertEqual(df_norm.iloc[0]["cargo_funcao"], "PROFESSOR NIVEL SUPERIOR")
+        finally:
+            if tmp_path.exists():
+                tmp_path.unlink()
+
+    def test_13_cruzador_vinculos_art37_auditoria(self):
+        """Valida auditoria constitucional CF/88 Art. 37, XVI (dois cargos de professor até 60h)."""
+        res_ok = auditar_acumulacao_cf37("PROFESSOR", "30h", "PROFESSOR", "30h", "Ceará-Mirim", "SEEC")
+        self.assertTrue(res_ok["acumulacao_legal"])
+        self.assertEqual(res_ok["carga_horaria_total"], 60)
+        self.assertIn("Art. 37, XVI, 'a'", res_ok["enquadramento"])
+
+        res_excess = auditar_acumulacao_cf37("PROFESSOR", "40h", "PROFESSOR", "30h", "Ceará-Mirim", "Natal")
+        self.assertFalse(res_excess["acumulacao_legal"])
+        self.assertEqual(res_excess["carga_horaria_total"], 70)
 
 
 if __name__ == "__main__":

@@ -173,15 +173,15 @@ window.OlymposViews.diarioOficial = (function() {
       if (item.matriculas && item.matriculas.length) nerBadges.push('Mat.: ' + item.matriculas.join(', '));
 
       tr.innerHTML =
-        '<td style="font-family:var(--font-mono); font-size:12px;">' + window.OlymposApp.escapeHtml(item.data) + '</td>' +
-        '<td>' +
+        '<td data-label="Data" style="font-family:var(--font-mono); font-size:12px;">' + window.OlymposApp.escapeHtml(item.data) + '</td>' +
+        '<td data-label="Setor">' +
           '<span class="pill-badge pill-blue">' + window.OlymposApp.escapeHtml(item.setor) + '</span>' +
         '</td>' +
-        '<td>' +
+        '<td data-label="Ato Oficial">' +
           '<div style="font-weight:600; color:var(--text-main);">' + window.OlymposApp.escapeHtml(item.titulo) + '</div>' +
           (nerBadges.length ? '<div style="font-size:11.5px; color:var(--text-muted); margin-top:3px;">' + window.OlymposApp.escapeHtml(nerBadges.join(' • ')) + '</div>' : '') +
         '</td>' +
-        '<td class="text-right">' +
+        '<td data-label="Documento" class="text-right">' +
           (item.url
             ? '<a href="' + window.OlymposApp.escapeHtml(item.url) + '" target="_blank" rel="noopener" class="btn btn-primary btn-sm">Abrir PDF ↗</a>'
             : '<span class="text-muted">--</span>') +

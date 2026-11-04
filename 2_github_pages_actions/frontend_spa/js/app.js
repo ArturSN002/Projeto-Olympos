@@ -255,7 +255,7 @@ window.OlymposApp = (function() {
   }
 
   function normalizarPermissoesRbac(listaBruta) {
-    const set = new Set(['visao-geral', 'configuracoes', 'personas', 'busca']);
+    const set = new Set(['visao-geral', 'configuracoes', 'personas', 'busca', 'escolas']);
     (listaBruta || []).forEach(function(item) {
       if (LEGACY_TAB_MAP[item]) {
         LEGACY_TAB_MAP[item].forEach(function(p) { set.add(p); });
@@ -768,7 +768,12 @@ window.OlymposApp = (function() {
   function copiarKpi(elemId, rotulo) {
     const el = document.getElementById(elemId);
     if (!el) return;
-    copiarTexto(el.textContent.trim(), rotulo);
+    const txt = el.textContent.trim();
+    if (txt === '--' || txt.includes('--')) {
+      showToast('Aguardando carregamento da numeração oficial...', true);
+      return;
+    }
+    copiarTexto(txt, rotulo);
   }
 
   function renderizarItensLinksGerados(listContainer, arquivos) {

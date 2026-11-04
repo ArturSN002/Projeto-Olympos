@@ -70,10 +70,18 @@ window.OlymposViews.visaoGeral = (function() {
 
     if (data.numeracao) {
       const n = data.numeracao;
-      const ofVal = n.proximoOficio2026 !== undefined ? n.proximoOficio2026 : (n.proximoOficio || 155);
-      const ptVal = n.proximaPortaria2026 !== undefined ? n.proximaPortaria2026 : (n.proximaPortaria || 163);
-      const ultOf = n.ultimoOficio2026 !== undefined ? n.ultimoOficio2026 : (ofVal - 1);
-      const ultPt = n.ultimaPortaria2026 !== undefined ? n.ultimaPortaria2026 : (ptVal - 1);
+      const ofVal = (n.proximoOficio2026 !== undefined && n.proximoOficio2026 !== null)
+        ? n.proximoOficio2026
+        : ((n.proximoOficio !== undefined && n.proximoOficio !== null) ? n.proximoOficio : null);
+      const ptVal = (n.proximaPortaria2026 !== undefined && n.proximaPortaria2026 !== null)
+        ? n.proximaPortaria2026
+        : ((n.proximaPortaria !== undefined && n.proximaPortaria !== null) ? n.proximaPortaria : null);
+      const ultOf = (n.ultimoOficio2026 !== undefined && n.ultimoOficio2026 !== null)
+        ? n.ultimoOficio2026
+        : (ofVal !== null ? (ofVal - 1) : null);
+      const ultPt = (n.ultimaPortaria2026 !== undefined && n.ultimaPortaria2026 !== null)
+        ? n.ultimaPortaria2026
+        : (ptVal !== null ? (ptVal - 1) : null);
       const memUrl = n.arquivoUrl || 'https://drive.google.com/file/d/1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_/view';
 
       const elOf = document.getElementById('kpiProximoOficio');
@@ -81,29 +89,29 @@ window.OlymposViews.visaoGeral = (function() {
       const elPt = document.getElementById('kpiProximaPortaria');
       const elUltPt = document.getElementById('kpiUltimaPortaria');
 
-      if (elOf) elOf.textContent = 'Nº ' + ofVal;
+      if (elOf) elOf.textContent = ofVal !== null ? ('Nº ' + ofVal) : '--';
       if (elUltOf) {
-        elUltOf.innerHTML = '<span>Último emitido: Nº ' + ultOf + '</span>' +
+        elUltOf.innerHTML = '<span>Último emitido: ' + (ultOf !== null ? ('Nº ' + ultOf) : '--') + '</span>' +
           '<a href="' + window.OlymposApp.escapeHtml(memUrl) + '" target="_blank" rel="noopener" class="folder-chip">Memória de Apolo ↗</a>';
       }
 
-      if (elPt) elPt.textContent = 'Nº ' + ptVal;
+      if (elPt) elPt.textContent = ptVal !== null ? ('Nº ' + ptVal) : '--';
       if (elUltPt) {
-        elUltPt.innerHTML = '<span>Última emitida: Nº ' + ultPt + '</span>' +
+        elUltPt.innerHTML = '<span>Última emitida: ' + (ultPt !== null ? ('Nº ' + ultPt) : '--') + '</span>' +
           '<a href="' + window.OlymposApp.escapeHtml(memUrl) + '" target="_blank" rel="noopener" class="folder-chip">Memória de Apolo ↗</a>';
       }
 
       const inOf = document.getElementById('inputProximoOficioMd');
       const inPt = document.getElementById('inputProximaPortariaMd');
       const inSig = document.getElementById('inputSignatarioMd');
-      if (inOf) inOf.value = ofVal;
-      if (inPt) inPt.value = ptVal;
+      if (inOf && ofVal !== null) inOf.value = ofVal;
+      if (inPt && ptVal !== null) inPt.value = ptVal;
       if (inSig && (n.signatarioTitular || n.signatario)) {
         inSig.value = n.signatarioTitular || n.signatario;
       }
 
       const inputOficioForm = document.getElementById('oficioNumeroInput');
-      if (inputOficioForm && !inputOficioForm.value) {
+      if (inputOficioForm && !inputOficioForm.value && ofVal !== null) {
         inputOficioForm.value = String(ofVal);
       }
     }

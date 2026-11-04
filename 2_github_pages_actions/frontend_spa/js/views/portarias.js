@@ -25,6 +25,8 @@ window.OlymposViews.portarias = (function() {
       }
     };
 
+    bind('subtabBtnPortariasLote', 'click', function() { alternarSubtab('lote'); });
+    bind('subtabBtnPortariasLicencas', 'click', function() { alternarSubtab('licencas'); });
     bind('pincelOperacaoSelect', 'change', carregarCatalogo);
     bind('pincelPlanilhaSelect', 'change', handlePlanilhaChange);
     bind('pincelDryRunBtn', 'click', executarDryRun);
@@ -34,6 +36,23 @@ window.OlymposViews.portarias = (function() {
     bind('closeJobResultBtn', 'click', function() {
       document.getElementById('pincelCompletedJobBox').classList.add('hidden');
     });
+  }
+
+  function alternarSubtab(tabKey) {
+    const paneLote = document.getElementById('subpanePortariasLote');
+    const paneLic = document.getElementById('subpanePortariasLicencas');
+    const btnLote = document.getElementById('subtabBtnPortariasLote');
+    const btnLic = document.getElementById('subtabBtnPortariasLicencas');
+
+    const isLic = (tabKey === 'licencas');
+    if (btnLote) btnLote.classList.toggle('active', !isLic);
+    if (btnLic) btnLic.classList.toggle('active', isLic);
+    if (paneLote) paneLote.classList.toggle('hidden', isLic);
+    if (paneLic) paneLic.classList.toggle('hidden', !isLic);
+
+    if (isLic && window.OlymposViews.licencas && typeof window.OlymposViews.licencas.init === 'function') {
+      window.OlymposViews.licencas.init();
+    }
   }
 
   function carregarCatalogo() {
@@ -292,6 +311,7 @@ window.OlymposViews.portarias = (function() {
   }
 
   return {
-    init: init
+    init: init,
+    alternarSubtab: alternarSubtab
   };
 })();

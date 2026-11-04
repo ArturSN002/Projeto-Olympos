@@ -46,6 +46,12 @@ window.OlymposRouter = (function() {
       subtitle: 'Extração automatizada de 15 municípios potiguares e SEEC/RN com consolidação em esquema canônico de 8 colunas para Cadmo e Hera.',
       category: 'inteligencia'
     },
+    'escolas': {
+      eyebrow: 'GEORREFERENCIAMENTO MUNICIPAL • REDE ESCOLAR SMEB',
+      title: 'Mapa e Gestão das Escolas Municipais.',
+      subtitle: 'Localização cartográfica, cadastro georreferenciado (CRUD com latitude e longitude) e distribuição territorial das unidades da SMEB de Ceará-Mirim.',
+      category: 'gestao'
+    },
     'personas': {
       eyebrow: 'ARQUITETURA COGNITIVA • 17 PERSONAS & 11 MEMÓRIAS',
       title: 'Ecossistema Olympos e Memórias .md.',
@@ -79,6 +85,12 @@ window.OlymposRouter = (function() {
   }
 
   function navegarPara(pageId, replaceState) {
+    let targetSubtab = null;
+    if (pageId === 'licencas') {
+      pageId = 'portarias';
+      targetSubtab = 'licencas';
+    }
+
     if (!PAGES[pageId]) {
       pageId = 'visao-geral';
     }
@@ -115,6 +127,12 @@ window.OlymposRouter = (function() {
     document.body.classList.remove('nav-drawer-open');
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
+    if (pageId === 'portarias') {
+      if (window.OlymposViews && window.OlymposViews.portarias && typeof window.OlymposViews.portarias.alternarSubtab === 'function') {
+        window.OlymposViews.portarias.alternarSubtab(targetSubtab || 'lote');
+      }
+    }
+
     dispararCarregamentoPagina(pageId);
   }
 
@@ -128,6 +146,7 @@ window.OlymposRouter = (function() {
       'certificados': 'certificados',
       'diario-oficial': 'diarioOficial',
       'papiro-cadmo': 'papiroCadmo',
+      'escolas': 'escolas',
       'personas': 'personas',
       'busca': 'busca',
       'configuracoes': 'configuracoes'
@@ -135,6 +154,9 @@ window.OlymposRouter = (function() {
     const key = map[pageId];
     if (key && window.OlymposViews[key] && typeof window.OlymposViews[key].init === 'function') {
       window.OlymposViews[key].init();
+    }
+    if (pageId === 'portarias' && window.OlymposViews.licencas && typeof window.OlymposViews.licencas.init === 'function') {
+      window.OlymposViews.licencas.init();
     }
   }
 

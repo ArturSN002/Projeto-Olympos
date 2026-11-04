@@ -114,12 +114,12 @@
           <a href="#visao-geral" class="nav-link active" data-page="visao-geral">Visão Geral</a>
           <span class="nav-divider-dot" aria-hidden="true"></span>
           <a href="#oficios" class="nav-link" data-page="oficios">Ofícios</a>
-          <a href="#portarias" class="nav-link" data-page="portarias">Portarias em Lote</a>
-          <a href="#licencas" class="nav-link" data-page="licencas">Licenças</a>
+          <a href="#portarias" class="nav-link" data-page="portarias">Portarias</a>
           <a href="#certificados" class="nav-link" data-page="certificados">Certificados</a>
           <span class="nav-divider-dot" aria-hidden="true"></span>
           <a href="#diario-oficial" class="nav-link" data-page="diario-oficial">Diário Oficial</a>
           <a href="#papiro-cadmo" class="nav-link" data-page="papiro-cadmo">Papiro de Cadmo</a>
+          <a href="#escolas" class="nav-link" data-page="escolas">Escolas</a>
           <a href="#personas" class="nav-link" data-page="personas">Personas &amp; Memórias</a>
           <a href="#busca" class="nav-link hidden" data-page="busca" style="display: none !important;">Busca no Acervo</a>
           <span class="nav-divider-dot" aria-hidden="true"></span>
@@ -141,11 +141,11 @@
       <div class="nav-rail-inner mobile-nav-inner">
         <a href="#visao-geral" class="nav-link active" data-page="visao-geral">Visão Geral</a>
         <a href="#oficios" class="nav-link" data-page="oficios">Ofícios</a>
-        <a href="#portarias" class="nav-link" data-page="portarias">Portarias em Lote</a>
-        <a href="#licencas" class="nav-link" data-page="licencas">Licenças</a>
+        <a href="#portarias" class="nav-link" data-page="portarias">Portarias</a>
         <a href="#certificados" class="nav-link" data-page="certificados">Certificados</a>
         <a href="#diario-oficial" class="nav-link" data-page="diario-oficial">Diário Oficial</a>
         <a href="#papiro-cadmo" class="nav-link" data-page="papiro-cadmo">Papiro de Cadmo</a>
+        <a href="#escolas" class="nav-link" data-page="escolas">Escolas</a>
         <a href="#personas" class="nav-link" data-page="personas">Personas &amp; Memórias</a>
         <a href="#busca" class="nav-link hidden" data-page="busca" style="display: none !important;">Busca no Acervo</a>
         <a href="#configuracoes" class="nav-link" data-page="configuracoes">Ajustes</a>
@@ -193,9 +193,9 @@
                   <button id="editOficioBtn" class="btn-mini" title="Ajustar contador oficial">Ajustar</button>
                 </div>
               </div>
-              <div class="stat-value" id="kpiProximoOficio">Nº 155</div>
+              <div class="stat-value" id="kpiProximoOficio">--</div>
               <div class="stat-meta" id="kpiUltimoOficio">
-                <span>Último emitido: Nº 154</span>
+                <span>Último emitido: --</span>
                 <a href="https://drive.google.com/file/d/1wGlcqqTuWAyy-2VRO_QqyyMcKHb4AmRn/view" target="_blank" rel="noopener" class="folder-chip">Memória de Apolo ↗</a>
               </div>
             </div>
@@ -209,9 +209,9 @@
                   <button id="editPortariaBtn" class="btn-mini" title="Ajustar contador oficial">Ajustar</button>
                 </div>
               </div>
-              <div class="stat-value" id="kpiProximaPortaria">Nº 163</div>
+              <div class="stat-value" id="kpiProximaPortaria">--</div>
               <div class="stat-meta" id="kpiUltimaPortaria">
-                <span>Última emitida: Nº 162</span>
+                <span>Última emitida: --</span>
                 <a href="https://drive.google.com/file/d/1wGlcqqTuWAyy-2VRO_QqyyMcKHb4AmRn/view" target="_blank" rel="noopener" class="folder-chip">Memória de Apolo ↗</a>
               </div>
             </div>
@@ -298,6 +298,16 @@
                 </div>
                 <span class="qm-action">Abrir página dedicada →</span>
               </div>
+
+              <div class="quick-module-card" data-nav-target="escolas">
+                <div class="qm-icon-badge" data-persona-icon="hera"></div>
+                <div>
+                  <div class="qm-category">Georreferenciamento Municipal</div>
+                  <div class="qm-title">Mapa de Escolas</div>
+                  <div class="qm-desc">Mapeamento cartográfico interativo, catálogo e gestão completa com latitude e longitude da rede SMEB.</div>
+                </div>
+                <span class="qm-action">Abrir página dedicada →</span>
+              </div>
             </div>
           </div>
 
@@ -370,189 +380,201 @@
         </section>
 
         <!-- =========================================================================
-             PÁGINA 3: PORTARIAS EM LOTE (O PINCEL DE HOMERO)
+             PÁGINA 3: PORTARIAS (EM LOTE & CADASTRO DE LICENÇAS)
              ========================================================================= -->
         <section class="page-view hidden" id="page-portarias">
           <div class="surface-card">
-            <div class="card-header-row">
-              <div>
-                <span class="section-eyebrow">PROCESSAMENTO EM LOTE • FAIL-FAST</span>
-                <h2 class="section-title">Emissão de Portarias (Licenças, Anulações e Readaptações)</h2>
-                <p class="section-desc">Valide inconsistências antes da geração e receba a confirmação de término com links diretos para abrir ou copiar todos os documentos gerados.</p>
-              </div>
-              <a href="https://drive.google.com/drive/folders/1qGq5uqxOtN_V63itUheYatLIcj5R86O3" target="_blank" rel="noopener" class="folder-chip">
-                Abrir Pasta Portarias 2026 ↗
-              </a>
+            <!-- SELETOR DE SUB-ABAS TIPO PÍLULA -->
+            <div class="subnav-tabs-bar" role="tablist" aria-label="Navegação interna de Portarias">
+              <button type="button" class="subnav-tab active" id="subtabBtnPortariasLote" data-subtab="lote">
+                <span>⚡ Portarias em Lote</span>
+              </button>
+              <button type="button" class="subnav-tab" id="subtabBtnPortariasLicencas" data-subtab="licencas">
+                <span>📋 Cadastro de Licenças</span>
+              </button>
             </div>
 
-            <div class="controls-grid">
-              <div class="field-group">
-                <label for="pincelOperacaoSelect">1. Modalidade da Portaria</label>
-                <select id="pincelOperacaoSelect" class="input-clean">
-                  <option value="LICENCAS">Licenças (Prêmio, Não Remunerada e Anulação)</option>
-                  <option value="READAPTACOES">Readaptações Funcionais</option>
-                </select>
-              </div>
-              <div class="field-group">
-                <label for="pincelPlanilhaSelect">2. Planilha Oficial de Controle</label>
-                <select id="pincelPlanilhaSelect" class="input-clean"></select>
-              </div>
-              <div class="field-group">
-                <label for="pincelAbaSelect">3. Aba Selecionada</label>
-                <select id="pincelAbaSelect" class="input-clean"></select>
-              </div>
-            </div>
-
-            <div class="button-group" style="margin-top: 20px; margin-bottom: 18px;">
-              <button id="pincelDryRunBtn" class="btn btn-secondary">Diagnóstico Pré-Voo (Dry-Run)</button>
-              <button id="pincelGenerateBtn" class="btn btn-primary">Gerar Portarias Pendentes</button>
-              <button id="pincelStopBtn" class="btn btn-danger hidden">Interromper Lote</button>
-            </div>
-
-            <div id="pincelProgressBox" class="output-panel hidden" style="margin-bottom: 16px;">
-              <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12.5px; font-weight: 600;">
-                <span id="pincelProgressLabel">Processando portarias no Google Drive...</span>
-                <span id="pincelProgressNumbers" style="font-family: var(--font-mono);">0 / 0</span>
-              </div>
-              <div class="progress-track-clean">
-                <div id="pincelProgressFill" class="progress-fill-clean" style="width: 0%;"></div>
-              </div>
-            </div>
-
-            <!-- IDENTIFICAÇÃO DE FINALIZAÇÃO E LINKS VISÍVEIS DOS ARQUIVOS GERADOS -->
-            <div id="pincelCompletedJobBox" class="job-result-card hidden">
-              <div class="job-result-header">
-                <div class="job-result-title">
-                  <span class="job-done-badge" id="pincelDoneCheckSvg"></span>
-                  <span id="jobResultHeading">Finalização Confirmada — Portarias Disponíveis</span>
+            <!-- SUB-ABA 1: PORTARIAS EM LOTE (O PINCEL DE HOMERO) -->
+            <div id="subpanePortariasLote" class="subtab-pane">
+              <div class="card-header-row">
+                <div>
+                  <span class="section-eyebrow">PROCESSAMENTO EM LOTE • FAIL-FAST</span>
+                  <h2 class="section-title">Emissão de Portarias (Licenças, Anulações e Readaptações)</h2>
+                  <p class="section-desc">Valide inconsistências antes da geração e receba a confirmação de término com links diretos para abrir ou copiar todos os documentos gerados.</p>
                 </div>
-                <div class="button-group">
-                  <button id="copyAllJobLinksBtn" class="btn btn-secondary btn-sm">Copiar Todos os Links</button>
-                  <button id="closeJobResultBtn" class="btn btn-ghost btn-sm">Fechar</button>
-                </div>
+                <a href="https://drive.google.com/drive/folders/1qGq5uqxOtN_V63itUheYatLIcj5R86O3" target="_blank" rel="noopener" class="folder-chip">
+                  Abrir Pasta Portarias 2026 ↗
+                </a>
               </div>
-              <div id="jobResultSummary" style="font-size: 13.5px; color: var(--text-secondary);"></div>
-              <div class="job-links-list" id="jobLinksList"></div>
-            </div>
 
-            <div id="pincelOutput" class="output-panel">
-              Selecione a modalidade, a planilha oficial e a aba para executar a validação pré-voo ou iniciar a geração em lote.
-            </div>
-          </div>
-        </section>
-
-        <!-- =========================================================================
-             PÁGINA 4: CADASTRO DIRETO DE LICENÇA NO HUB
-             ========================================================================= -->
-        <section class="page-view hidden" id="page-licencas">
-          <div class="surface-card">
-            <div class="card-header-row">
-              <div>
-                <span class="section-eyebrow">REGISTRO FUNCIONAL INTEGRADO</span>
-                <h2 class="section-title">Cadastrar Licença Direto no Hub</h2>
-                <p class="section-desc">Registra o servidor na aba correspondente da planilha oficial de Licenças, calcula automaticamente o término (90 dias ou anos afastados) e emite a Portaria no ato se desejado.</p>
-              </div>
-              <a href="https://docs.google.com/spreadsheets/d/1agqeKFfubxvmdq2oND3ndykU2037NIuOXBOHVSLS9oc/edit" target="_blank" rel="noopener" class="folder-chip">
-                Abrir Planilha Oficial de Licenças ↗
-              </a>
-            </div>
-
-            <form id="formCadastroLicenca">
               <div class="controls-grid">
                 <div class="field-group">
-                  <label for="licModalidadeSelect">Modalidade da Licença</label>
-                  <select id="licModalidadeSelect" class="input-clean">
-                    <option value="PREMIO">Licença-Prêmio (90 dias corridos)</option>
-                    <option value="NAO_REMUNERADA">Licença Sem Remuneração</option>
-                    <option value="ANULACAO">Portaria de Anulação de Licença</option>
+                  <label for="pincelOperacaoSelect">1. Modalidade da Portaria</label>
+                  <select id="pincelOperacaoSelect" class="input-clean">
+                    <option value="LICENCAS">Licenças (Prêmio, Não Remunerada e Anulação)</option>
+                    <option value="READAPTACOES">Readaptações Funcionais</option>
                   </select>
                 </div>
-
-                <div class="field-group" id="grpLicNome">
-                  <label for="licNomeInput">Nome Completo do(a) Servidor(a)</label>
-                  <input type="text" id="licNomeInput" class="input-clean" placeholder="Ex: MARIA DA SILVA OLIVEIRA" />
+                <div class="field-group">
+                  <label for="pincelPlanilhaSelect">2. Planilha Oficial de Controle</label>
+                  <select id="pincelPlanilhaSelect" class="input-clean"></select>
                 </div>
-
-                <div class="field-group" id="grpLicMatricula">
-                  <label for="licMatriculaInput">Matrícula Funcional</label>
-                  <input type="text" id="licMatriculaInput" class="input-clean" placeholder="Ex: 123456-7" />
-                </div>
-
-                <div class="field-group" id="grpLicCargo">
-                  <label for="licCargoInput">Cargo / Categoria Funcional</label>
-                  <input type="text" id="licCargoInput" class="input-clean" placeholder="Ex: Professor de Ensino Fundamental" />
+                <div class="field-group">
+                  <label for="pincelAbaSelect">3. Aba Selecionada</label>
+                  <select id="pincelAbaSelect" class="input-clean"></select>
                 </div>
               </div>
 
-              <div class="controls-grid" style="margin-top: 16px;">
-                <div class="field-group" id="grpLicPeriodoAquisitivo">
-                  <label for="licPeriodoInput">Período Aquisitivo (Nº do quinquênio ou intervalo)</label>
-                  <input type="text" id="licPeriodoInput" class="input-clean" placeholder="Ex: 1 (ou 2019/2024)" />
-                </div>
+              <div class="button-group" style="margin-top: 20px; margin-bottom: 18px;">
+                <button id="pincelDryRunBtn" class="btn btn-secondary">Diagnóstico Pré-Voo (Dry-Run)</button>
+                <button id="pincelGenerateBtn" class="btn btn-primary">Gerar Portarias Pendentes</button>
+                <button id="pincelStopBtn" class="btn btn-danger hidden">Interromper Lote</button>
+              </div>
 
-                <div class="field-group hidden" id="grpLicAnosAfastados">
-                  <label for="licAnosInput">Quantidade de Anos Afastados</label>
-                  <input type="number" min="1" max="10" id="licAnosInput" class="input-clean" placeholder="Ex: 2" />
+              <div id="pincelProgressBox" class="output-panel hidden" style="margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12.5px; font-weight: 600;">
+                  <span id="pincelProgressLabel">Processando portarias no Google Drive...</span>
+                  <span id="pincelProgressNumbers" style="font-family: var(--font-mono);">0 / 0</span>
                 </div>
-
-                <div class="field-group hidden" id="grpLicPortariaAnular">
-                  <label for="licPortariaAnularInput">Nº da Portaria a Anular</label>
-                  <input type="text" id="licPortariaAnularInput" class="input-clean" placeholder="Ex: 120/2026" />
-                </div>
-
-                <div class="field-group hidden" id="grpLicParecer">
-                  <label for="licParecerInput">Nº do Parecer Jurídico</label>
-                  <input type="text" id="licParecerInput" class="input-clean" placeholder="Ex: 045/2026-ASJUR" />
-                </div>
-
-                <div class="field-group" id="grpLicDataInicio">
-                  <label for="licDataInicioInput">Data de Início</label>
-                  <input type="date" id="licDataInicioInput" class="input-clean" />
-                </div>
-
-                <div class="field-group" id="grpLicDataTermino">
-                  <label for="licDataTerminoInput">Data de Término (Calculada Automaticamente)</label>
-                  <input type="date" id="licDataTerminoInput" class="input-clean" />
+                <div class="progress-track-clean">
+                  <div id="pincelProgressFill" class="progress-fill-clean" style="width: 0%;"></div>
                 </div>
               </div>
 
-              <div class="controls-grid" style="margin-top: 16px; align-items: end;">
-                <div class="field-group">
-                  <label for="licNumPortariaInput">Nº da Portaria</label>
-                  <input type="text" id="licNumPortariaInput" class="input-clean" value="AUTO" placeholder="AUTO (Alocar via Olho de Apolo)" />
+              <!-- IDENTIFICAÇÃO DE FINALIZAÇÃO E LINKS VISÍVEIS DOS ARQUIVOS GERADOS -->
+              <div id="pincelCompletedJobBox" class="job-result-card hidden">
+                <div class="job-result-header">
+                  <div class="job-result-title">
+                    <span class="job-done-badge" id="pincelDoneCheckSvg"></span>
+                    <span id="jobResultHeading">Finalização Confirmada — Portarias Disponíveis</span>
+                  </div>
+                  <div class="button-group">
+                    <button id="copyAllJobLinksBtn" class="btn btn-secondary btn-sm">Copiar Todos os Links</button>
+                    <button id="closeJobResultBtn" class="btn btn-ghost btn-sm">Fechar</button>
+                  </div>
                 </div>
-
-                <div class="field-group">
-                  <label style="display: flex; align-items: center; gap: 9px; cursor: pointer; padding: 10px 0;">
-                    <input type="checkbox" id="licRepublicadoCheck" />
-                    <span>Republicação por incorreção</span>
-                  </label>
-                </div>
-
-                <div class="field-group">
-                  <label style="display: flex; align-items: center; gap: 9px; cursor: pointer; padding: 10px 0;">
-                    <input type="checkbox" id="licRetroativoCheck" />
-                    <span>Efeitos retroativos à data inicial</span>
-                  </label>
-                </div>
-
-                <div class="field-group">
-                  <label style="display: flex; align-items: center; gap: 9px; cursor: pointer; padding: 10px 0; color: var(--accent-gold); font-weight: 700;">
-                    <input type="checkbox" id="licGerarAgoraCheck" checked />
-                    <span>Emitir documento Google Docs agora</span>
-                  </label>
-                </div>
+                <div id="jobResultSummary" style="font-size: 13.5px; color: var(--text-secondary);"></div>
+                <div class="job-links-list" id="jobLinksList"></div>
               </div>
 
-              <div class="button-group" style="margin-top: 20px;">
-                <button type="submit" id="btnSalvarLicenca" class="btn btn-primary">Registrar Licença e Gerar Ato</button>
-                <button type="reset" class="btn btn-secondary">Limpar Campos</button>
+              <div id="pincelOutput" class="output-panel">
+                Selecione a modalidade, a planilha oficial e a aba para executar a validação pré-voo ou iniciar a geração em lote.
               </div>
-            </form>
+            </div>
 
-            <div id="licencaOutputFeedback" class="job-result-card hidden"></div>
+            <!-- SUB-ABA 2: CADASTRO DIRETO DE LICENÇA -->
+            <div id="subpanePortariasLicencas" class="subtab-pane hidden">
+              <div class="card-header-row">
+                <div>
+                  <span class="section-eyebrow">REGISTRO FUNCIONAL INTEGRADO</span>
+                  <h2 class="section-title">Cadastrar Licença Direto no Hub</h2>
+                  <p class="section-desc">Registra o servidor na aba correspondente da planilha oficial de Licenças, calcula automaticamente o término (90 dias ou anos afastados) e emite a Portaria no ato se desejado.</p>
+                </div>
+                <a href="https://docs.google.com/spreadsheets/d/1agqeKFfubxvmdq2oND3ndykU2037NIuOXBOHVSLS9oc/edit" target="_blank" rel="noopener" class="folder-chip">
+                  Abrir Planilha Oficial de Licenças ↗
+                </a>
+              </div>
+
+              <form id="formCadastroLicenca">
+                <div class="controls-grid">
+                  <div class="field-group">
+                    <label for="licModalidadeSelect">Modalidade da Licença</label>
+                    <select id="licModalidadeSelect" class="input-clean">
+                      <option value="PREMIO">Licença-Prêmio (90 dias corridos)</option>
+                      <option value="NAO_REMUNERADA">Licença Sem Remuneração</option>
+                      <option value="ANULACAO">Portaria de Anulação de Licença</option>
+                    </select>
+                  </div>
+
+                  <div class="field-group" id="grpLicNome">
+                    <label for="licNomeInput">Nome Completo do(a) Servidor(a)</label>
+                    <input type="text" id="licNomeInput" class="input-clean" placeholder="Ex: MARIA DA SILVA OLIVEIRA" />
+                  </div>
+
+                  <div class="field-group" id="grpLicMatricula">
+                    <label for="licMatriculaInput">Matrícula Funcional</label>
+                    <input type="text" id="licMatriculaInput" class="input-clean" placeholder="Ex: 123456-7" />
+                  </div>
+
+                  <div class="field-group" id="grpLicCargo">
+                    <label for="licCargoInput">Cargo / Categoria Funcional</label>
+                    <input type="text" id="licCargoInput" class="input-clean" placeholder="Ex: Professor de Ensino Fundamental" />
+                  </div>
+                </div>
+
+                <div class="controls-grid" style="margin-top: 16px;">
+                  <div class="field-group" id="grpLicPeriodoAquisitivo">
+                    <label for="licPeriodoInput">Período Aquisitivo (Nº do quinquênio ou intervalo)</label>
+                    <input type="text" id="licPeriodoInput" class="input-clean" placeholder="Ex: 1 (ou 2019/2024)" />
+                  </div>
+
+                  <div class="field-group hidden" id="grpLicAnosAfastados">
+                    <label for="licAnosInput">Quantidade de Anos Afastados</label>
+                    <input type="number" min="1" max="10" id="licAnosInput" class="input-clean" placeholder="Ex: 2" />
+                  </div>
+
+                  <div class="field-group hidden" id="grpLicPortariaAnular">
+                    <label for="licPortariaAnularInput">Nº da Portaria a Anular</label>
+                    <input type="text" id="licPortariaAnularInput" class="input-clean" placeholder="Ex: 120/2026" />
+                  </div>
+
+                  <div class="field-group hidden" id="grpLicParecer">
+                    <label for="licParecerInput">Nº do Parecer Jurídico</label>
+                    <input type="text" id="licParecerInput" class="input-clean" placeholder="Ex: 045/2026-ASJUR" />
+                  </div>
+
+                  <div class="field-group" id="grpLicDataInicio">
+                    <label for="licDataInicioInput">Data de Início</label>
+                    <input type="date" id="licDataInicioInput" class="input-clean" />
+                  </div>
+
+                  <div class="field-group" id="grpLicDataTermino">
+                    <label for="licDataTerminoInput">Data de Término (Calculada Automaticamente)</label>
+                    <input type="date" id="licDataTerminoInput" class="input-clean" />
+                  </div>
+                </div>
+
+                <div class="controls-grid" style="margin-top: 16px; align-items: end;">
+                  <div class="field-group">
+                    <label for="licNumPortariaInput">Nº da Portaria</label>
+                    <input type="text" id="licNumPortariaInput" class="input-clean" value="AUTO" placeholder="AUTO (Alocar via Olho de Apolo)" />
+                  </div>
+
+                  <div class="field-group">
+                    <label style="display: flex; align-items: center; gap: 9px; cursor: pointer; padding: 10px 0;">
+                      <input type="checkbox" id="licRepublicadoCheck" />
+                      <span>Republicação por incorreção</span>
+                    </label>
+                  </div>
+
+                  <div class="field-group">
+                    <label style="display: flex; align-items: center; gap: 9px; cursor: pointer; padding: 10px 0;">
+                      <input type="checkbox" id="licRetroativoCheck" />
+                      <span>Efeitos retroativos à data inicial</span>
+                    </label>
+                  </div>
+
+                  <div class="field-group">
+                    <label style="display: flex; align-items: center; gap: 9px; cursor: pointer; padding: 10px 0; color: var(--accent-gold); font-weight: 700;">
+                      <input type="checkbox" id="licGerarAgoraCheck" checked />
+                      <span>Emitir documento Google Docs agora</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="button-group" style="margin-top: 20px;">
+                  <button type="submit" id="btnSalvarLicenca" class="btn btn-primary">Registrar Licença e Gerar Ato</button>
+                  <button type="reset" class="btn btn-secondary">Limpar Campos</button>
+                </div>
+              </form>
+
+              <div id="licencaOutputFeedback" class="job-result-card hidden"></div>
+            </div>
           </div>
         </section>
+
+        <!-- PÁGINA 4: ALIAS / REDIRECT COMPATIBILITY -->
+        <section class="page-view hidden" id="page-licencas" style="display: none !important;"></section>
 
         <!-- =========================================================================
              PÁGINA 5: CERTIFICADOS & DECLARAÇÕES (A LIRA DE ORFEU)
@@ -665,7 +687,7 @@
             </div>
 
             <div class="table-wrapper table-responsive">
-              <table class="clean-table">
+              <table class="clean-table table-responsive-cards">
                 <thead>
                   <tr>
                     <th style="width: 135px;">Data</th>
@@ -756,9 +778,26 @@
                 <button type="button" id="btnAlternarFormPermuta" class="btn btn-secondary btn-sm" aria-expanded="true">
                   <span>+ Nova Intenção</span>
                 </button>
+                <button type="button" id="btnCarregarCsvTransparencia" class="btn btn-secondary btn-sm" title="Carregar planilha CSV de servidores da transparência">
+                  <span>📂 Carregar Planilha CSV</span>
+                </button>
+                <input type="file" id="cadmoUploadCsvInput" accept=".csv" style="display: none;" />
                 <button type="button" id="btnRecalcularMatchesHera" class="btn btn-primary btn-sm">
                   <span>⚡ Recalcular Matching (Hera)</span>
                 </button>
+              </div>
+            </div>
+
+            <!-- STATUS DA BASE DE REFERÊNCIA DA TRANSPARÊNCIA -->
+            <div id="cadmoStatusTransparencia" style="margin: 14px 0; padding: 10px 16px; background: var(--bg-tonal); border: 1px solid var(--border-hairline); border-radius: var(--radius-md, 12px); display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10B981;"></span>
+                <strong style="color: var(--text-main);">Base de Referência Transparência:</strong>
+                <span id="cadmoBadgeBaseRef" style="color: var(--text-secondary);">Ceará-Mirim (4.182 servidores • 890 docentes ativos com matrícula de 7 dígitos)</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px; font-size: 11.5px; color: var(--text-muted);">
+                <span>🏛️ Cruzamento CF/88 Art. 37, XVI Ativo</span>
+                <span>⚖️ Teto Máx: 60h</span>
               </div>
             </div>
 
@@ -783,11 +822,12 @@
               <form id="formPermutaCadmo" class="controls-grid permuta-form-grid" style="grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; padding: 18px; background: var(--bg-surface); border-radius: var(--radius-md, 12px); border: 1px solid var(--border-hairline);">
                 <div class="field-group">
                   <label for="permutaNome">Nome do(a) Servidor(a)</label>
-                  <input type="text" id="permutaNome" name="permutaNome" class="input-clean" placeholder="Nome completo do professor(a)" required autocomplete="name" />
+                  <input type="text" id="permutaNome" name="permutaNome" list="listaServidoresCearaMirim" class="input-clean" placeholder="Digite ou selecione o professor(a)..." required autocomplete="off" />
+                  <datalist id="listaServidoresCearaMirim"></datalist>
                 </div>
                 <div class="field-group">
                   <label for="permutaMatricula">Matrícula Funcional</label>
-                  <input type="text" id="permutaMatricula" name="permutaMatricula" class="input-clean" placeholder="Ex: 2026-4401" required />
+                  <input type="text" id="permutaMatricula" name="permutaMatricula" class="input-clean" placeholder="Ex: 0010016 (7 dígitos)" required />
                 </div>
                 <div class="field-group">
                   <label for="permutaCargo">Cargo / Função</label>
@@ -817,6 +857,7 @@
                   <label for="permutaCargaHoraria">Carga Horária Semanal</label>
                   <select id="permutaCargaHoraria" name="permutaCargaHoraria" class="input-clean" required>
                     <option value="30h">30h Semanais (Padrão SMEB)</option>
+                    <option value="25h">25h Semanais</option>
                     <option value="20h">20h Semanais</option>
                     <option value="40h">40h Semanais (Dedicação Exclusiva)</option>
                   </select>
@@ -874,15 +915,143 @@
             <!-- GRADE DE RESULTADOS DE MATCHING DA PERSONA HERA -->
             <div style="margin-top: 10px;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-                <strong style="font-family: var(--font-display); font-size: 14.5px; display: flex; align-items: center; gap: 6px;">
-                  <span>Cruzamento de Vínculos &amp; Compatibilidade Funcional (Hera)</span>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <button type="button" id="tabAbaPermutas" class="btn btn-secondary btn-sm active" style="font-size: 12px; font-weight: 600;">
+                    <span>🤝 Permutas Recíprocas (Hera)</span>
+                  </button>
+                  <button type="button" id="tabAbaVinculos" class="btn btn-secondary btn-sm" style="font-size: 12px; font-weight: 600;">
+                    <span>🏛️ Cruzamento de Vínculos (CF Art. 37)</span>
+                  </button>
                   <span id="badgeTotalMatches" class="pill-badge pill-gold" style="font-size: 11px;">0 cruzamentos</span>
-                </strong>
+                </div>
                 <span style="font-size: 12px; color: var(--text-muted);">Ponderação: Cargo/Disciplina (40 pts) + Carga Horária (30 pts) + Rota Inversa (30 pts)</span>
               </div>
               <div id="resultadoMatchingHera" class="resultado-matching-container">
                 <!-- Tabela ou Cards de Matching Injetados via JS -->
               </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- =========================================================================
+             PÁGINA: MAPA E GESTÃO DAS ESCOLAS MUNICIPAIS DE CEARÁ-MIRIM (CRUD)
+             ========================================================================= -->
+        <section class="page-view hidden" id="page-escolas">
+          <div class="surface-card">
+            <div class="card-header-row">
+              <div>
+                <span class="section-eyebrow">GEORREFERENCIAMENTO MUNICIPAL • REDE ESCOLAR SMEB</span>
+                <h2 class="section-title">Mapa e Gestão das Escolas Municipais</h2>
+                <p class="section-desc">Mapeamento cartográfico interativo (Leaflet.js), catálogo georreferenciado com latitude e longitude, cadastro, edição e exclusão de unidades diretamente no mapa com persistência local e backup JSON.</p>
+              </div>
+              <div class="button-group">
+                <button type="button" id="btnNovaEscola" class="btn btn-primary btn-sm">
+                  <span>+ Nova Unidade Escolar</span>
+                </button>
+                <button type="button" id="btnRecentralizarMapaEscolas" class="btn btn-secondary btn-sm" title="Centralizar mapa em Ceará-Mirim">
+                  <span>🎯 Recentralizar</span>
+                </button>
+                <button type="button" id="btnExportarEscolasJson" class="btn btn-secondary btn-sm" title="Exportar catálogo em arquivo JSON">
+                  <span>📥 Exportar JSON</span>
+                </button>
+                <button type="button" id="btnImportarEscolasJson" class="btn btn-secondary btn-sm" title="Importar catálogo a partir de arquivo JSON">
+                  <span>📤 Importar JSON</span>
+                </button>
+                <input type="file" id="escolasImportFileInput" accept=".json" style="display: none;" />
+                <button type="button" id="btnRestaurarEscolasPadrao" class="btn btn-ghost btn-sm" title="Restaurar catálogo inicial oficial com 20 escolas">
+                  <span>↺ Restaurar Padrão</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- CARDS DE CONTADORES / KPIS -->
+            <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin: 16px 0 20px 0;">
+              <div class="stat-card">
+                <div class="stat-top">
+                  <span class="stat-label">Total de Unidades</span>
+                  <span class="pill-badge pill-gold">Rede SMEB</span>
+                </div>
+                <div class="stat-value" id="kpiEscolasTotal">20</div>
+                <div class="stat-meta">Unidades ativas cadastradas</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-top">
+                  <span class="stat-label">Escolas Urbanas</span>
+                  <span class="pill-badge pill-blue">Zona Urbana</span>
+                </div>
+                <div class="stat-value" id="kpiEscolasUrbanas">10</div>
+                <div class="stat-meta">Ensino Fundamental e Sede</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-top">
+                  <span class="stat-label">Escolas Rurais</span>
+                  <span class="pill-badge pill-green">Zona Rural</span>
+                </div>
+                <div class="stat-value" id="kpiEscolasRurais">6</div>
+                <div class="stat-meta">Polos e distritos agrícolas</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-top">
+                  <span class="stat-label">Educação Infantil</span>
+                  <span class="pill-badge" style="background: rgba(245,158,11,0.15); color: #F59E0B; border: 1px solid rgba(245,158,11,0.3);">CMEIs</span>
+                </div>
+                <div class="stat-value" id="kpiEscolasCmeis">4</div>
+                <div class="stat-meta">Centros de Ed. Infantil</div>
+              </div>
+            </div>
+
+            <!-- CONTÊINER DO MAPA INTERATIVO (LEAFLET.JS) -->
+            <div class="cadmo-map-outer escola-map-outer" style="margin: 18px 0; border: 1px solid var(--border-hairline); border-radius: var(--radius-lg, 16px); overflow: hidden; background: var(--bg-surface); box-shadow: var(--shadow-subtle);">
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: var(--bg-tonal); border-bottom: 1px solid var(--border-hairline); font-size: 12.5px; flex-wrap: wrap; gap: 8px;">
+                <span style="font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
+                  <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10B981;"></span>
+                  Mapa Georreferenciado das Unidades Escolares — Ceará-Mirim/RN
+                </span>
+                <span id="escolasCoordLiveDisplay" style="font-family: var(--font-mono); font-size: 11.5px; color: var(--text-muted);">
+                  Clique no mapa para capturar latitude e longitude
+                </span>
+                <div style="display: flex; gap: 14px; font-size: 11.5px; color: var(--text-muted); flex-wrap: wrap;">
+                  <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #D4AF37;"></span> Sede</span>
+                  <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #38BDF8;"></span> Urbana</span>
+                  <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10B981;"></span> Rural</span>
+                  <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #F59E0B;"></span> CMEI</span>
+                </div>
+              </div>
+              <div id="mapaEscolasCearaMirim" style="height: 480px; width: 100%; border-radius: var(--radius-lg); position: relative; z-index: 1;"></div>
+            </div>
+
+            <!-- BARRA DE FILTROS E BUSCA -->
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin: 20px 0 14px 0;">
+              <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                <input type="search" id="escolaBuscaInput" class="input-clean" style="width: 280px; padding: 7px 12px; font-size: 13px;" placeholder="Buscar por escola, bairro ou INEP..." />
+                <div class="button-group" style="margin: 0;">
+                  <button type="button" class="btn-mini active" data-filtro-categoria="todas">Todas</button>
+                  <button type="button" class="btn-mini" data-filtro-categoria="sede">Sede</button>
+                  <button type="button" class="btn-mini" data-filtro-categoria="urbana">Urbanas</button>
+                  <button type="button" class="btn-mini" data-filtro-categoria="rural">Rurais</button>
+                  <button type="button" class="btn-mini" data-filtro-categoria="cmei">CMEIs</button>
+                </div>
+              </div>
+              <span id="escolasContagemExibida" style="font-size: 12.5px; color: var(--text-muted);">Carregando unidades...</span>
+            </div>
+
+            <!-- TABELA DE UNIDADES ESCOLARES -->
+            <div class="table-wrapper">
+              <table class="clean-table" id="tabelaEscolas">
+                <thead>
+                  <tr>
+                    <th>Unidade Escolar</th>
+                    <th style="width: 140px;">Categoria</th>
+                    <th style="width: 100px;">Zona</th>
+                    <th style="width: 160px;">Bairro / Distrito</th>
+                    <th style="width: 170px;">Coordenadas (Lat / Lng)</th>
+                    <th class="text-right" style="width: 160px;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="tabelaEscolasBody">
+                  <tr><td colspan="6" class="text-muted text-center" style="padding: 24px;">Carregando escolas...</td></tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </section>
@@ -1121,11 +1290,11 @@
           <div class="controls-grid" style="grid-template-columns: repeat(2, 1fr);">
             <div class="field-group">
               <label for="inputProximoOficioMd">Próximo Ofício 2026</label>
-              <input type="number" id="inputProximoOficioMd" class="input-clean" min="1" value="155" />
+              <input type="number" id="inputProximoOficioMd" class="input-clean" min="1" placeholder="--" value="" />
             </div>
             <div class="field-group">
               <label for="inputProximaPortariaMd">Próxima Portaria 2026</label>
-              <input type="number" id="inputProximaPortariaMd" class="input-clean" min="1" value="163" />
+              <input type="number" id="inputProximaPortariaMd" class="input-clean" min="1" placeholder="--" value="" />
             </div>
           </div>
           <div class="controls-grid" style="grid-template-columns: 1fr; margin-top: 14px;">
@@ -1270,9 +1439,136 @@
       </div>
     </div>
 
+    <!-- =========================================================================
+         MODAL DE CADASTRO E EDIÇÃO DE UNIDADE ESCOLAR (#modalCadastroEscola)
+         ========================================================================= -->
+    <div id="modalCadastroEscola" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalCadastroEscolaTitulo">
+      <div class="modal-card" style="max-width: 620px; width: 92%;">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <span class="badge badge-purple" style="font-size: 0.72rem; margin-bottom: 4px;">Georreferenciamento Municipal SMEB</span>
+            <h3 id="modalCadastroEscolaTitulo" style="margin: 0; font-size: 1.22rem; font-weight: 700;">Cadastrar Nova Unidade Escolar</h3>
+          </div>
+          <button id="closeModalCadastroEscolaBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal">&times;</button>
+        </div>
+
+        <form id="formCadastroEscola">
+          <input type="hidden" id="escolaId" name="escolaId" />
+          <div class="modal-body" style="padding: 20px 24px; max-height: 75vh; overflow-y: auto;">
+            <p class="section-desc" style="margin-top: 0; margin-bottom: 14px;">
+              Preencha os dados da escola ou clique no mapa para capturar a latitude e longitude exatas.
+            </p>
+
+            <!-- Campo: Nome -->
+            <div class="field-group" style="margin-bottom: 12px;">
+              <label for="escolaNome">Nome da Unidade Escolar *</label>
+              <input type="text" id="escolaNome" name="escolaNome" class="input-clean" placeholder="Ex: E. M. Alice Garcia Freire" required />
+            </div>
+
+            <!-- Linha: INEP e Categoria -->
+            <div class="controls-grid" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+              <div class="field-group">
+                <label for="escolaInep">Código INEP (8 dígitos)</label>
+                <input type="text" id="escolaInep" name="escolaInep" class="input-clean" placeholder="Ex: 24021001" maxlength="8" />
+              </div>
+              <div class="field-group">
+                <label for="escolaCategoria">Categoria Institucional *</label>
+                <select id="escolaCategoria" name="escolaCategoria" class="input-clean" required>
+                  <option value="Ensino Fundamental">Ensino Fundamental</option>
+                  <option value="Polo Rural">Polo Rural</option>
+                  <option value="Educação Infantil">Educação Infantil (CMEI)</option>
+                  <option value="Sede Administrativa">Sede Administrativa</option>
+                  <option value="Educação Especial">Educação Especial</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Linha: Zona e Bairro/Distrito -->
+            <div class="controls-grid" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+              <div class="field-group">
+                <label for="escolaZona">Zona *</label>
+                <select id="escolaZona" name="escolaZona" class="input-clean" required>
+                  <option value="Urbana">Urbana</option>
+                  <option value="Rural">Rural</option>
+                </select>
+              </div>
+              <div class="field-group">
+                <label for="escolaBairroDistrito">Bairro / Distrito / Comunidade *</label>
+                <input type="text" id="escolaBairroDistrito" name="escolaBairroDistrito" class="input-clean" placeholder="Ex: Centro, Gravatá, Massangana..." required />
+              </div>
+            </div>
+
+            <!-- Campo: Endereço -->
+            <div class="field-group" style="margin-bottom: 12px;">
+              <label for="escolaEndereco">Endereço Completo / Referência</label>
+              <input type="text" id="escolaEndereco" name="escolaEndereco" class="input-clean" placeholder="Ex: Rua Presidente Vargas, s/n" />
+            </div>
+
+            <!-- Linha: Telefone e Diretor -->
+            <div class="controls-grid" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+              <div class="field-group">
+                <label for="escolaTelefone">Telefone / Contato</label>
+                <input type="text" id="escolaTelefone" name="escolaTelefone" class="input-clean" placeholder="(84) 3274-5900" />
+              </div>
+              <div class="field-group">
+                <label for="escolaDiretor">Diretor(a) / Gestor(a)</label>
+                <input type="text" id="escolaDiretor" name="escolaDiretor" class="input-clean" placeholder="Nome do(a) gestor(a)" />
+              </div>
+            </div>
+
+            <!-- Bloco de Coordenadas Geográficas (Latitude e Longitude) -->
+            <div style="background: var(--bg-tonal); padding: 14px; border-radius: var(--radius-md, 12px); border: 1px solid var(--border-hairline); margin-bottom: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <strong style="font-size: 13px; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
+                  <span>📍</span> Coordenadas Geográficas (Graus Decimais)
+                </strong>
+                <span style="font-size: 11px; color: var(--text-muted);">Precisão 6 casas decimais</span>
+              </div>
+              <div class="controls-grid" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px;">
+                <div class="field-group">
+                  <label for="escolaLatitude">Latitude (Decimal) *</label>
+                  <input type="number" id="escolaLatitude" name="escolaLatitude" class="input-clean" step="0.000001" placeholder="-5.634000" required />
+                </div>
+                <div class="field-group">
+                  <label for="escolaLongitude">Longitude (Decimal) *</label>
+                  <input type="number" id="escolaLongitude" name="escolaLongitude" class="input-clean" step="0.000001" placeholder="-35.428000" required />
+                </div>
+              </div>
+              <div id="escolaCoordValidacaoBadge" class="pill-badge pill-green" style="font-size: 11px; display: inline-block;">
+                ✓ Coordenadas dentro da delimitação territorial de Ceará-Mirim/RN
+              </div>
+              <p style="margin: 6px 0 0 0; font-size: 11.5px; color: var(--text-muted); line-height: 1.4;">
+                💡 <em>Dica: Com este modal aberto, você pode clicar diretamente em qualquer ponto do mapa para capturar e preencher as coordenadas automaticamente.</em>
+              </p>
+            </div>
+          </div>
+
+          <div class="modal-footer" style="padding: 14px 24px; border-top: 1px solid var(--border-hairline); display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" id="btnCancelarModalEscola" class="btn btn-secondary btn-sm">Cancelar</button>
+            <button type="submit" id="btnSalvarEscola" class="btn btn-primary btn-sm">Salvar Unidade Escolar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- Supabase JS v2 CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <?!= include('ui_scripts'); ?>
+
+    <!-- Registro Oficial do Service Worker PWA Olympos SMEB -->
+    <script>
+      if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('./sw.js')
+            .then(function(reg) {
+              console.log('[PWA] Service Worker registrado com sucesso:', reg.scope);
+            })
+            .catch(function(err) {
+              console.warn('[PWA] Erro ao registrar Service Worker:', err);
+            });
+        });
+      }
+    </script>
   </body>
 </html>
