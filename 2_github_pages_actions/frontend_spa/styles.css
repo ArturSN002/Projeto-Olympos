@@ -189,22 +189,28 @@ a {
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.3s ease;
 }
 
+.mobile-drawer {
+  display: none;
+}
+
 .sidebar-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(11, 17, 32, 0.55);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  z-index: 190;
+  background: rgba(11, 17, 32, 0.65);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 990;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.25s ease;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+  visibility: hidden;
 }
 
 body.nav-drawer-open .sidebar-backdrop,
 .sidebar-backdrop.active {
   opacity: 1;
   pointer-events: auto;
+  visibility: visible;
 }
 
 /* ==========================================================================
@@ -1555,18 +1561,24 @@ body.nav-drawer-open .sidebar-backdrop,
     display: none !important;
   }
 
-  /* Gaveta Lateral Deslizante */
-  .sidebar,
+  /* Gaveta Lateral Deslizante Mobile */
   .masthead-nav-rail {
+    display: none !important;
+  }
+
+  .sidebar,
+  .mobile-drawer {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
     bottom: 0 !important;
+    height: 100vh !important;
+    height: 100dvh !important;
     width: min(300px, 84vw) !important;
     max-width: 320px !important;
-    z-index: 300 !important;
+    z-index: 1000 !important;
     background: var(--bg-elevated) !important;
-    box-shadow: var(--shadow-modal) !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5) !important;
     transform: translateX(-100%) !important;
     transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
     overflow-y: auto !important;
@@ -1577,8 +1589,12 @@ body.nav-drawer-open .sidebar-backdrop,
     border-top: none !important;
   }
 
+  body.nav-drawer-open {
+    overflow: hidden;
+  }
+
   body.nav-drawer-open .sidebar,
-  body.nav-drawer-open .masthead-nav-rail,
+  body.nav-drawer-open .mobile-drawer,
   .sidebar.open,
   .sidebar.active {
     transform: translateX(0) !important;

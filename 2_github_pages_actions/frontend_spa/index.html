@@ -67,7 +67,7 @@
         </div>
 
         <div class="masthead-controls">
-          <div class="quick-search-pill">
+          <div class="quick-search-pill hidden" style="display: none !important;">
             <button id="topQuickSearchBtn" class="btn-search-trigger" title="Pesquisar no acervo" aria-label="Pesquisar"></button>
             <input type="search" id="topQuickSearchInput" placeholder="Pesquisar ato, servidor ou portaria..." autocomplete="off" />
             <span class="kbd-hint">/</span>
@@ -93,15 +93,8 @@
         </div>
       </div>
 
-      <!-- BACKDROP OVERLAY PARA SIDEBAR/DRAWER NO MOBILE -->
-      <div id="sidebarBackdrop" class="sidebar-backdrop" onclick="document.body.classList.remove('nav-drawer-open')" aria-hidden="true"></div>
-
-      <!-- TRILHO DE NAVEGAÇÃO MODULAR (1 BLOCO = 1 PÁGINA / SIDEBAR NO MOBILE) -->
-      <nav class="masthead-nav-rail sidebar" aria-label="Navegação modular do Hub Olympos">
-        <div class="drawer-header">
-          <span class="drawer-title">Navegação Olympos</span>
-          <button class="drawer-close-btn" onclick="document.body.classList.remove('nav-drawer-open')" aria-label="Fechar menu">✕</button>
-        </div>
+      <!-- TRILHO DE NAVEGAÇÃO MODULAR (DESKTOP) -->
+      <nav class="masthead-nav-rail" aria-label="Navegação modular do Hub Olympos">
         <div class="nav-rail-inner">
           <a href="#visao-geral" class="nav-link active" data-page="visao-geral">Visão Geral</a>
           <span class="nav-divider-dot" aria-hidden="true"></span>
@@ -113,11 +106,36 @@
           <a href="#diario-oficial" class="nav-link" data-page="diario-oficial">Diário Oficial</a>
           <a href="#papiro-cadmo" class="nav-link" data-page="papiro-cadmo">Papiro de Cadmo</a>
           <a href="#personas" class="nav-link" data-page="personas">Personas &amp; Memórias</a>
-          <a href="#busca" class="nav-link" data-page="busca">Busca no Acervo</a>
+          <a href="#busca" class="nav-link hidden" data-page="busca" style="display: none !important;">Busca no Acervo</a>
           <span class="nav-divider-dot" aria-hidden="true"></span>
           <a href="#configuracoes" class="nav-link" data-page="configuracoes">Ajustes</a>
         </div>
       </nav>
+    </header>
+
+    <!-- =========================================================================
+         GAVETA LATERAL DE NAVEGAÇÃO MOBILE (DRAWER & BACKDROP DEDICADOS)
+         ========================================================================= -->
+    <div id="sidebarBackdrop" class="sidebar-backdrop" onclick="document.body.classList.remove('nav-drawer-open')" aria-hidden="true"></div>
+
+    <aside id="mobileSidebar" class="sidebar mobile-drawer" aria-label="Navegação móvel Olympos">
+      <div class="drawer-header">
+        <span class="drawer-title">Navegação Olympos</span>
+        <button class="drawer-close-btn" onclick="document.body.classList.remove('nav-drawer-open')" aria-label="Fechar menu">✕</button>
+      </div>
+      <div class="nav-rail-inner mobile-nav-inner">
+        <a href="#visao-geral" class="nav-link active" data-page="visao-geral">Visão Geral</a>
+        <a href="#oficios" class="nav-link" data-page="oficios">Ofícios</a>
+        <a href="#portarias" class="nav-link" data-page="portarias">Portarias em Lote</a>
+        <a href="#licencas" class="nav-link" data-page="licencas">Licenças</a>
+        <a href="#certificados" class="nav-link" data-page="certificados">Certificados</a>
+        <a href="#diario-oficial" class="nav-link" data-page="diario-oficial">Diário Oficial</a>
+        <a href="#papiro-cadmo" class="nav-link" data-page="papiro-cadmo">Papiro de Cadmo</a>
+        <a href="#personas" class="nav-link" data-page="personas">Personas &amp; Memórias</a>
+        <a href="#busca" class="nav-link hidden" data-page="busca" style="display: none !important;">Busca no Acervo</a>
+        <a href="#configuracoes" class="nav-link" data-page="configuracoes">Ajustes</a>
+      </div>
+    </aside>
     </header>
 
     <!-- =========================================================================

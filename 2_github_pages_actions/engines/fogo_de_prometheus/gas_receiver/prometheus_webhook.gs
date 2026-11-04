@@ -210,6 +210,68 @@ function registrarAlertaMemoriaOlympos(nomeArquivoMd, novaLinha) {
 }
 
 /**
+ * Converte data para formato por extenso em português (ex: "29 de Outubro de 2026").
+ */
+function formatarDataPorExtensoPtBr_(dataStr) {
+  if (!dataStr) return '';
+  const partes = String(dataStr).trim().split(/[-/]/);
+  const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+  if (partes.length === 3) {
+    let dia, mes, ano;
+    if (partes[0].length === 4) {
+      ano = partes[0]; mes = parseInt(partes[1], 10); dia = parseInt(partes[2], 10);
+    } else {
+      dia = parseInt(partes[0], 10); mes = parseInt(partes[1], 10); ano = partes[2];
+    }
+    const nomeMes = (mes >= 1 && mes <= 12) ? meses[mes - 1] : String(mes);
+    return `${dia} de ${nomeMes} de ${ano}`;
+  }
+  return String(dataStr);
+}
+
+/**
+ * Gera nome de arquivo canônico padronizado no formato:
+ * "Portaria - SMEB nº 163 de 29 de Outubro de 2026.pdf"
+ */
+function gerarNomeArquivoPadronizado_(pub, dataISO, dataRef) {
+  if (pub.nome_arquivo && String(pub.nome_arquivo).toLowerCase().endsWith('.pdf') && !pub.nome_arquivo.includes('FEMURN_')) {
+    return pub.nome_arquivo;
+  }
+  const ner = extrairEntidadesNerGas_(pub);
+  const cat = String(pub.categoria || pub.tipo_ato || 'PORTARIA').toUpperCase();
+  let tipo = 'Portaria';
+  if (cat.includes('EDITAL')) tipo = 'Edital';
+  else if (cat.includes('DECRETO')) tipo = 'Decreto';
+  else if (cat.includes('LEI')) tipo = 'Lei';
+  else if (cat.includes('EXTRATO')) tipo = 'Extrato';
+  else if (cat.includes('RESOLU')) tipo = 'Resolução';
+  else if (cat.includes('AVISO')) tipo = 'Aviso';
+
+  const orgao = 'SMEB';
+  const dataExtenso = formatarDataPorExtensoPtBr_(pub.data_circulacao || dataRef || dataISO);
+  let num = (ner && ner.numeroAto) ? String(ner.numeroAto) : '';
+  if (num) {
+    num = num.replace(/[\\/:*?"<>|]/g, '-').replace(/\/\d{4}$/, '').trim();
+  }
+
+  let baseNome = '';
+  if (num) {
+    baseNome = `${tipo} - ${orgao} nº ${num}`;
+  } else if (pub.codigo_identificador || pub.codigo) {
+    baseNome = `${tipo} - ${orgao} (${pub.codigo_identificador || pub.codigo})`;
+  } else {
+    baseNome = `${tipo} - ${orgao}`;
+  }
+
+  if (dataExtenso) {
+    baseNome = `${baseNome} de ${dataExtenso}`;
+  }
+
+  baseNome = baseNome.replace(/[\\/:*?"<>|]/g, '_').replace(/\s+/g, ' ').trim();
+  return `${baseNome}.pdf`;
+}
+
+/**
  * Processa o pacote diário enviado pela VM do Fogo de Prometheus (GitHub Actions).
  */
 function processarPacotePrometheus(payload) {
@@ -241,8 +303,7 @@ function processarPacotePrometheus(payload) {
     }
 
     const folder = obterPastaCacheada(folderId);
-    const nomeLimpo = String(tituloAto).replace(/[\\/:*?"<>|]/g, '_').substring(0, 80);
-    const fileName = pub.nome_arquivo || `${dataISO}_FEMURN_${codId}_${nomeLimpo}.pdf`;
+    const fileName = pub.nome_arquivo || gerarNomeArquivoPadronizado_(pub, dataISO, dataRef);
 
     const existentes = folder.getFilesByName(fileName);
     let fileUrl = '';

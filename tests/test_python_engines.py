@@ -101,6 +101,32 @@ class TestFogoDePrometheusEngine(unittest.TestCase):
         self.assertIn("MARIA HELENA DOS SANTOS", res["servidores"])
         self.assertIn("ANA PAULA ROCHA", res["servidores"])
 
+    def test_04b_formatar_nome_arquivo_oficial(self):
+        """Valida a padronização oficial de nomes de arquivos do Diário Oficial (ex: Portaria - SMEB nº 163 de 29 de Outubro de 2026.pdf)."""
+        fn_nome = scraper_femurn.formatar_nome_arquivo_oficial
+        fn_data = scraper_femurn.formatar_data_por_extenso
+
+        # 1. Validação de data por extenso
+        self.assertEqual(fn_data("29/10/2026"), "29 de Outubro de 2026")
+        self.assertEqual(fn_data("2026-10-29"), "29 de Outubro de 2026")
+
+        # 2. Portaria com número puro
+        nome1, tit1 = fn_nome("PORTARIA", "163", "29/10/2026", "SMEB")
+        self.assertEqual(nome1, "Portaria - SMEB nº 163 de 29 de Outubro de 2026.pdf")
+        self.assertEqual(tit1, "Portaria - SMEB nº 163 de 29 de Outubro de 2026")
+
+        # 3. Portaria com barra de ano (ex: 163/2026) -> normaliza para nº 163
+        nome2, tit2 = fn_nome("PORTARIA", "163/2026", "29/10/2026", "SMEB")
+        self.assertEqual(nome2, "Portaria - SMEB nº 163 de 29 de Outubro de 2026.pdf")
+
+        # 4. Edital de PSS
+        nome3, tit3 = fn_nome("EDITAL_PSS", "02/2026", "15/03/2026", "SMEB")
+        self.assertEqual(nome3, "Edital - SMEB nº 02 de 15 de Março de 2026.pdf")
+
+        # 5. Ato sem número estruturado -> fallback por código
+        nome4, tit4 = fn_nome("PORTARIA", "", "29/10/2026", "SMEB", cod_id="DD6CE488")
+        self.assertEqual(nome4, "Portaria - SMEB (DD6CE488) de 29 de Outubro de 2026.pdf")
+
     def test_05_obter_intervalo_datas(self):
         """Testa o comportamento do seletor de datas com e sem variáveis customizadas."""
         fn = scraper_femurn.obter_intervalo_datas

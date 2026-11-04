@@ -154,6 +154,83 @@ def extrair_entidades_estruturadas(texto_integral, titulo_ato=""):
     }
 
 
+MESES_PT_EXTENSO = {
+    1: "Janeiro", 2: "Fevereiro", 3: "Março", 4: "Abril",
+    5: "Maio", 6: "Junho", 7: "Julho", 8: "Agosto",
+    9: "Setembro", 10: "Outubro", 11: "Novembro", 12: "Dezembro"
+}
+
+
+def formatar_data_por_extenso(data_str):
+    """Converte datas em formato DD/MM/AAAA ou AAAA-MM-DD para 'DD de Mês de AAAA'."""
+    if not data_str:
+        return ""
+    partes = re.split(r"[-/]", str(data_str).strip())
+    if len(partes) == 3:
+        try:
+            if len(partes[0]) == 4:  # AAAA-MM-DD
+                ano, mes, dia = partes[0], int(partes[1]), int(partes[2])
+            else:  # DD/MM/AAAA
+                dia, mes, ano = int(partes[0]), int(partes[1]), partes[2]
+            nome_mes = MESES_PT_EXTENSO.get(mes, f"{mes:02d}")
+            return f"{dia} de {nome_mes} de {ano}"
+        except (ValueError, KeyError):
+            pass
+    return str(data_str)
+
+
+def formatar_nome_arquivo_oficial(categoria, numero_ato, data_circulacao, orgao="SMEB", cod_id=""):
+    """
+    Padroniza o nome do arquivo oficial capturado no Diário Oficial.
+    Exemplo: 'Portaria - SMEB nº 163 de 29 de Outubro de 2026.pdf'
+    """
+    cat_upper = str(categoria or "").upper()
+    tipo = "Portaria"
+    if "EDITAL" in cat_upper:
+        tipo = "Edital"
+    elif "DECRETO" in cat_upper:
+        tipo = "Decreto"
+    elif "LEI" in cat_upper:
+        tipo = "Lei"
+    elif "EXTRATO" in cat_upper:
+        tipo = "Extrato"
+    elif "RESOLU" in cat_upper:
+        tipo = "Resolução"
+    elif "AVISO" in cat_upper:
+        tipo = "Aviso"
+    elif "PERMUTA" in cat_upper:
+        tipo = "Portaria"
+
+    orgao_tag = "SMEB"
+    if orgao and ("Gabinete" in str(orgao) or "Prefeitura" in str(orgao)):
+        orgao_tag = "Gabinete"
+    elif orgao and "Câmara" in str(orgao):
+        orgao_tag = "Câmara"
+
+    data_extenso = formatar_data_por_extenso(data_circulacao)
+
+    num_limpo = ""
+    if numero_ato:
+        # Se contiver sufixo de ano (ex: 163/2026), remove para não duplicar o ano no nome
+        num_limpo = re.sub(r"/\d{4}$", "", str(numero_ato)).strip()
+        num_limpo = re.sub(r"[\\/:*?\"<>|]", "-", num_limpo).strip()
+
+    if num_limpo:
+        titulo_base = f"{tipo} - {orgao_tag} nº {num_limpo}"
+    elif cod_id:
+        titulo_base = f"{tipo} - {orgao_tag} ({cod_id})"
+    else:
+        titulo_base = f"{tipo} - {orgao_tag}"
+
+    if data_extenso:
+        titulo_base = f"{titulo_base} de {data_extenso}"
+
+    # Sanitiza caracteres proibidos em sistemas de arquivos (Windows, Linux, Drive)
+    nome_seguro = re.sub(r'[\\/:*?"<>|]', '_', titulo_base)
+    nome_seguro = re.sub(r'\s+', ' ', nome_seguro).strip()
+    return f"{nome_seguro}.pdf", titulo_base
+
+
 def extrair_texto_com_fallback_ocr(texto_html, pdf_bytes=None, page_opt=None):
     """
     Sugestão 3.4.2: Caso a matéria na FEMURN contenha tabelas escaneadas ou texto HTML esparso (< 120 chars),
@@ -602,14 +679,25 @@ def executar_ciclo_pesquisa(
             # Sugestão 3.4.1: Extração estruturada NER (Servidores, Matrículas, Nº do Ato)
             entidades_ner = extrair_entidades_estruturadas(texto_integral, titulo_ato)
 
-            print(f"[MATERIA OK] Cód: {cod_id} | Cat: {categoria} | Método: {metodo_extracao} | Título: {titulo_ato}")
+            # Padronização Oficial de Título e Nome de Arquivo (ex: 'Portaria - SMEB nº 163 de 29 de Outubro de 2026.pdf')
+            nome_arq, tit_oficial = formatar_nome_arquivo_oficial(
+                categoria=categoria,
+                numero_ato=entidades_ner.get("numero_ato"),
+                data_circulacao=dt_ini,
+                orgao=orgao_alvo or "SMEB",
+                cod_id=cod_id
+            )
+
+            print(f"[MATERIA OK] Cód: {cod_id} | Cat: {categoria} | Método: {metodo_extracao} | Título: {tit_oficial or titulo_ato}")
 
             publicacoes_coletadas.append({
                 "codigo_identificador": cod_id,
                 "data_circulacao": dt_ini,
                 "entidade": entidade_alvo,
                 "orgao": orgao_alvo or "Câmara Municipal",
-                "titulo_ato": titulo_ato,
+                "titulo_ato": tit_oficial if tit_oficial else titulo_ato,
+                "titulo_original": titulo_ato,
+                "nome_arquivo": nome_arq,
                 "categoria": categoria,
                 "metodo_extracao": metodo_extracao,
                 "entidades_ner": entidades_ner,
