@@ -148,8 +148,11 @@ class TestFases1A5Expansion(unittest.TestCase):
 
         code = router_file.read_text(encoding="utf-8")
         self.assertIn("case 'prometheus_boletim_config_obter':", code, "Rota 'prometheus_boletim_config_obter' ausente no switch")
+        self.assertIn("case 'prometheus_get_config':", code, "Alias 'prometheus_get_config' ausente no switch")
         self.assertIn("case 'prometheus_boletim_config_salvar':", code, "Rota 'prometheus_boletim_config_salvar' ausente no switch")
+        self.assertIn("case 'prometheus_config_emails':", code, "Alias 'prometheus_config_emails' ausente no switch")
         self.assertIn("case 'prometheus_boletim_disparar':", code, "Rota 'prometheus_boletim_disparar' ausente no switch")
+        self.assertIn("case 'prometheus_test_email':", code, "Alias 'prometheus_test_email' ausente no switch")
 
     def test_05_fase1_scraper_femurn_drive_sa_upload_and_fallback(self):
         """Valida upload direto no Google Drive via Service Account e pastas de governança 2026."""
@@ -368,6 +371,7 @@ class TestFases1A5Expansion(unittest.TestCase):
         self.assertIn('id="mapaPermutasCadmo"', html, "Div #mapaPermutasCadmo ausente em index.html")
         self.assertIn('id="formPermutaCadmo"', html, "Formulário #formPermutaCadmo ausente em index.html")
         self.assertIn('id="resultadoMatchingHera"', html, "Grade de resultados #resultadoMatchingHera ausente")
+        self.assertEqual(html.count("</header>"), 1, "Tag </header> duplicada ou órfã detectada em index.html")
 
     def test_19_fase5_papiro_cadmo_georeferenced_points_and_hera_matching(self):
         """Valida catálogo georreferenciado, Leaflet map e motor de matching da persona Hera (40/30/30)."""
@@ -394,6 +398,8 @@ class TestFases1A5Expansion(unittest.TestCase):
         self.assertIn("executarMatchingHera", code, "Função executarMatchingHera ausente em papiroCadmo.js")
         self.assertIn("olympos_permutas_banco", code, "Chave de armazenamento olympos_permutas_banco ausente")
         self.assertIn("badge-excelente", code, "Badge de classificação 'excelente' ausente no matching Hera")
+        self.assertIn("String(munDestA || '').toLowerCase()", code, "Coerção defensiva em munDestA ausente no matching Hera")
+        self.assertIn("String(munDestB || '').toLowerCase()", code, "Coerção defensiva em munDestB ausente no matching Hera")
 
     def test_20_fase5_semantic_search_pgvector_migration_syntax_sqlglot(self):
         """Valida que a migração 004_semantic_search_pgvector.sql compila perfeitamente no analisador sqlglot."""

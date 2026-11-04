@@ -434,12 +434,18 @@ window.OlymposViews.papiroCadmo = (function() {
     const munOrigB = intB.municipioOrigem || extrairMunicipioOrigem(intB.origem);
     const munDestB = intB.destino;
 
-    const rotaInversaExata = (munOrigA.toLowerCase() === munDestB.toLowerCase()) &&
-                             (munOrigB.toLowerCase() === munDestA.toLowerCase());
+    const sOrigA = String(munOrigA || '').toLowerCase();
+    const sDestA = String(munDestA || '').toLowerCase();
+    const sOrigB = String(munOrigB || '').toLowerCase();
+    const sDestB = String(munDestB || '').toLowerCase();
+
+    const rotaInversaExata = Boolean(sOrigA && sDestB && sOrigB && sDestA) &&
+                             (sOrigA === sDestB) &&
+                             (sOrigB === sDestA);
 
     if (rotaInversaExata) {
       ptsRota = 30;
-    } else if (munOrigA.toLowerCase() === munDestB.toLowerCase() || munOrigB.toLowerCase() === munDestA.toLowerCase()) {
+    } else if ((sOrigA && sDestB && sOrigA === sDestB) || (sOrigB && sDestA && sOrigB === sDestA)) {
       ptsRota = 18;
     } else {
       ptsRota = 5;
