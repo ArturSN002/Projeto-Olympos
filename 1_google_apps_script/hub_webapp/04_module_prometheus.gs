@@ -138,12 +138,231 @@ function registrarIndicePlanilhaDiarioOficial2026(resultadosSalvos) {
 }
 
 /**
- * Envia o Resumo Executivo de publicações para o Espaço do Google Chat da SMEB ou E-mail.
+ * Extrai e valida a lista de destinatários de e-mail do Boletim Diário a partir das ScriptProperties.
+ * Suporta separação por vírgula, ponto-e-vírgula ou espaços ([,;\s]+), com deduplicação e validação regex.
+ * Fallback em cadeia: BOLETIM_DESTINATARIOS_EMAIL -> EMAIL_PARTICULAR -> EMAIL_RESUMO_PARTICULAR.
+ * @param {GoogleAppsScript.Properties.Properties} [propsOpt]
+ * @param {string} [overrideStr]
+ * @return {string[]} Lista de endereços de e-mail válidos
+ */
+function extrairDestinatariosBoletimPrometheus_(propsOpt, overrideStr) {
+  const props = propsOpt || PropertiesService.getScriptProperties();
+  const raw = overrideStr ||
+    props.getProperty('BOLETIM_DESTINATARIOS_EMAIL') ||
+    props.getProperty('EMAIL_PARTICULAR') ||
+    props.getProperty('EMAIL_RESUMO_PARTICULAR') ||
+    '';
+
+  if (!raw || typeof raw !== 'string') return [];
+
+  const partes = raw.replace(/[;\t\r\n]+/g, ',').split(',');
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const validos = [];
+
+  partes.forEach(function(item) {
+    const limpo = String(item || '').trim().toLowerCase();
+    if (limpo && emailRegex.test(limpo) && validos.indexOf(limpo) === -1) {
+      validos.push(limpo);
+    }
+  });
+
+  return validos;
+}
+
+/**
+ * Monta o corpo de e-mail em HTML editorial responsivo para o Boletim Diário Executivo.
+ * Utiliza paleta institucional Olympos (#0B1120, #D4AF37), tipografia limpa, badges de atos,
+ * entidades NER (servidores e matrículas), extrato do teor e botão de 1 clique para o Drive.
+ */
+function montarHtmlBoletimEditorial_(dataRef, resultadosSalvos) {
+  const total = (resultadosSalvos || []).length;
+  const dataExtenso = formatarDataPorExtensoPtBr_(dataRef);
+
+  // Mapeamento de contagem por categoria
+  const contadores = {};
+  (resultadosSalvos || []).forEach(function(r) {
+    const cat = String(r.categoria || 'ATO_GABINETE').toUpperCase();
+    contadores[cat] = (contadores[cat] || 0) + 1;
+  });
+
+  const badgesResumo = Object.keys(contadores).map(function(c) {
+    return '<span style="display:inline-block;padding:3px 9px;margin:2px 4px;background-color:#E2E8F0;color:#1E293B;border-radius:12px;font-size:11.5px;font-weight:600;">' + c + ': ' + contadores[c] + '</span>';
+  }).join(' ');
+
+  const cardsHtml = (resultadosSalvos || []).map(function(r) {
+    const cat = String(r.categoria || 'ATO_GABINETE').toUpperCase();
+    let badgeBg = '#DBEAFE';
+    let badgeColor = '#1E40AF';
+    if (cat.includes('EDITAL') || cat.includes('PSS')) {
+      badgeBg = '#F3E8FF'; badgeColor = '#6B21A8';
+    } else if (cat.includes('DECRETO') || cat.includes('LEI') || cat.includes('NORMATIVO')) {
+      badgeBg = '#FEF3C7'; badgeColor = '#92400E';
+    } else if (cat.includes('PERMUTA') || cat.includes('CESS')) {
+      badgeBg = '#D1FAE5'; badgeColor = '#065F46';
+    }
+
+    const nerPartes = [];
+    if (r.servidores && r.servidores.length > 0) {
+      nerPartes.push('👤 <b>Servidor(es):</b> ' + r.servidores.join(', '));
+    }
+    if (r.matriculas && r.matriculas.length > 0) {
+      nerPartes.push('🏷️ <b>Matrícula(s):</b> ' + r.matriculas.join(', '));
+    }
+
+    const nerBox = nerPartes.length > 0
+      ? '<div style="margin:9px 0 8px;padding:8px 12px;background-color:#F8FAFC;border-left:3px solid #D4AF37;border-radius:4px;font-size:12px;color:#334155;line-height:1.45;">' + nerPartes.join('<br>') + '</div>'
+      : '';
+
+    const resumoTexto = r.resumo || '';
+    const resumoSnippet = resumoTexto
+      ? '<p style="margin:8px 0 10px;font-size:12.5px;color:#475569;line-height:1.5;">' + String(resumoTexto).substring(0, 260) + (resumoTexto.length > 260 ? '...' : '') + '</p>'
+      : '';
+
+    const urlDrive = r.urlDrive || '#';
+
+    return `
+      <div style="margin-bottom:16px;padding:16px;background-color:#FFFFFF;border:1px solid #E2E8F0;border-radius:10px;box-shadow:0 1px 3px rgba(15,23,42,0.04);">
+        <div style="margin-bottom:6px;">
+          <span style="display:inline-block;padding:2px 8px;background-color:${badgeBg};color:${badgeColor};font-size:11px;font-weight:700;border-radius:4px;text-transform:uppercase;">${cat}</span>
+          <span style="font-size:12px;color:#64748B;margin-left:8px;">${r.orgao || 'SMEB'}${r.codigo ? ' • Cód. ' + r.codigo : ''}</span>
+        </div>
+        <h3 style="margin:4px 0 6px;font-size:15px;font-weight:700;color:#0F172A;line-height:1.35;">${r.titulo}</h3>
+        ${nerBox}
+        ${resumoSnippet}
+        <div style="margin-top:10px;">
+          <a href="${urlDrive}" target="_blank" style="display:inline-block;padding:8px 16px;background-color:#0B1120;color:#D4AF37;text-decoration:none;font-size:12px;font-weight:700;border-radius:6px;border:1px solid #D4AF37;">
+            📄 Abrir PDF no Google Drive ➔
+          </a>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  const planilhaId = PROMETHEUS_CONFIG.PLANILHA_ID_OFICIAL;
+
+  return `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Boletim Diário Executivo FEMURN</title>
+</head>
+<body style="margin:0;padding:0;background-color:#F1F5F9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0F172A;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#F1F5F9;padding:24px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:660px;background-color:#FFFFFF;border-radius:12px;overflow:hidden;box-shadow:0 4px 14px rgba(15,23,42,0.08);border:1px solid #E2E8F0;">
+          <tr>
+            <td style="background-color:#0B1120;padding:28px 24px;border-bottom:3px solid #D4AF37;">
+              <div style="display:inline-block;padding:4px 10px;background-color:rgba(212,175,55,0.15);border:1px solid #D4AF37;border-radius:20px;color:#D4AF37;font-size:11px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:12px;">
+                GOVERNANÇA EXECUTIVA • SMEB 2026
+              </div>
+              <h1 style="margin:0 0 6px;color:#FFFFFF;font-size:21px;font-weight:700;line-height:1.25;">
+                🔥 Boletim Diário Executivo FEMURN
+              </h1>
+              <p style="margin:0;color:#94A3B8;font-size:13px;line-height:1.4;">
+                Secretaria Municipal de Educação Básica • Prefeitura de Ceará-Mirim/RN
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color:#F8FAFC;padding:16px 24px;border-bottom:1px solid #E2E8F0;">
+              <div style="font-size:13px;color:#334155;line-height:1.5;">
+                📅 <strong>Edição:</strong> ${dataExtenso || dataRef} &nbsp;•&nbsp;
+                📊 <strong>Total de Atos:</strong> <b>${total} publicação(ões)</b>
+              </div>
+              ${badgesResumo ? `<div style="margin-top:8px;">${badgesResumo}</div>` : ''}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:22px 20px;">
+              ${total > 0 ? cardsHtml : '<div style="padding:24px;text-align:center;background:#F8FAFC;border-radius:8px;color:#64748B;">ℹ️ Nenhuma publicação referente à Educação / SMEB foi localizada nesta edição.</div>'}
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color:#F8FAFC;padding:18px 20px;border-top:1px solid #E2E8F0;text-align:center;">
+              <a href="https://docs.google.com/spreadsheets/d/${planilhaId}/edit" target="_blank" style="display:inline-block;padding:9px 16px;background-color:#0B1120;color:#FFFFFF;text-decoration:none;font-size:12.5px;font-weight:600;border-radius:6px;">
+                📊 Abrir Planilha Oficial Diário 2026 ↗
+              </a>
+              <p style="margin:14px 0 0;font-size:11px;color:#94A3B8;line-height:1.4;">
+                Informativo matinal automatizado gerado pelo motor <strong>Fogo de Prometheus</strong>.<br>
+                Configurado via Script Properties (<code>BOLETIM_DESTINATARIOS_EMAIL</code>).
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+}
+
+/**
+ * Despacha o Boletim Executivo por e-mail para a lista configurada de múltiplos destinatários.
+ */
+function enviarBoletimExecutivoEmail(dataRef, resultadosSalvos, destinatariosOverride) {
+  const destinatarios = extrairDestinatariosBoletimPrometheus_(null, destinatariosOverride);
+  if (!destinatarios || destinatarios.length === 0) {
+    return { enviado: false, motivo: 'Nenhum destinatário de e-mail válido configurado.' };
+  }
+
+  if (typeof MailApp === 'undefined' || !MailApp.sendEmail) {
+    return { enviado: false, motivo: 'Serviço MailApp indisponível neste ambiente de execução.' };
+  }
+
+  const total = (resultadosSalvos || []).length;
+  const assunto = `🔥 [Fogo de Prometheus] Boletim Executivo FEMURN (${dataRef}) — ${total} ato(s)`;
+  const htmlBody = montarHtmlBoletimEditorial_(dataRef, resultadosSalvos);
+
+  const linhasTexto = [
+    `🔥 Boletim Diário Executivo FEMURN (${dataRef})`,
+    `Secretaria Municipal de Educação Básica • SMEB Ceará-Mirim/RN`,
+    `Total de Atos Identificados: ${total}`,
+    ''
+  ];
+  (resultadosSalvos || []).forEach(function(r, i) {
+    linhasTexto.push(`${i + 1}. [${r.categoria}] ${r.titulo} (${r.orgao || 'SMEB'})`);
+    if (r.servidores && r.servidores.length) {
+      linhasTexto.push(`   Servidores: ${r.servidores.join(', ')}`);
+    }
+    if (r.matriculas && r.matriculas.length) {
+      linhasTexto.push(`   Matrículas: ${r.matriculas.join(', ')}`);
+    }
+    if (r.resumo) {
+      linhasTexto.push(`   Resumo: ${String(r.resumo).substring(0, 180)}`);
+    }
+    linhasTexto.push(`   PDF Drive: ${r.urlDrive}`);
+    linhasTexto.push('');
+  });
+
+  try {
+    MailApp.sendEmail({
+      to: destinatarios.join(', '),
+      subject: assunto,
+      body: linhasTexto.join('\n'),
+      htmlBody: htmlBody
+    });
+    return {
+      enviado: true,
+      destinatarios: destinatarios,
+      totalDestinatarios: destinatarios.length,
+      totalAtos: total
+    };
+  } catch (err) {
+    console.error('Falha ao enviar Boletim Executivo via MailApp:', err);
+    return { enviado: false, erro: err.message };
+  }
+}
+
+/**
+ * Envia o Resumo Executivo de publicações para o Espaço do Google Chat da SMEB e E-mail Institucional.
  */
 function enviarResumoEspacoGoogleChat(dataRef, resultadosSalvos) {
   const props = PropertiesService.getScriptProperties();
   const chatWebhookUrl = (props.getProperty('GOOGLE_CHAT_WEBHOOK_URL') || '').trim();
-  const emailParticular = (props.getProperty('EMAIL_RESUMO_PARTICULAR') || '').trim();
   const total = (resultadosSalvos || []).length;
 
   const linhasTexto = [
@@ -158,11 +377,11 @@ function enviarResumoEspacoGoogleChat(dataRef, resultadosSalvos) {
     const infoNer = (r.servidores && r.servidores.length > 0)
       ? ` | 👤 ${r.servidores.join(', ')}${r.matriculas && r.matriculas.length ? ` (Mat. ${r.matriculas.join(', ')})` : ''}`
       : '';
-    linhasTexto.push(`${idx + 1}. *[${r.categoria}]* ${r.titulo} (${r.orgao})${infoNer} • <${r.urlDrive}|Abrir PDF>`);
+    linhasTexto.push(`${idx + 1}. *[${r.categoria}]* ${r.titulo} (${r.orgao || 'SMEB'})${infoNer} • <${r.urlDrive}|Abrir PDF>`);
 
     widgets.push({
       decoratedText: {
-        topLabel: `${r.categoria} • ${r.orgao}`,
+        topLabel: `${r.categoria} • ${r.orgao || 'SMEB'}`,
         text: `<b>${r.titulo}</b>${infoNer}`,
         wrapText: true,
         button: {
@@ -188,7 +407,6 @@ function enviarResumoEspacoGoogleChat(dataRef, resultadosSalvos) {
   };
 
   let enviadoChat = false;
-  let enviadoEmail = false;
 
   if (chatWebhookUrl && chatWebhookUrl.startsWith('https://chat.googleapis.com/') && typeof UrlFetchApp !== 'undefined' && UrlFetchApp.fetch) {
     try {
@@ -204,48 +422,15 @@ function enviarResumoEspacoGoogleChat(dataRef, resultadosSalvos) {
     }
   }
 
-  const destinoEmail = emailParticular || (chatWebhookUrl.includes('@') && !chatWebhookUrl.startsWith('http') ? chatWebhookUrl : '');
-  if (destinoEmail && typeof MailApp !== 'undefined' && MailApp.sendEmail) {
-    try {
-      const itensHtml = (resultadosSalvos || []).map((r) => {
-        const nerHtml = (r.servidores && r.servidores.length > 0)
-          ? `<div style="font-size:12px;color:#475569;margin-top:4px;">👤 <b>Servidor(es):</b> ${r.servidores.join(', ')}${r.matriculas && r.matriculas.length ? ` (Mat.: ${r.matriculas.join(', ')})` : ''}</div>`
-          : '';
-        return `<li style="margin-bottom:10px;padding:10px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;">
-          <span style="font-size:11px;font-weight:bold;color:#1e40af;background:#dbeafe;padding:2px 6px;border-radius:4px;">${r.categoria}</span>
-          <strong style="margin-left:6px;color:#0f172a;">${r.titulo}</strong> <span style="color:#64748b;font-size:12px;">(${r.orgao})</span>
-          ${nerHtml}
-          <div style="margin-top:6px;"><a href="${r.urlDrive}" style="color:#2563eb;font-weight:bold;text-decoration:none;font-size:12px;">📄 Abrir PDF no Google Drive ➔</a></div>
-        </li>`;
-      }).join('');
-
-      const htmlBody = `<div style="font-family:sans-serif;max-width:640px;margin:0 auto;border:1px solid #cbd5e1;border-radius:10px;overflow:hidden;">
-        <div style="background:#1e3a8a;color:#fff;padding:14px 18px;">
-          <h3 style="margin:0;font-size:16px;">🔥 Fogo de Prometheus — Resumo Diário FEMURN (${dataRef})</h3>
-          <p style="margin:4px 0 0;font-size:12px;opacity:0.9;">SMEB Ceará-Mirim/RN • ${total} publicação(ões) arquivada(s)</p>
-        </div>
-        <div style="padding:16px;">
-          ${total > 0 ? `<ul style="list-style:none;padding:0;margin:0;">${itensHtml}</ul>` : `<p style="color:#475569;">ℹ️ Nenhuma publicação referente à SMEB / Educação foi localizada na edição de ${dataRef}.</p>`}
-        </div>
-      </div>`;
-
-      MailApp.sendEmail({
-        to: destinoEmail,
-        subject: `🔥 [Fogo de Prometheus] Resumo FEMURN (${dataRef}) — ${total} ato(s)`,
-        body: linhasTexto.join('\n'),
-        htmlBody: htmlBody
-      });
-      enviadoEmail = true;
-    } catch (e) {
-      console.warn('Aviso ao enviar resumo para e-mail:', e);
-    }
-  }
+  // Disparo do Boletim Diário Executivo via MailApp para múltiplos destinatários
+  const resultadoEmail = enviarBoletimExecutivoEmail(dataRef, resultadosSalvos);
 
   return {
-    enviado: enviadoChat || enviadoEmail,
+    enviado: enviadoChat || resultadoEmail.enviado,
     viaChat: enviadoChat,
-    viaEmail: enviadoEmail,
-    totalAtos: total
+    viaEmail: resultadoEmail.enviado,
+    totalAtos: total,
+    detalheEmail: resultadoEmail
   };
 }
 
@@ -274,6 +459,44 @@ function dispararResumoGoogleChatManual() {
     mensagem: res.enviado
       ? `Resumo com ${itensConvertidos.length} ato(s) enviado com sucesso!`
       : `Resumo gerado para ${itensConvertidos.length} ato(s). Configure GOOGLE_CHAT_WEBHOOK_URL nas Script Properties para disparo externo.`
+  };
+}
+
+/**
+ * Disparo manual do Boletim Diário Executivo por e-mail a partir da UI ou API Hub.
+ */
+function dispararBoletimEmailManual(destinatariosCustom) {
+  const painel = carregarPainelPrometheus();
+  const dataRef = Utilities.formatDate(new Date(), 'America/Fortaleza', 'dd/MM/yyyy');
+  const rawMeta = PropertiesService.getScriptProperties().getProperty(PROMETHEUS_CONFIG.PROP_LAST_SYNC);
+  let itens = [];
+  if (rawMeta) {
+    try {
+      const parsed = JSON.parse(rawMeta);
+      itens = parsed.publicacoes || [];
+    } catch (e) {}
+  }
+  if (!itens || itens.length === 0) {
+    itens = (painel.arquivosDrive || []).slice(0, 10).map((arq, i) => ({
+      codigo: `DOC${i + 1}`,
+      data: dataRef,
+      orgao: arq.setor,
+      categoria: arq.setor.includes('Portarias') ? 'PORTARIA' : 'ATO_GABINETE',
+      titulo: arq.nome.replace(/\.pdf$/i, ''),
+      servidores: [],
+      matriculas: [],
+      urlDrive: arq.url,
+      resumo: 'Ato oficial arquivado na pasta de governança de 2026.'
+    }));
+  }
+  const res = enviarBoletimExecutivoEmail(dataRef, itens, destinatariosCustom);
+  return {
+    ok: res.enviado,
+    status: res.enviado ? 'OK' : 'FALHA',
+    mensagem: res.enviado
+      ? `Boletim com ${itens.length} ato(s) enviado com sucesso para ${res.totalDestinatarios} destinatário(s)!`
+      : `Falha no envio do boletim: ${res.motivo || res.erro || 'Verifique as configurações de e-mail.'}`,
+    detalhe: res
   };
 }
 
@@ -371,18 +594,20 @@ function processarPacotePrometheus(payload) {
       folderId = PROMETHEUS_CONFIG.FOLDER_GABINETE_2026;
     }
 
-    const folder = obterPastaCacheada(folderId);
-    const fileName = pub.nome_arquivo || gerarNomeArquivoPadronizado_(pub, dataISO, dataRef);
+    let fileUrl = pub.url_drive || pub.urlDrive || '';
+    if (!fileUrl) {
+      const folder = obterPastaCacheada(folderId);
+      const fileName = pub.nome_arquivo || gerarNomeArquivoPadronizado_(pub, dataISO, dataRef);
 
-    const existentes = folder.getFilesByName(fileName);
-    let fileUrl = '';
-    if (existentes.hasNext()) {
-      fileUrl = existentes.next().getUrl();
-    } else {
-      const decodedBytes = Utilities.base64Decode(pub.pdf_base64);
-      const blob = Utilities.newBlob(decodedBytes, 'application/pdf', fileName);
-      const novoArquivo = folder.createFile(blob);
-      fileUrl = novoArquivo.getUrl();
+      const existentes = folder.getFilesByName(fileName);
+      if (existentes.hasNext()) {
+        fileUrl = existentes.next().getUrl();
+      } else if (pub.pdf_base64) {
+        const decodedBytes = Utilities.base64Decode(pub.pdf_base64);
+        const blob = Utilities.newBlob(decodedBytes, 'application/pdf', fileName);
+        const novoArquivo = folder.createFile(blob);
+        fileUrl = novoArquivo.getUrl();
+      }
     }
 
     const ner = extrairEntidadesNerPrometheus_(pub);
@@ -397,6 +622,7 @@ function processarPacotePrometheus(payload) {
       numeroAto: ner.numeroAto,
       servidores: ner.servidores,
       matriculas: ner.matriculas,
+      resumo: pub.resumo_texto || pub.resumo || '',
       urlDrive: fileUrl
     });
 

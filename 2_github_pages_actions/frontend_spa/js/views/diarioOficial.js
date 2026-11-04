@@ -28,9 +28,25 @@ window.OlymposViews.diarioOficial = (function() {
     bind('prometheusTriggerActionBtn', 'click', dispararColetaGitHubActions);
     bind('prometheusSectorFilter', 'change', renderizarTabela);
     bind('prometheusSearchInput', 'input', renderizarTabela);
+    bind('diarioSalvarBoletimEmailBtn', 'click', function() {
+      const inEl = document.getElementById('diarioBoletimEmailInput');
+      if (window.OlymposApp && typeof window.OlymposApp.salvarBoletimEmails === 'function') {
+        window.OlymposApp.salvarBoletimEmails(inEl ? inEl.value : '');
+      }
+    });
   }
 
   function carregarPainel() {
+    const inDiario = document.getElementById('diarioBoletimEmailInput');
+    if (inDiario && !inDiario.value) {
+      inDiario.value = localStorage.getItem('olympos_boletim_emails') || '';
+    }
+
+    const tbody = document.getElementById('prometheusTableBody');
+    if (tbody && window.OlymposApp && typeof window.OlymposApp.renderSkeletonTable === 'function') {
+      window.OlymposApp.renderSkeletonTable(tbody, 5, 4, ['15%', '20%', '50%', '15%']);
+    }
+
     window.OlymposApi.chamar('prometheus_status', {}, function(res) {
       const data = (res && res.data) ? res.data : res;
       if (!data) return;
@@ -114,7 +130,38 @@ window.OlymposViews.diarioOficial = (function() {
 
     tbody.innerHTML = '';
     if (filtered.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" class="text-muted text-center" style="padding: 28px;">Nenhuma publicação localizada para os filtros aplicados.</td></tr>';
+      tbody.innerHTML =
+        '<tr>' +
+          '<td colspan="4" style="padding: 28px 12px; border: none;">' +
+            '<div class="empty-state-card">' +
+              '<div class="empty-state-icon">📰</div>' +
+              '<div class="empty-state-title">Nenhuma publicação localizada</div>' +
+              '<div class="empty-state-desc">Não foram encontrados atos oficiais ou arquivos para os filtros e termos selecionados. Tente ajustar os parâmetros de pesquisa ou atualizar o acervo.</div>' +
+              '<div class="empty-state-actions">' +
+                '<button type="button" id="diarioLimparFiltrosBtn" class="btn btn-secondary btn-sm">Limpar Filtros</button>' +
+                '<button type="button" id="diarioAtualizarListaBtn" class="btn btn-primary btn-sm">Atualizar Lista</button>' +
+              '</div>' +
+            '</div>' +
+          '</td>' +
+        '</tr>';
+
+      const btnClear = document.getElementById('diarioLimparFiltrosBtn');
+      if (btnClear) {
+        btnClear.addEventListener('click', function() {
+          const sec = document.getElementById('prometheusSectorFilter');
+          const srch = document.getElementById('prometheusSearchInput');
+          if (sec) sec.value = 'TODOS';
+          if (srch) srch.value = '';
+          renderizarTabela();
+        });
+      }
+
+      const btnRefresh = document.getElementById('diarioAtualizarListaBtn');
+      if (btnRefresh) {
+        btnRefresh.addEventListener('click', function() {
+          carregarPainel();
+        });
+      }
       return;
     }
 

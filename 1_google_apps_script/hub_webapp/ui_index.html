@@ -4,7 +4,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Olympos — Inteligência Documental SMEB Ceará-Mirim</title>
+    <!-- Favicon Oficial Olympos (SVG em Data URI para zero 404s + Fallback Físico) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230B1120'/%3E%3Cpath d='M8 22h16M10 22V12m4 10V12m4 10V12m4 10V12M7 12l9-6 9 6H7z' stroke='%23F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E" />
+    <link rel="alternate icon" href="favicon.ico" />
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#0B1120" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Olympos" />
+    <link rel="apple-touch-icon" href="assets/favicon.svg" />
     <?!= include('ui_styles'); ?>
+    <!-- Leaflet.js 1.9.4 & OpenStreetMap (Painel Georreferenciado de Permutas Cadmo & Hera) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   </head>
   <body>
     <!-- =========================================================================
@@ -24,11 +37,11 @@
           <form id="loginForm">
             <div class="field-group" style="margin-bottom: 14px;">
               <label for="loginUserInput">Identificador ou E-mail Institucional</label>
-              <input type="text" id="loginUserInput" class="input-clean" placeholder="Ex: admin, rh, pedagogico, juridico" required autocomplete="username" />
+              <input type="text" id="loginUserInput" name="loginEmail" class="input-clean" placeholder="Ex: admin, rh, pedagogico, juridico" required autocomplete="username" />
             </div>
             <div class="field-group" style="margin-bottom: 20px;">
               <label for="loginPasswordInput">Senha de Acesso</label>
-              <input type="password" id="loginPasswordInput" class="input-clean" placeholder="••••••••" required autocomplete="current-password" />
+              <input type="password" id="loginPasswordInput" name="loginSenha" class="input-clean" placeholder="••••••••" required autocomplete="current-password" />
             </div>
 
             <button type="submit" id="loginSubmitBtn" class="btn btn-primary" style="width: 100%; padding: 12px 20px;">
@@ -37,10 +50,13 @@
           </form>
 
           <div style="margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--border-hairline); text-align: center;">
-            <p class="stat-label" style="font-size: 0.82rem; color: var(--text-muted); margin: 0; line-height: 1.5;">
+            <p class="stat-label" style="font-size: 0.82rem; color: var(--text-muted); margin: 0 0 10px 0; line-height: 1.5;">
               Autenticação corporativa protegida via <strong>Supabase Auth &amp; RBAC</strong>.<br />
               Utilize seu e-mail institucional e senha cadastrados no sistema.
             </p>
+            <button type="button" id="openSetupModalFromLoginBtn" class="btn btn-secondary btn-sm" style="font-size: 0.78rem; padding: 6px 14px;">
+              ⚙️ Configurar Instância Supabase
+            </button>
           </div>
         </div>
       </div>
@@ -49,7 +65,7 @@
     <!-- =========================================================================
          MASTHEAD EDITORIAL TRANSLÚCIDA (REFERÊNCIA DEEPMIND.GOOGLE & BLOG.GOOGLE)
          ========================================================================= -->
-    <header class="top-masthead">
+    <header class="top-masthead topbar">
       <div class="masthead-upper">
         <div style="display: flex; align-items: center; gap: 10px;">
           <button id="mobileMenuToggleBtn" class="icon-capsule-btn mobile-menu-btn" aria-label="Alternar navegação"></button>
@@ -63,7 +79,7 @@
         <div class="masthead-controls">
           <div class="quick-search-pill hidden" style="display: none !important;">
             <button id="topQuickSearchBtn" class="btn-search-trigger" title="Pesquisar no acervo" aria-label="Pesquisar"></button>
-            <input type="search" id="topQuickSearchInput" placeholder="Pesquisar ato, servidor ou portaria..." />
+            <input type="search" id="topQuickSearchInput" placeholder="Pesquisar ato, servidor ou portaria..." autocomplete="off" />
             <span class="kbd-hint">/</span>
           </div>
 
@@ -72,6 +88,15 @@
           </div>
 
           <button id="themeToggleBtn" class="icon-capsule-btn" title="Alternar Modo Claro / Modo Escuro" aria-label="Alternar Tema"></button>
+
+          <button id="topGeminiBtn" class="btn btn-sm btn-gemini-companion" title="Abrir Assistente Gemini SMEB (Janela Lateral Desktop)" aria-label="Abrir Assistente Gemini">
+            <span class="gemini-sparkle" aria-hidden="true">✨</span>
+            <span>Gemini</span>
+          </button>
+
+          <button id="topNovoUsuarioBtn" class="btn btn-primary btn-sm hidden" title="Cadastrar Novo Usuário (Exclusivo Gabinete)" style="font-size: 0.76rem; padding: 6px 12px; display: inline-flex; align-items: center; gap: 4px;">
+            <span>+ Novo Usuário</span>
+          </button>
 
           <button id="userSessionBtn" class="user-capsule-btn" title="Perfil RBAC Ativo (Clique para encerrar ou trocar sessão)">
             <span class="user-avatar-dot" id="userAvatarInitials">GB</span>
@@ -612,6 +637,21 @@
               </div>
             </div>
 
+            <!-- CONFIGURAÇÃO DE DESTINATÁRIOS DO BOLETIM EXECUTIVO FEMURN -->
+            <div class="surface-card" style="margin-bottom: 18px; padding: 14px 18px; border: 1px solid var(--border-hairline); background: var(--bg-surface);">
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                <div>
+                  <div style="font-weight: 600; font-size: 13.5px; color: var(--text-main);">📧 Destinatários do Boletim Diário (Fogo de Prometheus)</div>
+                  <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Lista de e-mails para envio automático do briefing executivo diário da FEMURN às 07:00 BRT.</div>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                  <input type="text" id="diarioBoletimEmailInput" class="input-clean" style="width: 280px; font-size: 12px; padding: 6px 12px;" placeholder="gabinete@smeb.cearamirim.rn.gov.br" />
+                  <button type="button" id="diarioSalvarBoletimEmailBtn" class="btn btn-primary btn-sm" style="font-size: 12px; padding: 6px 14px;">Salvar E-mails</button>
+                </div>
+              </div>
+              <div id="diarioBoletimEmailFeedback" style="font-size: 11.5px; color: var(--accent-gold); margin-top: 6px; display: none;"></div>
+            </div>
+
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
               <strong style="font-family: var(--font-display); font-size: 15px;">Publicações e PDFs Arquivados nas Pastas Oficiais (2026)</strong>
               <div style="display: flex; gap: 8px; flex-wrap: wrap;">
@@ -625,7 +665,7 @@
               </div>
             </div>
 
-            <div class="table-wrapper">
+            <div class="table-wrapper table-responsive">
               <table class="clean-table">
                 <thead>
                   <tr>
@@ -699,6 +739,153 @@
 
             <div id="cadmoPortaisGrid" class="controls-grid" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px;"></div>
           </div>
+
+          <!-- =========================================================================
+               PAINEL GEORREFERENCIADO DE PERMUTAS (CADMO & HERA)
+               ========================================================================= -->
+          <div id="painelPermutasCadmo" class="surface-card cadmo-permutas-panel" style="margin-top: 24px; border: 1px solid var(--border-hairline);">
+            <div class="card-header-row">
+              <div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                  <span class="section-eyebrow">INTELIGÊNCIA GEORREFERENCIADA • PERSONA HERA</span>
+                  <span class="selo-hera-badge" title="Algoritmo de Matching e Parecer Funcional Hera">⚡ Selo Hera</span>
+                </div>
+                <h3 class="section-title" style="font-size: 1.28rem; margin: 0 0 6px 0;">Painel de Permutas Docentes Intermunicipais</h3>
+                <p class="section-desc" style="margin: 0;">Mapeamento georreferenciado interativo das unidades escolares da SMEB de Ceará-Mirim e polos metropolitanos parceiros (Natal ZN/ZS, Extremoz, São Gonçalo do Amarante e Macaíba) com motor de compatibilidade automática da persona Hera.</p>
+              </div>
+              <div class="button-group">
+                <button type="button" id="btnAlternarFormPermuta" class="btn btn-secondary btn-sm" aria-expanded="true">
+                  <span>+ Nova Intenção</span>
+                </button>
+                <button type="button" id="btnRecalcularMatchesHera" class="btn btn-primary btn-sm">
+                  <span>⚡ Recalcular Matching (Hera)</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- CONTÊINER DO MAPA INTERATIVO (LEAFLET.JS) -->
+            <div class="cadmo-map-outer" style="margin: 18px 0; border: 1px solid var(--border-hairline); border-radius: var(--radius-lg, 16px); overflow: hidden; background: var(--bg-surface); box-shadow: var(--shadow-subtle);">
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: var(--bg-tonal); border-bottom: 1px solid var(--border-hairline); font-size: 12.5px;">
+                <span style="font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
+                  <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10B981;"></span>
+                  Mapa Interativo de Polos &amp; Escolas Polo — Ceará-Mirim &amp; Grande Natal
+                </span>
+                <div style="display: flex; gap: 14px; font-size: 11.5px; color: var(--text-muted);">
+                  <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #D4AF37;"></span> SMEB Sede</span>
+                  <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #38BDF8;"></span> Escolas Ceará-Mirim</span>
+                  <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10B981;"></span> Polos Parceiros</span>
+                </div>
+              </div>
+              <div id="mapaPermutasCadmo" style="height: 420px; width: 100%; border-radius: var(--radius-lg); position: relative; z-index: 1;"></div>
+            </div>
+
+            <!-- FORMULÁRIO DE INTENÇÃO DE PERMUTA -->
+            <div id="wrapperFormPermuta" style="margin-bottom: 24px;">
+              <form id="formPermutaCadmo" class="controls-grid permuta-form-grid" style="grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; padding: 18px; background: var(--bg-surface); border-radius: var(--radius-md, 12px); border: 1px solid var(--border-hairline);">
+                <div class="field-group">
+                  <label for="permutaNome">Nome do(a) Servidor(a)</label>
+                  <input type="text" id="permutaNome" name="permutaNome" class="input-clean" placeholder="Nome completo do professor(a)" required autocomplete="name" />
+                </div>
+                <div class="field-group">
+                  <label for="permutaMatricula">Matrícula Funcional</label>
+                  <input type="text" id="permutaMatricula" name="permutaMatricula" class="input-clean" placeholder="Ex: 2026-4401" required />
+                </div>
+                <div class="field-group">
+                  <label for="permutaCargo">Cargo / Função</label>
+                  <select id="permutaCargo" name="permutaCargo" class="input-clean" required>
+                    <option value="Professor dos Anos Iniciais">Professor dos Anos Iniciais (1º ao 5º)</option>
+                    <option value="Professor de Educação Infantil">Professor de Educação Infantil</option>
+                    <option value="Professor dos Anos Finais">Professor dos Anos Finais (6º ao 9º)</option>
+                    <option value="Especialista em Educação">Especialista em Educação / Pedagogo</option>
+                    <option value="Assistente de Apoio Pedagógico">Assistente de Apoio Pedagógico</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label for="permutaDisciplina">Disciplina / Habilitação</label>
+                  <select id="permutaDisciplina" name="permutaDisciplina" class="input-clean" required>
+                    <option value="Polivalente / Pedagogia">Polivalente / Pedagogia</option>
+                    <option value="Língua Portuguesa">Língua Portuguesa</option>
+                    <option value="Matemática">Matemática</option>
+                    <option value="História">História</option>
+                    <option value="Geografia">Geografia</option>
+                    <option value="Ciências Biológicas">Ciências Biológicas</option>
+                    <option value="Língua Inglesa">Língua Inglesa</option>
+                    <option value="Educação Física">Educação Física</option>
+                    <option value="Artes">Artes</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label for="permutaCargaHoraria">Carga Horária Semanal</label>
+                  <select id="permutaCargaHoraria" name="permutaCargaHoraria" class="input-clean" required>
+                    <option value="30h">30h Semanais (Padrão SMEB)</option>
+                    <option value="20h">20h Semanais</option>
+                    <option value="40h">40h Semanais (Dedicação Exclusiva)</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label for="permutaTurno">Turno de Lotação / Preferência</label>
+                  <select id="permutaTurno" name="permutaTurno" class="input-clean" required>
+                    <option value="Matutino">Matutino</option>
+                    <option value="Vespertino">Vespertino</option>
+                    <option value="Noturno">Noturno</option>
+                    <option value="Integral">Integral</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label for="permutaEscolaOrigem">Polo / Escola de Origem</label>
+                  <select id="permutaEscolaOrigem" name="permutaEscolaOrigem" class="input-clean" required>
+                    <optgroup label="Ceará-Mirim — SMEB (Sede &amp; Escolas Polo)">
+                      <option value="E. M. Alice Garcia Freire (Ceará-Mirim)">E. M. Alice Garcia Freire (Ceará-Mirim)</option>
+                      <option value="E. M. Prefeito Roberto Varela (Ceará-Mirim)">E. M. Prefeito Roberto Varela (Ceará-Mirim)</option>
+                      <option value="E. M. Augusto Severo (Ceará-Mirim)">E. M. Augusto Severo (Ceará-Mirim)</option>
+                      <option value="E. M. Monsenhor Celso Cicco (Ceará-Mirim)">E. M. Monsenhor Celso Cicco (Ceará-Mirim)</option>
+                      <option value="E. M. Dr. Júlio Senna (Gravatá - Ceará-Mirim)">E. M. Dr. Júlio Senna (Gravatá - Ceará-Mirim)</option>
+                      <option value="E. M. Barão de Ceará-Mirim">E. M. Barão de Ceará-Mirim</option>
+                      <option value="E. M. Madalena Antunes (Massangana - Ceará-Mirim)">E. M. Madalena Antunes (Massangana - Ceará-Mirim)</option>
+                      <option value="SMEB Sede (Ceará-Mirim)">SMEB Sede (Ceará-Mirim)</option>
+                    </optgroup>
+                    <optgroup label="Polos Parceiros Metropolitanos">
+                      <option value="Polo Natal (Zona Norte - SME)">Polo Natal (Zona Norte - SME)</option>
+                      <option value="Polo Natal (Zona Sul / Centro - SME)">Polo Natal (Zona Sul / Centro - SME)</option>
+                      <option value="Polo Extremoz (SME Centro)">Polo Extremoz (SME Centro)</option>
+                      <option value="Polo São Gonçalo do Amarante (SME Centro)">Polo São Gonçalo do Amarante (SME Centro)</option>
+                      <option value="Polo Macaíba (SME Centro)">Polo Macaíba (SME Centro)</option>
+                    </optgroup>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label for="permutaPoloDestino">Polo / Cidade de Destino Desejada</label>
+                  <select id="permutaPoloDestino" name="permutaPoloDestino" class="input-clean" required>
+                    <option value="Ceará-Mirim">Ceará-Mirim (Rede Municipal SMEB)</option>
+                    <option value="Natal">Natal (SME Natal / Zona Norte &amp; Sul)</option>
+                    <option value="Extremoz">Extremoz (SME Extremoz)</option>
+                    <option value="São Gonçalo do Amarante">São Gonçalo do Amarante (SME SGA)</option>
+                    <option value="Macaíba">Macaíba (SME Macaíba)</option>
+                  </select>
+                </div>
+                <div class="field-group" style="grid-column: 1 / -1; display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 4px;">
+                  <button type="button" id="btnLimparFormPermuta" class="btn btn-secondary btn-sm">Limpar</button>
+                  <button type="submit" id="btnSalvarIntencaoPermuta" class="btn btn-primary btn-sm">
+                    <span>Gravar Intenção de Permuta</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- GRADE DE RESULTADOS DE MATCHING DA PERSONA HERA -->
+            <div style="margin-top: 10px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                <strong style="font-family: var(--font-display); font-size: 14.5px; display: flex; align-items: center; gap: 6px;">
+                  <span>Cruzamento de Vínculos &amp; Compatibilidade Funcional (Hera)</span>
+                  <span id="badgeTotalMatches" class="pill-badge pill-gold" style="font-size: 11px;">0 cruzamentos</span>
+                </strong>
+                <span style="font-size: 12px; color: var(--text-muted);">Ponderação: Cargo/Disciplina (40 pts) + Carga Horária (30 pts) + Rota Inversa (30 pts)</span>
+              </div>
+              <div id="resultadoMatchingHera" class="resultado-matching-container">
+                <!-- Tabela ou Cards de Matching Injetados via JS -->
+              </div>
+            </div>
+          </div>
         </section>
 
         <!-- =========================================================================
@@ -720,9 +907,9 @@
             </div>
 
             <div style="display: flex; gap: 10px; margin-bottom: 22px; flex-wrap: wrap; align-items: center;">
-              <input type="search" id="memoriaSearchInput" class="input-clean" style="max-width: 260px;" placeholder="Filtrar persona ou domínio..." />
-              <div style="display: flex; gap: 8px; flex: 1; min-width: 300px; flex-wrap: wrap;">
-                <select id="quickAlertTargetSelect" class="input-clean" style="max-width: 200px;">
+              <input type="search" id="memoriaSearchInput" class="input-clean" style="max-width: 260px;" placeholder="Filtrar persona ou domínio..." autocomplete="off" />
+              <div class="quick-alert-bar quick-alert-bar-responsive" style="display: flex; gap: 8px; flex: 1; min-width: 0; width: 100%; flex-wrap: wrap;">
+                <select id="quickAlertTargetSelect" class="input-clean" style="max-width: 200px;" aria-label="Destinatário do Alerta">
                   <option value="_memoria_helio.md">Hélio (Diário FEMURN)</option>
                   <option value="_memoria_apolo.md">Apolo (Numeração 2026)</option>
                   <option value="_memoria_hera.md">Hera (RH &amp; Permutas)</option>
@@ -735,7 +922,7 @@
                   <option value="_memoria_atena.md">Atena (Pedagógico)</option>
                   <option value="_memoria_hermes.md">Hermes (Transporte)</option>
                 </select>
-                <input type="text" id="quickAlertMessageInput" class="input-clean" style="flex: 1; min-width: 200px;" placeholder="Despachar alerta oficial no Correio do Olimpo..." />
+                <input type="text" id="quickAlertMessageInput" class="input-clean" style="flex: 1; min-width: min(100%, 180px);" placeholder="Despachar alerta oficial no Correio do Olimpo..." autocomplete="off" aria-label="Mensagem do Alerta" />
                 <button id="quickAlertSendBtn" class="btn btn-primary btn-sm">Registrar Recado</button>
               </div>
             </div>
@@ -759,7 +946,7 @@
               </div>
             </div>
 
-            <div class="controls-grid" style="grid-template-columns: 3fr 1fr auto; align-items: end; margin-bottom: 14px;">
+            <div class="controls-grid search-controls-responsive" style="align-items: end; margin-bottom: 14px;">
               <div class="field-group">
                 <label for="pageBuscaInput">Termo de Pesquisa (Servidor, Matrícula, Nº do Ato ou * para listar recentes)</label>
                 <input type="search" id="pageBuscaInput" class="input-clean" placeholder="Ex: Portaria 163, Ofício 155, Permuta, Maria..." />
@@ -822,7 +1009,7 @@
               </div>
             </div>
 
-            <div class="controls-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px;">
+            <div class="controls-grid config-grid-responsive" style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 24px;">
               <div>
                 <h3 style="font-size: 1.05rem; margin-bottom: 12px;">Endpoint do Gateway Google Apps Script</h3>
                 <div class="field-group" style="margin-bottom: 14px;">
@@ -856,6 +1043,42 @@
                   </select>
                 </div>
               </div>
+            </div>
+
+            <!-- PAINEL DE GESTÃO DE USUÁRIOS RBAC (EXCLUSIVO ADMIN_GABINETE) -->
+            <div id="blocoGestaoUsuarios" class="surface-card hidden" style="margin-top: 24px; border: 1px solid var(--border-hairline); background: var(--surface-secondary, rgba(255,255,255,0.02));">
+              <div class="card-header-row" style="margin-bottom: 8px;">
+                <div>
+                  <span class="section-eyebrow">MODERAÇÃO DE ACESSOS • GABINETE</span>
+                  <h3 class="section-title" style="font-size: 1.15rem;">Gestão de Operadores &amp; Papéis RBAC</h3>
+                  <p class="section-desc" style="margin-bottom: 0;">Cadastre novos operadores institucionais com papéis e permissões segmentadas no Supabase Auth.</p>
+                </div>
+                <button type="button" id="btnAbrirModalNovoUsuario" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;">
+                  <span>+ Novo Usuário</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- PAINEL DE CONFIGURAÇÃO DO BOLETIM DIÁRIO FEMURN (FOGO DE PROMETHEUS) -->
+            <div class="surface-card" style="margin-top: 24px; border: 1px solid var(--border-hairline);">
+              <div class="card-header-row" style="margin-bottom: 12px;">
+                <div>
+                  <span class="section-eyebrow">BOLETIM DIÁRIO FEMURN • FOGO DE PROMETHEUS</span>
+                  <h3 class="section-title" style="font-size: 1.15rem;">Destinatários do Resumo Executivo por E-mail</h3>
+                  <p class="section-desc" style="margin-bottom: 0;">E-mails institucionais que recebem o briefing matinal às 07:00 BRT com atos da FEMURN e links do Drive (<code>BOLETIM_DESTINATARIOS_EMAIL</code>).</p>
+                </div>
+              </div>
+              <div class="controls-grid" style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 12px; align-items: end;">
+                <div class="field-group">
+                  <label for="configBoletimEmailInput">Lista de E-mails (separados por vírgula)</label>
+                  <input type="text" id="configBoletimEmailInput" class="input-clean" placeholder="gabinete@smeb.cearamirim.rn.gov.br, assessoria@smeb.cearamirim.rn.gov.br" />
+                </div>
+                <div class="button-group">
+                  <button type="button" id="configSalvarBoletimEmailBtn" class="btn btn-primary btn-sm">Salvar Destinatários</button>
+                  <button type="button" id="configTestarBoletimEmailBtn" class="btn btn-secondary btn-sm">Enviar Teste</button>
+                </div>
+              </div>
+              <div id="configBoletimEmailFeedback" class="stat-label" style="margin-top: 8px; font-size: 12px;"></div>
             </div>
           </div>
         </section>
@@ -923,6 +1146,133 @@
         </div>
       </div>
     </div>
+
+    <!-- =========================================================================
+         MODAL DE CONFIGURAÇÃO GUIADA DO SUPABASE (SETUP MODAL)
+         ========================================================================= -->
+    <div id="supabaseSetupModal" class="modal-backdrop" style="display: none;" role="dialog" aria-labelledby="setupModalTitle" aria-modal="true">
+      <div class="modal-card" style="max-width: 580px; width: 92%;">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <span class="badge badge-purple" style="font-size: 0.72rem; margin-bottom: 4px;">Ambiente Seguro Olympos</span>
+            <h3 id="setupModalTitle" style="margin: 0; font-size: 1.25rem;">Configuração da Instância Supabase</h3>
+          </div>
+          <button id="closeSetupModalBtn" class="modal-close-btn" aria-label="Fechar modal">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 20px;">
+          <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin-top: 0;">
+            O Projeto Olympos opera com arquitetura <strong>Zero Trust</strong> e <strong>Zero Senhas no Repositório</strong>.
+            Configure os parâmetros de conexão do seu projeto Supabase. Os valores são salvos apenas no
+            <code>localStorage</code> deste navegador, mantendo o repositório público 100% seguro.
+          </p>
+
+          <form id="supabaseSetupForm">
+            <!-- Campo de identificador acessível oculto exigido por navegadores Chromium e WCAG para formulários com senha -->
+            <input type="text" name="username" autocomplete="username" class="sr-only" tabindex="-1" aria-hidden="true" value="admin-smeb" />
+
+            <div class="field-group" style="margin-bottom: 14px;">
+              <label for="setupSupabaseUrl">URL do Projeto Supabase (Endpoint REST)</label>
+              <input type="url" id="setupSupabaseUrl" class="input-clean" value="https://rbwizevjvbvjwtbwwyif.supabase.co" placeholder="https://seu-projeto.supabase.co" required autocomplete="url" />
+              <small style="color: var(--text-muted); font-size: 0.75rem;">Disponível em Project Settings &gt; API &gt; Project URL</small>
+            </div>
+
+            <div class="field-group" style="margin-bottom: 14px;">
+              <label for="setupSupabaseAnonKey">Chave Pública Anônima (Anon / Public Key)</label>
+              <input type="password" id="setupSupabaseAnonKey" class="input-clean" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." required autocomplete="new-password" />
+              <small style="color: var(--text-muted); font-size: 0.75rem;">Disponível em Project Settings &gt; API &gt; Project API keys (anon public)</small>
+            </div>
+
+            <div class="field-group" style="margin-bottom: 18px;">
+              <label for="setupGasWebhookUrl">URL do WebApp Google Apps Script (Opcional - Espelho)</label>
+              <input type="url" id="setupGasWebhookUrl" class="input-clean" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="url" />
+            </div>
+
+            <div id="setupModalFeedback" style="display: none; padding: 10px; border-radius: 8px; margin-bottom: 14px; font-size: 0.85rem;"></div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+              <button type="button" id="testSupabaseConnectionBtn" class="btn btn-secondary">Testar Conexão</button>
+              <button type="submit" id="saveSupabaseConfigBtn" class="btn btn-primary">Salvar Configuração</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================================
+         MODAL DE CADASTRO DE NOVO USUÁRIO (EXCLUSIVO ADMIN_GABINETE)
+         ========================================================================= -->
+    <div id="modalNovoUsuario" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalNovoUsuarioTitulo">
+      <div class="modal-card" style="max-width: 560px; width: 92%;">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <span class="badge badge-purple" style="font-size: 0.72rem; margin-bottom: 4px;">Moderação de Acessos • Gabinete</span>
+            <h3 id="modalNovoUsuarioTitulo" style="margin: 0; font-size: 1.22rem; font-weight: 700;">Adicionar Novo Usuário</h3>
+          </div>
+          <button id="closeModalNovoUsuarioBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal">&times;</button>
+        </div>
+
+        <form id="formNovoUsuario">
+          <div class="modal-body" style="padding: 20px 24px;">
+            <p class="section-desc" style="margin-top: 0; margin-bottom: 16px;">
+              O usuário será provisionado no <strong>Supabase Auth</strong> e sincronizado com as permissões da função designada.
+            </p>
+
+            <!-- Campo: Nome Completo -->
+            <div class="field-group" style="margin-bottom: 14px;">
+              <label for="novoUsuarioNome">Nome Completo *</label>
+              <input type="text" id="novoUsuarioNome" class="input-clean" placeholder="Ex: Maria Helena dos Santos" required autocomplete="name" />
+            </div>
+
+            <!-- Campo: Email Institucional -->
+            <div class="field-group" style="margin-bottom: 14px;">
+              <label for="novoUsuarioEmail">Email Institucional *</label>
+              <input type="email" id="novoUsuarioEmail" class="input-clean" placeholder="servidor@smeb.cearamirim.rn.gov.br" required autocomplete="email username" />
+            </div>
+
+            <!-- Campo: Papel (select) -->
+            <div class="field-group" style="margin-bottom: 14px;">
+              <label for="novoUsuarioRole">Papel (Perfil RBAC) *</label>
+              <select id="novoUsuarioRole" class="input-clean" required>
+                <option value="RH_COMISSAO">RH_COMISSAO (RH &amp; Comissão de Portarias)</option>
+                <option value="PEDAGOGICO_EVENTOS">PEDAGOGICO_EVENTOS (Pedagógico &amp; Eventos)</option>
+                <option value="JURIDICO">JURIDICO (Assessoria Jurídica)</option>
+                <option value="ADMIN_GABINETE">ADMIN_GABINETE (Gabinete &amp; Governança Total - Moderador)</option>
+              </select>
+            </div>
+
+            <!-- Campo: Departamento -->
+            <div class="field-group" style="margin-bottom: 14px;">
+              <label for="novoUsuarioDepartamento">Departamento / Lotação</label>
+              <input type="text" id="novoUsuarioDepartamento" class="input-clean" value="Secretaria Municipal de Educacao" autocomplete="organization" />
+            </div>
+
+            <!-- Campo: Senha Temporária -->
+            <div class="field-group" style="margin-bottom: 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <label for="novoUsuarioSenha" style="margin-bottom: 0;">Senha Temporária *</label>
+                <button type="button" id="btnGerarSenhaNovoUsuario" class="btn-mini" style="font-size: 0.74rem;">🎲 Gerar Senha Segura</button>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <input type="password" id="novoUsuarioSenha" class="input-clean" style="font-family: var(--font-mono); font-size: 13px;" placeholder="Mínimo 8 caracteres" required autocomplete="new-password" />
+                <button type="button" id="btnToggleVisibilidadeSenha" class="btn btn-secondary btn-sm" style="white-space: nowrap; padding: 0 12px;" title="Alternar visibilidade da senha">👁️</button>
+              </div>
+              <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 4px; display: block;">Mínimo de 8 caracteres. O usuário poderá alterar em seu próximo acesso.</small>
+            </div>
+
+            <!-- Área de feedback / Mensagem -->
+            <div id="novoUsuarioFeedback" class="output-panel hidden" style="margin-bottom: 14px; font-size: 12.5px;"></div>
+          </div>
+
+          <div class="modal-footer" style="padding: 14px 24px; border-top: 1px solid var(--border-hairline); display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" id="btnCancelarNovoUsuario" class="btn btn-secondary btn-sm">Cancelar</button>
+            <button type="submit" id="btnSalvarNovoUsuario" class="btn btn-primary btn-sm">Criar Usuário</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Supabase JS v2 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <?!= include('ui_scripts'); ?>
   </body>

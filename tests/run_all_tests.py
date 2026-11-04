@@ -84,6 +84,12 @@ TEST_MODULES = [
         "module": "test_canonical_ids_and_cors",
         "name": "Alinhamento Canônico de IDs, CORS Simple Requests e Catálogo Offline",
         "description": "Validação dos 34 IDs oficiais no GAS/Frontend/Python, Simple Requests CORS sem OPTIONS, e catálogo de 17 personas."
+    },
+    {
+        "id": "M8",
+        "module": "test_fases_1_a_5_expansion",
+        "name": "Bateria Expandida Fases 1 a 5 (Boletim, Gemini, PWA, UI/UX, Permutas e pgvector)",
+        "description": "Validação integral e genuína das 5 novas fases: boletim diário editorial, Gemini companion, PWA manifest e SW seguro, UI skeletons e touch targets 44px, permutas Leaflet/Hera e migração pgvector."
     }
 ]
 

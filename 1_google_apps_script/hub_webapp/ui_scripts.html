@@ -147,21 +147,748 @@ window.OlymposIcons = (function() {
   };
 })();
 
+// --- MODULE: js\setup_modal.js ---
+/**
+ * @fileoverview Modal Interativo de Configuração do Supabase (Zero Senhas Hardcoded).
+ * Permite ao operador inserir a URL e Anon Key do Supabase ou alternar para modo contingência,
+ * armazenando as preferências exclusivamente no localStorage do navegador.
+ * Versão 2.0.0 — Projeto Olympos
+ */
+
+window.OlymposSetupModal = (function() {
+  function getElements() {
+    return {
+      modal: document.getElementById('supabaseSetupModal'),
+      form: document.getElementById('supabaseSetupForm'),
+      inputUrl: document.getElementById('setupSupabaseUrl'),
+      inputKey: document.getElementById('setupSupabaseAnonKey'),
+      inputGas: document.getElementById('setupGasWebhookUrl'),
+      btnTest: document.getElementById('testSupabaseConnectionBtn'),
+      btnClose: document.getElementById('closeSetupModalBtn'),
+      feedback: document.getElementById('setupModalFeedback')
+    };
+  }
+
+  function abrirModal() {
+    const el = getElements();
+    if (!el.modal) return;
+
+    // Preenche com os valores salvos no localStorage (se existirem)
+    if (el.inputUrl) {
+      el.inputUrl.value = localStorage.getItem('olympos_supabase_url') || '';
+    }
+    if (el.inputKey) {
+      el.inputKey.value = localStorage.getItem('olympos_supabase_anon_key') || '';
+    }
+    if (el.inputGas) {
+      el.inputGas.value = localStorage.getItem('olympos_api_url') || '';
+    }
+
+    if (el.feedback) {
+      el.feedback.style.display = 'none';
+      el.feedback.textContent = '';
+    }
+
+    el.modal.style.display = 'flex';
+  }
+
+  function fecharModal() {
+    const el = getElements();
+    if (el.modal) {
+      el.modal.style.display = 'none';
+    }
+  }
+
+  function exibirFeedback(mensagem, tipo) {
+    const el = getElements();
+    if (!el.feedback) return;
+
+    el.feedback.style.display = 'block';
+    el.feedback.textContent = mensagem;
+
+    if (tipo === 'sucesso') {
+      el.feedback.style.backgroundColor = 'rgba(16, 185, 129, 0.15)';
+      el.feedback.style.color = '#10b981';
+      el.feedback.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+    } else if (tipo === 'aviso') {
+      el.feedback.style.backgroundColor = 'rgba(245, 158, 11, 0.15)';
+      el.feedback.style.color = '#f59e0b';
+      el.feedback.style.border = '1px solid rgba(245, 158, 11, 0.3)';
+    } else {
+      el.feedback.style.backgroundColor = 'rgba(239, 68, 68, 0.15)';
+      el.feedback.style.color = '#ef4444';
+      el.feedback.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+    }
+  }
+
+  function normalizeUrl(rawUrl) {
+    return String(rawUrl || '')
+      .trim()
+      .replace(/\/+$/, '')
+      .replace(/\/(rest|auth)\/v1(\/.*)?$/i, '');
+  }
+
+  async function testarConexao() {
+    const el = getElements();
+    const url = normalizeUrl(el.inputUrl ? el.inputUrl.value : '');
+    if (el.inputUrl && url) {
+      el.inputUrl.value = url;
+    }
+    const key = (el.inputKey ? el.inputKey.value : '').trim();
+
+    if (!url || !url.startsWith('https://')) {
+      exibirFeedback('Informe uma URL HTTPS válida para a instância Supabase.', 'erro');
+      return;
+    }
+    if (!key || key.length < 20) {
+      exibirFeedback('A chave anônima (anon public key) informada é inválida ou muito curta.', 'erro');
+      return;
+    }
+
+    exibirFeedback('Testando conectividade com o Supabase...', 'aviso');
+
+    try {
+      const endpoint = url.replace(/\/$/, '') + '/rest/v1/';
+      const response = await fetch(endpoint, {
+        method: 'GET',
+        headers: {
+          'apikey': key,
+          'Authorization': 'Bearer ' + key
+        }
+      });
+
+      if (response.ok || response.status === 200 || response.status === 404 || response.status === 401) {
+        // Se respondeu HTTP do PostgREST, endpoint é válido
+        if (response.status === 401) {
+          exibirFeedback('A URL respondeu, mas a chave Anon informada foi recusada (HTTP 401). Verifique a chave.', 'erro');
+        } else {
+          exibirFeedback('Conexão com o Supabase estabelecida com sucesso! (Status ' + response.status + ')', 'sucesso');
+        }
+      } else {
+        exibirFeedback('Resposta inesperada da instância Supabase: HTTP ' + response.status, 'aviso');
+      }
+    } catch (err) {
+      console.error('[OlymposSetupModal] Erro ao testar conexão:', err);
+      exibirFeedback('Falha de rede ao conectar à URL informada: ' + err.message, 'erro');
+    }
+  }
+
+  function salvarConfiguracao(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const el = getElements();
+
+    const url = normalizeUrl(el.inputUrl ? el.inputUrl.value : '');
+    if (el.inputUrl && url) {
+      el.inputUrl.value = url;
+    }
+    const key = (el.inputKey ? el.inputKey.value : '').trim();
+    const gas = (el.inputGas ? el.inputGas.value : '').trim();
+
+    if (!url || !url.startsWith('https://')) {
+      exibirFeedback('URL do Supabase inválida. Deve iniciar com https://', 'erro');
+      return;
+    }
+    if (!key || key.length < 20) {
+      exibirFeedback('A Chave Anônima do Supabase informada é inválida.', 'erro');
+      return;
+    }
+
+    try {
+      localStorage.setItem('olympos_supabase_url', url);
+      localStorage.setItem('olympos_supabase_anon_key', key);
+      if (gas) {
+        localStorage.setItem('olympos_api_url', gas);
+      }
+
+      // Reinicializa o cliente Supabase forçando atualização de credenciais
+      if (window.OlymposSupabase && typeof window.OlymposSupabase.init === 'function') {
+        window.OlymposSupabase.init(true);
+      }
+
+      exibirFeedback('Configurações salvas no localStorage com sucesso!', 'sucesso');
+
+      setTimeout(function() {
+        fecharModal();
+        if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+          window.OlymposApp.showToast('Instância Supabase configurada com sucesso!', 'success');
+        }
+      }, 700);
+    } catch (err) {
+      exibirFeedback('Erro ao salvar no localStorage: ' + err.message, 'erro');
+    }
+  }
+
+  function bindEvents() {
+    const el = getElements();
+
+    if (el.btnClose) {
+      el.btnClose.addEventListener('click', fecharModal);
+    }
+    if (el.btnTest) {
+      el.btnTest.addEventListener('click', testarConexao);
+    }
+    if (el.form) {
+      el.form.addEventListener('submit', salvarConfiguracao);
+    }
+
+    // Botão de abertura a partir da tela de login
+    const btnOpenFromLogin = document.getElementById('openSetupModalFromLoginBtn');
+    if (btnOpenFromLogin) {
+      btnOpenFromLogin.addEventListener('click', abrirModal);
+    }
+
+    // Clique fora fecha o modal
+    if (el.modal) {
+      el.modal.addEventListener('click', function(e) {
+        if (e.target === el.modal) {
+          fecharModal();
+        }
+      });
+    }
+  }
+
+  // Inicializa os bindings quando o DOM estiver pronto
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bindEvents);
+  } else {
+    bindEvents();
+  }
+
+  return {
+    abrirModal: abrirModal,
+    fecharModal: fecharModal,
+    testarConexao: testarConexao,
+    salvarConfiguracao: salvarConfiguracao
+  };
+})();
+
+// --- MODULE: js\olympos_password_guard.js ---
+/**
+ * OlymposPasswordSecurity — Módulo de Proteção de Senhas e Verificação HaveIBeenPwned
+ * Projeto Olympos — Secretaria Municipal de Educação Básica (SMEB de Ceará-Mirim/RN)
+ * 
+ * Implementa verificação k-Anonymity SHA-1 conforme RFC e documentação HaveIBeenPwned.org (v3 API)
+ * e validação estrutural de complexidade de senhas baseada no NIST SP 800-63B.
+ * 
+ * Funciona nativamente no navegador sem expor a senha ou o hash completo para a rede.
+ */
+(function(global) {
+  'use strict';
+
+  /**
+   * Converte uma string em hash SHA-1 hexadecimal (maiúsculo).
+   * Utiliza a Web Crypto API (crypto.subtle) com fallback para ambiente Node.js se disponível.
+   * @param {string} text 
+   * @returns {Promise<string>}
+   */
+  async function sha1Hex(text) {
+    if (typeof text !== 'string') {
+      text = String(text || '');
+    }
+
+    // Suporte a Web Crypto API no navegador
+    var cryptoObj = (typeof window !== 'undefined' && (window.crypto || window.msCrypto)) || 
+                    (typeof global !== 'undefined' && global.crypto);
+
+    if (cryptoObj && cryptoObj.subtle && typeof TextEncoder !== 'undefined') {
+      var encoder = new TextEncoder();
+      var data = encoder.encode(text);
+      var hashBuffer = await cryptoObj.subtle.digest('SHA-1', data);
+      var hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(function(b) {
+        return b.toString(16).padStart(2, '0');
+      }).join('').toUpperCase();
+    }
+
+    // Fallback para Node.js (execução de testes em backend)
+    if (typeof require !== 'undefined') {
+      try {
+        var nodeCrypto = require('crypto');
+        return nodeCrypto.createHash('sha1').update(text, 'utf8').digest('hex').toUpperCase();
+      } catch (e) {
+        // Fallback não disponível
+      }
+    }
+
+    throw new Error('Ambiente criptográfico seguro (Web Crypto API) não disponível.');
+  }
+
+  /**
+   * Consulta a API pública HaveIBeenPwned usando o modelo k-Anonymity (v3 Range API).
+   * Envia apenas os primeiros 5 caracteres do hash SHA-1 da senha.
+   * A senha em texto claro e o hash completo NUNCA trafegam pela rede.
+   * 
+   * @param {string} password Senha a ser verificada
+   * @returns {Promise<{ leaked: boolean, breachCount: number, checked: boolean }>}
+   */
+  async function checkHaveIBeenPwned(password) {
+    if (!password || typeof password !== 'string') {
+      return { leaked: false, breachCount: 0, checked: false };
+    }
+
+    try {
+      var fullHash = await sha1Hex(password);
+      var prefix = fullHash.substring(0, 5);
+      var suffix = fullHash.substring(5);
+
+      var fetchFn = typeof fetch === 'function' ? fetch : (typeof window !== 'undefined' ? window.fetch : null);
+      if (!fetchFn) {
+        console.warn('[OlymposPasswordSecurity] Função fetch não disponível no ambiente.');
+        return { leaked: false, breachCount: 0, checked: false };
+      }
+
+      var response = await fetchFn('https://api.pwnedpasswords.com/range/' + prefix, {
+        method: 'GET',
+        headers: {
+          'Add-Padding': 'true' // Previne análise de tráfego por tamanho de pacote
+        }
+      });
+
+      if (!response.ok) {
+        console.warn('[OlymposPasswordSecurity] API HaveIBeenPwned indisponível (HTTP ' + response.status + '). Prosseguindo em modo defensivo.');
+        return { leaked: false, breachCount: 0, checked: false };
+      }
+
+      var bodyText = await response.text();
+      var lines = bodyText.split('\n');
+
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i].trim();
+        if (!line) continue;
+        var parts = line.split(':');
+        if (parts[0] && parts[0].toUpperCase() === suffix) {
+          var count = parseInt(parts[1], 10) || 1;
+          return { leaked: true, breachCount: count, checked: true };
+        }
+      }
+
+      return { leaked: false, breachCount: 0, checked: true };
+    } catch (err) {
+      console.warn('[OlymposPasswordSecurity] Falha na verificação de vazamento HaveIBeenPwned:', err);
+      // Fallback gracioso: não bloqueia o fluxo em caso de falha de conexão externa
+      return { leaked: false, breachCount: 0, checked: false };
+    }
+  }
+
+  /**
+   * Valida os requisitos estruturais de complexidade de senha institucional recomendados pelo NIST SP 800-63B.
+   * @param {string} password 
+   * @returns {{ valid: boolean, errors: string[] }}
+   */
+  function validateComplexity(password) {
+    var errors = [];
+    if (!password || typeof password !== 'string' || password.length < 12) {
+      errors.push('A senha deve possuir pelo menos 12 caracteres.');
+    }
+    if (!/[A-Z]/.test(password || '')) {
+      errors.push('A senha deve conter ao menos uma letra maiúscula.');
+    }
+    if (!/[a-z]/.test(password || '')) {
+      errors.push('A senha deve conter ao menos uma letra minúscula.');
+    }
+    if (!/[0-9]/.test(password || '')) {
+      errors.push('A senha deve conter ao menos um número.');
+    }
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(password || '')) {
+      errors.push('A senha deve conter ao menos um caractere especial (!@#$%...).');
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors: errors
+    };
+  }
+
+  var api = {
+    sha1Hex: sha1Hex,
+    checkHaveIBeenPwned: checkHaveIBeenPwned,
+    validateComplexity: validateComplexity
+  };
+
+  // Exportação em ambiente de navegador
+  if (typeof window !== 'undefined') {
+    window.OlymposPasswordSecurity = api;
+  }
+
+  // Exportação em ambiente CommonJS / Node.js (testes unitários)
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = api;
+  }
+
+  return api;
+})(typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : this));
+
+// --- MODULE: js\supabase_client.js ---
+/**
+ * @fileoverview Cliente de Inicialização Supabase com Proteção Contra Falhas (Resilience Layer).
+ * Se as variáveis de ambiente/localStorage não estiverem configuradas,
+ * exibe o Setup Modal amigavelmente sem travar ou emitir tela branca no navegador.
+ * Versão 2.0.0 — Projeto Olympos
+ */
+
+window.OlymposSupabase = (function() {
+  let supabaseInstance = null;
+  let cachedProfile = null;
+  let activeUrl = null;
+  let activeKey = null;
+
+  function normalizeSupabaseUrl(rawUrl) {
+    return String(rawUrl || '')
+      .trim()
+      .replace(/\/+$/, '')
+      .replace(/\/(rest|auth)\/v1(\/.*)?$/i, '');
+  }
+
+  const DEFAULT_PUBLIC_SUPABASE_URL = 'https://rbwizevjvbvjwtbwwyif.supabase.co';
+
+  function getConfig() {
+    let rawUrl = localStorage.getItem('olympos_supabase_url');
+    if (!rawUrl) {
+      rawUrl = DEFAULT_PUBLIC_SUPABASE_URL;
+      try {
+        localStorage.setItem('olympos_supabase_url', DEFAULT_PUBLIC_SUPABASE_URL);
+      } catch (e) {}
+    }
+    const cleanUrl = normalizeSupabaseUrl(rawUrl);
+    if (rawUrl && cleanUrl && rawUrl !== cleanUrl) {
+      localStorage.setItem('olympos_supabase_url', cleanUrl);
+    }
+    return {
+      url: cleanUrl,
+      anonKey: (localStorage.getItem('olympos_supabase_anon_key') || '').trim()
+    };
+  }
+
+  function isConfigured() {
+    const cfg = getConfig();
+    return Boolean(cfg.url && cfg.anonKey && cfg.url.startsWith('https://') && cfg.anonKey.length > 20);
+  }
+
+  function init(force) {
+    const cfg = getConfig();
+
+    if (!isConfigured()) {
+      console.info('[OlymposSupabase] Inicialização em modo público. Credenciais de autenticação aguardando configuração via Setup Modal.');
+      // Evita travar a página: aguarda o DOM e abre o Setup Modal de forma graciosa
+      if (window.OlymposSetupModal && typeof window.OlymposSetupModal.abrirModal === 'function') {
+        window.OlymposSetupModal.abrirModal();
+      } else {
+        setTimeout(function() {
+          if (window.OlymposSetupModal && typeof window.OlymposSetupModal.abrirModal === 'function') {
+            window.OlymposSetupModal.abrirModal();
+          }
+        }, 500);
+      }
+      return null;
+    }
+
+    if (!window.supabase) {
+      console.error('[OlymposSupabase] A biblioteca Supabase JS (@supabase/supabase-js) não foi carregada pelo CDN.');
+      return null;
+    }
+
+    // Padrão Singleton Estrito: Reutiliza instância ativa se URL e Chave forem idênticas
+    if (supabaseInstance && !force && activeUrl === cfg.url && activeKey === cfg.anonKey) {
+      return supabaseInstance;
+    }
+
+    // Se já havia instância ativa mas credenciais mudaram ou force=true, encerra auto-refresh anterior
+    if (supabaseInstance && supabaseInstance.auth && typeof supabaseInstance.auth.stopAutoRefreshToken === 'function') {
+      try {
+        supabaseInstance.auth.stopAutoRefreshToken();
+      } catch (eStop) {}
+    }
+
+    try {
+      supabaseInstance = window.supabase.createClient(cfg.url, cfg.anonKey, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true
+        }
+      });
+      activeUrl = cfg.url;
+      activeKey = cfg.anonKey;
+      console.log('[OlymposSupabase] Cliente Supabase inicializado com sucesso (Singleton).');
+
+      // Escuta renovação automática de token e sincroniza sessão do app
+      if (supabaseInstance.auth && typeof supabaseInstance.auth.onAuthStateChange === 'function') {
+        supabaseInstance.auth.onAuthStateChange(function(event, session) {
+          if (event === 'TOKEN_REFRESHED' && session && window.OlymposApp && typeof window.OlymposApp.atualizarTokenSessao === 'function') {
+            window.OlymposApp.atualizarTokenSessao(session.access_token);
+          }
+        });
+      }
+
+      return supabaseInstance;
+    } catch (err) {
+      console.error('[OlymposSupabase] Erro ao instanciar createClient:', err);
+      return null;
+    }
+  }
+
+  function getClient() {
+    if (!supabaseInstance) {
+      init();
+    }
+    return supabaseInstance;
+  }
+
+  /**
+   * Realiza login autenticado com e-mail institucional e senha no Supabase Auth.
+   * @param {string} email
+   * @param {string} password
+   * @returns {Promise<Object>} Dados do usuário, sessão e perfil RBAC
+   */
+  async function login(email, password) {
+    const client = getClient();
+    if (!client) {
+      if (window.OlymposSetupModal && typeof window.OlymposSetupModal.abrirModal === 'function') {
+        window.OlymposSetupModal.abrirModal();
+      }
+      throw new Error('Supabase não está configurado. Por favor, configure a URL e a Chave Anônima.');
+    }
+
+    const cleanEmail = String(email || '').trim();
+    const cleanPassword = String(password || '').trim();
+
+    if (!cleanEmail || !cleanPassword) {
+      throw new Error('Informe e-mail e senha para prosseguir.');
+    }
+
+    // Chamada oficial ao Supabase Auth GoTrue
+    const { data, error } = await client.auth.signInWithPassword({
+      email: cleanEmail,
+      password: cleanPassword
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    // Carregar perfil associado na tabela public.profiles
+    let profile = null;
+    try {
+      const { data: profData, error: profErr } = await client
+        .from('profiles')
+        .select('*')
+        .eq('id', data.user.id)
+        .maybeSingle();
+
+      if (!profErr && profData) {
+        profile = profData;
+      }
+    } catch (eProf) {
+      console.warn('[OlymposSupabase] Aviso ao buscar perfil na tabela profiles:', eProf);
+    }
+
+    // Fallback de perfil via metadados do token se a tabela não tiver registro
+    if (!profile) {
+      const userMeta = data.user.user_metadata || {};
+      const appMeta = data.user.app_metadata || {};
+      profile = {
+        id: data.user.id,
+        email: data.user.email,
+        full_name: userMeta.full_name || data.user.email,
+        role: appMeta.role || 'RH_COMISSAO',
+        department: userMeta.department || 'Secretaria Municipal de Educacao'
+      };
+    }
+
+    cachedProfile = profile;
+
+    // Cache RBAC de alta performance em sessionStorage para navegação veloz
+    try {
+      sessionStorage.setItem('olympos_rbac_profile_cache', JSON.stringify(profile));
+      sessionStorage.setItem('olympos_session_rbac', JSON.stringify({
+        user: data.user,
+        profile: profile,
+        role: profile.role,
+        token: data.session ? data.session.access_token : null
+      }));
+    } catch (eStorage) {
+      console.warn('[OlymposSupabase] Aviso ao persistir RBAC no sessionStorage:', eStorage);
+    }
+
+    return {
+      user: data.user,
+      session: data.session,
+      profile: profile
+    };
+  }
+
+  /**
+   * Resgata perfil e claims RBAC em cache (memória ativa ou sessionStorage).
+   */
+  function getCachedProfile() {
+    if (cachedProfile) return cachedProfile;
+    try {
+      const raw = sessionStorage.getItem('olympos_rbac_profile_cache');
+      if (raw) {
+        cachedProfile = JSON.parse(raw);
+        return cachedProfile;
+      }
+    } catch (e) {
+      console.warn('[OlymposSupabase] Falha ao ler cache RBAC do sessionStorage:', e);
+    }
+    return null;
+  }
+
+  /**
+   * Encerra a sessão ativa no Supabase Auth.
+   */
+  async function logout() {
+    const client = getClient();
+    if (client) {
+      try {
+        await client.auth.signOut();
+      } catch (e) {
+        console.warn('[OlymposSupabase] Erro ao executar signOut:', e);
+      }
+    }
+    cachedProfile = null;
+    localStorage.removeItem('olympos_session');
+    try {
+      sessionStorage.removeItem('olympos_rbac_profile_cache');
+      sessionStorage.removeItem('olympos_session_rbac');
+    } catch (e) {}
+  }
+
+  /**
+   * Resgata a sessão atual autenticada.
+   */
+  async function getSession() {
+    const client = getClient();
+    if (!client) return null;
+    try {
+      const { data } = await client.auth.getSession();
+      return data ? data.session : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /**
+   * Resgata o JWT token de acesso da sessão atual.
+   */
+  async function getJwtToken() {
+    const sess = await getSession();
+    return (sess && sess.access_token) ? sess.access_token : null;
+  }
+
+  /**
+   * Helper de busca semântica vetorial (pgvector) no acervo oficial.
+   * Invoca a RPC 'match_publicacoes_semanticas' com threshold e count configuráveis.
+   * Se o pgvector não estiver populado, se queryEmbedding for termo de texto ou se ocorrer erro na RPC,
+   * executa fallback gracioso para busca textual padrão na tabela publicacoes_diario.
+   *
+   * @param {Array<number>|string} queryEmbedding - Vetor float 768 dimensões ou termo textual de consulta
+   * @param {number} [threshold=0.65] - Limiar mínimo de similaridade de cosseno
+   * @param {number} [count=10] - Limite máximo de publicações retornadas
+   * @returns {Promise<Array<Object>>} Lista de publicações encontradas com similaridade
+   */
+  async function buscarPublicacoesSemanticas(queryEmbedding, threshold = 0.65, count = 10) {
+    const client = getClient();
+    if (!client) {
+      console.warn('[OlymposSupabase] Cliente não inicializado para busca semântica.');
+      return [];
+    }
+
+    // 1. Tentativa de busca vetorial se queryEmbedding for um vetor numérico válido
+    if (Array.isArray(queryEmbedding) && queryEmbedding.length > 0) {
+      try {
+        const { data, error } = await client.rpc('match_publicacoes_semanticas', {
+          query_embedding: queryEmbedding,
+          match_threshold: threshold,
+          match_count: count
+        });
+
+        if (!error && Array.isArray(data) && data.length > 0) {
+          return data;
+        }
+
+        if (error) {
+          console.warn('[OlymposSupabase] RPC match_publicacoes_semanticas retornou erro. Acionando fallback textual:', error.message);
+        } else {
+          console.info('[OlymposSupabase] Busca vetorial retornou 0 registros. Executando fallback.');
+        }
+      } catch (errRpc) {
+        console.warn('[OlymposSupabase] Exceção na chamada RPC match_publicacoes_semanticas:', errRpc);
+      }
+    }
+
+    // 2. Fallback gracioso para busca textual na tabela publicacoes_diario
+    try {
+      let query = client
+        .from('publicacoes_diario')
+        .select('id, data_publicacao, edicao, titulo, ato_tipo, servidores_envolvidos, conteudo_ner')
+        .order('data_publicacao', { ascending: false })
+        .limit(count);
+
+      if (typeof queryEmbedding === 'string' && queryEmbedding.trim()) {
+        const term = queryEmbedding.trim();
+        query = query.or(`titulo.ilike.%${term}%,ato_tipo.ilike.%${term}%`);
+      }
+
+      const { data: textData, error: textErr } = await query;
+      if (!textErr && Array.isArray(textData)) {
+        return textData.map(function(item) {
+          return Object.assign({}, item, {
+            similarity: 1.0,
+            fallback_textual: true
+          });
+        });
+      }
+    } catch (errFallback) {
+      console.warn('[OlymposSupabase] Falha ao executar fallback textual:', errFallback);
+    }
+
+    return [];
+  }
+
+  return {
+    getConfig: getConfig,
+    isConfigured: isConfigured,
+    init: init,
+    getClient: getClient,
+    login: login,
+    logout: logout,
+    getSession: getSession,
+    getJwtToken: getJwtToken,
+    getCachedProfile: getCachedProfile,
+    buscarPublicacoesSemanticas: buscarPublicacoesSemanticas
+  };
+})();
+
+// Auto-inicialização quando o DOM carregar
+if (typeof window !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      window.OlymposSupabase.init();
+    });
+  } else {
+    window.OlymposSupabase.init();
+  }
+}
+
 // --- MODULE: js\api.js ---
 /**
  * Hub Olympos V2 — Camada Modular de API (Dual-Front: GitHub Pages HTTP + GAS Nativo)
+ * Integrado ao Supabase JWT e validação de sessão segura.
+ * Versão 2.0.0 — Projeto Olympos
  */
 window.OlymposApi = (function() {
   const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbw-zKUdYJO6Zw1_XHo12a49p2wpgNtfii-2CJOq1838f6S1-L0SYM6iI9A2PS2ZPjYdmQ/exec';
 
   function getApiUrl() {
-    return localStorage.getItem('olympos_gas_api_url') || DEFAULT_API_URL;
+    return localStorage.getItem('olympos_api_url') || localStorage.getItem('olympos_gas_api_url') || DEFAULT_API_URL;
   }
 
   function setApiUrl(url) {
     if (!url || !url.startsWith('https://')) {
       throw new Error('A URL da API deve começar com https://');
     }
+    localStorage.setItem('olympos_api_url', url.trim());
     localStorage.setItem('olympos_gas_api_url', url.trim());
   }
 
@@ -174,19 +901,36 @@ window.OlymposApi = (function() {
     }
   }
 
+  function getJwtToken() {
+    const session = getSession();
+    if (session) {
+      if (session.access_token) return session.access_token;
+      if (session.token) return session.token;
+      if (session.session && session.session.access_token) return session.session.access_token;
+    }
+    return null;
+  }
+
   function processarResposta(data, onSuccess, onError) {
     if (data && data.code === 'AUTH_REQUIRED') {
-      window.OlymposApp && window.OlymposApp.solicitarLogin();
-      if (onError) onError(new Error(data.mensagem || 'Sessão expirada. Faça login novamente.'));
+      if (window.OlymposApp && typeof window.OlymposApp.solicitarLogin === 'function') {
+        window.OlymposApp.solicitarLogin();
+      }
+      if (onError) onError(new Error(data.mensagem || 'Sessão expirada. Faça login novamente via Supabase.'));
       return;
     }
     if (onSuccess) onSuccess(data);
   }
 
   function chamar(action, payload, onSuccess, onError) {
-    const session = getSession();
-    const token = session ? session.token : null;
-    const bodyData = Object.assign({}, payload || {}, { action: action, token: token });
+    const token = getJwtToken();
+    const bodyData = Object.assign({}, payload || {}, {
+      action: action,
+      token: token,
+      _token: token,
+      sessionToken: token,
+      jwtToken: token
+    });
 
     // Frente 1: Execução embarcada no Google Apps Script (HtmlService)
     if (typeof google !== 'undefined' && google.script && google.script.run) {
@@ -202,24 +946,36 @@ window.OlymposApi = (function() {
       return;
     }
 
-    // Frente 2: Execução desacoplada via GitHub Pages / HTTP Fetch (CORS-safe text/plain)
+    // Frente 2: Execução desacoplada via GitHub Pages / HTTP Fetch
+    // Protocolo estrito de CORS Simple Request:
+    // 1. Método POST
+    // 2. Content-Type: text/plain;charset=utf-8 (evita preflight OPTIONS no GAS)
+    // 3. ZERO headers de autorização HTTP (token trafega no corpo JSON)
+    // 4. redirect: 'follow' explícito para redirecionamentos do script.googleusercontent.com
     const url = getApiUrl();
     fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(bodyData)
+      body: JSON.stringify(bodyData),
+      redirect: 'follow'
     })
       .then(function(res) {
         if (!res.ok) {
-          throw new Error('Falha HTTP ' + res.status + ': ' + res.statusText);
+          throw new Error('Falha HTTP ' + res.status + ': ' + (res.statusText || 'Erro no Gateway'));
         }
-        return res.json();
+        return res.text();
       })
-      .then(function(data) {
+      .then(function(text) {
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          throw new Error('Resposta não-JSON do Gateway GAS: ' + (text ? text.substring(0, 100) : 'vazio'));
+        }
         processarResposta(data, onSuccess, onError);
       })
       .catch(function(err) {
-        console.error('Erro HTTP [' + action + ']:', err);
+        console.warn('Erro de rede/Gateway [' + action + ']:', err.message);
         if (onError) onError(err);
       });
   }
@@ -229,39 +985,108 @@ window.OlymposApi = (function() {
 
     if (typeof google !== 'undefined' && google.script && google.script.run) {
       google.script.run
-        .withSuccessHandler(function() {
-          onResult({
-            ok: true,
-            latency: Math.round(performance.now() - start),
-            data: { sistema: 'Hub Olympos GAS Nativo', versao: '2.1.0' }
-          });
+        .withSuccessHandler(function(data) {
+          if (typeof onResult === 'function') {
+            onResult({
+              ok: true,
+              latency: Math.round(performance.now() - start),
+              data: data || { sistema: 'Hub Olympos GAS Nativo', versao: '2.1.0' }
+            });
+          }
         })
         .withFailureHandler(function(err) {
-          onResult({ ok: false, error: err.message });
+          if (typeof onResult === 'function') {
+            onResult({ ok: false, error: err.message });
+          }
         })
-        .executarAcaoHubClient({ action: 'auth_check', token: '' });
+        .executarAcaoHubClient({ action: 'ping', api: '1', token: '' });
       return;
     }
 
     const url = getApiUrl();
-    const testEndpoint = url + (url.includes('?') ? '&' : '?') + 'api=1';
+    const token = getJwtToken();
+    const pingPayload = {
+      action: 'ping',
+      api: '1',
+      token: token,
+      _token: token
+    };
 
-    fetch(testEndpoint)
-      .then(function(res) { return res.json(); })
-      .then(function(data) {
+    fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(pingPayload),
+      redirect: 'follow'
+    })
+      .then(function(res) {
+        if (!res.ok) {
+          throw new Error('Falha HTTP ' + res.status + ' (' + (res.statusText || 'Offline') + ')');
+        }
+        return res.text();
+      })
+      .then(function(text) {
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          throw new Error('Resposta HTML ou não-JSON recebida. Verifique a implantação pública do Apps Script.');
+        }
         const latency = Math.round(performance.now() - start);
-        onResult({ ok: true, latency: latency, data: data });
+        if (typeof onResult === 'function') {
+          onResult({ ok: true, latency: latency, data: data });
+        }
       })
       .catch(function(err) {
-        onResult({ ok: false, error: err.message });
+        if (typeof onResult === 'function') {
+          onResult({ ok: false, error: err.message || 'Gateway offline ou inacessível' });
+        }
       });
+  }
+
+  /**
+   * Atualiza o conteúdo Markdown de uma memória existente no Google Drive via Gateway GAS.
+   * Modifica in-place sem gerar duplicatas no Drive.
+   * @param {string} arquivo Nome do arquivo canônico (ex: _memoria_hera.md).
+   * @param {string} conteudo Texto consolidado em Markdown.
+   * @param {Function} [onSuccess] Callback de sucesso.
+   * @param {Function} [onError] Callback de erro.
+   */
+  function salvarMemoria(arquivo, conteudo, onSuccess, onError) {
+    return chamar('memorias_salvar', {
+      arquivo: arquivo,
+      conteudo: conteudo
+    }, onSuccess, onError);
+  }
+
+  /**
+   * Provisiona novo usuário administrativo através do Gateway GAS intermediando o Supabase Auth.
+   * Suporta tanto padrão assíncrono via Promise quanto callbacks tradicionais (onSuccess, onError).
+   * @param {Object} dados Dados cadastrais { email, nome, role, departamento, senhaTemporaria }.
+   * @param {Function} [onSuccess] Callback de sucesso.
+   * @param {Function} [onError] Callback de erro.
+   * @returns {Promise<Object>}
+   */
+  function criarUsuario(dados, onSuccess, onError) {
+    return new Promise(function(resolve, reject) {
+      chamar('usuario_criar', { dados: dados }, function(res) {
+        if (onSuccess) onSuccess(res);
+        resolve(res);
+      }, function(err) {
+        if (onError) onError(err);
+        reject(err);
+      });
+    });
   }
 
   return {
     getApiUrl: getApiUrl,
     setApiUrl: setApiUrl,
     DEFAULT_API_URL: DEFAULT_API_URL,
+    getSession: getSession,
+    getJwtToken: getJwtToken,
     chamar: chamar,
+    criarUsuario: criarUsuario,
+    salvarMemoria: salvarMemoria,
     testarConexao: testarConexao
   };
 })();
@@ -459,6 +1284,20 @@ window.OlymposViews.visaoGeral = (function() {
   }
 
   function carregarDados() {
+    // Verifica se há sessão institucional ou token configurado antes de chamar endpoint protegido
+    const sessao = (window.OlymposApp && typeof window.OlymposApp.getSession === 'function')
+      ? window.OlymposApp.getSession()
+      : null;
+    const jwtToken = (window.OlymposApi && typeof window.OlymposApi.getJwtToken === 'function')
+      ? window.OlymposApi.getJwtToken()
+      : null;
+
+    // Se não há sessão autenticada, renderiza o catálogo local das 17 personas sem emitir erro de rede
+    if (!sessao && !jwtToken) {
+      renderizarConstelacao17Personas(lastOverviewData ? lastOverviewData.memorias : null);
+      return;
+    }
+
     window.OlymposApi.chamar('overview_get', {}, function(res) {
       const data = (res && res.data) ? res.data : res;
       if (data && (data.numeracao || data.memorias)) {
@@ -468,7 +1307,8 @@ window.OlymposViews.visaoGeral = (function() {
         isLoaded = true;
       }
     }, function(err) {
-      console.warn('Visão Geral usando catálogo local das 17 personas:', err);
+      // Degradação graciosa para catálogo local sem poluir o console com advertências
+      renderizarConstelacao17Personas(lastOverviewData ? lastOverviewData.memorias : null);
     });
   }
 
@@ -1447,9 +2287,25 @@ window.OlymposViews.diarioOficial = (function() {
     bind('prometheusTriggerActionBtn', 'click', dispararColetaGitHubActions);
     bind('prometheusSectorFilter', 'change', renderizarTabela);
     bind('prometheusSearchInput', 'input', renderizarTabela);
+    bind('diarioSalvarBoletimEmailBtn', 'click', function() {
+      const inEl = document.getElementById('diarioBoletimEmailInput');
+      if (window.OlymposApp && typeof window.OlymposApp.salvarBoletimEmails === 'function') {
+        window.OlymposApp.salvarBoletimEmails(inEl ? inEl.value : '');
+      }
+    });
   }
 
   function carregarPainel() {
+    const inDiario = document.getElementById('diarioBoletimEmailInput');
+    if (inDiario && !inDiario.value) {
+      inDiario.value = localStorage.getItem('olympos_boletim_emails') || '';
+    }
+
+    const tbody = document.getElementById('prometheusTableBody');
+    if (tbody && window.OlymposApp && typeof window.OlymposApp.renderSkeletonTable === 'function') {
+      window.OlymposApp.renderSkeletonTable(tbody, 5, 4, ['15%', '20%', '50%', '15%']);
+    }
+
     window.OlymposApi.chamar('prometheus_status', {}, function(res) {
       const data = (res && res.data) ? res.data : res;
       if (!data) return;
@@ -1533,7 +2389,38 @@ window.OlymposViews.diarioOficial = (function() {
 
     tbody.innerHTML = '';
     if (filtered.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="4" class="text-muted text-center" style="padding: 28px;">Nenhuma publicação localizada para os filtros aplicados.</td></tr>';
+      tbody.innerHTML =
+        '<tr>' +
+          '<td colspan="4" style="padding: 28px 12px; border: none;">' +
+            '<div class="empty-state-card">' +
+              '<div class="empty-state-icon">📰</div>' +
+              '<div class="empty-state-title">Nenhuma publicação localizada</div>' +
+              '<div class="empty-state-desc">Não foram encontrados atos oficiais ou arquivos para os filtros e termos selecionados. Tente ajustar os parâmetros de pesquisa ou atualizar o acervo.</div>' +
+              '<div class="empty-state-actions">' +
+                '<button type="button" id="diarioLimparFiltrosBtn" class="btn btn-secondary btn-sm">Limpar Filtros</button>' +
+                '<button type="button" id="diarioAtualizarListaBtn" class="btn btn-primary btn-sm">Atualizar Lista</button>' +
+              '</div>' +
+            '</div>' +
+          '</td>' +
+        '</tr>';
+
+      const btnClear = document.getElementById('diarioLimparFiltrosBtn');
+      if (btnClear) {
+        btnClear.addEventListener('click', function() {
+          const sec = document.getElementById('prometheusSectorFilter');
+          const srch = document.getElementById('prometheusSearchInput');
+          if (sec) sec.value = 'TODOS';
+          if (srch) srch.value = '';
+          renderizarTabela();
+        });
+      }
+
+      const btnRefresh = document.getElementById('diarioAtualizarListaBtn');
+      if (btnRefresh) {
+        btnRefresh.addEventListener('click', function() {
+          carregarPainel();
+        });
+      }
       return;
     }
 
@@ -1613,11 +2500,146 @@ window.OlymposViews.diarioOficial = (function() {
 // --- MODULE: js\views\papiroCadmo.js ---
 /**
  * Hub Olympos V2.1 — Página Modular 7: O Papiro de Cadmo (ETL Mensal de Permutas RN)
+ * Painel Georreferenciado de Permutas & Motor de Matching da Persona Hera (Leaflet.js + OSM)
  */
 window.OlymposViews = window.OlymposViews || {};
 
 window.OlymposViews.papiroCadmo = (function() {
   let isStatusLoaded = false;
+  let leafletMap = null;
+  let markersLayer = null;
+  let routeLayer = null;
+  let observerCadmo = null;
+
+  const BANCO_STORAGE_KEY = 'olympos_permutas_banco';
+
+  // Catálogo Georreferenciado de Unidades Escolares e Polos Intermunicipais
+  const PONTOS_GEORREFERENCIADOS = [
+    // Ceará-Mirim — Sede SMEB e Escolas Polo
+    { id: 'smeb_sede', nome: 'SMEB Sede (Ceará-Mirim)', municipio: 'Ceará-Mirim', tipo: 'Sede Administrativa', coords: [-5.6344, -35.4245], cor: '#D4AF37' },
+    { id: 'em_alice_garcia', nome: 'E. M. Alice Garcia Freire (Ceará-Mirim)', municipio: 'Ceará-Mirim', tipo: 'Escola Polo', coords: [-5.6338, -35.4262], cor: '#38BDF8' },
+    { id: 'em_roberto_varela', nome: 'E. M. Prefeito Roberto Varela (Ceará-Mirim)', municipio: 'Ceará-Mirim', tipo: 'Escola Polo', coords: [-5.6312, -35.4210], cor: '#38BDF8' },
+    { id: 'em_augusto_severo', nome: 'E. M. Augusto Severo (Ceará-Mirim)', municipio: 'Ceará-Mirim', tipo: 'Escola Polo', coords: [-5.6355, -35.4280], cor: '#38BDF8' },
+    { id: 'em_celso_cicco', nome: 'E. M. Monsenhor Celso Cicco (Ceará-Mirim)', municipio: 'Ceará-Mirim', tipo: 'Escola Polo', coords: [-5.6420, -35.4190], cor: '#38BDF8' },
+    { id: 'em_julio_senna', nome: 'E. M. Dr. Júlio Senna (Gravatá - Ceará-Mirim)', municipio: 'Ceará-Mirim', tipo: 'Escola Polo Rural', coords: [-5.6025, -35.4650], cor: '#38BDF8' },
+    { id: 'em_barao', nome: 'E. M. Barão de Ceará-Mirim', municipio: 'Ceará-Mirim', tipo: 'Escola Polo', coords: [-5.6150, -35.3980], cor: '#38BDF8' },
+    { id: 'em_madalena_antunes', nome: 'E. M. Madalena Antunes (Massangana - Ceará-Mirim)', municipio: 'Ceará-Mirim', tipo: 'Escola Polo Rural', coords: [-5.6710, -35.4520], cor: '#38BDF8' },
+
+    // Polos Metropolitanos Parceiros (Grande Natal e Região Metropolitana)
+    { id: 'polo_natal_zn', nome: 'Polo Natal (Zona Norte - SME)', municipio: 'Natal', tipo: 'Polo Metropolitano', coords: [-5.7550, -35.2600], cor: '#10B981' },
+    { id: 'polo_natal_zs', nome: 'Polo Natal (Zona Sul / Centro - SME)', municipio: 'Natal', tipo: 'Polo Metropolitano', coords: [-5.8150, -35.2100], cor: '#10B981' },
+    { id: 'polo_extremoz', nome: 'Polo Extremoz (SME Centro)', municipio: 'Extremoz', tipo: 'Polo Metropolitano', coords: [-5.7067, -35.3069], cor: '#8B5CF6' },
+    { id: 'polo_sga', nome: 'Polo São Gonçalo do Amarante (SME Centro)', municipio: 'São Gonçalo do Amarante', tipo: 'Polo Metropolitano', coords: [-5.7928, -35.3300], cor: '#F59E0B' },
+    { id: 'polo_macaiba', nome: 'Polo Macaíba (SME Centro)', municipio: 'Macaíba', tipo: 'Polo Metropolitano', coords: [-5.8569, -35.3531], cor: '#EC4899' }
+  ];
+
+  // Amostra inicial de intenções de permuta salvas em localStorage para demonstração imediata
+  const BANCO_INICIAL_AMOSTRA = [
+    {
+      id: 'perm_001',
+      nome: 'Mariana Medeiros da Silva',
+      matricula: '2026-1042',
+      cargo: 'Professor dos Anos Iniciais',
+      disciplina: 'Polivalente / Pedagogia',
+      cargaHoraria: '30h',
+      origem: 'E. M. Alice Garcia Freire (Ceará-Mirim)',
+      municipioOrigem: 'Ceará-Mirim',
+      destino: 'Natal',
+      turno: 'Matutino',
+      dataCadastro: '2026-10-25'
+    },
+    {
+      id: 'perm_002',
+      nome: 'Carlos Eduardo Nogueira',
+      matricula: '2026-3081',
+      cargo: 'Professor dos Anos Iniciais',
+      disciplina: 'Polivalente / Pedagogia',
+      cargaHoraria: '30h',
+      origem: 'Polo Natal (Zona Norte - SME)',
+      municipioOrigem: 'Natal',
+      destino: 'Ceará-Mirim',
+      turno: 'Matutino',
+      dataCadastro: '2026-10-26'
+    },
+    {
+      id: 'perm_003',
+      nome: 'Fernanda de Lima Souza',
+      matricula: '2026-2155',
+      cargo: 'Professor dos Anos Finais',
+      disciplina: 'Matemática',
+      cargaHoraria: '30h',
+      origem: 'E. M. Prefeito Roberto Varela (Ceará-Mirim)',
+      municipioOrigem: 'Ceará-Mirim',
+      destino: 'Extremoz',
+      turno: 'Vespertino',
+      dataCadastro: '2026-10-28'
+    },
+    {
+      id: 'perm_004',
+      nome: 'Roberto Rocha Brandão',
+      matricula: '2026-5120',
+      cargo: 'Professor dos Anos Finais',
+      disciplina: 'Matemática',
+      cargaHoraria: '30h',
+      origem: 'Polo Extremoz (SME Centro)',
+      municipioOrigem: 'Extremoz',
+      destino: 'Ceará-Mirim',
+      turno: 'Vespertino',
+      dataCadastro: '2026-10-29'
+    },
+    {
+      id: 'perm_005',
+      nome: 'Juliana Beatriz Santos',
+      matricula: '2026-6401',
+      cargo: 'Professor dos Anos Finais',
+      disciplina: 'Língua Portuguesa',
+      cargaHoraria: '20h',
+      origem: 'E. M. Monsenhor Celso Cicco (Ceará-Mirim)',
+      municipioOrigem: 'Ceará-Mirim',
+      destino: 'São Gonçalo do Amarante',
+      turno: 'Matutino',
+      dataCadastro: '2026-11-01'
+    },
+    {
+      id: 'perm_006',
+      nome: 'Marcos Vinícius Dantas',
+      matricula: '2026-7890',
+      cargo: 'Professor dos Anos Finais',
+      disciplina: 'Língua Portuguesa',
+      cargaHoraria: '30h',
+      origem: 'Polo São Gonçalo do Amarante (SME Centro)',
+      municipioOrigem: 'São Gonçalo do Amarante',
+      destino: 'Ceará-Mirim',
+      turno: 'Matutino',
+      dataCadastro: '2026-11-02'
+    },
+    {
+      id: 'perm_007',
+      nome: 'Ana Cláudia Fontes',
+      matricula: '2026-8012',
+      cargo: 'Especialista em Educação',
+      disciplina: 'Polivalente / Pedagogia',
+      cargaHoraria: '40h',
+      origem: 'E. M. Augusto Severo (Ceará-Mirim)',
+      municipioOrigem: 'Ceará-Mirim',
+      destino: 'Macaíba',
+      turno: 'Integral',
+      dataCadastro: '2026-11-03'
+    },
+    {
+      id: 'perm_008',
+      nome: 'Pedro Henrique Guedes',
+      matricula: '2026-9134',
+      cargo: 'Especialista em Educação',
+      disciplina: 'Polivalente / Pedagogia',
+      cargaHoraria: '40h',
+      origem: 'Polo Macaíba (SME Centro)',
+      municipioOrigem: 'Macaíba',
+      destino: 'Ceará-Mirim',
+      turno: 'Integral',
+      dataCadastro: '2026-11-03'
+    }
+  ];
 
   const PORTAIS = [
     { nome: 'Governo do Estado do RN (SEEC)', regiao: 'Estadual', tecnologia: 'Playwright SPA (SEAD/COPES)', url: 'https://remuneracao.rn.gov.br/table-people' },
@@ -1644,6 +2666,10 @@ window.OlymposViews.papiroCadmo = (function() {
     if (!isStatusLoaded) {
       carregarStatusDrive();
     }
+    garantirBancoPermutasInicial();
+    inicializarMapa();
+    executarMatchingHera();
+    observarVisibilidadePagina();
   }
 
   function bindEvents() {
@@ -1659,6 +2685,511 @@ window.OlymposViews.papiroCadmo = (function() {
     if (btnTrigger && !btnTrigger._bound) {
       btnTrigger._bound = true;
       btnTrigger.addEventListener('click', dispararColetaMensal);
+    }
+
+    const formPermuta = document.getElementById('formPermutaCadmo');
+    if (formPermuta && !formPermuta._bound) {
+      formPermuta._bound = true;
+      formPermuta.addEventListener('submit', salvarNovaIntencaoPermuta);
+    }
+
+    const btnLimpar = document.getElementById('btnLimparFormPermuta');
+    if (btnLimpar && !btnLimpar._bound) {
+      btnLimpar._bound = true;
+      btnLimpar.addEventListener('click', function() {
+        if (formPermuta) formPermuta.reset();
+      });
+    }
+
+    const btnRecalcular = document.getElementById('btnRecalcularMatchesHera');
+    if (btnRecalcular && !btnRecalcular._bound) {
+      btnRecalcular._bound = true;
+      btnRecalcular.addEventListener('click', function() {
+        executarMatchingHera();
+        if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+          window.OlymposApp.showToast('Algoritmo de matching da persona Hera recalculado com sucesso!');
+        }
+      });
+    }
+
+    const btnToggleForm = document.getElementById('btnAlternarFormPermuta');
+    if (btnToggleForm && !btnToggleForm._bound) {
+      btnToggleForm._bound = true;
+      btnToggleForm.addEventListener('click', function() {
+        const wrapper = document.getElementById('wrapperFormPermuta');
+        if (!wrapper) return;
+        const isHidden = wrapper.classList.toggle('hidden');
+        btnToggleForm.setAttribute('aria-expanded', String(!isHidden));
+        btnToggleForm.textContent = isHidden ? '+ Nova Intenção' : '− Ocultar Formulário';
+      });
+    }
+
+    window.addEventListener('resize', function() {
+      if (leafletMap) {
+        leafletMap.invalidateSize();
+      }
+    });
+  }
+
+  function observarVisibilidadePagina() {
+    const pageCadmo = document.getElementById('page-papiro-cadmo');
+    if (!pageCadmo || observerCadmo) return;
+
+    observerCadmo = new MutationObserver(function() {
+      if (!pageCadmo.classList.contains('hidden') && leafletMap) {
+        setTimeout(function() {
+          leafletMap.invalidateSize();
+        }, 120);
+      }
+    });
+
+    observerCadmo.observe(pageCadmo, {
+      attributes: true,
+      attributeFilter: ['class', 'style']
+    });
+  }
+
+  function garantirBancoPermutasInicial() {
+    try {
+      const gravado = localStorage.getItem(BANCO_STORAGE_KEY);
+      if (!gravado || gravado === '[]') {
+        localStorage.setItem(BANCO_STORAGE_KEY, JSON.stringify(BANCO_INICIAL_AMOSTRA));
+      }
+    } catch (e) {
+      console.warn('[PapiroCadmo] LocalStorage inacessível para banco de permutas:', e);
+    }
+  }
+
+  function obterBancoPermutas() {
+    try {
+      const raw = localStorage.getItem(BANCO_STORAGE_KEY);
+      if (raw) {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr)) return arr;
+      }
+    } catch (e) {
+      console.warn('[PapiroCadmo] Erro ao analisar banco de permutas:', e);
+    }
+    return BANCO_INICIAL_AMOSTRA.slice();
+  }
+
+  function extrairMunicipioOrigem(nomeOrigem) {
+    const str = String(nomeOrigem || '').toLowerCase();
+    if (str.includes('ceará-mirim') || str.includes('ceara-mirim') || str.includes('smeb')) return 'Ceará-Mirim';
+    if (str.includes('natal')) return 'Natal';
+    if (str.includes('extremoz')) return 'Extremoz';
+    if (str.includes('são gonçalo') || str.includes('sao goncalo') || str.includes('sga')) return 'São Gonçalo do Amarante';
+    if (str.includes('macaíba') || str.includes('macaiba')) return 'Macaíba';
+    return 'Ceará-Mirim';
+  }
+
+  function inicializarMapa() {
+    const mapEl = document.getElementById('mapaPermutasCadmo');
+    if (!mapEl || typeof window.L === 'undefined') return;
+
+    if (!leafletMap) {
+      leafletMap = window.L.map('mapaPermutasCadmo', {
+        center: [-5.634, -35.428],
+        zoom: 10,
+        zoomControl: true,
+        scrollWheelZoom: false
+      });
+
+      window.L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(leafletMap);
+
+      markersLayer = window.L.layerGroup().addTo(leafletMap);
+      routeLayer = window.L.layerGroup().addTo(leafletMap);
+
+      plotarMarcadores();
+    }
+
+    setTimeout(function() {
+      if (leafletMap) leafletMap.invalidateSize();
+    }, 150);
+  }
+
+  function plotarMarcadores() {
+    if (!leafletMap || !markersLayer) return;
+    markersLayer.clearLayers();
+
+    PONTOS_GEORREFERENCIADOS.forEach(function(ponto) {
+      const isSede = ponto.tipo.includes('Sede');
+      const isPolo = ponto.tipo.includes('Polo Metropolitano');
+
+      const markerHtml =
+        '<div style="background:' + ponto.cor + '; width: 22px; height: 22px; border-radius: 50%; border: 2.5px solid #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; font-size: 10px; color: #fff; font-weight: bold;">' +
+        (isSede ? '★' : (isPolo ? 'P' : 'E')) +
+        '</div>';
+
+      const customIcon = window.L.divIcon({
+        className: 'cadmo-leaflet-divicon',
+        html: markerHtml,
+        iconSize: [22, 22],
+        iconAnchor: [11, 11],
+        popupAnchor: [0, -12]
+      });
+
+      const popupContent =
+        '<div class="cadmo-map-popup" style="font-family: var(--font-body, sans-serif); min-width: 210px; padding: 4px;">' +
+          '<div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">' +
+            '<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:' + ponto.cor + ';"></span>' +
+            '<strong style="font-size:12.5px; color: #0B1120;">' + window.OlymposApp.escapeHtml(ponto.nome) + '</strong>' +
+          '</div>' +
+          '<div style="font-size:11.5px; color: #475569; margin-bottom:8px;">' +
+            'Município: <strong>' + window.OlymposApp.escapeHtml(ponto.municipio) + '</strong> • ' + window.OlymposApp.escapeHtml(ponto.tipo) +
+          '</div>' +
+          '<div style="display:flex; gap:6px; margin-top:8px;">' +
+            '<button type="button" class="btn btn-secondary btn-sm" style="font-size:10.5px; padding:3px 8px;" onclick="window.OlymposViews.papiroCadmo.definirOrigemForm(\'' + window.OlymposApp.escapeHtml(ponto.nome) + '\')">Definir Origem</button>' +
+            '<button type="button" class="btn btn-primary btn-sm" style="font-size:10.5px; padding:3px 8px;" onclick="window.OlymposViews.papiroCadmo.definirDestinoForm(\'' + window.OlymposApp.escapeHtml(ponto.municipio) + '\')">Definir Destino</button>' +
+          '</div>' +
+        '</div>';
+
+      const marker = window.L.marker(ponto.coords, { icon: customIcon }).bindPopup(popupContent);
+      markersLayer.addLayer(marker);
+    });
+  }
+
+  function definirOrigemForm(nomePonto) {
+    const sel = document.getElementById('permutaEscolaOrigem');
+    if (!sel) return;
+    for (let i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].value === nomePonto) {
+        sel.selectedIndex = i;
+        break;
+      }
+    }
+    const wrapper = document.getElementById('wrapperFormPermuta');
+    if (wrapper && wrapper.classList.contains('hidden')) {
+      wrapper.classList.remove('hidden');
+    }
+    if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+      window.OlymposApp.showToast('Origem preenchida: ' + nomePonto);
+    }
+  }
+
+  function definirDestinoForm(municipio) {
+    const sel = document.getElementById('permutaPoloDestino');
+    if (!sel) return;
+    for (let i = 0; i < sel.options.length; i++) {
+      if (sel.options[i].value.toLowerCase() === municipio.toLowerCase()) {
+        sel.selectedIndex = i;
+        break;
+      }
+    }
+    const wrapper = document.getElementById('wrapperFormPermuta');
+    if (wrapper && wrapper.classList.contains('hidden')) {
+      wrapper.classList.remove('hidden');
+    }
+    if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+      window.OlymposApp.showToast('Destino preenchido: ' + municipio);
+    }
+  }
+
+  /**
+   * Motor de Matching Automático da Persona Hera:
+   * Pontuação ponderada:
+   *  1. Cargo / Disciplina: 40 pontos
+   *  2. Carga Horária: 30 pontos
+   *  3. Rota Inversa de Permuta: 30 pontos
+   * Total: 0 a 100%
+   * Badges: Excelente (>= 80%), Boa (>= 60%), Regular (< 60%)
+   */
+  function calcularCompatibilidadeHera(intA, intB) {
+    // 1. Cargo & Disciplina (40 pts)
+    let ptsCargo = 0;
+    const mesmoCargo = intA.cargo === intB.cargo;
+    const mesmaDisciplina = intA.disciplina === intB.disciplina;
+
+    if (mesmoCargo && mesmaDisciplina) {
+      ptsCargo = 40;
+    } else if (mesmoCargo) {
+      ptsCargo = 28;
+    } else if (mesmaDisciplina) {
+      ptsCargo = 18;
+    } else {
+      ptsCargo = 0;
+    }
+
+    // 2. Carga Horária (30 pts)
+    let ptsCH = 0;
+    const chA = parseInt(intA.cargaHoraria, 10) || 30;
+    const chB = parseInt(intB.cargaHoraria, 10) || 30;
+    const diffCH = Math.abs(chA - chB);
+
+    if (diffCH === 0) {
+      ptsCH = 30;
+    } else if (diffCH <= 10) {
+      ptsCH = 16; // Requer compensação de carga horária pela comissão
+    } else {
+      ptsCH = 0;
+    }
+
+    // 3. Rota Inversa de Permuta (30 pts)
+    let ptsRota = 0;
+    const munOrigA = intA.municipioOrigem || extrairMunicipioOrigem(intA.origem);
+    const munDestA = intA.destino;
+    const munOrigB = intB.municipioOrigem || extrairMunicipioOrigem(intB.origem);
+    const munDestB = intB.destino;
+
+    const rotaInversaExata = (munOrigA.toLowerCase() === munDestB.toLowerCase()) &&
+                             (munOrigB.toLowerCase() === munDestA.toLowerCase());
+
+    if (rotaInversaExata) {
+      ptsRota = 30;
+    } else if (munOrigA.toLowerCase() === munDestB.toLowerCase() || munOrigB.toLowerCase() === munDestA.toLowerCase()) {
+      ptsRota = 18;
+    } else {
+      ptsRota = 5;
+    }
+
+    const scoreTotal = ptsCargo + ptsCH + ptsRota;
+
+    let nivel = 'Regular';
+    let badgeClass = 'badge-regular';
+    let parecerHera = 'Parecer Hera: Requer análise curricular detalhada e adequação de carga horária pela Comissão de RH.';
+
+    if (scoreTotal >= 80) {
+      nivel = 'Excelente';
+      badgeClass = 'badge-excelente';
+      parecerHera = 'Parecer Hera: Compatibilidade pedagógica e rota geográfica recíproca perfeitas. Deferimento prioritário recomendado.';
+    } else if (scoreTotal >= 60) {
+      nivel = 'Boa';
+      badgeClass = 'badge-boa';
+      parecerHera = 'Parecer Hera: Viabilidade operacional confirmada. Necessário alinhamento de turno ou ajuste funcional leve.';
+    }
+
+    return {
+      score: scoreTotal,
+      nivel: nivel,
+      badgeClass: badgeClass,
+      ptsCargo: ptsCargo,
+      ptsCH: ptsCH,
+      ptsRota: ptsRota,
+      parecerHera: parecerHera
+    };
+  }
+
+  function executarMatchingHera() {
+    const container = document.getElementById('resultadoMatchingHera');
+    const badgeTotal = document.getElementById('badgeTotalMatches');
+    if (!container) return;
+
+    const banco = obterBancoPermutas();
+    const matches = [];
+
+    // Cruzamento combinatório de pares (i < j)
+    for (let i = 0; i < banco.length; i++) {
+      for (let j = i + 1; j < banco.length; j++) {
+        const intA = banco[i];
+        const intB = banco[j];
+
+        // Evita cruzar mesma pessoa ou matrícula
+        if (intA.matricula === intB.matricula) continue;
+
+        const resultado = calcularCompatibilidadeHera(intA, intB);
+
+        // Considera match relevante se score >= 50 ou se rota inversa for compatível
+        if (resultado.score >= 50) {
+          matches.push({
+            candidatoA: intA,
+            candidatoB: intB,
+            resultado: resultado
+          });
+        }
+      }
+    }
+
+    // Ordenação decrescente por score de compatibilidade
+    matches.sort(function(a, b) {
+      return b.resultado.score - a.resultado.score;
+    });
+
+    if (badgeTotal) {
+      badgeTotal.textContent = matches.length + (matches.length === 1 ? ' oportunidade' : ' oportunidades');
+    }
+
+    if (matches.length === 0) {
+      container.innerHTML =
+        '<div class="output-panel text-center" style="padding: 32px 20px;">' +
+          '<div style="font-size: 1.8rem; margin-bottom: 8px;">🤝</div>' +
+          '<strong style="display:block; font-size:15px; margin-bottom:6px; color:var(--text-main);">Nenhum cruzamento com compatibilidade mínima identificado ainda</strong>' +
+          '<p style="font-size:13px; color:var(--text-muted); max-width:480px; margin:0 auto 16px;">Cadastre novas intenções de permuta no formulário acima para que o motor de inteligência da persona Hera processe os cruzamentos recíprocos.</p>' +
+        '</div>';
+      return;
+    }
+
+    let html = '<div class="hera-matches-grid">';
+    matches.forEach(function(m, idx) {
+      const res = m.resultado;
+      const cA = m.candidatoA;
+      const cB = m.candidatoB;
+
+      html +=
+        '<div class="match-card-hera" id="matchCard_' + idx + '">' +
+          '<div class="match-card-header">' +
+            '<div style="display: flex; align-items: center; gap: 8px;">' +
+              '<span class="badge-compatibilidade ' + res.badgeClass + '">' + res.score + '% • ' + res.nivel + '</span>' +
+              '<span class="selo-hera-badge" title="Instrução validada pela Persona Hera">⚡ Selo Hera</span>' +
+            '</div>' +
+            '<button type="button" class="btn btn-secondary btn-sm btn-tracar-rota" ' +
+              'onclick="window.OlymposViews.papiroCadmo.tracarRotaPermuta(\'' + window.OlymposApp.escapeHtml(cA.origem) + '\', \'' + window.OlymposApp.escapeHtml(cB.origem) + '\', ' + res.score + ')">' +
+              '🗺️ Ver Rota no Mapa' +
+            '</button>' +
+          '</div>' +
+
+          '<div class="match-candidatos-row">' +
+            '<div class="candidato-box">' +
+              '<div class="candidato-badge-tag">Servidor(a) A</div>' +
+              '<strong class="candidato-nome">' + window.OlymposApp.escapeHtml(cA.nome) + '</strong>' +
+              '<div class="candidato-meta">Matrícula: ' + window.OlymposApp.escapeHtml(cA.matricula) + ' • ' + window.OlymposApp.escapeHtml(cA.cargaHoraria) + ' (' + window.OlymposApp.escapeHtml(cA.turno) + ')</div>' +
+              '<div class="candidato-cargo">' + window.OlymposApp.escapeHtml(cA.cargo) + ' — ' + window.OlymposApp.escapeHtml(cA.disciplina) + '</div>' +
+              '<div class="rota-chip-container">' +
+                '<span class="rota-chip-origem">' + window.OlymposApp.escapeHtml(cA.origem) + '</span>' +
+                '<span class="rota-arrow">➔</span>' +
+                '<span class="rota-chip-destino">' + window.OlymposApp.escapeHtml(cA.destino) + '</span>' +
+              '</div>' +
+            '</div>' +
+
+            '<div class="match-connector-icon">' +
+              '<div class="connector-circle">⇄</div>' +
+            '</div>' +
+
+            '<div class="candidato-box">' +
+              '<div class="candidato-badge-tag">Servidor(a) B</div>' +
+              '<strong class="candidato-nome">' + window.OlymposApp.escapeHtml(cB.nome) + '</strong>' +
+              '<div class="candidato-meta">Matrícula: ' + window.OlymposApp.escapeHtml(cB.matricula) + ' • ' + window.OlymposApp.escapeHtml(cB.cargaHoraria) + ' (' + window.OlymposApp.escapeHtml(cB.turno) + ')</div>' +
+              '<div class="candidato-cargo">' + window.OlymposApp.escapeHtml(cB.cargo) + ' — ' + window.OlymposApp.escapeHtml(cB.disciplina) + '</div>' +
+              '<div class="rota-chip-container">' +
+                '<span class="rota-chip-origem">' + window.OlymposApp.escapeHtml(cB.origem) + '</span>' +
+                '<span class="rota-arrow">➔</span>' +
+                '<span class="rota-chip-destino">' + window.OlymposApp.escapeHtml(cB.destino) + '</span>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="match-score-breakdown">' +
+            '<div class="score-pill-item">' +
+              '<span class="score-pill-label">Cargo &amp; Disciplina</span>' +
+              '<span class="score-pill-val">' + res.ptsCargo + ' / 40 pts</span>' +
+            '</div>' +
+            '<div class="score-pill-item">' +
+              '<span class="score-pill-label">Carga Horária</span>' +
+              '<span class="score-pill-val">' + res.ptsCH + ' / 30 pts</span>' +
+            '</div>' +
+            '<div class="score-pill-item">' +
+              '<span class="score-pill-label">Rota Inversa</span>' +
+              '<span class="score-pill-val">' + res.ptsRota + ' / 30 pts</span>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="parecer-hera-box">' +
+            '<span class="parecer-hera-icon">⚖️</span>' +
+            '<p class="parecer-hera-text">' + window.OlymposApp.escapeHtml(res.parecerHera) + '</p>' +
+          '</div>' +
+        '</div>';
+    });
+    html += '</div>';
+
+    container.innerHTML = html;
+  }
+
+  function tracarRotaPermuta(origemA, origemB, score) {
+    if (!leafletMap || !routeLayer) return;
+    routeLayer.clearLayers();
+
+    // Localiza coordenadas de A e B
+    let coordA = null;
+    let coordB = null;
+
+    PONTOS_GEORREFERENCIADOS.forEach(function(p) {
+      if (p.nome === origemA || origemA.includes(p.nome) || p.nome.includes(origemA)) {
+        coordA = p.coords;
+      }
+      if (p.nome === origemB || origemB.includes(p.nome) || p.nome.includes(origemB)) {
+        coordB = p.coords;
+      }
+    });
+
+    if (!coordA) coordA = [-5.6344, -35.4245];
+    if (!coordB) coordB = [-5.7550, -35.2600];
+
+    const corLinha = score >= 80 ? '#10B981' : (score >= 60 ? '#D4AF37' : '#64748B');
+
+    const polyline = window.L.polyline([coordA, coordB], {
+      color: corLinha,
+      weight: 4,
+      dashArray: '8, 8',
+      opacity: 0.95
+    }).addTo(routeLayer);
+
+    const bounds = window.L.latLngBounds([coordA, coordB]);
+    leafletMap.fitBounds(bounds, { padding: [50, 50], maxZoom: 13 });
+
+    // Scroll suave até o mapa
+    const mapWrapper = document.getElementById('mapaPermutasCadmo');
+    if (mapWrapper) {
+      mapWrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+      window.OlymposApp.showToast('Rota de permuta traçada no mapa cartográfico!');
+    }
+  }
+
+  function salvarNovaIntencaoPermuta(e) {
+    if (e && e.preventDefault) e.preventDefault();
+
+    const nome = (document.getElementById('permutaNome')?.value || '').trim();
+    const matricula = (document.getElementById('permutaMatricula')?.value || '').trim();
+    const cargo = (document.getElementById('permutaCargo')?.value || '').trim();
+    const disciplina = (document.getElementById('permutaDisciplina')?.value || '').trim();
+    const cargaHoraria = (document.getElementById('permutaCargaHoraria')?.value || '').trim();
+    const turno = (document.getElementById('permutaTurno')?.value || '').trim();
+    const origem = (document.getElementById('permutaEscolaOrigem')?.value || '').trim();
+    const destino = (document.getElementById('permutaPoloDestino')?.value || '').trim();
+
+    if (!nome || !matricula || !cargo || !disciplina || !origem || !destino) {
+      if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+        window.OlymposApp.showToast('Por favor, preencha todos os campos obrigatórios da permuta.', true);
+      }
+      return;
+    }
+
+    const novaIntencao = {
+      id: 'perm_' + Date.now(),
+      nome: nome,
+      matricula: matricula,
+      cargo: cargo,
+      disciplina: disciplina,
+      cargaHoraria: cargaHoraria,
+      turno: turno,
+      origem: origem,
+      municipioOrigem: extrairMunicipioOrigem(origem),
+      destino: destino,
+      dataCadastro: new Date().toISOString().slice(0, 10)
+    };
+
+    try {
+      const banco = obterBancoPermutas();
+      banco.unshift(novaIntencao);
+      localStorage.setItem(BANCO_STORAGE_KEY, JSON.stringify(banco));
+
+      const form = document.getElementById('formPermutaCadmo');
+      if (form) form.reset();
+
+      executarMatchingHera();
+
+      if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+        window.OlymposApp.showToast('Intenção de permuta gravada com sucesso! Persona Hera recalculou as compatibilidades.');
+      }
+    } catch (err) {
+      console.error('[PapiroCadmo] Erro ao gravar intenção no localStorage:', err);
+      if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+        window.OlymposApp.showToast('Erro ao salvar intenção de permuta.', true);
+      }
     }
   }
 
@@ -1760,9 +3291,500 @@ window.OlymposViews.papiroCadmo = (function() {
   }
 
   return {
-    init: init
+    init: init,
+    definirOrigemForm: definirOrigemForm,
+    definirDestinoForm: definirDestinoForm,
+    executarMatchingHera: executarMatchingHera,
+    tracarRotaPermuta: tracarRotaPermuta
   };
 })();
+
+// --- MODULE: js\memorias_catalogo.js ---
+/**
+ * Hub Olympos V2.1 — Catálogo Canônico Síncrono de Memórias Operacionais (.md)
+ * Fornece disponibilidade instantânea offline e online para a SPA.
+ * Contém o conteúdo consolidado real das 11 memórias físicas e mapeamento das personas anfitriãs.
+ * Pasta Oficial no Google Drive: 1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu
+ */
+window.OLYMPOS_MEMORIAS_CATALOGO = (function() {
+  'use strict';
+
+  var PASTA_DRIVE_ID = '1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu';
+  var PASTA_DRIVE_URL = 'https://drive.google.com/drive/folders/1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu';
+
+  // 11 Memórias Canônicas Físicas com Conteúdo Markdown Consolidado Real
+  var CANONICAL_MEMORIAS = [
+  {
+    "slug": "apolo",
+    "nome": "Apolo",
+    "deus": "Apolo",
+    "arquivo": "_memoria_apolo.md",
+    "id": "1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_",
+    "driveId": "1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_",
+    "url": "https://drive.google.com/file/d/1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_/view",
+    "camada": "Camada 2 — Gestão e Expedição de Atos",
+    "perfilRbac": "ADMIN_GABINETE",
+    "dominio": "Numeração Sequencial de Ofícios e Portarias 2026",
+    "icone": "apolo",
+    "totalLinhas": 36,
+    "alertasRecentes": [
+      "[OLHO DE APOLO]: Último Ofício 2026 detectado no Drive: nº 0 (Próximo: 1) | Última Portaria 2026: nº 0 (Próxima: 1)",
+      "[ ] Nenhuma pendência crítica registrada."
+    ],
+    "conteudoCompleto": "# Memória Operacional — APOLO\nAtualizado em: 2026-10-29 14:16\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- [OLHO DE APOLO]: Último Ofício 2026 detectado no Drive: nº 0 (Próximo: 1) | Última Portaria 2026: nº 0 (Próxima: 1)\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n- Proximo_Oficio_2026: 155\n- Ultimo_Oficio_2026: 154\n- Proxima_Portaria_2026: 175\n- Ultima_Portaria_2026: 174\n- Proximo_Memorando_2026: 1\n- Proximo_Parecer_Juridico_2026: 1\n- Proximo_Edital_PSS_2026: 1\n- Signatario_Titular_SMEB: Secretário(a) Municipal de Educação Básica\n- Cargo_Signatario_SMEB: Secretário(a) Municipal de Educação Básica\n- Ano_Exercicio_Ativo: 2026\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Nenhuma pendência crítica registrada.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-10-29 14:16] [AUTO-NUMERAÇÃO PINCEL]: Portaria nº 174/2026 alocada automaticamente. Próxima disponível: nº 175.\n- [2026-10-29 14:16] [AUTO-NUMERAÇÃO PINCEL]: Portaria nº 173/2026 alocada automaticamente. Próxima disponível: nº 174.\n- [2026-10-29 14:15] [AUTO-NUMERAÇÃO PINCEL]: Portaria nº 172/2026 alocada automaticamente. Próxima disponível: nº 173.\n- [2026-10-29 14:15] [AUTO-NUMERAÇÃO PINCEL]: Portaria nº 171/2026 alocada automaticamente. Próxima disponível: nº 172.\n- [2026-10-29 14:15] [AUTO-NUMERAÇÃO PINCEL]: Portaria nº 170/2026 alocada automaticamente. Próxima disponível: nº 171.\n- [2026-10-29 14:15] [AUTO-NUMERAÇÃO PINCEL]: Portaria nº 169/2026 alocada automaticamente. Próxima disponível: nº 170.\n- [2026-10-29 14:15] [AUTO-NUMERAÇÃO PINCEL]: Portaria nº 168/2026 alocada automaticamente. Próxima disponível: nº 169.\n- [2026-10-29 14:15] [AUTO-NUMERAÇÃO PINCEL]: Portaria nº 167/2026 alocada automaticamente. Próxima disponível: nº 168.\n- [2026-10-29 14:15] [AUTO-NUMERAÇÃO PINCEL]: Portaria nº 166/2026 alocada automaticamente. Próxima disponível: nº 167.\n- [2026-10-29 14:15] [AUTO-NUMERAÇÃO PINCEL]: Portaria nº 165/2026 alocada automaticamente. Próxima disponível: nº 166.\n- [2026-10-29 14:15] [AUTO-NUMERAÇÃO PINCEL]: Portaria nº 164/2026 alocada automaticamente. Próxima disponível: nº 165.\n- [2026-10-29 14:15] [AUTO-NUMERAÇÃO PINCEL]: Portaria nº 163/2026 alocada automaticamente. Próxima disponível: nº 164.\n- [2026-10-24 20:15] Arquivo de memória inicializado pelo Hub Olympos."
+  },
+  {
+    "slug": "atena",
+    "nome": "Atena",
+    "deus": "Atena",
+    "arquivo": "_memoria_atena.md",
+    "id": "1bngNddimtP8nMmfhUJEa1YvkSEcmZ69Q",
+    "driveId": "1bngNddimtP8nMmfhUJEa1YvkSEcmZ69Q",
+    "url": "https://drive.google.com/file/d/1bngNddimtP8nMmfhUJEa1YvkSEcmZ69Q/view",
+    "camada": "Camada 2 — Planejamento Educacional",
+    "perfilRbac": "PEDAGOGICO_EVENTOS",
+    "dominio": "Coordenação Pedagógica, Formação e Diretrizes BNCC",
+    "icone": "atena",
+    "totalLinhas": 14,
+    "alertasRecentes": [
+      "Sem novos alertas na caixa de entrada.",
+      "[ ] Nenhuma pendência crítica registrada."
+    ],
+    "conteudoCompleto": "# Memória Operacional — ATENA\nAtualizado em: 2026-10-24 20:15\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- Sem novos alertas na caixa de entrada.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Nenhuma pendência crítica registrada.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-10-24 20:15] Arquivo de memória inicializado pelo Hub Olympos."
+  },
+  {
+    "slug": "dedalo",
+    "nome": "Dédalo",
+    "deus": "Dédalo",
+    "arquivo": "_memoria_dedalo.md",
+    "id": "16U0x5463ldiyxjgbN5IyiYNoCQQ4BdF-",
+    "driveId": "16U0x5463ldiyxjgbN5IyiYNoCQQ4BdF-",
+    "url": "https://drive.google.com/file/d/16U0x5463ldiyxjgbN5IyiYNoCQQ4BdF-/view",
+    "camada": "Camada 4 — Arquitetura e Engenharia de Software",
+    "perfilRbac": "ADMIN_GABINETE",
+    "dominio": "Infraestrutura Técnica, Snapshots e Integridade do Monorepo",
+    "icone": "dedalo",
+    "totalLinhas": 14,
+    "alertasRecentes": [
+      "Sem novos alertas na caixa de entrada.",
+      "[ ] Nenhuma pendência crítica registrada."
+    ],
+    "conteudoCompleto": "# Memória Operacional — DEDALO\nAtualizado em: 2026-10-24 20:15\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- Sem novos alertas na caixa de entrada.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Nenhuma pendência crítica registrada.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-10-24 20:15] Arquivo de memória inicializado pelo Hub Olympos."
+  },
+  {
+    "slug": "helio",
+    "nome": "Hélio",
+    "deus": "Hélio",
+    "arquivo": "_memoria_helio.md",
+    "id": "1JGVVV1umqhKa06nKDK5h_6TD34_Z2v90",
+    "driveId": "1JGVVV1umqhKa06nKDK5h_6TD34_Z2v90",
+    "url": "https://drive.google.com/file/d/1JGVVV1umqhKa06nKDK5h_6TD34_Z2v90/view",
+    "camada": "Camada 2 — Publicidade Institucional e Vigilância",
+    "perfilRbac": "ADMIN_GABINETE",
+    "dominio": "Vigilância Diária do Diário Oficial FEMURN e Atos de Ceará-Mirim",
+    "icone": "helio",
+    "totalLinhas": 32,
+    "alertasRecentes": [
+      "[2026-11-03] Edição FEMURN (0 atos): Nenhuma publicação da SMEB/Educação localizada nesta edição.",
+      "[2026-11-02] Edição FEMURN (0 atos): Nenhuma publicação da SMEB/Educação localizada nesta edição.",
+      "[2026-10-30] Edição FEMURN (12 atos): CF8FA90B, 93AC65DA, D0454967, FCA1C759, B9166C97, A52E9337, D6963F41, CB29B175, 1D7D1792, B7AEB7F5, 5DBB0859, 7D9C51E4 catalogados.",
+      "[2026-10-29] Edição FEMURN (0 atos): Nenhuma publicação da SMEB/Educação localizada nesta edição.",
+      "[2026-10-28] Edição FEMURN (1 ato): Lei Federal nº 15.247/2025 (ID: 2407C44B) catalogado.",
+      "[2026-10-27] Edição FEMURN (0 atos): Nenhuma publicação da SMEB/Educação localizada nesta edição.",
+      "[2026-10-26] Edição FEMURN (1 ato): Ato_FEMURN_84D30E38 catalogado.",
+      "[2026-10-23] Edição FEMURN (7 atos): DD6CE488, 85C4A851, Portaria 160/2026 (5D5C754A), 89D56A2D, Portarias 2338/2339 e Decreto 5143 catalogados.",
+      "[ ] Validar espelho na Planilha de Publicações da FEMURN (1AIncS3ITYx_kT_tmfkAL5cYnw7nnuMAAUgiCd2lluqY).",
+      "[ ] Monitorar publicações da próxima edição matutina (08:00 BRT)."
+    ],
+    "conteudoCompleto": "# Memória Operacional — HELIO\nAtualizado em: 2026-11-03 14:39\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- [2026-11-03] Edição FEMURN (0 atos): Nenhuma publicação da SMEB/Educação localizada nesta edição.\n- [2026-11-02] Edição FEMURN (0 atos): Nenhuma publicação da SMEB/Educação localizada nesta edição.\n- [2026-10-30] Edição FEMURN (12 atos): CF8FA90B, 93AC65DA, D0454967, FCA1C759, B9166C97, A52E9337, D6963F41, CB29B175, 1D7D1792, B7AEB7F5, 5DBB0859, 7D9C51E4 catalogados.\n- [2026-10-29] Edição FEMURN (0 atos): Nenhuma publicação da SMEB/Educação localizada nesta edição.\n- [2026-10-28] Edição FEMURN (1 ato): Lei Federal nº 15.247/2025 (ID: 2407C44B) catalogado.\n- [2026-10-27] Edição FEMURN (0 atos): Nenhuma publicação da SMEB/Educação localizada nesta edição.\n- [2026-10-26] Edição FEMURN (1 ato): Ato_FEMURN_84D30E38 catalogado.\n- [2026-10-23] Edição FEMURN (7 atos): DD6CE488, 85C4A851, Portaria 160/2026 (5D5C754A), 89D56A2D, Portarias 2338/2339 e Decreto 5143 catalogados.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n- Total_Atos_Indexados_2026: 21 atos\n- Ultima_Edicao_Verificada: 2026-11-03\n- Cronograma_Varredura: Diário às 08:00 e 16:00 BRT\n- Workflow_Operacional: Coleta diária -> Extração de IDs -> Catalogação Drive -> Notificação de Setores\n- Planilha_Controle_FEMURN: 1AIncS3ITYx_kT_tmfkAL5cYnw7nnuMAAUgiCd2lluqY\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Validar espelho na Planilha de Publicações da FEMURN (1AIncS3ITYx_kT_tmfkAL5cYnw7nnuMAAUgiCd2lluqY).\n- [ ] Monitorar publicações da próxima edição matutina (08:00 BRT).\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-11-03 14:39] Varredura diária FEMURN executada: 0 atos novos.\n- [2026-11-02 08:00] Varredura diária FEMURN executada: 0 atos novos.\n- [2026-10-30 18:30] Varredura diária FEMURN executada: 12 atos catalogados.\n- [2026-10-28 17:00] Varredura diária FEMURN executada: 1 ato catalogado.\n- [2026-10-23 16:00] Varredura diária FEMURN executada: 7 atos catalogados.\n- [2026-10-24 20:15] Arquivo de memória inicializado pelo Hub Olympos."
+  },
+  {
+    "slug": "hera",
+    "nome": "Hera",
+    "deus": "Hera",
+    "arquivo": "_memoria_hera.md",
+    "id": "1nV-BkugwDaDiqgvodP6VV-gNFi5tRMXh",
+    "driveId": "1nV-BkugwDaDiqgvodP6VV-gNFi5tRMXh",
+    "url": "https://drive.google.com/file/d/1nV-BkugwDaDiqgvodP6VV-gNFi5tRMXh/view",
+    "camada": "Camada 2 — Gestão do Quadro de Servidores",
+    "perfilRbac": "RH_COMISSAO",
+    "dominio": "Recursos Humanos, Lotação, Movimentação Funcional e Permutas",
+    "icone": "hera",
+    "totalLinhas": 14,
+    "alertasRecentes": [
+      "Sem novos alertas na caixa de entrada.",
+      "[ ] Nenhuma pendência crítica registrada."
+    ],
+    "conteudoCompleto": "# Memória Operacional — HERA\nAtualizado em: 2026-10-24 20:15\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- Sem novos alertas na caixa de entrada.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Nenhuma pendência crítica registrada.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-10-24 20:15] Arquivo de memória inicializado pelo Hub Olympos."
+  },
+  {
+    "slug": "hermes",
+    "nome": "Hermes",
+    "deus": "Hermes",
+    "arquivo": "_memoria_hermes.md",
+    "id": "1yKxawxSXKGzT-qCWfNPN3cqVgIzcoLWH",
+    "driveId": "1yKxawxSXKGzT-qCWfNPN3cqVgIzcoLWH",
+    "url": "https://drive.google.com/file/d/1yKxawxSXKGzT-qCWfNPN3cqVgIzcoLWH/view",
+    "camada": "Camada 2 — Logística e Operações de Campo",
+    "perfilRbac": "ADMIN_GABINETE",
+    "dominio": "Transporte Escolar, Rotas Urbanas/Rurais e Frotas SMEB",
+    "icone": "hermes",
+    "totalLinhas": 14,
+    "alertasRecentes": [
+      "Sem novos alertas na caixa de entrada.",
+      "[ ] Nenhuma pendência crítica registrada."
+    ],
+    "conteudoCompleto": "# Memória Operacional — HERMES\nAtualizado em: 2026-10-24 20:15\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- Sem novos alertas na caixa de entrada.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Nenhuma pendência crítica registrada.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-10-24 20:15] Arquivo de memória inicializado pelo Hub Olympos."
+  },
+  {
+    "slug": "hestia",
+    "nome": "Héstia",
+    "deus": "Héstia",
+    "arquivo": "_memoria_hestia.md",
+    "id": "1uUuHvJ-fsjlqK_CWrin-YBBp_0VmiJKnSBiujFUP8VM",
+    "driveId": "1uUuHvJ-fsjlqK_CWrin-YBBp_0VmiJKnSBiujFUP8VM",
+    "url": "https://drive.google.com/file/d/1uUuHvJ-fsjlqK_CWrin-YBBp_0VmiJKnSBiujFUP8VM/view",
+    "camada": "Camada 1 — Governança Central e Gabinete",
+    "perfilRbac": "ADMIN_GABINETE",
+    "dominio": "Governança Central, Recepção, Triagem, LGPD e Selo CNCA 2026",
+    "icone": "hestia",
+    "totalLinhas": 27,
+    "alertasRecentes": [
+      "[2026-10-28 12:15] [HÉSTIA]: Pendência crítica ativa – Selo CNCA 2026 (Pasta: CNCA - Selo - Edição 2026): Acompanhar cumprimento dos 16 critérios pendentes com os respectivos responsáveis.",
+      "[ ] CNCA - Rayssa: Critérios 01, 02, 03, 05 e 06",
+      "[ ] CNCA - Francisco: Critérios 13, 14 e 19",
+      "[ ] CNCA - Rosana: Critérios 17, 18 e 19",
+      "[ ] CNCA - Carlos: Critérios 01 e 07",
+      "[ ] CNCA - Sara: Critério 04",
+      "[ ] CNCA - Cristina: Critério 08",
+      "[ ] CNCA - Elba: Critério 15",
+      "[ ] CNCA - Veridiana: Critério 21",
+      "[ ] CNCA - Kivia e Glicelia: Critério 35"
+    ],
+    "conteudoCompleto": "# Memória Operacional — HESTIA\nAtualizado em: 2026-10-28 12:15\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- [2026-10-28 12:15] [HÉSTIA]: Pendência crítica ativa – Selo CNCA 2026 (Pasta: CNCA - Selo - Edição 2026): Acompanhar cumprimento dos 16 critérios pendentes com os respectivos responsáveis.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n- Atividade_Temporaria: Selo CNCA 2026 (Pasta: CNCA - Selo - Edição 2026) | 9 OK / 16 Pendentes\n- Seguranca_Documental: Conforme LGPD (Lei 13.709/2018) e Proteção de PII\n- Registro_Infraestrutura_Patrimonio: Ativo e Auditado (Inventário e Tombamento de Bens SMEB)\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] CNCA - Rayssa: Critérios 01, 02, 03, 05 e 06\n- [ ] CNCA - Francisco: Critérios 13, 14 e 19\n- [ ] CNCA - Rosana: Critérios 17, 18 e 19\n- [ ] CNCA - Carlos: Critérios 01 e 07\n- [ ] CNCA - Sara: Critério 04\n- [ ] CNCA - Cristina: Critério 08\n- [ ] CNCA - Elba: Critério 15\n- [ ] CNCA - Veridiana: Critério 21\n- [ ] CNCA - Kivia e Glicelia: Critério 35\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-10-28 12:15] Alocada pendência crítica do Selo CNCA 2026 na Caixa de Entrada.\n- [2026-10-28 12:05] Registrada pendência operacional: Acompanhamento de 16 critérios do Selo CNCA 2026 na pasta oficial.\n- [2026-10-24 20:15] Arquivo de memória inicializado pelo Hub Olympos."
+  },
+  {
+    "slug": "homero",
+    "nome": "Homero",
+    "deus": "Homero",
+    "arquivo": "_memoria_homero.md",
+    "id": "1JTB1SMgjq9Ws4E4RDBVAkH2GmCK1Fv6Q",
+    "driveId": "1JTB1SMgjq9Ws4E4RDBVAkH2GmCK1Fv6Q",
+    "url": "https://drive.google.com/file/d/1JTB1SMgjq9Ws4E4RDBVAkH2GmCK1Fv6Q/view",
+    "camada": "Camada 2 — Atos Oficiais e Redação Administrativa",
+    "perfilRbac": "RH_COMISSAO",
+    "dominio": "Redação Oficial, Portarias de Licença, Readaptação e Ofícios",
+    "icone": "homero",
+    "totalLinhas": 14,
+    "alertasRecentes": [
+      "[2026-10-29 14:16] Lote concluído (LICENCAS - Premio): 12 portaria(s) processada(s).",
+      "[ ] Nenhuma pendência crítica registrada."
+    ],
+    "conteudoCompleto": "# Memória Operacional — HOMERO\nAtualizado em: 2026-10-29 14:16\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- [2026-10-29 14:16] Lote concluído (LICENCAS - Premio): 12 portaria(s) processada(s).\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Nenhuma pendência crítica registrada.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-10-24 20:15] Arquivo de memória inicializado pelo Hub Olympos."
+  },
+  {
+    "slug": "nike",
+    "nome": "Niké",
+    "deus": "Niké",
+    "arquivo": "_memoria_nike.md",
+    "id": "13ziWkZGuh3HSTvSjE8fXlqoPTEc-kHze",
+    "driveId": "13ziWkZGuh3HSTvSjE8fXlqoPTEc-kHze",
+    "url": "https://drive.google.com/file/d/13ziWkZGuh3HSTvSjE8fXlqoPTEc-kHze/view",
+    "camada": "Camada 2 — Seleção e Provimento de Pessoal",
+    "perfilRbac": "RH_COMISSAO",
+    "dominio": "Processos Seletivos Simplificados (PSS) e Concursos Públicos",
+    "icone": "nike",
+    "totalLinhas": 22,
+    "alertasRecentes": [
+      "[2026-10-30] [HÉLIO/FEMURN]: Publicado Ato_FEMURN_7D9C51E4 (https://drive.google.com/file/d/1F_p_mqh9mHjJHl4wk4bTzt-WSoAk88ls/view?usp=drivesdk)",
+      "[2026-10-26] [HÉLIO/FEMURN]: Publicado Ato_FEMURN_84D30E38 (https://drive.google.com/file/d/1d7DJTKfmc98l9jKHQhFPykj5S9TXAlLI/view?usp=drivesdk)",
+      "[ ] Acompanhar homologação, prazos recursais e convocações dos Atos FEMURN 84D30E38 e 7D9C51E4.",
+      "[ ] Aplicar matriz de pontuação e rubricas objetivas de avaliação para o próximo edital PSS 2026."
+    ],
+    "conteudoCompleto": "# Memória Operacional — NIKE\nAtualizado em: 2026-10-30 18:00\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- [2026-10-30] [HÉLIO/FEMURN]: Publicado Ato_FEMURN_7D9C51E4 (https://drive.google.com/file/d/1F_p_mqh9mHjJHl4wk4bTzt-WSoAk88ls/view?usp=drivesdk)\n- [2026-10-26] [HÉLIO/FEMURN]: Publicado Ato_FEMURN_84D30E38 (https://drive.google.com/file/d/1d7DJTKfmc98l9jKHQhFPykj5S9TXAlLI/view?usp=drivesdk)\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n- Dominio_Atuacao: Processos Seletivos Simplificados (PSS) e Concursos Públicos\n- Padroes_Avaliacao: Rubricas de pontuação de títulos, critérios objetivos de desempate e homologação legal\n- Benchmarks_Juridicos: Conformidade com Art. 37, IX da CF/88 e Lei Municipal de Contratação Temporária\n- Monitoramento_Atos_FEMURN: Sincronizado (Atos 84D30E38 e 7D9C51E4)\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Acompanhar homologação, prazos recursais e convocações dos Atos FEMURN 84D30E38 e 7D9C51E4.\n- [ ] Aplicar matriz de pontuação e rubricas objetivas de avaliação para o próximo edital PSS 2026.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-10-30 18:00] Ato FEMURN 7D9C51E4 catalogado na Caixa de Entrada com link oficial do Drive.\n- [2026-10-26 12:00] Ato FEMURN 84D30E38 catalogado na Caixa de Entrada com link oficial do Drive.\n- [2026-10-24 20:15] Arquivo de memória inicializado pelo Hub Olympos."
+  },
+  {
+    "slug": "orfeu",
+    "nome": "Orfeu",
+    "deus": "Orfeu",
+    "arquivo": "_memoria_orfeu.md",
+    "id": "1OUIM7SUDvEtnn08kIMyedRnp1UHKiWhF",
+    "driveId": "1OUIM7SUDvEtnn08kIMyedRnp1UHKiWhF",
+    "url": "https://drive.google.com/file/d/1OUIM7SUDvEtnn08kIMyedRnp1UHKiWhF/view",
+    "camada": "Camada 2 — Certificação e Reconhecimento Institucional",
+    "perfilRbac": "PEDAGOGICO_EVENTOS",
+    "dominio": "Emissão de Certificados, Eventos Culturais e Declarações (A Lira)",
+    "icone": "orfeu",
+    "totalLinhas": 14,
+    "alertasRecentes": [
+      "Sem novos alertas na caixa de entrada.",
+      "[ ] Nenhuma pendência crítica registrada."
+    ],
+    "conteudoCompleto": "# Memória Operacional — ORFEU\nAtualizado em: 2026-10-24 20:15\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- Sem novos alertas na caixa de entrada.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Nenhuma pendência crítica registrada.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-10-24 20:15] Arquivo de memória inicializado pelo Hub Olympos."
+  },
+  {
+    "slug": "temis",
+    "nome": "Têmis",
+    "deus": "Têmis",
+    "arquivo": "_memoria_temis.md",
+    "id": "1cGAfAIynCD6xbwg7HpAx3_GLy6q0yOwt",
+    "driveId": "1cGAfAIynCD6xbwg7HpAx3_GLy6q0yOwt",
+    "url": "https://drive.google.com/file/d/1cGAfAIynCD6xbwg7HpAx3_GLy6q0yOwt/view",
+    "camada": "Camada 2 — Consultoria Jurídica e Controle de Legalidade",
+    "perfilRbac": "JURIDICO",
+    "dominio": "Assessoria Jurídica, Pareceres, Legalidade e Prazos MP/TCE",
+    "icone": "temis",
+    "totalLinhas": 22,
+    "alertasRecentes": [
+      "[2026-10-28] [HÉLIO/FEMURN]: Publicado Lei nº 9.394/1996, Lei Federal nº 15.247/2025 (Compromisso Nacional Criança Alfabetizada), novo Plano (https://drive.google.com/file/d/1HQeKuZDaqlF9YJkTwB-KH-AkM9gYYXPA/view?usp=drivesdk)",
+      "[2026-10-23] [HÉLIO/FEMURN]: Publicado DECRETO Nº 5143, DE 21 DE OUTUBRO DE 2026 (https://drive.google.com/file/d/1DxBSGnCBGYE7wfBTlGYSjOdvf_rlH78E/view?usp=drivesdk)",
+      "[ ] Avaliar adequação dos procedimentos SMEB à Lei Federal nº 15.247/2025 e Decreto Municipal nº 5143/2026.",
+      "[ ] Revisão de conformidade de termos aditivos e contratos educacionais conforme Lei nº 14.133/2021."
+    ],
+    "conteudoCompleto": "# Memória Operacional — TEMIS\nAtualizado em: 2026-10-28 15:30\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- [2026-10-28] [HÉLIO/FEMURN]: Publicado Lei nº 9.394/1996, Lei Federal nº 15.247/2025 (Compromisso Nacional Criança Alfabetizada), novo Plano (https://drive.google.com/file/d/1HQeKuZDaqlF9YJkTwB-KH-AkM9gYYXPA/view?usp=drivesdk)\n- [2026-10-23] [HÉLIO/FEMURN]: Publicado DECRETO Nº 5143, DE 21 DE OUTUBRO DE 2026 (https://drive.google.com/file/d/1DxBSGnCBGYE7wfBTlGYSjOdvf_rlH78E/view?usp=drivesdk)\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n- Dominio_Atuacao: Assessoria Jurídica, Controle de Legalidade e Prazos MP/TCE\n- Marco_Estatutario: LDB (Lei 9.394/1996), Lei 14.133/2021 (Licitações), Lei 15.247/2025 (CNCA) e Decretos Municipais\n- Template_Parecer: Estrutura Quadripartite (Ementa, Relatório, Fundamentação e Parecer Conclusivo)\n- Ultimo_Parecer_Emitido: 2026-10-28\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Avaliar adequação dos procedimentos SMEB à Lei Federal nº 15.247/2025 e Decreto Municipal nº 5143/2026.\n- [ ] Revisão de conformidade de termos aditivos e contratos educacionais conforme Lei nº 14.133/2021.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-10-28 15:30] Publicação sobre Lei Federal nº 15.247/2025 (CNCA) registrada para análise jurídica.\n- [2026-10-23 10:00] Decreto Municipal nº 5143/2026 registrado na Caixa de Entrada.\n- [2026-10-24 20:15] Arquivo de memória inicializado pelo Hub Olympos."
+  }
+];
+
+  // Personas com Roteamento Anfitrião (Host-Routed)
+  var HOST_PERSONAS = [
+  {
+    "nome": "Zeus",
+    "slug": "zeus",
+    "camada": "Camada 1",
+    "dominio": "Oráculo Executivo e Triagem Macro de Demandas",
+    "anfitriao": "Héstia",
+    "arquivoAnfitriao": "_memoria_hestia.md",
+    "icone": "zeus"
+  },
+  {
+    "nome": "Hefesto",
+    "slug": "hefesto",
+    "camada": "Camada 4",
+    "dominio": "Automação DevOps, GitHub Actions e Infraestrutura",
+    "anfitriao": "Dédalo",
+    "arquivoAnfitriao": "_memoria_dedalo.md",
+    "icone": "hefesto"
+  },
+  {
+    "nome": "Ares",
+    "slug": "ares",
+    "camada": "Camada 2",
+    "dominio": "Mediação de Conflitos, Relações de Trabalho e PAD",
+    "anfitriao": "Hera",
+    "arquivoAnfitriao": "_memoria_hera.md",
+    "icone": "ares"
+  },
+  {
+    "nome": "Afrodite",
+    "slug": "afrodite",
+    "camada": "Camada 3A",
+    "dominio": "Clima Organizacional, Eventos de Reconhecimento e Cultura",
+    "anfitriao": "Orfeu",
+    "arquivoAnfitriao": "_memoria_orfeu.md",
+    "icone": "afrodite"
+  },
+  {
+    "nome": "Dionísio",
+    "slug": "dionisio",
+    "camada": "Camada 2",
+    "dominio": "Projetos Culturais, Festividades Escolares e Artes",
+    "anfitriao": "Atena",
+    "arquivoAnfitriao": "_memoria_atena.md",
+    "icone": "dionisio"
+  },
+  {
+    "nome": "Poseidon",
+    "slug": "poseidon",
+    "camada": "Camada 2",
+    "dominio": "Logística Marítima/Fluvial e Rotas Hídricas",
+    "anfitriao": "Hermes",
+    "arquivoAnfitriao": "_memoria_hermes.md",
+    "icone": "poseidon"
+  },
+  {
+    "nome": "Hades",
+    "slug": "hades",
+    "camada": "Camada 2",
+    "dominio": "Arquivo Histórico Morto, Contencioso e Prazos Prescricionais",
+    "anfitriao": "Têmis",
+    "arquivoAnfitriao": "_memoria_temis.md",
+    "icone": "hades"
+  },
+  {
+    "nome": "Cadmo",
+    "slug": "cadmo",
+    "camada": "Camada 3B",
+    "dominio": "Localizador Cadastral & O Papiro de Cadmo (16 Entes RN)",
+    "anfitriao": "Hera",
+    "arquivoAnfitriao": "_memoria_hera.md",
+    "icone": "cadmo"
+  },
+  {
+    "nome": "Arquimedes",
+    "slug": "arquimedes",
+    "camada": "Camada 4",
+    "dominio": "Ciência de Dados Educacionais, Censo e Indicadores",
+    "anfitriao": "Dédalo",
+    "arquivoAnfitriao": "_memoria_dedalo.md",
+    "icone": "arquimedes"
+  },
+  {
+    "nome": "Íris",
+    "slug": "iris",
+    "camada": "Camada 3B",
+    "dominio": "Comunicação Ágil, Avisos Setoriais e Notificações",
+    "anfitriao": "Héstia",
+    "arquivoAnfitriao": "_memoria_hestia.md",
+    "icone": "iris"
+  },
+  {
+    "nome": "Sólon",
+    "slug": "solon",
+    "camada": "Camada 3B",
+    "dominio": "Técnica Legislativa e Constitucionalidade Municipal",
+    "anfitriao": "Têmis",
+    "arquivoAnfitriao": "_memoria_temis.md",
+    "icone": "solon"
+  }
+];
+
+  function normalizar(texto) {
+    if (!texto) return '';
+    return String(texto)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+  }
+
+  function obterChaveStorage(arquivo) {
+    return 'olympos_memoria_' + normalizar(arquivo).replace(/[^a-z0-9_]/g, '_');
+  }
+
+  function obterConteudoLocal(arquivo) {
+    try {
+      if (typeof localStorage === 'undefined') return null;
+      var chave = obterChaveStorage(arquivo);
+      return localStorage.getItem(chave);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function salvarLocal(arquivo, conteudo) {
+    try {
+      if (typeof localStorage === 'undefined') return false;
+      var chave = obterChaveStorage(arquivo);
+      localStorage.setItem(chave, conteudo);
+      localStorage.setItem(chave + '_updated_at', new Date().toISOString());
+      localStorage.setItem(chave + '_pending_sync', 'true');
+      return true;
+    } catch (e) {
+      console.warn('Erro ao salvar localmente no localStorage:', e);
+      return false;
+    }
+  }
+
+  function removerEdicaoLocal(arquivo) {
+    try {
+      if (typeof localStorage === 'undefined') return false;
+      var chave = obterChaveStorage(arquivo);
+      localStorage.removeItem(chave + '_pending_sync');
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function temEdicaoLocalPendente(arquivo) {
+    try {
+      if (typeof localStorage === 'undefined') return false;
+      var chave = obterChaveStorage(arquivo);
+      return localStorage.getItem(chave + '_pending_sync') === 'true';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function listarTodas() {
+    return CANONICAL_MEMORIAS.map(function(m) {
+      var local = obterConteudoLocal(m.arquivo);
+      var conteudo = (local !== null && local !== undefined) ? local : m.conteudoCompleto;
+      var linhas = conteudo ? conteudo.split('\n').length : 0;
+      var pendente = temEdicaoLocalPendente(m.arquivo);
+
+      return Object.assign({}, m, {
+        conteudoCompleto: conteudo,
+        totalLinhas: linhas,
+        edicaoPendente: pendente
+      });
+    });
+  }
+
+  function listarExtras() {
+    return HOST_PERSONAS.slice();
+  }
+
+  function obterPorArquivo(arquivo) {
+    if (!arquivo) return null;
+    var norm = normalizar(arquivo);
+    var todas = listarTodas();
+
+    // 1. Busca direta nas memórias canônicas
+    for (var i = 0; i < todas.length; i++) {
+      var m = todas[i];
+      if (normalizar(m.arquivo) === norm || normalizar(m.slug) === norm || normalizar(m.nome) === norm) {
+        return m;
+      }
+    }
+
+    // 2. Busca entre as personas anfitriãs
+    for (var j = 0; j < HOST_PERSONAS.length; j++) {
+      var h = HOST_PERSONAS[j];
+      if (normalizar(h.slug) === norm || normalizar(h.nome) === norm) {
+        return obterPorArquivo(h.arquivoAnfitriao);
+      }
+    }
+
+    return null;
+  }
+
+  function obterPorSlug(slug) {
+    return obterPorArquivo(slug);
+  }
+
+  function obterPorNome(nome) {
+    return obterPorArquivo(nome);
+  }
+
+  function getMapaIdsDrive() {
+    var mapa = {};
+    for (var i = 0; i < CANONICAL_MEMORIAS.length; i++) {
+      mapa[CANONICAL_MEMORIAS[i].slug] = CANONICAL_MEMORIAS[i].id;
+    }
+    return mapa;
+  }
+
+  return {
+    PASTA_DRIVE_ID: PASTA_DRIVE_ID,
+    PASTA_DRIVE_URL: PASTA_DRIVE_URL,
+    MEMORIAS: CANONICAL_MEMORIAS,
+    EXTRAS: HOST_PERSONAS,
+    listarTodas: listarTodas,
+    listarExtras: listarExtras,
+    obterPorArquivo: obterPorArquivo,
+    obterPorSlug: obterPorSlug,
+    obterPorNome: obterPorNome,
+    salvarLocal: salvarLocal,
+    obterConteudoLocal: obterConteudoLocal,
+    removerEdicaoLocal: removerEdicaoLocal,
+    temEdicaoLocalPendente: temEdicaoLocalPendente,
+    getMapaIdsDrive: getMapaIdsDrive
+  };
+})();
+
+// Alias para facilitar interoperabilidade em diferentes camadas
+window.OlymposMemoriasCatalogo = window.OLYMPOS_MEMORIAS_CATALOGO;
 
 // --- MODULE: js\views\personas.js ---
 /**
@@ -1786,11 +3808,15 @@ window.OlymposViews.personas = (function() {
 
   function init() {
     bindEvents();
-    if (!isLoaded) {
-      carregarMemorias();
-    } else {
+    // Inicialização síncrona imediata a partir do catálogo consolidado embutido
+    if (window.OLYMPOS_MEMORIAS_CATALOGO) {
+      memorias = window.OLYMPOS_MEMORIAS_CATALOGO.listarTodas();
+      personasExtras = window.OLYMPOS_MEMORIAS_CATALOGO.listarExtras();
+      isLoaded = true;
       filtrarMemorias();
     }
+    // Sincronização em background caso o Gateway GAS esteja disponível
+    carregarMemorias(true);
   }
 
   function bindEvents() {
@@ -1832,23 +3858,58 @@ window.OlymposViews.personas = (function() {
     });
   }
 
-  function carregarMemorias() {
+  function carregarMemorias(silencioso) {
+    if (!isLoaded && window.OLYMPOS_MEMORIAS_CATALOGO) {
+      memorias = window.OLYMPOS_MEMORIAS_CATALOGO.listarTodas();
+      personasExtras = window.OLYMPOS_MEMORIAS_CATALOGO.listarExtras();
+      isLoaded = true;
+      filtrarMemorias();
+    }
+
     window.OlymposApi.chamar('overview_get', {}, function(res) {
       const data = (res && res.data) ? res.data : res;
-      if (data) {
-        memorias = data.memorias || [];
-        personasExtras = (data.personasExtras && data.personasExtras.length) ? data.personasExtras : EXTRAS_DEFAULT;
+      if (data && data.memorias && data.memorias.length) {
+        memorias = data.memorias.map(function(remota) {
+          const catItem = window.OLYMPOS_MEMORIAS_CATALOGO ? window.OLYMPOS_MEMORIAS_CATALOGO.obterPorArquivo(remota.arquivo) : null;
+          const temPendente = window.OLYMPOS_MEMORIAS_CATALOGO ? window.OLYMPOS_MEMORIAS_CATALOGO.temEdicaoLocalPendente(remota.arquivo) : false;
+
+          let conteudo = remota.conteudoCompleto;
+          if (temPendente && catItem) {
+            conteudo = catItem.conteudoCompleto;
+          } else if (!conteudo && catItem) {
+            conteudo = catItem.conteudoCompleto;
+          }
+
+          return Object.assign({}, catItem || {}, remota, {
+            conteudoCompleto: conteudo,
+            totalLinhas: conteudo ? conteudo.split('\n').length : (remota.totalLinhas || (catItem ? catItem.totalLinhas : 0)),
+            deus: remota.deus || (catItem ? catItem.nome : remota.arquivo),
+            edicaoPendente: temPendente
+          });
+        });
+        if (data.personasExtras && data.personasExtras.length) {
+          personasExtras = data.personasExtras;
+        }
         isLoaded = true;
         filtrarMemorias();
       }
     }, function() {
-      // Fallback visual offline com catálogo das 17 personas
-      const cat = window.OlymposIcons ? window.OlymposIcons.getCatalogo17Personas() : [];
-      memorias = cat.filter(function(p) { return p.tipo === 'memoria'; }).map(function(p) {
-        return { deus: p.nome, arquivo: p.arquivo, dominio: p.dominio, icone: p.id, totalLinhas: 24, alertasRecentes: [] };
-      });
-      personasExtras = EXTRAS_DEFAULT;
+      // Fallback offline seguro: mantém o catálogo completo consolidado das memórias
+      if (window.OLYMPOS_MEMORIAS_CATALOGO) {
+        memorias = window.OLYMPOS_MEMORIAS_CATALOGO.listarTodas();
+        personasExtras = window.OLYMPOS_MEMORIAS_CATALOGO.listarExtras();
+      } else {
+        const cat = window.OlymposIcons ? window.OlymposIcons.getCatalogo17Personas() : [];
+        memorias = cat.filter(function(p) { return p.tipo === 'memoria'; }).map(function(p) {
+          return { deus: p.nome, arquivo: p.arquivo, dominio: p.dominio, icone: p.id, totalLinhas: 24, alertasRecentes: [] };
+        });
+        personasExtras = EXTRAS_DEFAULT;
+      }
+      isLoaded = true;
       filtrarMemorias();
+      if (!silencioso && window.OlymposApp) {
+        window.OlymposApp.showToast('Visualização baseada no catálogo local de memórias.');
+      }
     });
   }
 
@@ -2020,28 +4081,46 @@ window.OlymposViews.personas = (function() {
   }
 
   function abrirEditor(arquivo) {
-    const found = memorias.find(function(m) { return m.arquivo === arquivo; });
+    let found = memorias.find(function(m) { return m.arquivo === arquivo; });
+    if (!found && window.OLYMPOS_MEMORIAS_CATALOGO) {
+      found = window.OLYMPOS_MEMORIAS_CATALOGO.obterPorArquivo(arquivo);
+    }
     if (!found) {
-      window.OlymposApp.showToast('Conecte-se ao Gateway GAS para carregar o conteúdo ao vivo de ' + arquivo + '.', true);
-      return;
+      found = {
+        deus: arquivo,
+        nome: arquivo,
+        arquivo: arquivo,
+        conteudoCompleto: '# ' + arquivo + '\n'
+      };
+    }
+    if (!found.conteudoCompleto && window.OLYMPOS_MEMORIAS_CATALOGO) {
+      const cat = window.OLYMPOS_MEMORIAS_CATALOGO.obterPorArquivo(found.arquivo || arquivo);
+      if (cat && cat.conteudoCompleto) {
+        found.conteudoCompleto = cat.conteudoCompleto;
+      }
     }
     window.OlymposApp.abrirModalMemoria(found);
   }
 
   function copiarPersona(nomeDeus) {
-    const found = memorias.find(function(m) { return m.deus === nomeDeus; });
+    let found = memorias.find(function(m) { return m.deus === nomeDeus || m.nome === nomeDeus; });
+    if (!found && window.OLYMPOS_MEMORIAS_CATALOGO) {
+      found = window.OLYMPOS_MEMORIAS_CATALOGO.obterPorNome(nomeDeus);
+    }
     if (!found) return;
-    const ctx = '### Persona: ' + found.deus + ' (' + found.arquivo + ')\n' +
+    const nome = found.deus || found.nome;
+    const ctx = '### Persona: ' + nome + ' (' + found.arquivo + ')\n' +
       'Domínio: ' + (found.dominio || '') + '\n' +
       'Conteúdo Operacional:\n' + (found.conteudoCompleto || '') + '\n';
-    window.OlymposApp.copiarTexto(ctx, 'Contexto de ' + found.deus);
+    window.OlymposApp.copiarTexto(ctx, 'Contexto de ' + nome);
   }
 
   function copiarContextoCompletoGemini() {
     let ctx = '# Contexto Consolidado das Memórias Operacionais (Hub Olympos SMEB 2026)\n\n';
-    memorias.forEach(function(m) {
-      ctx += '## ' + m.deus + ' (' + m.arquivo + ')\n';
-      ctx += 'Domínio: ' + (m.dominio || '') + ' | Linhas: ' + (m.totalLinhas || 0) + '/60\n';
+    const lista = (memorias && memorias.length) ? memorias : (window.OLYMPOS_MEMORIAS_CATALOGO ? window.OLYMPOS_MEMORIAS_CATALOGO.listarTodas() : []);
+    lista.forEach(function(m) {
+      ctx += '## ' + (m.deus || m.nome) + ' (' + m.arquivo + ')\n';
+      ctx += 'Domínio: ' + (m.dominio || '') + ' | Linhas: ' + (m.totalLinhas || (m.conteudoCompleto ? m.conteudoCompleto.split('\n').length : 0)) + '/60\n';
       if (m.conteudoCompleto) ctx += m.conteudoCompleto + '\n\n';
     });
     window.OlymposApp.copiarTexto(ctx, 'Contexto consolidado das 11 memórias');
@@ -2356,10 +4435,32 @@ window.OlymposApp = (function() {
   // AUTENTICAÇÃO E CONTROLE DE ACESSO RBAC
   // =========================================================================
   function initSession() {
+    // 1. Tenta sessionStorage (memória da aba ativa para carregamento veloz)
+    try {
+      const cachedRbac = sessionStorage.getItem('olympos_session_rbac');
+      if (cachedRbac) {
+        const sessionObj = JSON.parse(cachedRbac);
+        if (sessionObj && sessionObj.perfil) {
+          currentUserSession = sessionObj;
+          aplicarSessaoNaInterface(currentUserSession);
+          return;
+        }
+      }
+    } catch (e) {
+      sessionStorage.removeItem('olympos_session_rbac');
+    }
+
+    // 2. Fallback resiliente para localStorage
     const stored = localStorage.getItem('olympos_session');
     if (stored) {
       try {
         currentUserSession = JSON.parse(stored);
+        try {
+          sessionStorage.setItem('olympos_session_rbac', JSON.stringify(currentUserSession));
+          if (currentUserSession.perfil) {
+            sessionStorage.setItem('olympos_rbac_profile_cache', JSON.stringify(currentUserSession.perfil));
+          }
+        } catch (eStore) {}
         aplicarSessaoNaInterface(currentUserSession);
       } catch (e) {
         localStorage.removeItem('olympos_session');
@@ -2375,19 +4476,89 @@ window.OlymposApp = (function() {
     if (modal) modal.classList.remove('hidden');
   }
 
-  function handleLoginSubmit() {
-    const userInput = document.getElementById('loginUserInput').value.trim();
-    const passInput = document.getElementById('loginPasswordInput').value.trim();
+  const RBAC_TAB_PERMISSIONS = {
+    ADMIN_GABINETE: [
+      'visao-geral', 'oficios', 'portarias', 'licencas', 'certificados',
+      'diario-oficial', 'papiro-cadmo', 'personas', 'busca', 'configuracoes'
+    ],
+    RH_COMISSAO: [
+      'visao-geral', 'oficios', 'portarias', 'licencas',
+      'diario-oficial', 'papiro-cadmo', 'personas', 'busca', 'configuracoes'
+    ],
+    PEDAGOGICO_EVENTOS: [
+      'visao-geral', 'oficios', 'certificados', 'personas', 'busca', 'configuracoes'
+    ],
+    JURIDICO: [
+      'visao-geral', 'oficios', 'portarias', 'diario-oficial',
+      'papiro-cadmo', 'personas', 'busca', 'configuracoes'
+    ]
+  };
+
+  async function handleLoginSubmit() {
+    const userInputEl = document.getElementById('loginUserInput') || document.getElementById('loginEmail');
+    const passInputEl = document.getElementById('loginPasswordInput') || document.getElementById('loginSenha');
+    const userInput = userInputEl ? userInputEl.value.trim() : '';
+    const passInput = passInputEl ? passInputEl.value.trim() : '';
     const btn = document.getElementById('loginSubmitBtn');
 
     if (!userInput || !passInput) {
-      showToast('Informe identificador e senha de acesso.', true);
+      showToast('Informe identificador/e-mail e senha de acesso.', true);
       return;
     }
 
     btn.disabled = true;
     btn.textContent = 'Validando credenciais...';
 
+    // 1. Autenticação primária via Supabase Auth
+    if (window.OlymposSupabase && window.OlymposSupabase.isConfigured()) {
+      try {
+        const authResult = await window.OlymposSupabase.login(userInput, passInput);
+        btn.disabled = false;
+        btn.textContent = 'Acessar Ambiente Olympos';
+
+        const profile = authResult.profile || {};
+        const role = profile.role || 'RH_COMISSAO';
+        const abas = RBAC_TAB_PERMISSIONS[role] || RBAC_TAB_PERMISSIONS.RH_COMISSAO;
+
+        currentUserSession = {
+          ok: true,
+          token: authResult.session.access_token,
+          access_token: authResult.session.access_token,
+          usuario: authResult.user.email,
+          nome: profile.full_name || authResult.user.email,
+          perfil: {
+            id: role,
+            nome: role,
+            abasPermitidas: abas
+          }
+        };
+
+        localStorage.setItem('olympos_session', JSON.stringify(currentUserSession));
+        try {
+          sessionStorage.setItem('olympos_session_rbac', JSON.stringify(currentUserSession));
+          sessionStorage.setItem('olympos_rbac_profile_cache', JSON.stringify(profile));
+        } catch (eStore) {}
+        document.getElementById('loginScreen').classList.add('hidden');
+        aplicarSessaoNaInterface(currentUserSession);
+        showToast('Bem-vindo(a), ' + (profile.full_name || authResult.user.email) + '!');
+
+        if (window.OlymposViews && window.OlymposViews.visaoGeral) {
+          window.OlymposViews.visaoGeral.recarregar();
+        }
+        window.OlymposRouter.navegarPara(window.OlymposRouter.getPaginaAtual(), true);
+        return;
+      } catch (err) {
+        console.warn('[handleLoginSubmit] Falha no Supabase Auth:', err);
+        if (err.message && (err.message.includes('Invalid login') || err.message.includes('credentials'))) {
+          btn.disabled = false;
+          btn.textContent = 'Acessar Ambiente Olympos';
+          showToast('Credenciais inválidas no Supabase Auth. Verifique e-mail e senha.', true);
+          return;
+        }
+      }
+    }
+
+    // 2. Fallback via backend GAS (se configurado ou em contingência)
     window.OlymposApi.chamar('auth_login', { usuario: userInput, senha: passInput }, function(res) {
       btn.disabled = false;
       btn.textContent = 'Acessar Ambiente Olympos';
@@ -2395,6 +4566,12 @@ window.OlymposApp = (function() {
       if (res && res.ok) {
         currentUserSession = res;
         localStorage.setItem('olympos_session', JSON.stringify(res));
+        try {
+          sessionStorage.setItem('olympos_session_rbac', JSON.stringify(res));
+          if (res.perfil) {
+            sessionStorage.setItem('olympos_rbac_profile_cache', JSON.stringify(res.perfil));
+          }
+        } catch (eStore) {}
         document.getElementById('loginScreen').classList.add('hidden');
         aplicarSessaoNaInterface(res);
         showToast(res.mensagem || 'Acesso autenticado com sucesso!');
@@ -2404,7 +4581,7 @@ window.OlymposApp = (function() {
         }
         window.OlymposRouter.navegarPara(window.OlymposRouter.getPaginaAtual(), true);
       } else {
-        showToast((res && res.mensagem) || 'Credenciais inválidas.', true);
+        showToast((res && res.mensagem) || 'Credenciais inválidas. Configure o Supabase no botão abaixo.', true);
       }
     }, function(err) {
       btn.disabled = false;
@@ -2413,9 +4590,24 @@ window.OlymposApp = (function() {
     });
   }
 
-  function fazerLogout() {
+  async function fazerLogout() {
+    if (window.OlymposSupabase && typeof window.OlymposSupabase.logout === 'function') {
+      try {
+        await window.OlymposSupabase.logout();
+      } catch (e) {
+        // silencia
+      }
+    }
     localStorage.removeItem('olympos_session');
+    try {
+      sessionStorage.removeItem('olympos_session_rbac');
+      sessionStorage.removeItem('olympos_rbac_profile_cache');
+    } catch (e) {}
     currentUserSession = null;
+    const blocoGestao = document.getElementById('blocoGestaoUsuarios');
+    if (blocoGestao) blocoGestao.classList.add('hidden');
+    const topNovoUsuarioBtn = document.getElementById('topNovoUsuarioBtn');
+    if (topNovoUsuarioBtn) topNovoUsuarioBtn.classList.add('hidden');
     showToast('Sessão encerrada.');
     solicitarLogin();
   }
@@ -2459,10 +4651,165 @@ window.OlymposApp = (function() {
         link.classList.add('hidden');
       }
     });
+
+    // Controle de Visibilidade RBAC para Moderador (ADMIN_GABINETE)
+    const isAdmin = Boolean(sessao.perfil && (sessao.perfil.id === 'ADMIN_GABINETE' || sessao.perfil.nome === 'ADMIN_GABINETE'));
+    const blocoGestao = document.getElementById('blocoGestaoUsuarios');
+    if (blocoGestao) {
+      if (isAdmin) {
+        blocoGestao.classList.remove('hidden');
+      } else {
+        blocoGestao.classList.add('hidden');
+      }
+    }
+    const topNovoUsuarioBtn = document.getElementById('topNovoUsuarioBtn');
+    if (topNovoUsuarioBtn) {
+      if (isAdmin) {
+        topNovoUsuarioBtn.classList.remove('hidden');
+      } else {
+        topNovoUsuarioBtn.classList.add('hidden');
+      }
+    }
   }
 
   function getSession() {
     return currentUserSession;
+  }
+
+  function getSessaoAtual() {
+    return currentUserSession;
+  }
+
+  function atualizarTokenSessao(novoToken) {
+    if (!novoToken) return;
+    if (currentUserSession) {
+      currentUserSession.token = novoToken;
+      currentUserSession.access_token = novoToken;
+      try {
+        localStorage.setItem('olympos_session', JSON.stringify(currentUserSession));
+      } catch (e) {}
+    }
+  }
+
+  // =========================================================================
+  // JANELA COMPANION GEMINI (DESKTOP RESEARCH ASSISTANT)
+  // =========================================================================
+  function abrirJanelaGeminiCompanion() {
+    const width = 520;
+    const height = 780;
+    const availWidth = (window.screen && window.screen.availWidth) ? window.screen.availWidth : window.innerWidth;
+    const availHeight = (window.screen && window.screen.availHeight) ? window.screen.availHeight : window.innerHeight;
+
+    // Posicionamento ergonômico no quadrante direito da tela
+    const left = Math.max(0, availWidth - 540);
+    const top = Math.max(20, Math.round((availHeight - height) / 2));
+
+    const windowFeatures = [
+      'width=' + width,
+      'height=' + height,
+      'left=' + left,
+      'top=' + top,
+      'resizable=yes',
+      'scrollbars=yes',
+      'status=no',
+      'toolbar=no',
+      'menubar=no',
+      'location=yes'
+    ].join(',');
+
+    const geminiWin = window.open('https://gemini.google.com/', 'GeminiOlympos', windowFeatures);
+    if (geminiWin && !geminiWin.closed) {
+      geminiWin.focus();
+    }
+  }
+
+  // =========================================================================
+  // SKELETON LOADERS EDITORIAL (TABELAS ANIMADAS)
+  // =========================================================================
+  function renderSkeletonTable(tbodyElement, rows = 4, cols = 4, colWidths = ['15%', '25%', '45%', '15%']) {
+    if (!tbodyElement) return;
+    tbodyElement.innerHTML = '';
+    for (let r = 0; r < rows; r++) {
+      const tr = document.createElement('tr');
+      tr.className = 'skeleton-table-row skeleton-row';
+      for (let c = 0; c < cols; c++) {
+        const td = document.createElement('td');
+        td.className = 'skeleton-cell';
+        const w = colWidths[c % colWidths.length] || '100%';
+        td.innerHTML = '<span class="skeleton-shimmer" style="max-width: ' + w + ';"></span>';
+        tr.appendChild(td);
+      }
+      tbodyElement.appendChild(tr);
+    }
+  }
+
+  // =========================================================================
+  // CONFIGURAÇÃO DE DESTINATÁRIOS DO BOLETIM (BOLETIM_DESTINATARIOS_EMAIL)
+  // =========================================================================
+  function carregarConfiguracaoBoletimEmails() {
+    const salvo = localStorage.getItem('olympos_boletim_emails') || '';
+    const inCfg = document.getElementById('configBoletimEmailInput');
+    const inDiario = document.getElementById('diarioBoletimEmailInput');
+    if (inCfg && !inCfg.value) inCfg.value = salvo;
+    if (inDiario && !inDiario.value) inDiario.value = salvo;
+
+    if (window.OlymposApi && typeof window.OlymposApi.chamar === 'function') {
+      window.OlymposApi.chamar('prometheus_get_config', {}, function(res) {
+        if (res && res.destinatarios) {
+          localStorage.setItem('olympos_boletim_emails', res.destinatarios);
+          if (inCfg) inCfg.value = res.destinatarios;
+          if (inDiario) inDiario.value = res.destinatarios;
+        }
+      });
+    }
+  }
+
+  function salvarBoletimEmails(emails) {
+    const clean = String(emails || '').trim();
+    localStorage.setItem('olympos_boletim_emails', clean);
+    const inCfg = document.getElementById('configBoletimEmailInput');
+    const inDiario = document.getElementById('diarioBoletimEmailInput');
+    if (inCfg) inCfg.value = clean;
+    if (inDiario) inDiario.value = clean;
+
+    const fbCfg = document.getElementById('configBoletimEmailFeedback');
+    const fbDiario = document.getElementById('diarioBoletimEmailFeedback');
+    if (fbCfg) {
+      fbCfg.textContent = 'Gravando destinatários...';
+      fbCfg.style.display = 'block';
+    }
+    if (fbDiario) {
+      fbDiario.textContent = 'Gravando destinatários...';
+      fbDiario.style.display = 'block';
+    }
+
+    if (window.OlymposApi && typeof window.OlymposApi.chamar === 'function') {
+      window.OlymposApi.chamar('prometheus_config_emails', { destinatarios: clean }, function(res) {
+        const msg = (res && res.mensagem) || 'Destinatários do boletim gravados com sucesso!';
+        if (fbCfg) fbCfg.textContent = '✅ ' + msg;
+        if (fbDiario) fbDiario.textContent = '✅ ' + msg;
+        showToast(msg);
+      }, function(err) {
+        if (fbCfg) fbCfg.textContent = '⚠️ Salvo localmente no navegador (pendente sync com servidor).';
+        if (fbDiario) fbDiario.textContent = '⚠️ Salvo localmente no navegador.';
+        showToast('Destinatários salvos localmente.');
+      });
+    } else {
+      showToast('Destinatários gravados no armazenamento local.');
+    }
+  }
+
+  function testarEnvioBoletim() {
+    const inCfg = document.getElementById('configBoletimEmailInput');
+    const emails = inCfg ? inCfg.value.trim() : '';
+    showToast('Enviando boletim de teste para ' + (emails || 'destinatários configurados') + '...');
+    if (window.OlymposApi && typeof window.OlymposApi.chamar === 'function') {
+      window.OlymposApi.chamar('prometheus_test_email', { destinatarios: emails }, function(res) {
+        showToast((res && res.mensagem) || 'Disparo de teste concluído com sucesso!');
+      }, function(err) {
+        showToast('Falha no teste: ' + err.message, true);
+      });
+    }
   }
 
   // =========================================================================
@@ -2476,6 +4823,7 @@ window.OlymposApp = (function() {
         handleLoginSubmit();
       });
     }
+
     const brandHome = document.getElementById('brandHomeLink');
     if (brandHome) {
       brandHome.addEventListener('click', function() {
@@ -2485,6 +4833,13 @@ window.OlymposApp = (function() {
 
     const btnTheme = document.getElementById('themeToggleBtn');
     if (btnTheme) btnTheme.addEventListener('click', alternarTema);
+
+    const btnGemini = document.getElementById('topGeminiBtn');
+    if (btnGemini) {
+      btnGemini.addEventListener('click', function() {
+        abrirJanelaGeminiCompanion();
+      });
+    }
 
     const btnUser = document.getElementById('userSessionBtn');
     if (btnUser) {
@@ -2506,6 +4861,7 @@ window.OlymposApp = (function() {
       link.addEventListener('click', function(e) {
         e.preventDefault();
         const page = link.getAttribute('data-page');
+        document.body.classList.remove('nav-drawer-open');
         window.OlymposRouter.navegarPara(page);
       });
     });
@@ -2513,6 +4869,7 @@ window.OlymposApp = (function() {
     document.querySelectorAll('[data-nav-target]').forEach(function(el) {
       el.addEventListener('click', function() {
         const target = el.getAttribute('data-nav-target');
+        document.body.classList.remove('nav-drawer-open');
         if (target) window.OlymposRouter.navegarPara(target);
       });
     });
@@ -2565,6 +4922,57 @@ window.OlymposApp = (function() {
 
     const btnSaveMem = document.getElementById('saveMemoriaBtn');
     if (btnSaveMem) btnSaveMem.addEventListener('click', salvarMemoriaMd);
+
+    // Modal de Cadastro de Novo Usuário (Exclusivo ADMIN_GABINETE)
+    const btnOpenNovoUser = document.getElementById('btnAbrirModalNovoUsuario');
+    if (btnOpenNovoUser) btnOpenNovoUser.addEventListener('click', abrirModalNovoUsuario);
+
+    const btnTopNovoUser = document.getElementById('topNovoUsuarioBtn');
+    if (btnTopNovoUser) btnTopNovoUser.addEventListener('click', abrirModalNovoUsuario);
+
+    const btnCloseNovoUser = document.getElementById('closeModalNovoUsuarioBtn');
+    if (btnCloseNovoUser) btnCloseNovoUser.addEventListener('click', fecharModalNovoUsuario);
+
+    const btnCancelNovoUser = document.getElementById('btnCancelarNovoUsuario');
+    if (btnCancelNovoUser) btnCancelNovoUser.addEventListener('click', fecharModalNovoUsuario);
+
+    const btnGenPass = document.getElementById('btnGerarSenhaNovoUsuario');
+    if (btnGenPass) btnGenPass.addEventListener('click', gerarSenhaParaFormularioNovoUsuario);
+
+    const btnTogglePass = document.getElementById('btnToggleVisibilidadeSenha');
+    if (btnTogglePass) btnTogglePass.addEventListener('click', toggleVisibilidadeSenhaNovoUsuario);
+
+    const formNovoUser = document.getElementById('formNovoUsuario');
+    if (formNovoUser) {
+      formNovoUser.addEventListener('submit', function(e) {
+        e.preventDefault();
+        handleNovoUsuarioSubmit(e);
+      });
+    }
+
+    // Configuração de Destinatários do Boletim (Ajustes e Diário Oficial)
+    const btnSalvarCfgEmail = document.getElementById('configSalvarBoletimEmailBtn');
+    if (btnSalvarCfgEmail) {
+      btnSalvarCfgEmail.addEventListener('click', function() {
+        const inCfg = document.getElementById('configBoletimEmailInput');
+        salvarBoletimEmails(inCfg ? inCfg.value : '');
+      });
+    }
+
+    const btnTestarCfgEmail = document.getElementById('configTestarBoletimEmailBtn');
+    if (btnTestarCfgEmail) {
+      btnTestarCfgEmail.addEventListener('click', testarEnvioBoletim);
+    }
+
+    const btnSalvarDiarioEmail = document.getElementById('diarioSalvarBoletimEmailBtn');
+    if (btnSalvarDiarioEmail) {
+      btnSalvarDiarioEmail.addEventListener('click', function() {
+        const inDiario = document.getElementById('diarioBoletimEmailInput');
+        salvarBoletimEmails(inDiario ? inDiario.value : '');
+      });
+    }
+
+    carregarConfiguracaoBoletimEmails();
   }
 
   function verificarStatusConexaoInicial() {
@@ -2628,9 +5036,19 @@ window.OlymposApp = (function() {
 
   function abrirModalMemoria(memoriaObj) {
     activeMemoriaEditando = memoriaObj;
-    document.getElementById('modalMemoriaTitle').textContent = memoriaObj.deus + ' — ' + memoriaObj.arquivo;
+    const nome = memoriaObj.deus || memoriaObj.nome || memoriaObj.arquivo;
+    document.getElementById('modalMemoriaTitle').textContent = nome + ' — ' + memoriaObj.arquivo;
     const ta = document.getElementById('modalMemoriaTextarea');
-    ta.value = memoriaObj.conteudoCompleto || '';
+
+    // Recupera conteúdo com preferência para edições locais salvas no catálogo
+    let conteudo = memoriaObj.conteudoCompleto || '';
+    if (window.OLYMPOS_MEMORIAS_CATALOGO) {
+      const local = window.OLYMPOS_MEMORIAS_CATALOGO.obterConteudoLocal(memoriaObj.arquivo);
+      if (local !== null && local !== undefined) {
+        conteudo = local;
+      }
+    }
+    ta.value = conteudo;
 
     const atualizarContadorLinhas = function() {
       const l = ta.value.split('\n').length;
@@ -2647,20 +5065,28 @@ window.OlymposApp = (function() {
   function salvarMemoriaMd() {
     if (!activeMemoriaEditando) return;
     const novoConteudo = document.getElementById('modalMemoriaTextarea').value;
+    const arq = activeMemoriaEditando.arquivo;
     const btn = document.getElementById('saveMemoriaBtn');
 
-    btn.disabled = true;
-    btn.textContent = 'Salvando no Drive...';
+    // 1. Persistência local imediata no browser (localStorage e in-memory)
+    if (window.OLYMPOS_MEMORIAS_CATALOGO) {
+      window.OLYMPOS_MEMORIAS_CATALOGO.salvarLocal(arq, novoConteudo);
+    }
+    activeMemoriaEditando.conteudoCompleto = novoConteudo;
 
-    window.OlymposApi.chamar('memorias_salvar', {
-      arquivo: activeMemoriaEditando.arquivo,
-      conteudo: novoConteudo
-    }, function(res) {
+    btn.disabled = true;
+    btn.textContent = 'Sincronizando no Drive...';
+
+    // 2. Sincronização remota via Gateway GAS (CORS Simple Request)
+    window.OlymposApi.salvarMemoria(arq, novoConteudo, function(res) {
       btn.disabled = false;
       btn.textContent = 'Salvar no Arquivo Existente';
 
       if (res && res.ok) {
-        showToast('Memória ' + activeMemoriaEditando.arquivo + ' atualizada sem criar duplicatas!');
+        if (window.OLYMPOS_MEMORIAS_CATALOGO) {
+          window.OLYMPOS_MEMORIAS_CATALOGO.removerEdicaoLocal(arq);
+        }
+        showToast('Memória ' + arq + ' sincronizada com sucesso no Google Drive!');
         document.getElementById('memoriaModal').classList.add('hidden');
         if (window.OlymposViews && window.OlymposViews.personas) {
           window.OlymposViews.personas.recarregar();
@@ -2669,12 +5095,21 @@ window.OlymposApp = (function() {
           window.OlymposViews.visaoGeral.recarregar();
         }
       } else {
-        showToast((res && res.mensagem) || 'Falha ao salvar memória.', true);
+        showToast('Salvo localmente no navegador! Sincronização com o Drive pendente (' + ((res && res.mensagem) || 'offline') + ').', false);
+        document.getElementById('memoriaModal').classList.add('hidden');
+        if (window.OlymposViews && window.OlymposViews.personas) {
+          window.OlymposViews.personas.recarregar();
+        }
       }
-    }, function(err) {
+    }, function() {
       btn.disabled = false;
       btn.textContent = 'Salvar no Arquivo Existente';
-      showToast('Erro ao salvar memória: ' + err.message, true);
+      // Modo offline: salvo com sucesso no localStorage, não trava nem perde a edição
+      showToast('Salvo localmente no navegador! Sincronização com o Drive ocorrerá quando o Gateway estiver online.', false);
+      document.getElementById('memoriaModal').classList.add('hidden');
+      if (window.OlymposViews && window.OlymposViews.personas) {
+        window.OlymposViews.personas.recarregar();
+      }
     });
   }
 
@@ -2759,6 +5194,165 @@ window.OlymposApp = (function() {
       .replace(/'/g, '&#39;');
   }
 
+  // =========================================================================
+  // GESTÃO DE USUÁRIOS E MODAL NOVO USUÁRIO (EXCLUSIVO ADMIN_GABINETE)
+  // =========================================================================
+  function abrirModalNovoUsuario() {
+    const sessao = currentUserSession;
+    const role = sessao && sessao.perfil && (sessao.perfil.id || sessao.perfil.nome);
+    if (role !== 'ADMIN_GABINETE') {
+      showToast('Acesso restrito ao Moderador do Gabinete (ADMIN_GABINETE).', true);
+      return;
+    }
+    const modal = document.getElementById('modalNovoUsuario');
+    if (modal) {
+      modal.classList.remove('hidden');
+      const inNome = document.getElementById('novoUsuarioNome');
+      if (inNome) inNome.focus();
+    }
+  }
+
+  function fecharModalNovoUsuario() {
+    const modal = document.getElementById('modalNovoUsuario');
+    if (modal) modal.classList.add('hidden');
+    const feedback = document.getElementById('novoUsuarioFeedback');
+    if (feedback) {
+      feedback.classList.add('hidden');
+      feedback.innerHTML = '';
+    }
+  }
+
+  function gerarSenhaSeguraAleatoria() {
+    const maiusculas = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    const minusculas = 'abcdefghijkmnopqrstuvwxyz';
+    const numeros = '23456789';
+    const simbolos = '!@#$%&*';
+    const todos = maiusculas + minusculas + numeros + simbolos;
+
+    let senha = '';
+    senha += maiusculas.charAt(Math.floor(Math.random() * maiusculas.length));
+    senha += minusculas.charAt(Math.floor(Math.random() * minusculas.length));
+    senha += numeros.charAt(Math.floor(Math.random() * numeros.length));
+    senha += simbolos.charAt(Math.floor(Math.random() * simbolos.length));
+
+    for (let i = 4; i < 14; i++) {
+      senha += todos.charAt(Math.floor(Math.random() * todos.length));
+    }
+    return senha.split('').sort(function() { return 0.5 - Math.random(); }).join('');
+  }
+
+  function gerarSenhaParaFormularioNovoUsuario() {
+    const inSenha = document.getElementById('novoUsuarioSenha');
+    if (inSenha) {
+      inSenha.value = gerarSenhaSeguraAleatoria();
+      inSenha.type = 'text';
+      const btnToggle = document.getElementById('btnToggleVisibilidadeSenha');
+      if (btnToggle) btnToggle.textContent = '🔒';
+      showToast('Senha segura gerada com sucesso!');
+    }
+  }
+
+  function toggleVisibilidadeSenhaNovoUsuario() {
+    const inSenha = document.getElementById('novoUsuarioSenha');
+    const btnToggle = document.getElementById('btnToggleVisibilidadeSenha');
+    if (!inSenha) return;
+    if (inSenha.type === 'password') {
+      inSenha.type = 'text';
+      if (btnToggle) btnToggle.textContent = '🔒';
+    } else {
+      inSenha.type = 'password';
+      if (btnToggle) btnToggle.textContent = '👁️';
+    }
+  }
+
+  function exibirFeedbackNovoUsuario(msg, tipo) {
+    const fb = document.getElementById('novoUsuarioFeedback');
+    if (!fb) return;
+    fb.classList.remove('hidden');
+    let cor = 'var(--text-primary)';
+    if (tipo === 'erro') cor = 'var(--danger, #e53935)';
+    else if (tipo === 'sucesso') cor = 'var(--success, #43a047)';
+    else if (tipo === 'info') cor = 'var(--accent-gold, #c99738)';
+    fb.innerHTML = '<span style="color:' + cor + '; font-weight:600;">' + escapeHtml(msg) + '</span>';
+  }
+
+  async function handleNovoUsuarioSubmit(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const sessao = currentUserSession;
+    const role = sessao && sessao.perfil && (sessao.perfil.id || sessao.perfil.nome);
+    if (role !== 'ADMIN_GABINETE') {
+      showToast('Ação restrita ao Moderador do Gabinete.', true);
+      return;
+    }
+
+    const inNome = document.getElementById('novoUsuarioNome');
+    const inEmail = document.getElementById('novoUsuarioEmail');
+    const inRole = document.getElementById('novoUsuarioRole');
+    const inDepto = document.getElementById('novoUsuarioDepartamento');
+    const inSenha = document.getElementById('novoUsuarioSenha');
+    const btnSubmit = document.getElementById('btnSalvarNovoUsuario');
+
+    const nome = inNome ? inNome.value.trim() : '';
+    const email = inEmail ? inEmail.value.trim() : '';
+    const papel = inRole ? inRole.value.trim() : '';
+    const departamento = inDepto ? inDepto.value.trim() : 'Secretaria Municipal de Educacao';
+    const senha = inSenha ? inSenha.value.trim() : '';
+
+    if (!nome || !email || !papel || !senha) {
+      exibirFeedbackNovoUsuario('Preencha todos os campos obrigatórios (*).', 'erro');
+      return;
+    }
+
+    if (senha.length < 8) {
+      exibirFeedbackNovoUsuario('A senha temporária deve conter no mínimo 8 caracteres.', 'erro');
+      return;
+    }
+
+    if (btnSubmit) {
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = 'Cadastrando...';
+    }
+    exibirFeedbackNovoUsuario('Provisionando operador no Supabase Auth...', 'info');
+
+    const payload = {
+      nome: nome,
+      email: email,
+      role: papel,
+      departamento: departamento,
+      senhaTemporaria: senha
+    };
+
+    try {
+      const res = await window.OlymposApi.criarUsuario(payload);
+      if (res && res.ok) {
+        exibirFeedbackNovoUsuario(res.mensagem || 'Usuário cadastrado com sucesso!', 'sucesso');
+        showToast('Usuário ' + email + ' cadastrado com sucesso!');
+        const form = document.getElementById('formNovoUsuario');
+        if (form) form.reset();
+        setTimeout(function() {
+          fecharModalNovoUsuario();
+          if (btnSubmit) {
+            btnSubmit.disabled = false;
+            btnSubmit.textContent = 'Criar Usuário';
+          }
+        }, 1500);
+      } else {
+        exibirFeedbackNovoUsuario((res && res.mensagem) || 'Falha ao cadastrar usuário.', 'erro');
+        if (btnSubmit) {
+          btnSubmit.disabled = false;
+          btnSubmit.textContent = 'Criar Usuário';
+        }
+      }
+    } catch (err) {
+      console.error('[handleNovoUsuarioSubmit] Erro:', err);
+      exibirFeedbackNovoUsuario('Erro de comunicação: ' + (err.message || 'Falha de rede.'), 'erro');
+      if (btnSubmit) {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'Criar Usuário';
+      }
+    }
+  }
+
   return {
     showToast: showToast,
     copiarTexto: copiarTexto,
@@ -2766,12 +5360,21 @@ window.OlymposApp = (function() {
     renderizarItensLinksGerados: renderizarItensLinksGerados,
     abrirModalContadores: abrirModalContadores,
     abrirModalMemoria: abrirModalMemoria,
+    abrirModalNovoUsuario: abrirModalNovoUsuario,
+    fecharModalNovoUsuario: fecharModalNovoUsuario,
     solicitarLogin: solicitarLogin,
     handleLoginSubmit: handleLoginSubmit,
     fazerLogout: fazerLogout,
     definirTema: definirTema,
     atualizarStatusConexao: atualizarStatusConexao,
     getSession: getSession,
+    getSessaoAtual: getSessaoAtual,
+    atualizarTokenSessao: atualizarTokenSessao,
+    abrirJanelaGeminiCompanion: abrirJanelaGeminiCompanion,
+    renderSkeletonTable: renderSkeletonTable,
+    carregarConfiguracaoBoletimEmails: carregarConfiguracaoBoletimEmails,
+    salvarBoletimEmails: salvarBoletimEmails,
+    testarEnvioBoletim: testarEnvioBoletim,
     escapeHtml: escapeHtml
   };
 })();

@@ -77,10 +77,32 @@ window.OlymposApp = (function() {
   // AUTENTICAÇÃO E CONTROLE DE ACESSO RBAC
   // =========================================================================
   function initSession() {
+    // 1. Tenta sessionStorage (memória da aba ativa para carregamento veloz)
+    try {
+      const cachedRbac = sessionStorage.getItem('olympos_session_rbac');
+      if (cachedRbac) {
+        const sessionObj = JSON.parse(cachedRbac);
+        if (sessionObj && sessionObj.perfil) {
+          currentUserSession = sessionObj;
+          aplicarSessaoNaInterface(currentUserSession);
+          return;
+        }
+      }
+    } catch (e) {
+      sessionStorage.removeItem('olympos_session_rbac');
+    }
+
+    // 2. Fallback resiliente para localStorage
     const stored = localStorage.getItem('olympos_session');
     if (stored) {
       try {
         currentUserSession = JSON.parse(stored);
+        try {
+          sessionStorage.setItem('olympos_session_rbac', JSON.stringify(currentUserSession));
+          if (currentUserSession.perfil) {
+            sessionStorage.setItem('olympos_rbac_profile_cache', JSON.stringify(currentUserSession.perfil));
+          }
+        } catch (eStore) {}
         aplicarSessaoNaInterface(currentUserSession);
       } catch (e) {
         localStorage.removeItem('olympos_session');
@@ -154,6 +176,10 @@ window.OlymposApp = (function() {
         };
 
         localStorage.setItem('olympos_session', JSON.stringify(currentUserSession));
+        try {
+          sessionStorage.setItem('olympos_session_rbac', JSON.stringify(currentUserSession));
+          sessionStorage.setItem('olympos_rbac_profile_cache', JSON.stringify(profile));
+        } catch (eStore) {}
         document.getElementById('loginScreen').classList.add('hidden');
         aplicarSessaoNaInterface(currentUserSession);
         showToast('Bem-vindo(a), ' + (profile.full_name || authResult.user.email) + '!');
@@ -182,6 +208,12 @@ window.OlymposApp = (function() {
       if (res && res.ok) {
         currentUserSession = res;
         localStorage.setItem('olympos_session', JSON.stringify(res));
+        try {
+          sessionStorage.setItem('olympos_session_rbac', JSON.stringify(res));
+          if (res.perfil) {
+            sessionStorage.setItem('olympos_rbac_profile_cache', JSON.stringify(res.perfil));
+          }
+        } catch (eStore) {}
         document.getElementById('loginScreen').classList.add('hidden');
         aplicarSessaoNaInterface(res);
         showToast(res.mensagem || 'Acesso autenticado com sucesso!');
@@ -209,6 +241,10 @@ window.OlymposApp = (function() {
       }
     }
     localStorage.removeItem('olympos_session');
+    try {
+      sessionStorage.removeItem('olympos_session_rbac');
+      sessionStorage.removeItem('olympos_rbac_profile_cache');
+    } catch (e) {}
     currentUserSession = null;
     const blocoGestao = document.getElementById('blocoGestaoUsuarios');
     if (blocoGestao) blocoGestao.classList.add('hidden');
@@ -298,6 +334,127 @@ window.OlymposApp = (function() {
   }
 
   // =========================================================================
+  // JANELA COMPANION GEMINI (DESKTOP RESEARCH ASSISTANT)
+  // =========================================================================
+  function abrirJanelaGeminiCompanion() {
+    const width = 520;
+    const height = 780;
+    const availWidth = (window.screen && window.screen.availWidth) ? window.screen.availWidth : window.innerWidth;
+    const availHeight = (window.screen && window.screen.availHeight) ? window.screen.availHeight : window.innerHeight;
+
+    // Posicionamento ergonômico no quadrante direito da tela
+    const left = Math.max(0, availWidth - 540);
+    const top = Math.max(20, Math.round((availHeight - height) / 2));
+
+    const windowFeatures = [
+      'width=' + width,
+      'height=' + height,
+      'left=' + left,
+      'top=' + top,
+      'resizable=yes',
+      'scrollbars=yes',
+      'status=no',
+      'toolbar=no',
+      'menubar=no',
+      'location=yes'
+    ].join(',');
+
+    const geminiWin = window.open('https://gemini.google.com/', 'GeminiOlympos', windowFeatures);
+    if (geminiWin && !geminiWin.closed) {
+      geminiWin.focus();
+    }
+  }
+
+  // =========================================================================
+  // SKELETON LOADERS EDITORIAL (TABELAS ANIMADAS)
+  // =========================================================================
+  function renderSkeletonTable(tbodyElement, rows = 4, cols = 4, colWidths = ['15%', '25%', '45%', '15%']) {
+    if (!tbodyElement) return;
+    tbodyElement.innerHTML = '';
+    for (let r = 0; r < rows; r++) {
+      const tr = document.createElement('tr');
+      tr.className = 'skeleton-table-row skeleton-row';
+      for (let c = 0; c < cols; c++) {
+        const td = document.createElement('td');
+        td.className = 'skeleton-cell';
+        const w = colWidths[c % colWidths.length] || '100%';
+        td.innerHTML = '<span class="skeleton-shimmer" style="max-width: ' + w + ';"></span>';
+        tr.appendChild(td);
+      }
+      tbodyElement.appendChild(tr);
+    }
+  }
+
+  // =========================================================================
+  // CONFIGURAÇÃO DE DESTINATÁRIOS DO BOLETIM (BOLETIM_DESTINATARIOS_EMAIL)
+  // =========================================================================
+  function carregarConfiguracaoBoletimEmails() {
+    const salvo = localStorage.getItem('olympos_boletim_emails') || '';
+    const inCfg = document.getElementById('configBoletimEmailInput');
+    const inDiario = document.getElementById('diarioBoletimEmailInput');
+    if (inCfg && !inCfg.value) inCfg.value = salvo;
+    if (inDiario && !inDiario.value) inDiario.value = salvo;
+
+    if (window.OlymposApi && typeof window.OlymposApi.chamar === 'function') {
+      window.OlymposApi.chamar('prometheus_get_config', {}, function(res) {
+        if (res && res.destinatarios) {
+          localStorage.setItem('olympos_boletim_emails', res.destinatarios);
+          if (inCfg) inCfg.value = res.destinatarios;
+          if (inDiario) inDiario.value = res.destinatarios;
+        }
+      });
+    }
+  }
+
+  function salvarBoletimEmails(emails) {
+    const clean = String(emails || '').trim();
+    localStorage.setItem('olympos_boletim_emails', clean);
+    const inCfg = document.getElementById('configBoletimEmailInput');
+    const inDiario = document.getElementById('diarioBoletimEmailInput');
+    if (inCfg) inCfg.value = clean;
+    if (inDiario) inDiario.value = clean;
+
+    const fbCfg = document.getElementById('configBoletimEmailFeedback');
+    const fbDiario = document.getElementById('diarioBoletimEmailFeedback');
+    if (fbCfg) {
+      fbCfg.textContent = 'Gravando destinatários...';
+      fbCfg.style.display = 'block';
+    }
+    if (fbDiario) {
+      fbDiario.textContent = 'Gravando destinatários...';
+      fbDiario.style.display = 'block';
+    }
+
+    if (window.OlymposApi && typeof window.OlymposApi.chamar === 'function') {
+      window.OlymposApi.chamar('prometheus_config_emails', { destinatarios: clean }, function(res) {
+        const msg = (res && res.mensagem) || 'Destinatários do boletim gravados com sucesso!';
+        if (fbCfg) fbCfg.textContent = '✅ ' + msg;
+        if (fbDiario) fbDiario.textContent = '✅ ' + msg;
+        showToast(msg);
+      }, function(err) {
+        if (fbCfg) fbCfg.textContent = '⚠️ Salvo localmente no navegador (pendente sync com servidor).';
+        if (fbDiario) fbDiario.textContent = '⚠️ Salvo localmente no navegador.';
+        showToast('Destinatários salvos localmente.');
+      });
+    } else {
+      showToast('Destinatários gravados no armazenamento local.');
+    }
+  }
+
+  function testarEnvioBoletim() {
+    const inCfg = document.getElementById('configBoletimEmailInput');
+    const emails = inCfg ? inCfg.value.trim() : '';
+    showToast('Enviando boletim de teste para ' + (emails || 'destinatários configurados') + '...');
+    if (window.OlymposApi && typeof window.OlymposApi.chamar === 'function') {
+      window.OlymposApi.chamar('prometheus_test_email', { destinatarios: emails }, function(res) {
+        showToast((res && res.mensagem) || 'Disparo de teste concluído com sucesso!');
+      }, function(err) {
+        showToast('Falha no teste: ' + err.message, true);
+      });
+    }
+  }
+
+  // =========================================================================
   // EVENTOS GLOBAIS E ATALHOS DE TECLADO
   // =========================================================================
   function bindGlobalElements() {
@@ -318,6 +475,13 @@ window.OlymposApp = (function() {
 
     const btnTheme = document.getElementById('themeToggleBtn');
     if (btnTheme) btnTheme.addEventListener('click', alternarTema);
+
+    const btnGemini = document.getElementById('topGeminiBtn');
+    if (btnGemini) {
+      btnGemini.addEventListener('click', function() {
+        abrirJanelaGeminiCompanion();
+      });
+    }
 
     const btnUser = document.getElementById('userSessionBtn');
     if (btnUser) {
@@ -427,6 +591,30 @@ window.OlymposApp = (function() {
         handleNovoUsuarioSubmit(e);
       });
     }
+
+    // Configuração de Destinatários do Boletim (Ajustes e Diário Oficial)
+    const btnSalvarCfgEmail = document.getElementById('configSalvarBoletimEmailBtn');
+    if (btnSalvarCfgEmail) {
+      btnSalvarCfgEmail.addEventListener('click', function() {
+        const inCfg = document.getElementById('configBoletimEmailInput');
+        salvarBoletimEmails(inCfg ? inCfg.value : '');
+      });
+    }
+
+    const btnTestarCfgEmail = document.getElementById('configTestarBoletimEmailBtn');
+    if (btnTestarCfgEmail) {
+      btnTestarCfgEmail.addEventListener('click', testarEnvioBoletim);
+    }
+
+    const btnSalvarDiarioEmail = document.getElementById('diarioSalvarBoletimEmailBtn');
+    if (btnSalvarDiarioEmail) {
+      btnSalvarDiarioEmail.addEventListener('click', function() {
+        const inDiario = document.getElementById('diarioBoletimEmailInput');
+        salvarBoletimEmails(inDiario ? inDiario.value : '');
+      });
+    }
+
+    carregarConfiguracaoBoletimEmails();
   }
 
   function verificarStatusConexaoInicial() {
@@ -824,6 +1012,11 @@ window.OlymposApp = (function() {
     getSession: getSession,
     getSessaoAtual: getSessaoAtual,
     atualizarTokenSessao: atualizarTokenSessao,
+    abrirJanelaGeminiCompanion: abrirJanelaGeminiCompanion,
+    renderSkeletonTable: renderSkeletonTable,
+    carregarConfiguracaoBoletimEmails: carregarConfiguracaoBoletimEmails,
+    salvarBoletimEmails: salvarBoletimEmails,
+    testarEnvioBoletim: testarEnvioBoletim,
     escapeHtml: escapeHtml
   };
 })();

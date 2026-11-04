@@ -59,6 +59,71 @@ except ImportError:
 FEMURN_SEARCH_URL = "https://www.diariomunicipal.com.br/femurn/pesquisar"
 MAX_PDFS_POR_LOTE_WEBHOOK = 10
 
+FOLDER_PORTARIAS_2026 = "1QEewN0R3bCksLxLhmOSFq20EQYI3g64Q"
+FOLDER_GABINETE_2026 = "16YaFjfO6DRPVzJtRzLsynrOI0llNXQ8L"
+FOLDER_JURIDICO_2026 = "1N6UgdyGTVdIP4PW02dDBstsi4LIhgmRJ"
+
+
+def obter_pasta_drive_destino(categoria: str, entidade: str) -> str:
+    """Determina a pasta oficial de 2026 no Google Drive conforme a categoria do ato."""
+    entidade_upper = str(entidade or "").upper()
+    cat_upper = str(categoria or "").upper()
+    if "CÂMARA" in entidade_upper or "CAMARA" in entidade_upper:
+        return FOLDER_JURIDICO_2026
+    if cat_upper == "PORTARIA":
+        return FOLDER_PORTARIAS_2026
+    return FOLDER_GABINETE_2026
+
+
+def upload_pdf_direto_drive(pdf_bytes: bytes, nome_arquivo: str, folder_id: str):
+    """
+    Realiza upload direto do PDF no Google Drive via Google Cloud Service Account (GCP_SA_KEY).
+    Elimina a necessidade de tráfego pesado de pdf_base64 no webhook do GAS.
+    """
+    sa_json = os.environ.get("GCP_SA_KEY", "").strip()
+    if not sa_json or not pdf_bytes:
+        return None
+
+    try:
+        from google.oauth2 import service_account
+        from googleapiclient.discovery import build
+        from googleapiclient.http import MediaInMemoryUpload
+
+        try:
+            sa_info = json.loads(sa_json)
+        except json.JSONDecodeError:
+            sa_info = json.loads(base64.b64decode(sa_json).decode("utf-8"))
+
+        credentials = service_account.Credentials.from_service_account_info(
+            sa_info,
+            scopes=["https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/drive"]
+        )
+        service = build("drive", "v3", credentials=credentials)
+
+        # Checa existência prévia para idempotência
+        query = f"'{folder_id}' in parents and name = '{nome_arquivo}' and trashed = false"
+        res = service.files().list(q=query, fields="files(id, name, webViewLink)").execute()
+        existentes = res.get("files", [])
+
+        media = MediaInMemoryUpload(pdf_bytes, mimetype="application/pdf", resumable=True)
+
+        if existentes:
+            file_id = existentes[0]["id"]
+            updated = service.files().update(fileId=file_id, media_body=media, fields="id, webViewLink").execute()
+            link = updated.get("webViewLink") or f"https://drive.google.com/file/d/{file_id}/view"
+            print(f"[DRIVE SA OK] Arquivo existente atualizado: {nome_arquivo} (ID: {file_id})")
+            return {"file_id": file_id, "url": link}
+        else:
+            meta = {"name": nome_arquivo, "parents": [folder_id]}
+            created = service.files().create(body=meta, media_body=media, fields="id, webViewLink").execute()
+            file_id = created.get("id")
+            link = created.get("webViewLink") or f"https://drive.google.com/file/d/{file_id}/view"
+            print(f"[DRIVE SA OK] Novo PDF criado no Drive: {nome_arquivo} (ID: {file_id})")
+            return {"file_id": file_id, "url": link}
+    except Exception as err:
+        print(f"[AVISO] Upload direto via Service Account falhou (fallback para Base64/GAS): {err}")
+        return None
+
 KEYWORDS_EDUCACAO = [
     "educação", "smeb", "professor", "magistério", "pedagog", "escola",
     "creche", "cme", "fundeb", "permuta", "cessão", "processo seletivo",
@@ -688,6 +753,15 @@ def executar_ciclo_pesquisa(
                 cod_id=cod_id
             )
 
+            # Upload direto no Drive se GCP_SA_KEY estiver ativa
+            url_drive_sa = ""
+            if pdf_bytes:
+                pasta_id = obter_pasta_drive_destino(categoria, entidade_alvo)
+                sa_drive_res = upload_pdf_direto_drive(pdf_bytes, nome_arq, pasta_id)
+                if sa_drive_res:
+                    url_drive_sa = sa_drive_res.get("url", "")
+                    pdf_b64 = ""  # Limpa pdf_base64 para reduzir tamanho do payload HTTP no webhook GAS
+
             print(f"[MATERIA OK] Cód: {cod_id} | Cat: {categoria} | Método: {metodo_extracao} | Título: {tit_oficial or titulo_ato}")
 
             publicacoes_coletadas.append({
@@ -702,6 +776,7 @@ def executar_ciclo_pesquisa(
                 "metodo_extracao": metodo_extracao,
                 "entidades_ner": entidades_ner,
                 "url_origem": url_mat,
+                "url_drive": url_drive_sa,
                 "resumo_texto": texto_integral[:1200],
                 "pdf_base64": pdf_b64
             })

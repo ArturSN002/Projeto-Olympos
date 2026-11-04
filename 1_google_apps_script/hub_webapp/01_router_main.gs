@@ -141,6 +141,22 @@ function rotearAcaoGatewayHub(payload) {
       return normalizarRespostaGateway_(dispararResumoGoogleChatManual());
     case 'prometheus_disparar_coleta':
       return normalizarRespostaGateway_(dispararColetaPrometheusRemota(payload.dataInicio, payload.dataFim));
+    case 'prometheus_boletim_config_obter': {
+      const props = PropertiesService.getScriptProperties();
+      const destinatarios = props.getProperty('BOLETIM_DESTINATARIOS_EMAIL') ||
+                            props.getProperty('EMAIL_PARTICULAR') ||
+                            props.getProperty('EMAIL_RESUMO_PARTICULAR') || '';
+      return normalizarRespostaGateway_({ ok: true, destinatarios: destinatarios });
+    }
+    case 'prometheus_boletim_config_salvar': {
+      const novos = String(payload.destinatarios || '').trim();
+      const props = PropertiesService.getScriptProperties();
+      props.setProperty('BOLETIM_DESTINATARIOS_EMAIL', novos);
+      props.setProperty('EMAIL_PARTICULAR', novos);
+      return normalizarRespostaGateway_({ ok: true, mensagem: 'Destinatários do Boletim Diário salvos com sucesso!' });
+    }
+    case 'prometheus_boletim_disparar':
+      return normalizarRespostaGateway_(dispararBoletimEmailManual(payload.destinatarios));
 
     // Automação O Papiro de Cadmo (ETL Intermunicipal RN — Frente GAS + GitHub Actions)
     case 'cadmo_status':

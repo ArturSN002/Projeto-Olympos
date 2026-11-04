@@ -7,7 +7,17 @@
     <!-- Favicon Oficial Olympos (SVG em Data URI para zero 404s + Fallback Físico) -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230B1120'/%3E%3Cpath d='M8 22h16M10 22V12m4 10V12m4 10V12m4 10V12M7 12l9-6 9 6H7z' stroke='%23F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E" />
     <link rel="alternate icon" href="favicon.ico" />
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#0B1120" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Olympos" />
+    <link rel="apple-touch-icon" href="assets/favicon.svg" />
     <link rel="stylesheet" href="styles.css" />
+    <!-- Leaflet.js 1.9.4 & OpenStreetMap (Painel Georreferenciado de Permutas Cadmo & Hera) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   </head>
   <body>
     <!-- =========================================================================
@@ -78,6 +88,11 @@
           </div>
 
           <button id="themeToggleBtn" class="icon-capsule-btn" title="Alternar Modo Claro / Modo Escuro" aria-label="Alternar Tema"></button>
+
+          <button id="topGeminiBtn" class="btn btn-sm btn-gemini-companion" title="Abrir Assistente Gemini SMEB (Janela Lateral Desktop)" aria-label="Abrir Assistente Gemini">
+            <span class="gemini-sparkle" aria-hidden="true">✨</span>
+            <span>Gemini</span>
+          </button>
 
           <button id="topNovoUsuarioBtn" class="btn btn-primary btn-sm hidden" title="Cadastrar Novo Usuário (Exclusivo Gabinete)" style="font-size: 0.76rem; padding: 6px 12px; display: inline-flex; align-items: center; gap: 4px;">
             <span>+ Novo Usuário</span>
@@ -622,6 +637,21 @@
               </div>
             </div>
 
+            <!-- CONFIGURAÇÃO DE DESTINATÁRIOS DO BOLETIM EXECUTIVO FEMURN -->
+            <div class="surface-card" style="margin-bottom: 18px; padding: 14px 18px; border: 1px solid var(--border-hairline); background: var(--bg-surface);">
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                <div>
+                  <div style="font-weight: 600; font-size: 13.5px; color: var(--text-main);">📧 Destinatários do Boletim Diário (Fogo de Prometheus)</div>
+                  <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Lista de e-mails para envio automático do briefing executivo diário da FEMURN às 07:00 BRT.</div>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                  <input type="text" id="diarioBoletimEmailInput" class="input-clean" style="width: 280px; font-size: 12px; padding: 6px 12px;" placeholder="gabinete@smeb.cearamirim.rn.gov.br" />
+                  <button type="button" id="diarioSalvarBoletimEmailBtn" class="btn btn-primary btn-sm" style="font-size: 12px; padding: 6px 14px;">Salvar E-mails</button>
+                </div>
+              </div>
+              <div id="diarioBoletimEmailFeedback" style="font-size: 11.5px; color: var(--accent-gold); margin-top: 6px; display: none;"></div>
+            </div>
+
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
               <strong style="font-family: var(--font-display); font-size: 15px;">Publicações e PDFs Arquivados nas Pastas Oficiais (2026)</strong>
               <div style="display: flex; gap: 8px; flex-wrap: wrap;">
@@ -708,6 +738,153 @@
             </div>
 
             <div id="cadmoPortaisGrid" class="controls-grid" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px;"></div>
+          </div>
+
+          <!-- =========================================================================
+               PAINEL GEORREFERENCIADO DE PERMUTAS (CADMO & HERA)
+               ========================================================================= -->
+          <div id="painelPermutasCadmo" class="surface-card cadmo-permutas-panel" style="margin-top: 24px; border: 1px solid var(--border-hairline);">
+            <div class="card-header-row">
+              <div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                  <span class="section-eyebrow">INTELIGÊNCIA GEORREFERENCIADA • PERSONA HERA</span>
+                  <span class="selo-hera-badge" title="Algoritmo de Matching e Parecer Funcional Hera">⚡ Selo Hera</span>
+                </div>
+                <h3 class="section-title" style="font-size: 1.28rem; margin: 0 0 6px 0;">Painel de Permutas Docentes Intermunicipais</h3>
+                <p class="section-desc" style="margin: 0;">Mapeamento georreferenciado interativo das unidades escolares da SMEB de Ceará-Mirim e polos metropolitanos parceiros (Natal ZN/ZS, Extremoz, São Gonçalo do Amarante e Macaíba) com motor de compatibilidade automática da persona Hera.</p>
+              </div>
+              <div class="button-group">
+                <button type="button" id="btnAlternarFormPermuta" class="btn btn-secondary btn-sm" aria-expanded="true">
+                  <span>+ Nova Intenção</span>
+                </button>
+                <button type="button" id="btnRecalcularMatchesHera" class="btn btn-primary btn-sm">
+                  <span>⚡ Recalcular Matching (Hera)</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- CONTÊINER DO MAPA INTERATIVO (LEAFLET.JS) -->
+            <div class="cadmo-map-outer" style="margin: 18px 0; border: 1px solid var(--border-hairline); border-radius: var(--radius-lg, 16px); overflow: hidden; background: var(--bg-surface); box-shadow: var(--shadow-subtle);">
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: var(--bg-tonal); border-bottom: 1px solid var(--border-hairline); font-size: 12.5px;">
+                <span style="font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
+                  <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10B981;"></span>
+                  Mapa Interativo de Polos &amp; Escolas Polo — Ceará-Mirim &amp; Grande Natal
+                </span>
+                <div style="display: flex; gap: 14px; font-size: 11.5px; color: var(--text-muted);">
+                  <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #D4AF37;"></span> SMEB Sede</span>
+                  <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #38BDF8;"></span> Escolas Ceará-Mirim</span>
+                  <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10B981;"></span> Polos Parceiros</span>
+                </div>
+              </div>
+              <div id="mapaPermutasCadmo" style="height: 420px; width: 100%; border-radius: var(--radius-lg); position: relative; z-index: 1;"></div>
+            </div>
+
+            <!-- FORMULÁRIO DE INTENÇÃO DE PERMUTA -->
+            <div id="wrapperFormPermuta" style="margin-bottom: 24px;">
+              <form id="formPermutaCadmo" class="controls-grid permuta-form-grid" style="grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; padding: 18px; background: var(--bg-surface); border-radius: var(--radius-md, 12px); border: 1px solid var(--border-hairline);">
+                <div class="field-group">
+                  <label for="permutaNome">Nome do(a) Servidor(a)</label>
+                  <input type="text" id="permutaNome" name="permutaNome" class="input-clean" placeholder="Nome completo do professor(a)" required autocomplete="name" />
+                </div>
+                <div class="field-group">
+                  <label for="permutaMatricula">Matrícula Funcional</label>
+                  <input type="text" id="permutaMatricula" name="permutaMatricula" class="input-clean" placeholder="Ex: 2026-4401" required />
+                </div>
+                <div class="field-group">
+                  <label for="permutaCargo">Cargo / Função</label>
+                  <select id="permutaCargo" name="permutaCargo" class="input-clean" required>
+                    <option value="Professor dos Anos Iniciais">Professor dos Anos Iniciais (1º ao 5º)</option>
+                    <option value="Professor de Educação Infantil">Professor de Educação Infantil</option>
+                    <option value="Professor dos Anos Finais">Professor dos Anos Finais (6º ao 9º)</option>
+                    <option value="Especialista em Educação">Especialista em Educação / Pedagogo</option>
+                    <option value="Assistente de Apoio Pedagógico">Assistente de Apoio Pedagógico</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label for="permutaDisciplina">Disciplina / Habilitação</label>
+                  <select id="permutaDisciplina" name="permutaDisciplina" class="input-clean" required>
+                    <option value="Polivalente / Pedagogia">Polivalente / Pedagogia</option>
+                    <option value="Língua Portuguesa">Língua Portuguesa</option>
+                    <option value="Matemática">Matemática</option>
+                    <option value="História">História</option>
+                    <option value="Geografia">Geografia</option>
+                    <option value="Ciências Biológicas">Ciências Biológicas</option>
+                    <option value="Língua Inglesa">Língua Inglesa</option>
+                    <option value="Educação Física">Educação Física</option>
+                    <option value="Artes">Artes</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label for="permutaCargaHoraria">Carga Horária Semanal</label>
+                  <select id="permutaCargaHoraria" name="permutaCargaHoraria" class="input-clean" required>
+                    <option value="30h">30h Semanais (Padrão SMEB)</option>
+                    <option value="20h">20h Semanais</option>
+                    <option value="40h">40h Semanais (Dedicação Exclusiva)</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label for="permutaTurno">Turno de Lotação / Preferência</label>
+                  <select id="permutaTurno" name="permutaTurno" class="input-clean" required>
+                    <option value="Matutino">Matutino</option>
+                    <option value="Vespertino">Vespertino</option>
+                    <option value="Noturno">Noturno</option>
+                    <option value="Integral">Integral</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label for="permutaEscolaOrigem">Polo / Escola de Origem</label>
+                  <select id="permutaEscolaOrigem" name="permutaEscolaOrigem" class="input-clean" required>
+                    <optgroup label="Ceará-Mirim — SMEB (Sede &amp; Escolas Polo)">
+                      <option value="E. M. Alice Garcia Freire (Ceará-Mirim)">E. M. Alice Garcia Freire (Ceará-Mirim)</option>
+                      <option value="E. M. Prefeito Roberto Varela (Ceará-Mirim)">E. M. Prefeito Roberto Varela (Ceará-Mirim)</option>
+                      <option value="E. M. Augusto Severo (Ceará-Mirim)">E. M. Augusto Severo (Ceará-Mirim)</option>
+                      <option value="E. M. Monsenhor Celso Cicco (Ceará-Mirim)">E. M. Monsenhor Celso Cicco (Ceará-Mirim)</option>
+                      <option value="E. M. Dr. Júlio Senna (Gravatá - Ceará-Mirim)">E. M. Dr. Júlio Senna (Gravatá - Ceará-Mirim)</option>
+                      <option value="E. M. Barão de Ceará-Mirim">E. M. Barão de Ceará-Mirim</option>
+                      <option value="E. M. Madalena Antunes (Massangana - Ceará-Mirim)">E. M. Madalena Antunes (Massangana - Ceará-Mirim)</option>
+                      <option value="SMEB Sede (Ceará-Mirim)">SMEB Sede (Ceará-Mirim)</option>
+                    </optgroup>
+                    <optgroup label="Polos Parceiros Metropolitanos">
+                      <option value="Polo Natal (Zona Norte - SME)">Polo Natal (Zona Norte - SME)</option>
+                      <option value="Polo Natal (Zona Sul / Centro - SME)">Polo Natal (Zona Sul / Centro - SME)</option>
+                      <option value="Polo Extremoz (SME Centro)">Polo Extremoz (SME Centro)</option>
+                      <option value="Polo São Gonçalo do Amarante (SME Centro)">Polo São Gonçalo do Amarante (SME Centro)</option>
+                      <option value="Polo Macaíba (SME Centro)">Polo Macaíba (SME Centro)</option>
+                    </optgroup>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label for="permutaPoloDestino">Polo / Cidade de Destino Desejada</label>
+                  <select id="permutaPoloDestino" name="permutaPoloDestino" class="input-clean" required>
+                    <option value="Ceará-Mirim">Ceará-Mirim (Rede Municipal SMEB)</option>
+                    <option value="Natal">Natal (SME Natal / Zona Norte &amp; Sul)</option>
+                    <option value="Extremoz">Extremoz (SME Extremoz)</option>
+                    <option value="São Gonçalo do Amarante">São Gonçalo do Amarante (SME SGA)</option>
+                    <option value="Macaíba">Macaíba (SME Macaíba)</option>
+                  </select>
+                </div>
+                <div class="field-group" style="grid-column: 1 / -1; display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 4px;">
+                  <button type="button" id="btnLimparFormPermuta" class="btn btn-secondary btn-sm">Limpar</button>
+                  <button type="submit" id="btnSalvarIntencaoPermuta" class="btn btn-primary btn-sm">
+                    <span>Gravar Intenção de Permuta</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- GRADE DE RESULTADOS DE MATCHING DA PERSONA HERA -->
+            <div style="margin-top: 10px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                <strong style="font-family: var(--font-display); font-size: 14.5px; display: flex; align-items: center; gap: 6px;">
+                  <span>Cruzamento de Vínculos &amp; Compatibilidade Funcional (Hera)</span>
+                  <span id="badgeTotalMatches" class="pill-badge pill-gold" style="font-size: 11px;">0 cruzamentos</span>
+                </strong>
+                <span style="font-size: 12px; color: var(--text-muted);">Ponderação: Cargo/Disciplina (40 pts) + Carga Horária (30 pts) + Rota Inversa (30 pts)</span>
+              </div>
+              <div id="resultadoMatchingHera" class="resultado-matching-container">
+                <!-- Tabela ou Cards de Matching Injetados via JS -->
+              </div>
+            </div>
           </div>
         </section>
 
@@ -880,6 +1057,28 @@
                   <span>+ Novo Usuário</span>
                 </button>
               </div>
+            </div>
+
+            <!-- PAINEL DE CONFIGURAÇÃO DO BOLETIM DIÁRIO FEMURN (FOGO DE PROMETHEUS) -->
+            <div class="surface-card" style="margin-top: 24px; border: 1px solid var(--border-hairline);">
+              <div class="card-header-row" style="margin-bottom: 12px;">
+                <div>
+                  <span class="section-eyebrow">BOLETIM DIÁRIO FEMURN • FOGO DE PROMETHEUS</span>
+                  <h3 class="section-title" style="font-size: 1.15rem;">Destinatários do Resumo Executivo por E-mail</h3>
+                  <p class="section-desc" style="margin-bottom: 0;">E-mails institucionais que recebem o briefing matinal às 07:00 BRT com atos da FEMURN e links do Drive (<code>BOLETIM_DESTINATARIOS_EMAIL</code>).</p>
+                </div>
+              </div>
+              <div class="controls-grid" style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 12px; align-items: end;">
+                <div class="field-group">
+                  <label for="configBoletimEmailInput">Lista de E-mails (separados por vírgula)</label>
+                  <input type="text" id="configBoletimEmailInput" class="input-clean" placeholder="gabinete@smeb.cearamirim.rn.gov.br, assessoria@smeb.cearamirim.rn.gov.br" />
+                </div>
+                <div class="button-group">
+                  <button type="button" id="configSalvarBoletimEmailBtn" class="btn btn-primary btn-sm">Salvar Destinatários</button>
+                  <button type="button" id="configTestarBoletimEmailBtn" class="btn btn-secondary btn-sm">Enviar Teste</button>
+                </div>
+              </div>
+              <div id="configBoletimEmailFeedback" class="stat-label" style="margin-top: 8px; font-size: 12px;"></div>
             </div>
           </div>
         </section>
@@ -1094,5 +1293,20 @@
     <script src="js/views/busca.js"></script>
     <script src="js/views/configuracoes.js"></script>
     <script src="js/app.js"></script>
+
+    <!-- Registro Oficial do Service Worker PWA Olympos SMEB -->
+    <script>
+      if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+        window.addEventListener('load', function() {
+          navigator.serviceWorker.register('./sw.js')
+            .then(function(reg) {
+              console.log('[PWA] Service Worker registrado com sucesso:', reg.scope);
+            })
+            .catch(function(err) {
+              console.warn('[PWA] Erro ao registrar Service Worker:', err);
+            });
+        });
+      }
+    </script>
   </body>
 </html>

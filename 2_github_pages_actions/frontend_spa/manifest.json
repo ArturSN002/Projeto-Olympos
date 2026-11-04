@@ -1,0 +1,27 @@
+{
+  "name": "Olympos — Inteligência Documental SMEB",
+  "short_name": "Olympos SMEB",
+  "description": "Plataforma de inteligência documental, governança administrativa e acervo da Secretaria Municipal de Educação Básica (SMEB de Ceará-Mirim/RN)",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#0B1120",
+  "background_color": "#0B1120",
+  "icons": [
+    {
+      "src": "assets/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "favicon.ico",
+      "sizes": "32x32 48x48",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["education", "government", "productivity"],
+  "lang": "pt-BR",
+  "dir": "ltr"
+}
