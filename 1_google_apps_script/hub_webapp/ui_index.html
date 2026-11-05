@@ -14,6 +14,41 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Olympos" />
     <link rel="apple-touch-icon" href="assets/favicon.svg" />
+    <script>
+      (function() {
+        try {
+          var CANONICAL_GAS_URL = 'https://script.google.com/macros/s/AKfycbw-zKUdYJO6Zw1_XHo12a49p2wpgNtfii-2CJOq1838f6S1-L0SYM6iI9A2PS2ZPjYdmQ/exec';
+          var u1 = localStorage.getItem('olympos_api_url') || '';
+          var u2 = localStorage.getItem('olympos_gas_api_url') || '';
+          if (u1.indexOf('AKfycbwM8M-L4QzDmsT3SGSUyuAAwwYri5McqL6HI2AGutVd7ZzXn5mQMfZj1O4eBs-ci2Ub7Q') !== -1) {
+            localStorage.setItem('olympos_api_url', CANONICAL_GAS_URL);
+          }
+          if (u2.indexOf('AKfycbwM8M-L4QzDmsT3SGSUyuAAwwYri5McqL6HI2AGutVd7ZzXn5mQMfZj1O4eBs-ci2Ub7Q') !== -1) {
+            localStorage.setItem('olympos_gas_api_url', CANONICAL_GAS_URL);
+          }
+          if ('caches' in window) {
+            caches.keys().then(function(keys) {
+              var stale = keys.filter(function(k) { return k !== 'olympos-shell-v2.5.0'; });
+              if (stale.length > 0) {
+                Promise.all(stale.map(function(k) { return caches.delete(k); })).then(function() {
+                  if (!sessionStorage.getItem('olympos_sw_purged_v250')) {
+                    sessionStorage.setItem('olympos_sw_purged_v250', '1');
+                    if ('serviceWorker' in navigator) {
+                      navigator.serviceWorker.getRegistrations().then(function(regs) {
+                        regs.forEach(function(r) { r.update(); });
+                        window.location.reload();
+                      });
+                    } else {
+                      window.location.reload();
+                    }
+                  }
+                });
+              }
+            });
+          }
+        } catch (e) {}
+      })();
+    </script>
     <?!= include('ui_styles'); ?>
     <!-- Leaflet.js 1.9.4 & OpenStreetMap (Painel Georreferenciado de Permutas Cadmo & Hera) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
