@@ -2733,3 +2733,33 @@ body.nav-drawer-open .sidebar-backdrop,
   border-color: rgba(212, 175, 55, 0.4);
 }
 
+/* Container Colapsável Ergonômico de Matching Hera */
+.hera-collapsible-card {
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.hera-collapsible-header:hover {
+  background: var(--bg-surface-hover, rgba(0, 0, 0, 0.03)) !important;
+}
+[data-theme="dark"] .hera-collapsible-header:hover {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+.hera-collapsible-body.is-collapsed {
+  display: none !important;
+}
+.hera-chevron-rotated {
+  transform: rotate(-180deg);
+}
+.resultado-matching-container::-webkit-scrollbar {
+  width: 6px;
+}
+.resultado-matching-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+.resultado-matching-container::-webkit-scrollbar-thumb {
+  background: var(--border-hairline);
+  border-radius: 4px;
+}
+.resultado-matching-container::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-gold, #D4AF37);
+}
+

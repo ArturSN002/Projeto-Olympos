@@ -51,6 +51,30 @@ window.OlymposViews.escolas = (function() {
         if (semente.length > 0) {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(semente));
         }
+      } else {
+        // Auto-migração retrocompatível: CMEI -> CEI para usuários com dados já em cache
+        try {
+          var arr = JSON.parse(gravado);
+          if (Array.isArray(arr)) {
+            var migrado = false;
+            arr.forEach(function(esc) {
+              if (esc && typeof esc.nome === 'string' && esc.nome.includes('CMEI')) {
+                esc.nome = esc.nome.replace(/\bCMEI\b/g, 'CEI');
+                migrado = true;
+              }
+              if (esc && typeof esc.categoria === 'string' && esc.categoria.includes('CMEI')) {
+                esc.categoria = esc.categoria.replace(/\bCMEI\b/g, 'CEI');
+                migrado = true;
+              }
+            });
+            if (migrado) {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+              console.log('[EscolasView] Auto-migração retrocompatível CMEI -> CEI executada no localStorage.');
+            }
+          }
+        } catch (eMig) {
+          console.warn('[EscolasView] Erro na auto-migração de CMEI para CEI:', eMig);
+        }
       }
     } catch (e) {
       console.warn('[EscolasView] LocalStorage inacessível:', e);
@@ -233,7 +257,7 @@ window.OlymposViews.escolas = (function() {
     var zon = String(zona || '').toLowerCase();
 
     if (cat.includes('sede')) return '#D4AF37'; // Dourado SMEB Sede
-    if (cat.includes('infantil') || cat.includes('cmei') || cat.includes('creche')) return '#F59E0B'; // Âmbar CMEI
+    if (cat.includes('infantil') || cat.includes('cei') || cat.includes('cmei') || cat.includes('creche')) return '#F59E0B'; // Âmbar CEI / Creche
     if (cat.includes('rural') || zon.includes('rural')) return '#10B981'; // Verde Polo Rural
     return '#38BDF8'; // Azul Urbana / Ensino Fundamental
   }
@@ -246,7 +270,7 @@ window.OlymposViews.escolas = (function() {
     var zon = String(zona || '').toLowerCase();
 
     if (cat.includes('sede')) return '★';
-    if (cat.includes('infantil') || cat.includes('cmei')) return 'C';
+    if (cat.includes('infantil') || cat.includes('cei') || cat.includes('cmei')) return 'C';
     if (cat.includes('rural') || zon.includes('rural')) return 'R';
     return 'U';
   }
@@ -324,20 +348,41 @@ window.OlymposViews.escolas = (function() {
     var termo = (currentSearchTerm || '').trim().toLowerCase();
     var filtro = activeCategoryFilter;
 
+    // Resiliência na busca textual com aliasing bidirecional CMEI <-> CEI
+    var termoNormalizado = termo;
+    var termoAlternativo = null;
+    if (termo === 'cmei') {
+      termoAlternativo = 'cei';
+    } else if (termo === 'cei') {
+      termoAlternativo = 'cmei';
+    }
+
     return todas.filter(function(item) {
-      // Filtro de Categoria
-      if (filtro === 'sede' && !String(item.categoria || '').toLowerCase().includes('sede')) return false;
-      if (filtro === 'urbana' && String(item.zona || '').toLowerCase() !== 'urbana') return false;
-      if (filtro === 'rural' && String(item.zona || '').toLowerCase() !== 'rural') return false;
-      if (filtro === 'cmei' && !String(item.categoria || '').toLowerCase().includes('infantil') && !String(item.categoria || '').toLowerCase().includes('cmei')) return false;
+      var cat = String(item.categoria || '').toLowerCase();
+      var zon = String(item.zona || '').toLowerCase();
+
+      // Filtro de Categoria (aceita 'cei' ou 'cmei' como alias)
+      if (filtro === 'sede' && !cat.includes('sede')) return false;
+      if (filtro === 'urbana' && zon !== 'urbana') return false;
+      if (filtro === 'rural' && zon !== 'rural') return false;
+      if ((filtro === 'cei' || filtro === 'cmei') && !cat.includes('infantil') && !cat.includes('cei') && !cat.includes('cmei')) return false;
 
       // Filtro de Busca Textual
-      if (termo) {
+      if (termoNormalizado) {
         var strNome = String(item.nome || '').toLowerCase();
         var strBairro = String(item.bairroDistrito || '').toLowerCase();
         var strEndereco = String(item.endereco || '').toLowerCase();
         var strInep = String(item.inep || '').toLowerCase();
-        if (!strNome.includes(termo) && !strBairro.includes(termo) && !strEndereco.includes(termo) && !strInep.includes(termo)) {
+
+        var matchPadrao = strNome.includes(termoNormalizado) ||
+                          strBairro.includes(termoNormalizado) ||
+                          strEndereco.includes(termoNormalizado) ||
+                          strInep.includes(termoNormalizado) ||
+                          cat.includes(termoNormalizado);
+
+        var matchAlt = termoAlternativo ? (strNome.includes(termoAlternativo) || cat.includes(termoAlternativo)) : false;
+
+        if (!matchPadrao && !matchAlt) {
           return false;
         }
       }
@@ -363,13 +408,13 @@ window.OlymposViews.escolas = (function() {
     var total = todas.length;
     var urbanas = 0;
     var rurais = 0;
-    var cmeis = 0;
+    var ceis = 0;
 
     todas.forEach(function(item) {
       var cat = String(item.categoria || '').toLowerCase();
       var zon = String(item.zona || '').toLowerCase();
-      if (cat.includes('infantil') || cat.includes('cmei')) {
-        cmeis++;
+      if (cat.includes('infantil') || cat.includes('cei') || cat.includes('cmei')) {
+        ceis++;
       } else if (zon === 'rural' || cat.includes('rural')) {
         rurais++;
       } else {
@@ -380,12 +425,12 @@ window.OlymposViews.escolas = (function() {
     var elTotal = document.getElementById('kpiEscolasTotal');
     var elUrbanas = document.getElementById('kpiEscolasUrbanas');
     var elRurais = document.getElementById('kpiEscolasRurais');
-    var elCmeis = document.getElementById('kpiEscolasCmeis');
+    var elCeis = document.getElementById('kpiEscolasCeis') || document.getElementById('kpiEscolasCmeis');
 
     if (elTotal) elTotal.textContent = total;
     if (elUrbanas) elUrbanas.textContent = urbanas;
     if (elRurais) elRurais.textContent = rurais;
-    if (elCmeis) elCmeis.textContent = cmeis;
+    if (elCeis) elCeis.textContent = ceis;
   }
 
   /**

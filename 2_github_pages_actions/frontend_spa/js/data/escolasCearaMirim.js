@@ -1,5 +1,5 @@
 /**
- * Catálogo Semente Oficial — Escolas Municipais e CMEIs de Ceará-Mirim/RN
+ * Catálogo Semente Oficial — Escolas Municipais e CEIs de Ceará-Mirim/RN
  * Secretaria Municipal de Educação Básica (SMEB)
  * Georreferenciamento de precisão (Latitude / Longitude) para visualização cartográfica no Leaflet.js
  */
@@ -292,11 +292,11 @@
     },
 
     // -------------------------------------------------------------------------
-    // CENTROS MUNICIPAIS DE EDUCAÇÃO INFANTIL (CMEIS)
+    // CENTROS DE EDUCAÇÃO INFANTIL (CEIS)
     // -------------------------------------------------------------------------
     {
       id: 'esc_018',
-      nome: 'CMEI Professora Maria de Lourdes',
+      nome: 'CEI Professora Maria de Lourdes',
       inep: '24021017',
       categoria: 'Educação Infantil',
       zona: 'Urbana',
@@ -312,7 +312,7 @@
     },
     {
       id: 'esc_019',
-      nome: 'CMEI Menino Jesus',
+      nome: 'CEI Menino Jesus',
       inep: '24021018',
       categoria: 'Educação Infantil',
       zona: 'Urbana',
@@ -328,7 +328,7 @@
     },
     {
       id: 'esc_020',
-      nome: 'CMEI Tia Zezé',
+      nome: 'CEI Tia Zezé',
       inep: '24021019',
       categoria: 'Educação Infantil',
       zona: 'Urbana',

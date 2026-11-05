@@ -947,22 +947,45 @@
               </form>
             </div>
 
-            <!-- GRADE DE RESULTADOS DE MATCHING DA PERSONA HERA -->
-            <div style="margin-top: 10px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-                <div style="display: flex; gap: 8px; align-items: center;">
-                  <button type="button" id="tabAbaPermutas" class="btn btn-secondary btn-sm active" style="font-size: 12px; font-weight: 600;">
-                    <span>🤝 Permutas Recíprocas (Hera)</span>
-                  </button>
-                  <button type="button" id="tabAbaVinculos" class="btn btn-secondary btn-sm" style="font-size: 12px; font-weight: 600;">
-                    <span>🏛️ Cruzamento de Vínculos (CF Art. 37)</span>
-                  </button>
+            <!-- COMPONENTE ERGONÔMICO COLAPSÁVEL DE MATCHING DA PERSONA HERA -->
+            <div id="heraMatchingCollapsibleCard" class="surface-card hera-collapsible-card" style="margin-top: 20px; border: 1px solid var(--border-hairline); border-radius: var(--radius-lg, 16px); overflow: hidden; background: var(--bg-surface); box-shadow: var(--shadow-subtle);">
+              <!-- CABEÇALHO / TRIGGER DO DROPDOWN COLAPSÁVEL -->
+              <div id="heraCollapsibleHeader" class="hera-collapsible-header" role="button" tabindex="0" aria-expanded="true" aria-controls="heraCollapsibleBody" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; background: var(--bg-tonal); cursor: pointer; user-select: none; border-bottom: 1px solid var(--border-hairline); transition: background 0.2s ease;">
+                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 1.2rem;" aria-hidden="true">🤝</span>
+                    <strong style="font-size: 14px; font-weight: 700; color: var(--text-main);">Sugestões de Permutas &amp; Pareceres Hera</strong>
+                    <span class="selo-hera-badge" title="Algoritmo de Matching e Parecer Funcional Hera">⚡ Selo Hera</span>
+                  </div>
                   <span id="badgeTotalMatches" class="pill-badge pill-gold" style="font-size: 11px;">0 cruzamentos</span>
+                  <span id="heraMatchPreviewPill" class="pill-badge pill-green hidden" style="font-size: 10.5px;"></span>
                 </div>
-                <span style="font-size: 12px; color: var(--text-muted);">Ponderação: Cargo/Disciplina (40 pts) + Carga Horária (30 pts) + Rota Inversa (30 pts)</span>
+
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span id="heraToggleLabel" style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">Recolher</span>
+                  <button type="button" id="btnToggleHeraMatching" class="icon-capsule-btn" aria-label="Expandir ou recolher sugestões de matching" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 12px; transition: transform 0.25s ease;">
+                    <span id="heraChevronIcon">▼</span>
+                  </button>
+                </div>
               </div>
-              <div id="resultadoMatchingHera" class="resultado-matching-container">
-                <!-- Tabela ou Cards de Matching Injetados via JS -->
+
+              <!-- CORPO COLAPSÁVEL (COM SCROLL INTERNO ERGONÔMICO) -->
+              <div id="heraCollapsibleBody" class="hera-collapsible-body" style="padding: 18px 20px; transition: all 0.3s ease;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+                  <div style="display: flex; gap: 8px; align-items: center;">
+                    <button type="button" id="tabAbaPermutas" class="btn btn-secondary btn-sm active" style="font-size: 12px; font-weight: 600;">
+                      <span>🤝 Permutas Recíprocas (Hera)</span>
+                    </button>
+                    <button type="button" id="tabAbaVinculos" class="btn btn-secondary btn-sm" style="font-size: 12px; font-weight: 600;">
+                      <span>🏛️ Cruzamento de Vínculos (CF Art. 37)</span>
+                    </button>
+                  </div>
+                  <span style="font-size: 11.5px; color: var(--text-muted);">Ponderação: Cargo/Disciplina (40 pts) + Carga Horária (30 pts) + Rota Inversa (30 pts)</span>
+                </div>
+
+                <div id="resultadoMatchingHera" class="resultado-matching-container" style="max-height: 520px; overflow-y: auto; padding-right: 4px;">
+                  <!-- Tabela ou Cards de Matching Injetados via JS -->
+                </div>
               </div>
             </div>
           </div>
@@ -1028,9 +1051,9 @@
               <div class="stat-card">
                 <div class="stat-top">
                   <span class="stat-label">Educação Infantil</span>
-                  <span class="pill-badge" style="background: rgba(245,158,11,0.15); color: #F59E0B; border: 1px solid rgba(245,158,11,0.3);">CMEIs</span>
+                  <span class="pill-badge" style="background: rgba(245,158,11,0.15); color: #F59E0B; border: 1px solid rgba(245,158,11,0.3);">CEIs</span>
                 </div>
-                <div class="stat-value" id="kpiEscolasCmeis">4</div>
+                <div class="stat-value" id="kpiEscolasCeis">4</div>
                 <div class="stat-meta">Centros de Ed. Infantil</div>
               </div>
             </div>
@@ -1049,7 +1072,7 @@
                   <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #D4AF37;"></span> Sede</span>
                   <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #38BDF8;"></span> Urbana</span>
                   <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10B981;"></span> Rural</span>
-                  <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #F59E0B;"></span> CMEI</span>
+                  <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #F59E0B;"></span> CEI</span>
                 </div>
               </div>
               <div id="mapaEscolasCearaMirim" style="height: 480px; width: 100%; border-radius: var(--radius-lg); position: relative; z-index: 1;"></div>
@@ -1064,7 +1087,7 @@
                   <button type="button" class="btn-mini" data-filtro-categoria="sede">Sede</button>
                   <button type="button" class="btn-mini" data-filtro-categoria="urbana">Urbanas</button>
                   <button type="button" class="btn-mini" data-filtro-categoria="rural">Rurais</button>
-                  <button type="button" class="btn-mini" data-filtro-categoria="cmei">CMEIs</button>
+                  <button type="button" class="btn-mini" data-filtro-categoria="cei">CEIs</button>
                 </div>
               </div>
               <span id="escolasContagemExibida" style="font-size: 12.5px; color: var(--text-muted);">Carregando unidades...</span>
@@ -1511,7 +1534,7 @@
                 <select id="escolaCategoria" name="escolaCategoria" class="input-clean" required>
                   <option value="Ensino Fundamental">Ensino Fundamental</option>
                   <option value="Polo Rural">Polo Rural</option>
-                  <option value="Educação Infantil">Educação Infantil (CMEI)</option>
+                  <option value="Educação Infantil">Educação Infantil (CEI)</option>
                   <option value="Sede Administrativa">Sede Administrativa</option>
                   <option value="Educação Especial">Educação Especial</option>
                 </select>

@@ -5,7 +5,7 @@ Módulo de Testes: test_escolas_map.py
 Projeto Olympos — Secretaria Municipal de Educação Básica (SMEB de Ceará-Mirim/RN)
 
 Validação automatizada da funcionalidade de Georreferenciamento e Mapa de Escolas:
-1. Integridade do Catálogo Semente Oficial (mínimo de 20 escolas/CMEIs com dados reais).
+1. Integridade do Catálogo Semente Oficial (mínimo de 20 escolas/CEIs com dados reais).
 2. Validação Geográfica Estrita (Bounding Box do Município de Ceará-Mirim/RN).
 3. Compilação e Sintaxe V8 dos Módulos JS (escolasCearaMirim.js e escolas.js).
 4. Presença e Estrutura dos Elementos DOM no index.html (#page-escolas, #mapaEscolasCearaMirim).
@@ -101,10 +101,12 @@ class TestEscolasMapFeature(unittest.TestCase):
             self.assertIsInstance(esc["lat"], (int, float), f"Latitude de {esc['nome']} não é numérica")
             self.assertIsInstance(esc["lng"], (int, float), f"Longitude de {esc['nome']} não é numérica")
 
-        # Representatividade: deve conter Sede, Ensino Fundamental, Polo Rural e Educação Infantil
+        # Representatividade: deve conter Sede, Ensino Fundamental, Polo Rural e Educação Infantil (CEIs)
         self.assertTrue(any("sede" in c.lower() for c in categorias), "Ausência de Sede Administrativa no catálogo")
         self.assertTrue(any("rural" in z.lower() for z in zonas), "Ausência de escolas rurais no catálogo")
-        self.assertTrue(any("infantil" in c.lower() or "cmei" in c.lower() for c in categorias), "Ausência de CMEIs/Educação Infantil no catálogo")
+        self.assertTrue(any("infantil" in c.lower() or "cei" in c.lower() or "cmei" in c.lower() for c in categorias), "Ausência de CEIs/Educação Infantil no catálogo")
+        self.assertTrue(any(esc["nome"].startswith("CEI ") for esc in escolas), "Ausência de unidades com nomenclatura oficial 'CEI ' no catálogo")
+        self.assertFalse(any("CMEI" in esc["nome"] for esc in escolas), "Presença indevida da sigla obsoleta 'CMEI' nos nomes das escolas")
 
         # Conferir presença de marcos célebres de Ceará-Mirim
         nomes_str = " ".join(nomes_vistos)
@@ -183,11 +185,12 @@ class TestEscolasMapFeature(unittest.TestCase):
         self.assertIn('id="kpiEscolasTotal"', html, "KPI #kpiEscolasTotal ausente")
         self.assertIn('id="kpiEscolasUrbanas"', html, "KPI #kpiEscolasUrbanas ausente")
         self.assertIn('id="kpiEscolasRurais"', html, "KPI #kpiEscolasRurais ausente")
-        self.assertIn('id="kpiEscolasCmeis"', html, "KPI #kpiEscolasCmeis ausente")
+        self.assertIn('id="kpiEscolasCeis"', html, "KPI #kpiEscolasCeis ausente")
 
         # Filtros e Tabela
         self.assertIn('id="escolaBuscaInput"', html, "Input de busca #escolaBuscaInput ausente")
         self.assertIn('data-filtro-categoria="todas"', html, "Filtro categoria 'todas' ausente")
+        self.assertIn('data-filtro-categoria="cei"', html, "Filtro categoria 'cei' ausente")
         self.assertIn('id="tabelaEscolas"', html, "Tabela #tabelaEscolas ausente")
         self.assertIn('id="tabelaEscolasBody"', html, "Tbody #tabelaEscolasBody ausente")
 
