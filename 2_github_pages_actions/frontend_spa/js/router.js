@@ -73,11 +73,16 @@ window.OlymposRouter = (function() {
   };
 
   let activePage = 'visao-geral';
+  let suppressNextHashChange = false;
 
   function init() {
     window.addEventListener('hashchange', function() {
+      if (suppressNextHashChange) {
+        suppressNextHashChange = false;
+        return;
+      }
       const hash = window.location.hash.replace('#', '').trim();
-      navegarPara(hash || 'visao-geral', false);
+      navegarPara(hash || 'visao-geral', true);
     });
 
     const initialHash = window.location.hash.replace('#', '').trim();
@@ -100,6 +105,7 @@ window.OlymposRouter = (function() {
       if (replaceState) {
         window.history.replaceState(null, '', '#' + pageId);
       } else {
+        suppressNextHashChange = true;
         window.location.hash = '#' + pageId;
       }
     }

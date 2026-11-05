@@ -78,11 +78,11 @@ window.OlymposViews.busca = (function() {
         const url = item.url || '';
 
         tr.innerHTML =
-          '<td><span class="pill-badge ' + (item.ano === '2026' ? 'pill-green' : 'pill-blue') + '">' + window.OlymposApp.escapeHtml(item.ano || '2026') + '</span></td>' +
-          '<td style="font-size:12.5px; font-weight:600; color:var(--text-secondary);">' + window.OlymposApp.escapeHtml(item.setor || '') + '</td>' +
-          '<td style="font-family:var(--font-mono); font-size:12px; color:var(--text-muted);">' + window.OlymposApp.escapeHtml(dt) + '</td>' +
-          '<td style="font-weight:600; color:var(--text-main);">' + window.OlymposApp.escapeHtml(item.nome || '') + '</td>' +
-          '<td class="text-right">' +
+          '<td data-label="Ano"><span class="pill-badge ' + (item.ano === '2026' ? 'pill-green' : 'pill-blue') + '">' + window.OlymposApp.escapeHtml(item.ano || '2026') + '</span></td>' +
+          '<td data-label="Setor" style="font-size:12.5px; font-weight:600; color:var(--text-secondary);">' + window.OlymposApp.escapeHtml(item.setor || '') + '</td>' +
+          '<td data-label="Criação" style="font-family:var(--font-mono); font-size:12px; color:var(--text-muted);">' + window.OlymposApp.escapeHtml(dt) + '</td>' +
+          '<td data-label="Título do Arquivo" style="font-weight:600; color:var(--text-main);">' + window.OlymposApp.escapeHtml(item.nome || '') + '</td>' +
+          '<td data-label="Acesso" class="text-right">' +
             '<div class="button-group" style="justify-content:flex-end;">' +
               (url ? '<button type="button" class="btn btn-ghost btn-sm btn-copy-search-url">Copiar</button>' : '') +
               (url ? '<a href="' + window.OlymposApp.escapeHtml(url) + '" target="_blank" rel="noopener" class="btn btn-primary btn-sm">Abrir ↗</a>' : '') +

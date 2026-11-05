@@ -884,7 +884,36 @@ if (typeof window !== 'undefined') {
 window.OlymposApi = (function() {
   const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbw-zKUdYJO6Zw1_XHo12a49p2wpgNtfii-2CJOq1838f6S1-L0SYM6iI9A2PS2ZPjYdmQ/exec';
 
+  // IDs de implantações antigas/revogadas que retornam HTTP 404 HTML sem cabeçalho CORS
+  const REVOKED_DEPLOYMENT_IDS = [
+    'AKfycbwM8M-L4QzDmsT3SGSUyuAAwwYri5McqL6HI2AGutVd7ZzXn5mQMfZj1O4eBs-ci2Ub7Q'
+  ];
+
+  function isRevokedOrInvalidUrl(url) {
+    if (!url || typeof url !== 'string' || !url.startsWith('https://')) return true;
+    for (let i = 0; i < REVOKED_DEPLOYMENT_IDS.length; i++) {
+      if (url.includes(REVOKED_DEPLOYMENT_IDS[i])) return true;
+    }
+    return false;
+  }
+
+  function sanitizeStoredApiUrl() {
+    try {
+      const savedA = localStorage.getItem('olympos_api_url');
+      const savedB = localStorage.getItem('olympos_gas_api_url');
+      if (savedA && isRevokedOrInvalidUrl(savedA)) {
+        localStorage.setItem('olympos_api_url', DEFAULT_API_URL);
+      }
+      if (savedB && isRevokedOrInvalidUrl(savedB)) {
+        localStorage.setItem('olympos_gas_api_url', DEFAULT_API_URL);
+      }
+    } catch (e) {}
+  }
+
+  sanitizeStoredApiUrl();
+
   function getApiUrl() {
+    sanitizeStoredApiUrl();
     return localStorage.getItem('olympos_api_url') || localStorage.getItem('olympos_gas_api_url') || DEFAULT_API_URL;
   }
 
@@ -892,8 +921,9 @@ window.OlymposApi = (function() {
     if (!url || !url.startsWith('https://')) {
       throw new Error('A URL da API deve começar com https://');
     }
-    localStorage.setItem('olympos_api_url', url.trim());
-    localStorage.setItem('olympos_gas_api_url', url.trim());
+    const clean = isRevokedOrInvalidUrl(url.trim()) ? DEFAULT_API_URL : url.trim();
+    localStorage.setItem('olympos_api_url', clean);
+    localStorage.setItem('olympos_gas_api_url', clean);
   }
 
   function getSession() {
@@ -957,12 +987,24 @@ window.OlymposApi = (function() {
     // 3. ZERO headers de autorização HTTP (token trafega no corpo JSON)
     // 4. redirect: 'follow' explícito para redirecionamentos do script.googleusercontent.com
     const url = getApiUrl();
-    fetch(url, {
+    const fetchOpts = {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(bodyData),
       redirect: 'follow'
-    })
+    };
+
+    fetch(url, fetchOpts)
+      .catch(function(firstErr) {
+        if (url !== DEFAULT_API_URL) {
+          try {
+            localStorage.setItem('olympos_api_url', DEFAULT_API_URL);
+            localStorage.setItem('olympos_gas_api_url', DEFAULT_API_URL);
+          } catch (e) {}
+          return fetch(DEFAULT_API_URL, fetchOpts);
+        }
+        throw firstErr;
+      })
       .then(function(res) {
         if (!res.ok) {
           throw new Error('Falha HTTP ' + res.status + ': ' + (res.statusText || 'Erro no Gateway'));
@@ -1015,13 +1057,24 @@ window.OlymposApi = (function() {
       token: token,
       _token: token
     };
-
-    fetch(url, {
+    const pingOpts = {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(pingPayload),
       redirect: 'follow'
-    })
+    };
+
+    fetch(url, pingOpts)
+      .catch(function(firstErr) {
+        if (url !== DEFAULT_API_URL) {
+          try {
+            localStorage.setItem('olympos_api_url', DEFAULT_API_URL);
+            localStorage.setItem('olympos_gas_api_url', DEFAULT_API_URL);
+          } catch (e) {}
+          return fetch(DEFAULT_API_URL, pingOpts);
+        }
+        throw firstErr;
+      })
       .then(function(res) {
         if (!res.ok) {
           throw new Error('Falha HTTP ' + res.status + ' (' + (res.statusText || 'Offline') + ')');
@@ -1172,11 +1225,16 @@ window.OlymposRouter = (function() {
   };
 
   let activePage = 'visao-geral';
+  let suppressNextHashChange = false;
 
   function init() {
     window.addEventListener('hashchange', function() {
+      if (suppressNextHashChange) {
+        suppressNextHashChange = false;
+        return;
+      }
       const hash = window.location.hash.replace('#', '').trim();
-      navegarPara(hash || 'visao-geral', false);
+      navegarPara(hash || 'visao-geral', true);
     });
 
     const initialHash = window.location.hash.replace('#', '').trim();
@@ -1199,6 +1257,7 @@ window.OlymposRouter = (function() {
       if (replaceState) {
         window.history.replaceState(null, '', '#' + pageId);
       } else {
+        suppressNextHashChange = true;
         window.location.hash = '#' + pageId;
       }
     }
@@ -1649,34 +1708,63 @@ window.OlymposViews.portarias = (function() {
     }
   }
 
+  function obterCatalogoPadrao(op) {
+    if (op === 'READAPTACOES') {
+      return [
+        {
+          id: '1Mz95vIv024qO62nO1USBtY2iQIrVThaeqcWYOcTQ2X0',
+          nome: 'Planilha Oficial de Readaptações 2026',
+          abas: ['Readaptações 2026', 'Página1']
+        }
+      ];
+    }
+    return [
+      {
+        id: '1agqeKFfubxvmdq2oND3ndykU2037NIuOXBOHVSLS9oc',
+        nome: 'Planilha Oficial de Licenças 2026',
+        abas: ['Licenças 2026', 'Página1']
+      }
+    ];
+  }
+
+  function renderizarOpcoesCatalogo(planSelect) {
+    planSelect.innerHTML = '';
+    if (catalog.length === 0) {
+      planSelect.innerHTML = '<option value="">Nenhuma planilha localizada nesta modalidade</option>';
+      handlePlanilhaChange();
+      return;
+    }
+
+    catalog.forEach(function(item, idx) {
+      const opt = document.createElement('option');
+      opt.value = item.id;
+      opt.textContent = item.nome + ' (' + ((item.abas && item.abas.length) || 0) + ' abas)';
+      if (idx === 0) opt.selected = true;
+      planSelect.appendChild(opt);
+    });
+
+    handlePlanilhaChange();
+  }
+
   function carregarCatalogo() {
     const op = document.getElementById('pincelOperacaoSelect').value;
     const planSelect = document.getElementById('pincelPlanilhaSelect');
     planSelect.innerHTML = '<option value="">Carregando planilhas oficiais...</option>';
 
     window.OlymposApi.chamar('portarias_catalogo', { operacao: op }, function(res) {
-      catalog = Array.isArray(res) ? res : ((res && res.planilhas) || []);
-      isCatalogLoaded = true;
-      planSelect.innerHTML = '';
-
-      if (catalog.length === 0) {
-        planSelect.innerHTML = '<option value="">Nenhuma planilha localizada nesta modalidade</option>';
-        handlePlanilhaChange();
-        return;
+      const lista = Array.isArray(res) ? res : ((res && res.planilhas) || []);
+      if (lista.length === 0 && res && res.status === 'ERRO') {
+        catalog = obterCatalogoPadrao(op);
+      } else {
+        catalog = lista.length > 0 ? lista : obterCatalogoPadrao(op);
       }
-
-      catalog.forEach(function(item, idx) {
-        const opt = document.createElement('option');
-        opt.value = item.id;
-        opt.textContent = item.nome + ' (' + ((item.abas && item.abas.length) || 0) + ' abas)';
-        if (idx === 0) opt.selected = true;
-        planSelect.appendChild(opt);
-      });
-
-      handlePlanilhaChange();
+      isCatalogLoaded = true;
+      renderizarOpcoesCatalogo(planSelect);
     }, function(err) {
-      planSelect.innerHTML = '<option value="">Falha ao consultar planilhas</option>';
-      window.OlymposApp.showToast('Erro ao carregar catálogo de portarias: ' + err.message, true);
+      console.warn('Catálogo de portarias em modo fallback local:', err);
+      catalog = obterCatalogoPadrao(op);
+      isCatalogLoaded = true;
+      renderizarOpcoesCatalogo(planSelect);
     });
   }
 
@@ -1752,18 +1840,18 @@ window.OlymposViews.portarias = (function() {
       if (res.amostraLinhas && res.amostraLinhas.length > 0) {
         html += '<div style="margin-top:14px; font-weight:700; font-size:13px; color:var(--text-main); margin-bottom:6px;">Registros Identificados na Planilha (' + res.amostraLinhas.length + ' linhas)</div>';
         html += '<div class="table-wrapper" style="max-height:260px; overflow-y:auto;">';
-        html += '<table class="clean-table" style="font-size:12px;">';
+        html += '<table class="clean-table table-responsive-cards" style="font-size:12px;">';
         html += '<thead><tr><th>Linha</th><th>Servidor(a)</th><th>Matrícula</th><th>Cargo / Função</th><th>Portaria</th><th>Status</th></tr></thead>';
         html += '<tbody>';
         res.amostraLinhas.forEach(function(item) {
           const badgeClass = item.status === 'DOCUMENTO GERADO' ? 'pill-green' : (item.valida ? 'pill-gold' : 'pill-red');
           html += '<tr>' +
-            '<td><strong>' + item.linha + '</strong></td>' +
-            '<td>' + window.OlymposApp.escapeHtml(item.servidor) + '</td>' +
-            '<td>' + window.OlymposApp.escapeHtml(item.matricula || '—') + '</td>' +
-            '<td>' + window.OlymposApp.escapeHtml(item.cargo || '—') + '</td>' +
-            '<td>' + window.OlymposApp.escapeHtml(item.portaria || 'Automática') + '</td>' +
-            '<td><span class="pill-badge ' + badgeClass + '" style="font-size:11px; padding:2px 8px;">' + window.OlymposApp.escapeHtml(item.status) + '</span></td>' +
+            '<td data-label="Linha"><strong>' + item.linha + '</strong></td>' +
+            '<td data-label="Servidor(a)">' + window.OlymposApp.escapeHtml(item.servidor) + '</td>' +
+            '<td data-label="Matrícula">' + window.OlymposApp.escapeHtml(item.matricula || '—') + '</td>' +
+            '<td data-label="Cargo / Função">' + window.OlymposApp.escapeHtml(item.cargo || '—') + '</td>' +
+            '<td data-label="Portaria">' + window.OlymposApp.escapeHtml(item.portaria || 'Automática') + '</td>' +
+            '<td data-label="Status"><span class="pill-badge ' + badgeClass + '" style="font-size:11px; padding:2px 8px;">' + window.OlymposApp.escapeHtml(item.status) + '</span></td>' +
           '</tr>';
         });
         html += '</tbody></table></div>';
@@ -2374,13 +2462,24 @@ window.OlymposViews.diarioOficial = (function() {
 
     window.OlymposApi.chamar('prometheus_status', {}, function(res) {
       const data = (res && res.data) ? res.data : res;
-      if (!data) return;
-      isLoaded = true;
-
-      const sw = (typeof data.statusWebhook === 'object' && data.statusWebhook) ? data.statusWebhook : {};
       const stElem = document.getElementById('promWebhookStatus');
       const lrElem = document.getElementById('promLastRun');
       const sheetBtn = document.getElementById('promSheetLinkBtn');
+
+      if (!data || data.status === 'ERRO' || (!data.statusWebhook && !data.arquivosDrive)) {
+        isLoaded = true;
+        if (stElem) {
+          stElem.textContent = 'Receptor GAS Pronto • Autentique-se ou execute a varredura FEMURN';
+        }
+        if (lrElem) {
+          lrElem.textContent = 'Última recepção: Aguardando sessão autenticada ou sincronização';
+        }
+        renderizarTabela();
+        return;
+      }
+      isLoaded = true;
+
+      const sw = (typeof data.statusWebhook === 'object' && data.statusWebhook) ? data.statusWebhook : {};
 
       if (stElem) {
         stElem.textContent = sw.webhookAtivo
@@ -2436,6 +2535,16 @@ window.OlymposViews.diarioOficial = (function() {
       renderizarTabela();
     }, function(err) {
       console.warn('Painel Fogo de Prometheus indisponível no momento:', err);
+      isLoaded = true;
+      const stElem = document.getElementById('promWebhookStatus');
+      const lrElem = document.getElementById('promLastRun');
+      if (stElem) {
+        stElem.textContent = 'Modo Offline / Público • Conecte-se ao Gateway para atualizar';
+      }
+      if (lrElem) {
+        lrElem.textContent = 'Última recepção: Sem conexão ativa com o receptor';
+      }
+      renderizarTabela();
     });
   }
 
@@ -4875,9 +4984,9 @@ window.OlymposViews.escolas = (function() {
       var cor = escola.cor || obterCorPorCategoria(escola.categoria, escola.zona);
 
       html += '<tr data-escola-id="' + escola.id + '">';
-      html += '<td>';
+      html += '<td data-label="Unidade Escolar">';
       html +=   '<div style="display: flex; align-items: center; gap: 8px;">';
-      html +=     '<span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: ' + cor + ';"></span>';
+      html +=     '<span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; background: ' + cor + ';"></span>';
       html +=     '<div>';
       html +=       '<strong style="color: var(--text-main); font-size: 13px;">' + escapeHtml(escola.nome) + '</strong>';
       if (escola.inep) {
@@ -4886,16 +4995,16 @@ window.OlymposViews.escolas = (function() {
       html +=     '</div>';
       html +=   '</div>';
       html += '</td>';
-      html += '<td><span class="pill-badge pill-blue" style="font-size: 11px;">' + escapeHtml(escola.categoria || 'Fundamental') + '</span></td>';
-      html += '<td><span style="font-size: 12px; font-weight: 600;">' + escapeHtml(escola.zona || 'Urbana') + '</span></td>';
-      html += '<td>' + escapeHtml(escola.bairroDistrito || '—') + '</td>';
-      html += '<td>';
+      html += '<td data-label="Categoria"><span class="pill-badge pill-blue" style="font-size: 11px;">' + escapeHtml(escola.categoria || 'Fundamental') + '</span></td>';
+      html += '<td data-label="Zona"><span style="font-size: 12px; font-weight: 600;">' + escapeHtml(escola.zona || 'Urbana') + '</span></td>';
+      html += '<td data-label="Bairro / Distrito">' + escapeHtml(escola.bairroDistrito || '—') + '</td>';
+      html += '<td data-label="Coordenadas">';
       html +=   '<span style="font-family: var(--font-mono); font-size: 11.5px; color: var(--text-secondary);">' +
                   lat.toFixed(6) + ', ' + lng.toFixed(6) +
                 '</span>';
       html += '</td>';
-      html += '<td class="text-right" style="white-space: nowrap;">';
-      html +=   '<div style="display: inline-flex; gap: 6px;">';
+      html += '<td data-label="Ações" class="text-right" style="white-space: nowrap;">';
+      html +=   '<div style="display: inline-flex; gap: 6px; flex-wrap: wrap;">';
       html +=     '<button type="button" class="btn btn-secondary btn-mini" title="Visualizar e centralizar no mapa" onclick="window.OlymposViews.escolas.centralizarEscola(' + lat + ', ' + lng + ', \'' + escola.id + '\')">📍 Mapa</button>';
       html +=     '<button type="button" class="btn btn-secondary btn-mini" title="Editar informações cadastrais" onclick="window.OlymposViews.escolas.abrirModalEdicao(\'' + escola.id + '\')">✏️ Editar</button>';
       html +=     '<button type="button" class="btn btn-ghost btn-mini" style="color: #EF4444;" title="Excluir escola" onclick="window.OlymposViews.escolas.excluirEscola(\'' + escola.id + '\')">🗑️</button>';
@@ -6341,11 +6450,11 @@ window.OlymposViews.busca = (function() {
         const url = item.url || '';
 
         tr.innerHTML =
-          '<td><span class="pill-badge ' + (item.ano === '2026' ? 'pill-green' : 'pill-blue') + '">' + window.OlymposApp.escapeHtml(item.ano || '2026') + '</span></td>' +
-          '<td style="font-size:12.5px; font-weight:600; color:var(--text-secondary);">' + window.OlymposApp.escapeHtml(item.setor || '') + '</td>' +
-          '<td style="font-family:var(--font-mono); font-size:12px; color:var(--text-muted);">' + window.OlymposApp.escapeHtml(dt) + '</td>' +
-          '<td style="font-weight:600; color:var(--text-main);">' + window.OlymposApp.escapeHtml(item.nome || '') + '</td>' +
-          '<td class="text-right">' +
+          '<td data-label="Ano"><span class="pill-badge ' + (item.ano === '2026' ? 'pill-green' : 'pill-blue') + '">' + window.OlymposApp.escapeHtml(item.ano || '2026') + '</span></td>' +
+          '<td data-label="Setor" style="font-size:12.5px; font-weight:600; color:var(--text-secondary);">' + window.OlymposApp.escapeHtml(item.setor || '') + '</td>' +
+          '<td data-label="Criação" style="font-family:var(--font-mono); font-size:12px; color:var(--text-muted);">' + window.OlymposApp.escapeHtml(dt) + '</td>' +
+          '<td data-label="Título do Arquivo" style="font-weight:600; color:var(--text-main);">' + window.OlymposApp.escapeHtml(item.nome || '') + '</td>' +
+          '<td data-label="Acesso" class="text-right">' +
             '<div class="button-group" style="justify-content:flex-end;">' +
               (url ? '<button type="button" class="btn btn-ghost btn-sm btn-copy-search-url">Copiar</button>' : '') +
               (url ? '<a href="' + window.OlymposApp.escapeHtml(url) + '" target="_blank" rel="noopener" class="btn btn-primary btn-sm">Abrir ↗</a>' : '') +
@@ -6881,7 +6990,11 @@ window.OlymposApp = (function() {
     if (inCfg && !inCfg.value) inCfg.value = salvo;
     if (inDiario && !inDiario.value) inDiario.value = salvo;
 
-    if (window.OlymposApi && typeof window.OlymposApi.chamar === 'function') {
+    const hasToken = Boolean(
+      currentUserSession ||
+      (window.OlymposApi && typeof window.OlymposApi.getJwtToken === 'function' && window.OlymposApi.getJwtToken())
+    );
+    if (hasToken && window.OlymposApi && typeof window.OlymposApi.chamar === 'function') {
       window.OlymposApi.chamar('prometheus_get_config', {}, function(res) {
         if (res && res.destinatarios) {
           localStorage.setItem('olympos_boletim_emails', res.destinatarios);

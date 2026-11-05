@@ -395,7 +395,11 @@ window.OlymposApp = (function() {
     if (inCfg && !inCfg.value) inCfg.value = salvo;
     if (inDiario && !inDiario.value) inDiario.value = salvo;
 
-    if (window.OlymposApi && typeof window.OlymposApi.chamar === 'function') {
+    const hasToken = Boolean(
+      currentUserSession ||
+      (window.OlymposApi && typeof window.OlymposApi.getJwtToken === 'function' && window.OlymposApi.getJwtToken())
+    );
+    if (hasToken && window.OlymposApi && typeof window.OlymposApi.chamar === 'function') {
       window.OlymposApi.chamar('prometheus_get_config', {}, function(res) {
         if (res && res.destinatarios) {
           localStorage.setItem('olympos_boletim_emails', res.destinatarios);

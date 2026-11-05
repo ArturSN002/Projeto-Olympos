@@ -6,7 +6,36 @@
 window.OlymposApi = (function() {
   const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbw-zKUdYJO6Zw1_XHo12a49p2wpgNtfii-2CJOq1838f6S1-L0SYM6iI9A2PS2ZPjYdmQ/exec';
 
+  // IDs de implantações antigas/revogadas que retornam HTTP 404 HTML sem cabeçalho CORS
+  const REVOKED_DEPLOYMENT_IDS = [
+    'AKfycbwM8M-L4QzDmsT3SGSUyuAAwwYri5McqL6HI2AGutVd7ZzXn5mQMfZj1O4eBs-ci2Ub7Q'
+  ];
+
+  function isRevokedOrInvalidUrl(url) {
+    if (!url || typeof url !== 'string' || !url.startsWith('https://')) return true;
+    for (let i = 0; i < REVOKED_DEPLOYMENT_IDS.length; i++) {
+      if (url.includes(REVOKED_DEPLOYMENT_IDS[i])) return true;
+    }
+    return false;
+  }
+
+  function sanitizeStoredApiUrl() {
+    try {
+      const savedA = localStorage.getItem('olympos_api_url');
+      const savedB = localStorage.getItem('olympos_gas_api_url');
+      if (savedA && isRevokedOrInvalidUrl(savedA)) {
+        localStorage.setItem('olympos_api_url', DEFAULT_API_URL);
+      }
+      if (savedB && isRevokedOrInvalidUrl(savedB)) {
+        localStorage.setItem('olympos_gas_api_url', DEFAULT_API_URL);
+      }
+    } catch (e) {}
+  }
+
+  sanitizeStoredApiUrl();
+
   function getApiUrl() {
+    sanitizeStoredApiUrl();
     return localStorage.getItem('olympos_api_url') || localStorage.getItem('olympos_gas_api_url') || DEFAULT_API_URL;
   }
 
@@ -14,8 +43,9 @@ window.OlymposApi = (function() {
     if (!url || !url.startsWith('https://')) {
       throw new Error('A URL da API deve começar com https://');
     }
-    localStorage.setItem('olympos_api_url', url.trim());
-    localStorage.setItem('olympos_gas_api_url', url.trim());
+    const clean = isRevokedOrInvalidUrl(url.trim()) ? DEFAULT_API_URL : url.trim();
+    localStorage.setItem('olympos_api_url', clean);
+    localStorage.setItem('olympos_gas_api_url', clean);
   }
 
   function getSession() {
@@ -79,12 +109,24 @@ window.OlymposApi = (function() {
     // 3. ZERO headers de autorização HTTP (token trafega no corpo JSON)
     // 4. redirect: 'follow' explícito para redirecionamentos do script.googleusercontent.com
     const url = getApiUrl();
-    fetch(url, {
+    const fetchOpts = {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(bodyData),
       redirect: 'follow'
-    })
+    };
+
+    fetch(url, fetchOpts)
+      .catch(function(firstErr) {
+        if (url !== DEFAULT_API_URL) {
+          try {
+            localStorage.setItem('olympos_api_url', DEFAULT_API_URL);
+            localStorage.setItem('olympos_gas_api_url', DEFAULT_API_URL);
+          } catch (e) {}
+          return fetch(DEFAULT_API_URL, fetchOpts);
+        }
+        throw firstErr;
+      })
       .then(function(res) {
         if (!res.ok) {
           throw new Error('Falha HTTP ' + res.status + ': ' + (res.statusText || 'Erro no Gateway'));
@@ -137,13 +179,24 @@ window.OlymposApi = (function() {
       token: token,
       _token: token
     };
-
-    fetch(url, {
+    const pingOpts = {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(pingPayload),
       redirect: 'follow'
-    })
+    };
+
+    fetch(url, pingOpts)
+      .catch(function(firstErr) {
+        if (url !== DEFAULT_API_URL) {
+          try {
+            localStorage.setItem('olympos_api_url', DEFAULT_API_URL);
+            localStorage.setItem('olympos_gas_api_url', DEFAULT_API_URL);
+          } catch (e) {}
+          return fetch(DEFAULT_API_URL, pingOpts);
+        }
+        throw firstErr;
+      })
       .then(function(res) {
         if (!res.ok) {
           throw new Error('Falha HTTP ' + res.status + ' (' + (res.statusText || 'Offline') + ')');

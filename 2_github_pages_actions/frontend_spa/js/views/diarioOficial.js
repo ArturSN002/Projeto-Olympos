@@ -49,13 +49,24 @@ window.OlymposViews.diarioOficial = (function() {
 
     window.OlymposApi.chamar('prometheus_status', {}, function(res) {
       const data = (res && res.data) ? res.data : res;
-      if (!data) return;
-      isLoaded = true;
-
-      const sw = (typeof data.statusWebhook === 'object' && data.statusWebhook) ? data.statusWebhook : {};
       const stElem = document.getElementById('promWebhookStatus');
       const lrElem = document.getElementById('promLastRun');
       const sheetBtn = document.getElementById('promSheetLinkBtn');
+
+      if (!data || data.status === 'ERRO' || (!data.statusWebhook && !data.arquivosDrive)) {
+        isLoaded = true;
+        if (stElem) {
+          stElem.textContent = 'Receptor GAS Pronto • Autentique-se ou execute a varredura FEMURN';
+        }
+        if (lrElem) {
+          lrElem.textContent = 'Última recepção: Aguardando sessão autenticada ou sincronização';
+        }
+        renderizarTabela();
+        return;
+      }
+      isLoaded = true;
+
+      const sw = (typeof data.statusWebhook === 'object' && data.statusWebhook) ? data.statusWebhook : {};
 
       if (stElem) {
         stElem.textContent = sw.webhookAtivo
@@ -111,6 +122,16 @@ window.OlymposViews.diarioOficial = (function() {
       renderizarTabela();
     }, function(err) {
       console.warn('Painel Fogo de Prometheus indisponível no momento:', err);
+      isLoaded = true;
+      const stElem = document.getElementById('promWebhookStatus');
+      const lrElem = document.getElementById('promLastRun');
+      if (stElem) {
+        stElem.textContent = 'Modo Offline / Público • Conecte-se ao Gateway para atualizar';
+      }
+      if (lrElem) {
+        lrElem.textContent = 'Última recepção: Sem conexão ativa com o receptor';
+      }
+      renderizarTabela();
     });
   }
 

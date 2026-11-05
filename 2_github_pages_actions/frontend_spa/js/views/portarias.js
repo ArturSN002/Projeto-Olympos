@@ -55,34 +55,63 @@ window.OlymposViews.portarias = (function() {
     }
   }
 
+  function obterCatalogoPadrao(op) {
+    if (op === 'READAPTACOES') {
+      return [
+        {
+          id: '1Mz95vIv024qO62nO1USBtY2iQIrVThaeqcWYOcTQ2X0',
+          nome: 'Planilha Oficial de Readaptações 2026',
+          abas: ['Readaptações 2026', 'Página1']
+        }
+      ];
+    }
+    return [
+      {
+        id: '1agqeKFfubxvmdq2oND3ndykU2037NIuOXBOHVSLS9oc',
+        nome: 'Planilha Oficial de Licenças 2026',
+        abas: ['Licenças 2026', 'Página1']
+      }
+    ];
+  }
+
+  function renderizarOpcoesCatalogo(planSelect) {
+    planSelect.innerHTML = '';
+    if (catalog.length === 0) {
+      planSelect.innerHTML = '<option value="">Nenhuma planilha localizada nesta modalidade</option>';
+      handlePlanilhaChange();
+      return;
+    }
+
+    catalog.forEach(function(item, idx) {
+      const opt = document.createElement('option');
+      opt.value = item.id;
+      opt.textContent = item.nome + ' (' + ((item.abas && item.abas.length) || 0) + ' abas)';
+      if (idx === 0) opt.selected = true;
+      planSelect.appendChild(opt);
+    });
+
+    handlePlanilhaChange();
+  }
+
   function carregarCatalogo() {
     const op = document.getElementById('pincelOperacaoSelect').value;
     const planSelect = document.getElementById('pincelPlanilhaSelect');
     planSelect.innerHTML = '<option value="">Carregando planilhas oficiais...</option>';
 
     window.OlymposApi.chamar('portarias_catalogo', { operacao: op }, function(res) {
-      catalog = Array.isArray(res) ? res : ((res && res.planilhas) || []);
-      isCatalogLoaded = true;
-      planSelect.innerHTML = '';
-
-      if (catalog.length === 0) {
-        planSelect.innerHTML = '<option value="">Nenhuma planilha localizada nesta modalidade</option>';
-        handlePlanilhaChange();
-        return;
+      const lista = Array.isArray(res) ? res : ((res && res.planilhas) || []);
+      if (lista.length === 0 && res && res.status === 'ERRO') {
+        catalog = obterCatalogoPadrao(op);
+      } else {
+        catalog = lista.length > 0 ? lista : obterCatalogoPadrao(op);
       }
-
-      catalog.forEach(function(item, idx) {
-        const opt = document.createElement('option');
-        opt.value = item.id;
-        opt.textContent = item.nome + ' (' + ((item.abas && item.abas.length) || 0) + ' abas)';
-        if (idx === 0) opt.selected = true;
-        planSelect.appendChild(opt);
-      });
-
-      handlePlanilhaChange();
+      isCatalogLoaded = true;
+      renderizarOpcoesCatalogo(planSelect);
     }, function(err) {
-      planSelect.innerHTML = '<option value="">Falha ao consultar planilhas</option>';
-      window.OlymposApp.showToast('Erro ao carregar catálogo de portarias: ' + err.message, true);
+      console.warn('Catálogo de portarias em modo fallback local:', err);
+      catalog = obterCatalogoPadrao(op);
+      isCatalogLoaded = true;
+      renderizarOpcoesCatalogo(planSelect);
     });
   }
 
@@ -158,18 +187,18 @@ window.OlymposViews.portarias = (function() {
       if (res.amostraLinhas && res.amostraLinhas.length > 0) {
         html += '<div style="margin-top:14px; font-weight:700; font-size:13px; color:var(--text-main); margin-bottom:6px;">Registros Identificados na Planilha (' + res.amostraLinhas.length + ' linhas)</div>';
         html += '<div class="table-wrapper" style="max-height:260px; overflow-y:auto;">';
-        html += '<table class="clean-table" style="font-size:12px;">';
+        html += '<table class="clean-table table-responsive-cards" style="font-size:12px;">';
         html += '<thead><tr><th>Linha</th><th>Servidor(a)</th><th>Matrícula</th><th>Cargo / Função</th><th>Portaria</th><th>Status</th></tr></thead>';
         html += '<tbody>';
         res.amostraLinhas.forEach(function(item) {
           const badgeClass = item.status === 'DOCUMENTO GERADO' ? 'pill-green' : (item.valida ? 'pill-gold' : 'pill-red');
           html += '<tr>' +
-            '<td><strong>' + item.linha + '</strong></td>' +
-            '<td>' + window.OlymposApp.escapeHtml(item.servidor) + '</td>' +
-            '<td>' + window.OlymposApp.escapeHtml(item.matricula || '—') + '</td>' +
-            '<td>' + window.OlymposApp.escapeHtml(item.cargo || '—') + '</td>' +
-            '<td>' + window.OlymposApp.escapeHtml(item.portaria || 'Automática') + '</td>' +
-            '<td><span class="pill-badge ' + badgeClass + '" style="font-size:11px; padding:2px 8px;">' + window.OlymposApp.escapeHtml(item.status) + '</span></td>' +
+            '<td data-label="Linha"><strong>' + item.linha + '</strong></td>' +
+            '<td data-label="Servidor(a)">' + window.OlymposApp.escapeHtml(item.servidor) + '</td>' +
+            '<td data-label="Matrícula">' + window.OlymposApp.escapeHtml(item.matricula || '—') + '</td>' +
+            '<td data-label="Cargo / Função">' + window.OlymposApp.escapeHtml(item.cargo || '—') + '</td>' +
+            '<td data-label="Portaria">' + window.OlymposApp.escapeHtml(item.portaria || 'Automática') + '</td>' +
+            '<td data-label="Status"><span class="pill-badge ' + badgeClass + '" style="font-size:11px; padding:2px 8px;">' + window.OlymposApp.escapeHtml(item.status) + '</span></td>' +
           '</tr>';
         });
         html += '</tbody></table></div>';

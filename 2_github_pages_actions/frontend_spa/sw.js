@@ -3,7 +3,7 @@
  * Estratégia: Cache de Shell Estático Offline com proteção absoluta de chamadas dinâmicas.
  */
 
-const CACHE_NAME = 'olympos-shell-v2.2.0';
+const CACHE_NAME = 'olympos-shell-v2.5.0';
 
 const SHELL_ASSETS = [
   './',
@@ -21,6 +21,7 @@ const SHELL_ASSETS = [
   './js/setup_modal.js',
   './js/memorias_catalogo.js',
   './js/olympos_password_guard.js',
+  './js/data/escolasCearaMirim.js',
   './js/views/visaoGeral.js',
   './js/views/oficios.js',
   './js/views/portarias.js',
@@ -28,6 +29,7 @@ const SHELL_ASSETS = [
   './js/views/certificados.js',
   './js/views/diarioOficial.js',
   './js/views/papiroCadmo.js',
+  './js/views/escolas.js',
   './js/views/personas.js',
   './js/views/busca.js',
   './js/views/configuracoes.js'
@@ -88,22 +90,18 @@ self.addEventListener('fetch', function(event) {
     return;
   }
 
-  // 4. Recursos do Shell Estático (CSS, JS, Imagens, Fontes, Manifest): Stale-While-Revalidate
+  // 4. Recursos do Shell Estático (CSS, JS, Imagens, Fontes, Manifest): Network-First com fallback para Cache
   event.respondWith(
-    caches.match(req).then(function(cachedResponse) {
-      const fetchPromise = fetch(req).then(function(networkResponse) {
-        if (networkResponse && networkResponse.status === 200) {
-          const clone = networkResponse.clone();
-          caches.open(CACHE_NAME).then(function(cache) {
-            cache.put(req, clone);
-          });
-        }
-        return networkResponse;
-      }).catch(function() {
-        return cachedResponse;
-      });
-
-      return cachedResponse || fetchPromise;
+    fetch(req).then(function(networkResponse) {
+      if (networkResponse && networkResponse.status === 200) {
+        const clone = networkResponse.clone();
+        caches.open(CACHE_NAME).then(function(cache) {
+          cache.put(req, clone);
+        });
+      }
+      return networkResponse;
+    }).catch(function() {
+      return caches.match(req);
     })
   );
 });

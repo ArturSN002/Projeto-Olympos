@@ -26,6 +26,12 @@ PAPIRO_MIRROR = BASE_DIR / "papiro-de-cadmo" / "pipeline"
 def sync_gas_templates():
     print("[1/4] Gerando templates GAS em Olympos/1_google_apps_script/hub_webapp/...")
     
+    # 0. Garante paridade estrita entre styles.css e css/style.css em frontend_spa
+    spa_css_dir = SPA_DIR / "css"
+    spa_css_dir.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(SPA_DIR / "styles.css", spa_css_dir / "style.css")
+    print("  -> frontend_spa/css/style.css sincronizado com styles.css")
+
     # 1. ui_styles.html
     css_content = (SPA_DIR / "styles.css").read_text(encoding="utf-8")
     ui_styles_path = GAS_DIR / "ui_styles.html"

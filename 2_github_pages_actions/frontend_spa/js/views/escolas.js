@@ -413,9 +413,9 @@ window.OlymposViews.escolas = (function() {
       var cor = escola.cor || obterCorPorCategoria(escola.categoria, escola.zona);
 
       html += '<tr data-escola-id="' + escola.id + '">';
-      html += '<td>';
+      html += '<td data-label="Unidade Escolar">';
       html +=   '<div style="display: flex; align-items: center; gap: 8px;">';
-      html +=     '<span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: ' + cor + ';"></span>';
+      html +=     '<span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; background: ' + cor + ';"></span>';
       html +=     '<div>';
       html +=       '<strong style="color: var(--text-main); font-size: 13px;">' + escapeHtml(escola.nome) + '</strong>';
       if (escola.inep) {
@@ -424,16 +424,16 @@ window.OlymposViews.escolas = (function() {
       html +=     '</div>';
       html +=   '</div>';
       html += '</td>';
-      html += '<td><span class="pill-badge pill-blue" style="font-size: 11px;">' + escapeHtml(escola.categoria || 'Fundamental') + '</span></td>';
-      html += '<td><span style="font-size: 12px; font-weight: 600;">' + escapeHtml(escola.zona || 'Urbana') + '</span></td>';
-      html += '<td>' + escapeHtml(escola.bairroDistrito || '—') + '</td>';
-      html += '<td>';
+      html += '<td data-label="Categoria"><span class="pill-badge pill-blue" style="font-size: 11px;">' + escapeHtml(escola.categoria || 'Fundamental') + '</span></td>';
+      html += '<td data-label="Zona"><span style="font-size: 12px; font-weight: 600;">' + escapeHtml(escola.zona || 'Urbana') + '</span></td>';
+      html += '<td data-label="Bairro / Distrito">' + escapeHtml(escola.bairroDistrito || '—') + '</td>';
+      html += '<td data-label="Coordenadas">';
       html +=   '<span style="font-family: var(--font-mono); font-size: 11.5px; color: var(--text-secondary);">' +
                   lat.toFixed(6) + ', ' + lng.toFixed(6) +
                 '</span>';
       html += '</td>';
-      html += '<td class="text-right" style="white-space: nowrap;">';
-      html +=   '<div style="display: inline-flex; gap: 6px;">';
+      html += '<td data-label="Ações" class="text-right" style="white-space: nowrap;">';
+      html +=   '<div style="display: inline-flex; gap: 6px; flex-wrap: wrap;">';
       html +=     '<button type="button" class="btn btn-secondary btn-mini" title="Visualizar e centralizar no mapa" onclick="window.OlymposViews.escolas.centralizarEscola(' + lat + ', ' + lng + ', \'' + escola.id + '\')">📍 Mapa</button>';
       html +=     '<button type="button" class="btn btn-secondary btn-mini" title="Editar informações cadastrais" onclick="window.OlymposViews.escolas.abrirModalEdicao(\'' + escola.id + '\')">✏️ Editar</button>';
       html +=     '<button type="button" class="btn btn-ghost btn-mini" style="color: #EF4444;" title="Excluir escola" onclick="window.OlymposViews.escolas.excluirEscola(\'' + escola.id + '\')">🗑️</button>';

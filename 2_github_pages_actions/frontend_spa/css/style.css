@@ -1950,21 +1950,40 @@ body.nav-drawer-open .sidebar-backdrop,
     display: block !important;
   }
 
+  #escolaBuscaInput,
+  #prometheusSearchInput {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
   .clean-table th,
   .clean-table td {
     padding: 10px 12px !important;
-    font-size: 12px !important;
+    font-size: 12.5px !important;
     white-space: normal !important;
-    word-break: break-word;
-    overflow-wrap: anywhere;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+    hyphens: none !important;
+  }
+
+  .clean-table:not(.table-responsive-cards) {
+    min-width: 580px !important;
+  }
+
+  .clean-table:not(.table-responsive-cards) th {
+    white-space: nowrap !important;
   }
 
   .clean-table td[colspan] {
     white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
   }
 
   .empty-state-card {
     white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
     max-width: 100% !important;
     box-sizing: border-box !important;
   }
@@ -1990,8 +2009,8 @@ body.nav-drawer-open .sidebar-backdrop,
   }
 }
 
-/* Layout em Cartões para Telas Móveis (<= 680px) — Diário Oficial e Publicações */
-@media (max-width: 680px) {
+/* Layout em Cartões para Telas Móveis (<= 768px & <= 680px) — Tabelas Responsivas sem Quebra de Sílabas */
+@media (max-width: 768px), (max-width: 680px) {
   .table-responsive-cards thead {
     display: none !important;
   }
@@ -2001,6 +2020,7 @@ body.nav-drawer-open .sidebar-backdrop,
   .table-responsive-cards td {
     display: block !important;
     width: 100% !important;
+    min-width: 0 !important;
     box-sizing: border-box !important;
   }
   .table-responsive-cards tr {
@@ -2012,39 +2032,73 @@ body.nav-drawer-open .sidebar-backdrop,
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   }
   .table-responsive-cards td {
-    padding: 4px 0 !important;
+    padding: 5px 0 !important;
     border-bottom: none !important;
+    text-align: left !important;
     white-space: normal !important;
-    word-break: break-word;
-    overflow-wrap: anywhere;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+    hyphens: none !important;
+    line-height: 1.45 !important;
+  }
+  .table-responsive-cards td[data-label]:not([data-label="Unidade Escolar"]):not([data-label="Ato Oficial"]):not([data-label="Título do Arquivo"]):not([data-label="Documento"]):not([data-label="Ações"]):not([data-label="Acesso"])::before {
+    content: attr(data-label) ": ";
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    margin-right: 6px;
   }
   .table-responsive-cards td[data-label="Data"] {
-    font-size: 11.5px !important;
-    color: var(--text-muted);
+    font-size: 12px !important;
+    color: var(--text-secondary);
   }
   .table-responsive-cards td[data-label="Setor"] {
     margin: 4px 0 6px;
   }
-  .table-responsive-cards td[data-label="Ato Oficial"] {
-    margin-bottom: 8px;
+  .table-responsive-cards td[data-label="Unidade Escolar"],
+  .table-responsive-cards td[data-label="Ato Oficial"],
+  .table-responsive-cards td[data-label="Título do Arquivo"] {
+    margin-bottom: 6px;
+    padding-bottom: 6px !important;
+    border-bottom: 1px solid var(--border-hairline) !important;
   }
   .table-responsive-cards td[data-label="Documento"],
-  .table-responsive-cards td:last-child {
+  .table-responsive-cards td[data-label="Ações"],
+  .table-responsive-cards td[data-label="Acesso"],
+  .table-responsive-cards td:last-child:not([colspan]):not(.skeleton-cell) {
     margin-top: 10px;
-    padding-top: 8px !important;
+    padding-top: 10px !important;
     border-top: 1px dashed var(--border-hairline) !important;
-    text-align: right;
+    text-align: left !important;
+  }
+  .table-responsive-cards td[data-label="Documento"] > div,
+  .table-responsive-cards td[data-label="Ações"] > div,
+  .table-responsive-cards td[data-label="Acesso"] > div,
+  .table-responsive-cards td:last-child > div {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    width: 100% !important;
+    justify-content: stretch !important;
   }
   .table-responsive-cards td[data-label="Documento"] .btn,
+  .table-responsive-cards td[data-label="Ações"] .btn,
+  .table-responsive-cards td[data-label="Acesso"] .btn,
   .table-responsive-cards td:last-child .btn {
-    width: 100% !important;
-    justify-content: center !important;
+    flex: 1 1 auto !important;
+    width: auto !important;
     min-height: 44px !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
   }
   .table-responsive-cards td[colspan] {
-    padding: 0 !important;
+    padding: 12px !important;
     border: none !important;
     background: transparent !important;
+    text-align: center !important;
   }
   .table-responsive-cards tr:has(td[colspan]) {
     padding: 0 !important;
