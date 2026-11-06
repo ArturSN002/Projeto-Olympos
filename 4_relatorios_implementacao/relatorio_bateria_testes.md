@@ -1,7 +1,7 @@
 # Relatório da Bateria de Testes Automatizados e Portão de Qualidade (Quality Gate)
 ## Projeto Olympos — Secretaria Municipal de Educação Básica (SMEB de Ceará-Mirim/RN)
 
-**Data da Execução**: 2026-11-05 23:12:05 UTC  
+**Data da Execução**: 2026-11-06 02:41:13 UTC  
 **Ambiente**: Python 3.13.1 | Node.js V8 Engine | Windows Local Host  
 **Status Geral do Quality Gate**: 🟢 **APROVADO (100% PASS)**  
 
@@ -16,12 +16,12 @@ A suíte de testes automatizados do Projeto Olympos implementa um portão de qua
 | Métrica | Valor Obtido | Meta Mínima Requerida | Status |
 |---|---|---|---|
 | **Total de Módulos Executados** | 9 | >= 6 módulos | 🟢 Conforme |
-| **Total de Testes Unitários/Integração** | 104 | >= 40 testes | 🟢 Conforme |
-| **Testes Aprovados (Passed)** | 104 | 100% dos testes | 🟢 Conforme |
+| **Total de Testes Unitários/Integração** | 105 | >= 40 testes | 🟢 Conforme |
+| **Testes Aprovados (Passed)** | 105 | 100% dos testes | 🟢 Conforme |
 | **Falhas / Erros Detectados** | 0 | 0 falhas | 🟢 Zero Falhas |
 | **Testes Ignorados (Skipped)** | 0 | 0 | 🟢 Nenhum |
 | **Taxa de Sucesso (Pass Rate)** | **100.0%** | 100.0% | 🟢 100% Aprovado |
-| **Tempo Total de Execução** | 11.49 segundos | < 60 segundos | 🟢 Excelente |
+| **Tempo Total de Execução** | 11.30 segundos | < 60 segundos | 🟢 Excelente |
 
 ---
 
@@ -29,15 +29,15 @@ A suíte de testes automatizados do Projeto Olympos implementa um portão de qua
 
 | Módulo | Escopo / Componente | Testes | Aprovados | Falhas | Duração | Resultado |
 |---|---|:---:|:---:|:---:|:---:|:---:|
-| **M1** - `test_js_syntax.py` | Validação de Sintaxe JS/GAS e Erradicação de Senhas Hardcoded | 6 | 6 | 0 | 6.143s | 🟢 PASS |
-| **M2** - `test_python_engines.py` | Motores ETL e Raspadores Python (Fogo de Prometheus e Papiro de Cadmo) | 14 | 14 | 0 | 0.105s | 🟢 PASS |
-| **M3** - `test_sql_migrations.py` | Migrações SQL Supabase, RLS, RPCs e Criptografia pgcrypto | 11 | 11 | 0 | 0.198s | 🟢 PASS |
-| **M4** - `test_security_scanner.py` | Scanner Estático de Segredos, PII, XSS e Repositórios Aninhados | 6 | 6 | 0 | 2.659s | 🟢 PASS |
-| **M5** - `test_workflows_yaml.py` | Manifestos de CI/CD do GitHub Actions e Auditoria de Secrets | 7 | 7 | 0 | 0.074s | 🟢 PASS |
-| **M6** - `test_ui_responsiveness.py` | Interface SPA, Viewport, Media Queries, Temas Light/Dark e Acessibilidade | 20 | 20 | 0 | 0.021s | 🟢 PASS |
+| **M1** - `test_js_syntax.py` | Validação de Sintaxe JS/GAS e Erradicação de Senhas Hardcoded | 6 | 6 | 0 | 6.166s | 🟢 PASS |
+| **M2** - `test_python_engines.py` | Motores ETL e Raspadores Python (Fogo de Prometheus e Papiro de Cadmo) | 14 | 14 | 0 | 0.056s | 🟢 PASS |
+| **M3** - `test_sql_migrations.py` | Migrações SQL Supabase, RLS, RPCs e Criptografia pgcrypto | 11 | 11 | 0 | 0.092s | 🟢 PASS |
+| **M4** - `test_security_scanner.py` | Scanner Estático de Segredos, PII, XSS e Repositórios Aninhados | 6 | 6 | 0 | 2.747s | 🟢 PASS |
+| **M5** - `test_workflows_yaml.py` | Manifestos de CI/CD do GitHub Actions e Auditoria de Secrets | 7 | 7 | 0 | 0.069s | 🟢 PASS |
+| **M6** - `test_ui_responsiveness.py` | Interface SPA, Viewport, Media Queries, Temas Light/Dark e Acessibilidade | 21 | 21 | 0 | 0.027s | 🟢 PASS |
 | **M7** - `test_canonical_ids_and_cors.py` | Alinhamento Canônico de IDs, CORS Simple Requests e Catálogo Offline | 10 | 10 | 0 | 0.006s | 🟢 PASS |
-| **M8** - `test_fases_1_a_5_expansion.py` | Bateria Expandida Fases 1 a 5 (Boletim, Gemini, PWA, UI/UX, Permutas e pgvector) | 23 | 23 | 0 | 0.190s | 🟢 PASS |
-| **M9** - `test_escolas_map.py` | Georreferenciamento Cartográfico e Gestão das Escolas Municipais | 7 | 7 | 0 | 0.654s | 🟢 PASS |
+| **M8** - `test_fases_1_a_5_expansion.py` | Bateria Expandida Fases 1 a 5 (Boletim, Gemini, PWA, UI/UX, Permutas e pgvector) | 23 | 23 | 0 | 0.246s | 🟢 PASS |
+| **M9** - `test_escolas_map.py` | Georreferenciamento Cartográfico e Gestão das Escolas Municipais | 7 | 7 | 0 | 0.534s | 🟢 PASS |
 
 ---
 
@@ -46,114 +46,115 @@ A suíte de testes automatizados do Projeto Olympos implementa um portão de qua
 ### 3.1. Módulo M1: `test_js_syntax.py`
 **Nome**: Validação de Sintaxe JS/GAS e Erradicação de Senhas Hardcoded  
 **Objetivo**: Verificação de sintaxe V8 com Node vm.Script e assertiva estrita de ausência de senhas em texto puro.  
-**Duração**: 6.143s | **Casos Executados**: 6 | **Aprovados**: 6  
+**Duração**: 6.166s | **Casos Executados**: 6 | **Aprovados**: 6  
 
 | Caso de Teste | Descrição da Verificação | Duração | Resultado |
 |---|---|:---:|:---:|
-| `test_01_no_banned_keywords_in_any_js_gs_html` | Assegura que ZERO arquivos contenham senhas hardcoded ou variáveis de demo legadas. | 0.7107s | 🟢 PASS |
-| `test_02_gas_scripts_syntax` | Valida que todos os arquivos .gs (Google Apps Script) possuem sintaxe V8 válida. | 2.1419s | 🟢 PASS |
-| `test_03_frontend_spa_js_syntax` | Valida que todos os arquivos .js da SPA possuem sintaxe JavaScript válida. | 2.2016s | 🟢 PASS |
-| `test_04_html_embedded_scripts_syntax` | Extrai blocos <script> inline de arquivos .html e valida a sintaxe JS de cada bloco. | 1.0873s | 🟢 PASS |
-| `test_05_supabase_service_in_gas_uses_script_properties` | Garante que o backend GAS utilize ScriptProperties para conectar ao Supabase sem credenciais hardcoded. | 0.0004s | 🟢 PASS |
-| `test_06_frontend_auth_and_setup_modal_components` | Verifica a presença e estrutura dos módulos frontend de setup e cliente Supabase. | 0.0005s | 🟢 PASS |
+| `test_01_no_banned_keywords_in_any_js_gs_html` | Assegura que ZERO arquivos contenham senhas hardcoded ou variáveis de demo legadas. | 0.7246s | 🟢 PASS |
+| `test_02_gas_scripts_syntax` | Valida que todos os arquivos .gs (Google Apps Script) possuem sintaxe V8 válida. | 2.1946s | 🟢 PASS |
+| `test_03_frontend_spa_js_syntax` | Valida que todos os arquivos .js da SPA possuem sintaxe JavaScript válida. | 2.2673s | 🟢 PASS |
+| `test_04_html_embedded_scripts_syntax` | Extrai blocos <script> inline de arquivos .html e valida a sintaxe JS de cada bloco. | 0.9775s | 🟢 PASS |
+| `test_05_supabase_service_in_gas_uses_script_properties` | Garante que o backend GAS utilize ScriptProperties para conectar ao Supabase sem credenciais hardcoded. | 0.0006s | 🟢 PASS |
+| `test_06_frontend_auth_and_setup_modal_components` | Verifica a presença e estrutura dos módulos frontend de setup e cliente Supabase. | 0.0009s | 🟢 PASS |
 
 ### 3.2. Módulo M2: `test_python_engines.py`
 **Nome**: Motores ETL e Raspadores Python (Fogo de Prometheus e Papiro de Cadmo)  
 **Objetivo**: Testes unitários de normalização de esquemas, extração NER, payloads do Supabase e resiliência a variáveis ausentes.  
-**Duração**: 0.105s | **Casos Executados**: 14 | **Aprovados**: 14  
+**Duração**: 0.056s | **Casos Executados**: 14 | **Aprovados**: 14  
 
 | Caso de Teste | Descrição da Verificação | Duração | Resultado |
 |---|---|:---:|:---:|
-| `test_01_normalizar_texto_sem_acentos` | Valida que textos com acentuação e caracteres especiais são normalizados para ASCII minúsculo. | 0.0002s | 🟢 PASS |
+| `test_01_normalizar_texto_sem_acentos` | Valida que textos com acentuação e caracteres especiais são normalizados para ASCII minúsculo. | 0.0001s | 🟢 PASS |
 | `test_02_contem_palavra_chave` | Valida a detecção semântica insensível a caixa e acentuação de termos-chave educacionais. | 0.0001s | 🟢 PASS |
-| `test_03_classificar_tipo_ato` | Valida a classificação hierárquica correta de matérias oficiais publicadas no Diário. | 0.0001s | 🟢 PASS |
-| `test_04_extrair_entidades_estruturadas_ner` | Testa o extrator de entidades nomeadas (NER Leve) para identificar número do ato, matrícula e servidor. | 0.0041s | 🟢 PASS |
-| `test_04b_formatar_nome_arquivo_oficial` | Valida a padronização oficial de nomes de arquivos do Diário Oficial (ex: Portaria - SMEB nº 163 de 29 de Outubro de 2026.pdf). | 0.0004s | 🟢 PASS |
-| `test_05_obter_intervalo_datas` | Testa o comportamento do seletor de datas com e sem variáveis customizadas. | 0.0100s | 🟢 PASS |
-| `test_06_sincronizar_supabase_publicacoes_payload_and_mock` | Testa o batch upsert de matérias mineradas no Supabase simulando chamadas HTTP mockadas. | 0.0021s | 🟢 PASS |
-| `test_07_sincronizar_supabase_missing_env_vars_handled_gracefully` | Verifica que a ausência de chaves de ambiente não lança exceção não tratada. | 0.0010s | 🟢 PASS |
-| `test_08_normalizar_dataframe_schema_and_synonyms` | Valida que o normalizador mapeia sinônimos de colunas para o esquema canônico de 8 colunas. | 0.0180s | 🟢 PASS |
-| `test_09_normalizar_dataframe_filters_empty_records` | Valida que registros com nome de servidor vazio são descartados. | 0.0290s | 🟢 PASS |
-| `test_10_cadmo_supabase_ingestion_payload_and_mock` | Testa a ingestão em lote para a tabela folha_intermunicipal mockando a chamada HTTP. | 0.0168s | 🟢 PASS |
-| `test_11_cadmo_supabase_missing_env_vars_and_missing_file_handled` | Valida que ausência de credenciais ou arquivo inexistente retorna False sem interrupção fatal. | 0.0028s | 🟢 PASS |
-| `test_12_normalizador_ler_csv_transparencia_title_rows_and_spaces` | Valida que ler_csv_transparencia ignora linhas de título no início e apara espaços nos cabeçalhos. | 0.0195s | 🟢 PASS |
-| `test_13_cruzador_vinculos_art37_auditoria` | Valida auditoria constitucional CF/88 Art. 37, XVI (dois cargos de professor até 60h). | 0.0003s | 🟢 PASS |
+| `test_03_classificar_tipo_ato` | Valida a classificação hierárquica correta de matérias oficiais publicadas no Diário. | 0.0012s | 🟢 PASS |
+| `test_04_extrair_entidades_estruturadas_ner` | Testa o extrator de entidades nomeadas (NER Leve) para identificar número do ato, matrícula e servidor. | 0.0082s | 🟢 PASS |
+| `test_04b_formatar_nome_arquivo_oficial` | Valida a padronização oficial de nomes de arquivos do Diário Oficial (ex: Portaria - SMEB nº 163 de 29 de Outubro de 2026.pdf). | 0.0005s | 🟢 PASS |
+| `test_05_obter_intervalo_datas` | Testa o comportamento do seletor de datas com e sem variáveis customizadas. | 0.0028s | 🟢 PASS |
+| `test_06_sincronizar_supabase_publicacoes_payload_and_mock` | Testa o batch upsert de matérias mineradas no Supabase simulando chamadas HTTP mockadas. | 0.0022s | 🟢 PASS |
+| `test_07_sincronizar_supabase_missing_env_vars_handled_gracefully` | Verifica que a ausência de chaves de ambiente não lança exceção não tratada. | 0.0012s | 🟢 PASS |
+| `test_08_normalizar_dataframe_schema_and_synonyms` | Valida que o normalizador mapeia sinônimos de colunas para o esquema canônico de 8 colunas. | 0.0094s | 🟢 PASS |
+| `test_09_normalizar_dataframe_filters_empty_records` | Valida que registros com nome de servidor vazio são descartados. | 0.0078s | 🟢 PASS |
+| `test_10_cadmo_supabase_ingestion_payload_and_mock` | Testa a ingestão em lote para a tabela folha_intermunicipal mockando a chamada HTTP. | 0.0086s | 🟢 PASS |
+| `test_11_cadmo_supabase_missing_env_vars_and_missing_file_handled` | Valida que ausência de credenciais ou arquivo inexistente retorna False sem interrupção fatal. | 0.0022s | 🟢 PASS |
+| `test_12_normalizador_ler_csv_transparencia_title_rows_and_spaces` | Valida que ler_csv_transparencia ignora linhas de título no início e apara espaços nos cabeçalhos. | 0.0106s | 🟢 PASS |
+| `test_13_cruzador_vinculos_art37_auditoria` | Valida auditoria constitucional CF/88 Art. 37, XVI (dois cargos de professor até 60h). | 0.0004s | 🟢 PASS |
 
 ### 3.3. Módulo M3: `test_sql_migrations.py`
 **Nome**: Migrações SQL Supabase, RLS, RPCs e Criptografia pgcrypto  
 **Objetivo**: Validação DDL, checagem tri-state de segurança, políticas RLS para as 4 roles, menor privilégio e sanitização de seeds.  
-**Duração**: 0.198s | **Casos Executados**: 11 | **Aprovados**: 11  
+**Duração**: 0.092s | **Casos Executados**: 11 | **Aprovados**: 11  
 
 | Caso de Teste | Descrição da Verificação | Duração | Resultado |
 |---|---|:---:|:---:|
-| `test_01_migrations_and_seed_files_exist` | Assegura a presença dos 4 arquivos de migração ordenados e do arquivo de seed. | 0.0098s | 🟢 PASS |
-| `test_02_sqlglot_syntax_validation` | Valida que todos os arquivos de migração possuem sintaxe SQL PostgreSQL válida via sqlglot. | 0.1699s | 🟢 PASS |
-| `test_03_required_extensions_installed` | Valida a presença de 'pgcrypto' e 'uuid-ossp' criadas em schema apropriado. | 0.0009s | 🟢 PASS |
-| `test_04_core_tables_and_foreign_keys_and_encrypted_columns` | Valida declaração de todas as tabelas requeridas, chaves estrangeiras e colunas criptografadas. | 0.0022s | 🟢 PASS |
-| `test_05_rls_enabled_and_no_force_rls` | Assegura que todas as tabelas possuem RLS habilitado e NENHUMA utiliza FORCE ROW LEVEL SECURITY. | 0.0018s | 🟢 PASS |
-| `test_06_explicit_policies_for_all_4_roles` | Assegura enum de papéis e políticas RLS para todos os 4 papéis do sistema. | 0.0024s | 🟢 PASS |
-| `test_07_rpc_security_and_tristate_auth_check` | Valida que RPCs decriptoras implementam checagem tri-state fail-closed para evitar bypass SQL. | 0.0013s | 🟢 PASS |
-| `test_08_crypto_functions_least_privilege_and_volatile` | Assegura que 'encrypt_pii' é VOLATILE e revoga privilégios de execução de PUBLIC e anon. | 0.0055s | 🟢 PASS |
-| `test_09_blind_index_no_hardcoded_salt` | Assegura que a função generate_blind_index na migração não possui salt ou pepper fixo embutido. | 0.0005s | 🟢 PASS |
-| `test_10_seed_roles_mock_sanitization` | Valida que o arquivo de seed usa dados mock e nenhuma credencial real exposta. | 0.0012s | 🟢 PASS |
-| `test_11_migration_004_security_advisor_remediation` | Valida que a migração 004 elimina rls_auto_enable, reforça search_path e restringe privilégios de execução. | 0.0024s | 🟢 PASS |
+| `test_01_migrations_and_seed_files_exist` | Assegura a presença dos 4 arquivos de migração ordenados e do arquivo de seed. | 0.0005s | 🟢 PASS |
+| `test_02_sqlglot_syntax_validation` | Valida que todos os arquivos de migração possuem sintaxe SQL PostgreSQL válida via sqlglot. | 0.0797s | 🟢 PASS |
+| `test_03_required_extensions_installed` | Valida a presença de 'pgcrypto' e 'uuid-ossp' criadas em schema apropriado. | 0.0008s | 🟢 PASS |
+| `test_04_core_tables_and_foreign_keys_and_encrypted_columns` | Valida declaração de todas as tabelas requeridas, chaves estrangeiras e colunas criptografadas. | 0.0016s | 🟢 PASS |
+| `test_05_rls_enabled_and_no_force_rls` | Assegura que todas as tabelas possuem RLS habilitado e NENHUMA utiliza FORCE ROW LEVEL SECURITY. | 0.0013s | 🟢 PASS |
+| `test_06_explicit_policies_for_all_4_roles` | Assegura enum de papéis e políticas RLS para todos os 4 papéis do sistema. | 0.0007s | 🟢 PASS |
+| `test_07_rpc_security_and_tristate_auth_check` | Valida que RPCs decriptoras implementam checagem tri-state fail-closed para evitar bypass SQL. | 0.0011s | 🟢 PASS |
+| `test_08_crypto_functions_least_privilege_and_volatile` | Assegura que 'encrypt_pii' é VOLATILE e revoga privilégios de execução de PUBLIC e anon. | 0.0025s | 🟢 PASS |
+| `test_09_blind_index_no_hardcoded_salt` | Assegura que a função generate_blind_index na migração não possui salt ou pepper fixo embutido. | 0.0004s | 🟢 PASS |
+| `test_10_seed_roles_mock_sanitization` | Valida que o arquivo de seed usa dados mock e nenhuma credencial real exposta. | 0.0010s | 🟢 PASS |
+| `test_11_migration_004_security_advisor_remediation` | Valida que a migração 004 elimina rls_auto_enable, reforça search_path e restringe privilégios de execução. | 0.0026s | 🟢 PASS |
 
 ### 3.4. Módulo M4: `test_security_scanner.py`
 **Nome**: Scanner Estático de Segredos, PII, XSS e Repositórios Aninhados  
 **Objetivo**: Varredura 100% de arquivos do monorepo contra chaves privadas, tokens de API, CPFs reais válidos, XSS e .git órfãos.  
-**Duração**: 2.659s | **Casos Executados**: 6 | **Aprovados**: 6  
+**Duração**: 2.747s | **Casos Executados**: 6 | **Aprovados**: 6  
 
 | Caso de Teste | Descrição da Verificação | Duração | Resultado |
 |---|---|:---:|:---:|
-| `test_01_no_nested_git_directories` | Assegura que não há diretórios .git aninhados dentro de subpastas (como o repositório legado do Prometheus). | 0.0382s | 🟢 PASS |
-| `test_02_gitignore_covers_sensitive_files` | Valida que o .gitignore oficial contém regras estritas para .env, *.key, *.pem e credentials.json. | 0.0034s | 🟢 PASS |
-| `test_03_no_physical_secret_files_present` | Assegura que nenhum arquivo físico sensível (.env, *.key, *.pem, credentials.json) foi comitado. | 0.0367s | 🟢 PASS |
-| `test_04_repository_wide_secret_and_token_scanner` | Varre recursivamente todo o repositório em busca de assinaturas de chaves privadas e tokens de API. | 2.1403s | 🟢 PASS |
-| `test_05_repository_wide_pii_cpf_leak_scanner` | Varre o repositório e valida que ZERO CPFs reais matematicamente válidos estão expostos sem mascaramento. | 0.4000s | 🟢 PASS |
-| `test_06_frontend_xss_and_injection_audit` | Audita arquivos JavaScript do Frontend SPA para garantir ausência de padrões inseguros (eval, document.write). | 0.0398s | 🟢 PASS |
+| `test_01_no_nested_git_directories` | Assegura que não há diretórios .git aninhados dentro de subpastas (como o repositório legado do Prometheus). | 0.0277s | 🟢 PASS |
+| `test_02_gitignore_covers_sensitive_files` | Valida que o .gitignore oficial contém regras estritas para .env, *.key, *.pem e credentials.json. | 0.0004s | 🟢 PASS |
+| `test_03_no_physical_secret_files_present` | Assegura que nenhum arquivo físico sensível (.env, *.key, *.pem, credentials.json) foi comitado. | 0.0226s | 🟢 PASS |
+| `test_04_repository_wide_secret_and_token_scanner` | Varre recursivamente todo o repositório em busca de assinaturas de chaves privadas e tokens de API. | 2.0836s | 🟢 PASS |
+| `test_05_repository_wide_pii_cpf_leak_scanner` | Varre o repositório e valida que ZERO CPFs reais matematicamente válidos estão expostos sem mascaramento. | 0.5495s | 🟢 PASS |
+| `test_06_frontend_xss_and_injection_audit` | Audita arquivos JavaScript do Frontend SPA para garantir ausência de padrões inseguros (eval, document.write). | 0.0631s | 🟢 PASS |
 
 ### 3.5. Módulo M5: `test_workflows_yaml.py`
 **Nome**: Manifestos de CI/CD do GitHub Actions e Auditoria de Secrets  
 **Objetivo**: Validação sintática YAML, triggers, runners Ubuntu, caminhos físicos no monorepo e vinculação segura de secrets sem fallback.  
-**Duração**: 0.074s | **Casos Executados**: 7 | **Aprovados**: 7  
+**Duração**: 0.069s | **Casos Executados**: 7 | **Aprovados**: 7  
 
 | Caso de Teste | Descrição da Verificação | Duração | Resultado |
 |---|---|:---:|:---:|
-| `test_01_all_workflow_files_exist` | Assegura a existência dos workflows essenciais na raiz e no diretório espelho. | 0.0006s | 🟢 PASS |
-| `test_02_yaml_syntax_valid` | Valida que todos os arquivos .yml são documentos YAML válidos e estruturados. | 0.0239s | 🟢 PASS |
-| `test_03_event_triggers_and_scheduling` | Valida que os gatilhos de eventos contêm os eventos esperados ('push', 'schedule', 'workflow_dispatch'). | 0.0111s | 🟢 PASS |
-| `test_04_runner_environments_are_ubuntu` | Garante que todos os jobs executem exclusivamente em runners baseados em Ubuntu Linux. | 0.0156s | 🟢 PASS |
-| `test_05_working_directories_and_paths_exist_physically` | Garante que todos os working-directory apontam para pastas existentes dentro de Olympos/. | 0.0171s | 🟢 PASS |
-| `test_06_secret_bindings_no_hardcoded_fallback` | Assegura que nenhum segredo do GitHub Actions (${{ secrets.* }}) possua valores default hardcoded. | 0.0022s | 🟢 PASS |
-| `test_07_workflows_mirror_consistency` | Garante que os manifestos em workflows_mirror são espelhos idênticos dos da raiz .github/workflows/. | 0.0029s | 🟢 PASS |
+| `test_01_all_workflow_files_exist` | Assegura a existência dos workflows essenciais na raiz e no diretório espelho. | 0.0012s | 🟢 PASS |
+| `test_02_yaml_syntax_valid` | Valida que todos os arquivos .yml são documentos YAML válidos e estruturados. | 0.0242s | 🟢 PASS |
+| `test_03_event_triggers_and_scheduling` | Valida que os gatilhos de eventos contêm os eventos esperados ('push', 'schedule', 'workflow_dispatch'). | 0.0119s | 🟢 PASS |
+| `test_04_runner_environments_are_ubuntu` | Garante que todos os jobs executem exclusivamente em runners baseados em Ubuntu Linux. | 0.0135s | 🟢 PASS |
+| `test_05_working_directories_and_paths_exist_physically` | Garante que todos os working-directory apontam para pastas existentes dentro de Olympos/. | 0.0154s | 🟢 PASS |
+| `test_06_secret_bindings_no_hardcoded_fallback` | Assegura que nenhum segredo do GitHub Actions (${{ secrets.* }}) possua valores default hardcoded. | 0.0014s | 🟢 PASS |
+| `test_07_workflows_mirror_consistency` | Garante que os manifestos em workflows_mirror são espelhos idênticos dos da raiz .github/workflows/. | 0.0013s | 🟢 PASS |
 
 ### 3.6. Módulo M6: `test_ui_responsiveness.py`
 **Nome**: Interface SPA, Viewport, Media Queries, Temas Light/Dark e Acessibilidade  
 **Objetivo**: Validação de meta viewport, media queries responsivas, Flexbox/Grid, variáveis de tema e resiliência do setup modal.  
-**Duração**: 0.021s | **Casos Executados**: 20 | **Aprovados**: 20  
+**Duração**: 0.027s | **Casos Executados**: 21 | **Aprovados**: 21  
 
 | Caso de Teste | Descrição da Verificação | Duração | Resultado |
 |---|---|:---:|:---:|
-| `test_01_viewport_meta_tag_present_in_index_html` | Assegura a presença da meta tag de viewport responsivo para renderização móvel correta. | 0.0010s | 🟢 PASS |
-| `test_02_css_files_exist_in_primary_and_css_paths` | Valida que o arquivo de folha de estilos existe nos caminhos canônicos (styles.css e css/style.css). | 0.0005s | 🟢 PASS |
-| `test_03_css_custom_properties_light_and_dark_themes` | Verifica a paleta de variáveis CSS no padrão editorial 60-30-10 para os modos claro e escuro. | 0.0006s | 🟢 PASS |
+| `test_01_viewport_meta_tag_present_in_index_html` | Assegura a presença da meta tag de viewport responsivo para renderização móvel correta. | 0.0009s | 🟢 PASS |
+| `test_02_css_files_exist_in_primary_and_css_paths` | Valida que o arquivo de folha de estilos existe nos caminhos canônicos (styles.css e css/style.css). | 0.0002s | 🟢 PASS |
+| `test_03_css_custom_properties_light_and_dark_themes` | Verifica a paleta de variáveis CSS no padrão editorial 60-30-10 para os modos claro e escuro. | 0.0004s | 🟢 PASS |
 | `test_04_responsive_media_queries` | Valida a existência de regras de @media query com breakpoints para mobile e tablet. | 0.0005s | 🟢 PASS |
-| `test_05_flexbox_and_grid_containers_usage` | Assegura a ampla utilização de CSS Flexbox e Grid para layout fluido e adaptável. | 0.0023s | 🟢 PASS |
-| `test_06_setup_modal_dom_structure_and_accessibility` | Valida a acessibilidade e completude estrutural do modal interativo de setup do Supabase. | 0.0006s | 🟢 PASS |
+| `test_05_flexbox_and_grid_containers_usage` | Assegura a ampla utilização de CSS Flexbox e Grid para layout fluido e adaptável. | 0.0025s | 🟢 PASS |
+| `test_06_setup_modal_dom_structure_and_accessibility` | Valida a acessibilidade e completude estrutural do modal interativo de setup do Supabase. | 0.0007s | 🟢 PASS |
 | `test_07_javascript_client_resilience_and_fallback` | Assegura que o cliente Supabase e o Setup Modal tratam ausência de credenciais sem quebrar a página. | 0.0005s | 🟢 PASS |
 | `test_08_mobile_breakpoint_and_header_collapse` | Valida a presença de media query defensiva para mobile (<= 480px / 560px) e recolhimento do masthead. | 0.0003s | 🟢 PASS |
-| `test_09_css_grid_minmax_mobile_safety` | Assegura que grades de memórias e configurações utilizam minmax fluido sem estouro de largura. | 0.0005s | 🟢 PASS |
-| `test_10_search_grid_mobile_adaptability` | Assegura que o grid de controles de busca global colapsa graciosamente em telas móveis. | 0.0006s | 🟢 PASS |
-| `test_11_nav_drawer_auto_close_on_navigation` | Valida que cliques em links de navegação fecham automaticamente o drawer no mobile. | 0.0004s | 🟢 PASS |
-| `test_12_modal_backdrop_scrollability_and_clipping` | Verifica que o backdrop e os cards de modal possuem rolagem vertical defensiva contra clipping. | 0.0004s | 🟢 PASS |
-| `test_13_touch_targets_and_table_touch_scroll` | Valida que elementos mini respeitam alvo de toque e tabelas usam aceleração de toque. | 0.0004s | 🟢 PASS |
-| `test_14_favicon_and_head_assets_integrity` | Valida a presença de favicons oficiais (Data URI no HTML e arquivos físicos .ico e .svg). | 0.0006s | 🟢 PASS |
-| `test_15_dom_input_autocomplete_and_supabase_singleton` | Assegura conformidade DOM de autocomplete e padrão Singleton do cliente GoTrue. | 0.0010s | 🟢 PASS |
-| `test_16_breakpoint_responsiveness_matrix_mobile_and_ultrawide` | Valida sistematicamente a matriz completa de viewports: 320px, 375px, 480px, 768px, 1600px, 1920px, 2560px e 3440px. | 0.0016s | 🟢 PASS |
-| `test_17_mobile_layout_elements_safety_topbar_alert_grid_sidebar` | Verifica regras CSS de segurança contra overflow em 320px: topbar, quick-alert-bar, controls-grid e sidebar drawer. | 0.0023s | 🟢 PASS |
-| `test_18_dom_accessibility_modal_novo_usuario_autocomplete` | Assegura conformidade WHATWG de autocomplete em #modalNovoUsuario para eliminar avisos Chromium de username ausente. | 0.0020s | 🟢 PASS |
-| `test_19_dom_accessibility_password_forms_have_username_fields` | Garante que 100% dos formulários com campos de senha no DOM possuem campo de username associado (W3C/WCAG 2.2). | 0.0033s | 🟢 PASS |
-| `test_20_m3_mobile_responsiveness_and_placeholders` | Valida as melhorias M3: Placeholders '--', unificação da navbar (Portarias) e responsividade mobile. | 0.0013s | 🟢 PASS |
+| `test_09_css_grid_minmax_mobile_safety` | Assegura que grades de memórias e configurações utilizam minmax fluido sem estouro de largura. | 0.0008s | 🟢 PASS |
+| `test_10_search_grid_mobile_adaptability` | Assegura que o grid de controles de busca global colapsa graciosamente em telas móveis. | 0.0014s | 🟢 PASS |
+| `test_11_nav_drawer_auto_close_on_navigation` | Valida que cliques em links de navegação fecham automaticamente o drawer no mobile. | 0.0005s | 🟢 PASS |
+| `test_12_modal_backdrop_scrollability_and_clipping` | Verifica que o backdrop e os cards de modal possuem rolagem vertical defensiva contra clipping. | 0.0006s | 🟢 PASS |
+| `test_13_touch_targets_and_table_touch_scroll` | Valida que elementos mini respeitam alvo de toque e tabelas usam aceleração de toque. | 0.0013s | 🟢 PASS |
+| `test_14_favicon_and_head_assets_integrity` | Valida a presença de favicons oficiais (Data URI no HTML e arquivos físicos .ico e .svg). | 0.0015s | 🟢 PASS |
+| `test_15_dom_input_autocomplete_and_supabase_singleton` | Assegura conformidade DOM de autocomplete e padrão Singleton do cliente GoTrue. | 0.0012s | 🟢 PASS |
+| `test_16_breakpoint_responsiveness_matrix_mobile_and_ultrawide` | Valida sistematicamente a matriz completa de viewports: 320px, 375px, 480px, 768px, 1600px, 1920px, 2560px e 3440px. | 0.0013s | 🟢 PASS |
+| `test_17_mobile_layout_elements_safety_topbar_alert_grid_sidebar` | Verifica regras CSS de segurança contra overflow em 320px: topbar, quick-alert-bar, controls-grid e sidebar drawer. | 0.0014s | 🟢 PASS |
+| `test_18_dom_accessibility_modal_novo_usuario_autocomplete` | Assegura conformidade WHATWG de autocomplete em #modalNovoUsuario para eliminar avisos Chromium de username ausente. | 0.0015s | 🟢 PASS |
+| `test_19_dom_accessibility_password_forms_have_username_fields` | Garante que 100% dos formulários com campos de senha no DOM possuem campo de username associado (W3C/WCAG 2.2). | 0.0041s | 🟢 PASS |
+| `test_20_m3_mobile_responsiveness_and_placeholders` | Valida as melhorias M3: Placeholders '--', unificação da navbar (Portarias) e responsividade mobile. | 0.0015s | 🟢 PASS |
+| `test_21_calendario_view_and_data_integrity` | Valida a implementação do Módulo Calendário Escolar (Milestone 4): dados 2026/2027, DOM, router e iCal. | 0.0037s | 🟢 PASS |
 
 ### 3.7. Módulo M7: `test_canonical_ids_and_cors.py`
 **Nome**: Alinhamento Canônico de IDs, CORS Simple Requests e Catálogo Offline  
@@ -162,62 +163,62 @@ A suíte de testes automatizados do Projeto Olympos implementa um portão de qua
 
 | Caso de Teste | Descrição da Verificação | Duração | Resultado |
 |---|---|:---:|:---:|
-| `test_01_all_34_official_canonical_ids_mapped_in_gas_config` | Assegura que 100% dos 34 IDs canônicos oficiais estão mapeados e sem divergências em 02_config_ids.gs. | 0.0003s | 🟢 PASS |
-| `test_02_canonical_ids_in_frontend_memorias_catalogo` | Valida que o catálogo síncrono do Frontend (memorias_catalogo.js) mapeia todos os 11 IDs canônicos e pasta raiz. | 0.0004s | 🟢 PASS |
-| `test_03_cors_simple_requests_in_api_js` | Assegura a conformidade estrita de CORS Simple Requests em js/api.js contra preflight OPTIONS no GAS. | 0.0003s | 🟢 PASS |
-| `test_04_offline_catalog_content_integrity_all_17_personas` | Assegura que o catálogo síncrono offline contempla todas as 17 personas com conteúdo Markdown e metadados reais. | 0.0004s | 🟢 PASS |
-| `test_05_synchronous_initialization_in_personas_js` | Valida que js/views/personas.js inicializa imediatamente a partir do catálogo e elimina mensagens bloqueantes. | 0.0002s | 🟢 PASS |
+| `test_01_all_34_official_canonical_ids_mapped_in_gas_config` | Assegura que 100% dos 34 IDs canônicos oficiais estão mapeados e sem divergências em 02_config_ids.gs. | 0.0005s | 🟢 PASS |
+| `test_02_canonical_ids_in_frontend_memorias_catalogo` | Valida que o catálogo síncrono do Frontend (memorias_catalogo.js) mapeia todos os 11 IDs canônicos e pasta raiz. | 0.0006s | 🟢 PASS |
+| `test_03_cors_simple_requests_in_api_js` | Assegura a conformidade estrita de CORS Simple Requests em js/api.js contra preflight OPTIONS no GAS. | 0.0004s | 🟢 PASS |
+| `test_04_offline_catalog_content_integrity_all_17_personas` | Assegura que o catálogo síncrono offline contempla todas as 17 personas com conteúdo Markdown e metadados reais. | 0.0005s | 🟢 PASS |
+| `test_05_synchronous_initialization_in_personas_js` | Valida que js/views/personas.js inicializa imediatamente a partir do catálogo e elimina mensagens bloqueantes. | 0.0003s | 🟢 PASS |
 | `test_06_in_place_updates_and_polymorphic_mime_types_in_gas` | Assegura atualização estrita in-place e suporte a Google Docs e Markdown em 03_service_memorias_md.gs. | 0.0003s | 🟢 PASS |
-| `test_07_gas_router_cors_shielding_and_public_ping` | Valida que 01_router_main.gs está blindado com try/catch, JSON garantido e rota pública de ping. | 0.0002s | 🟢 PASS |
-| `test_08_python_engines_and_manuals_id_alignment` | Valida o alinhamento de IDs de transparência e memórias nos motores Python e manuais técnicos. | 0.0004s | 🟢 PASS |
+| `test_07_gas_router_cors_shielding_and_public_ping` | Valida que 01_router_main.gs está blindado com try/catch, JSON garantido e rota pública de ping. | 0.0004s | 🟢 PASS |
+| `test_08_python_engines_and_manuals_id_alignment` | Valida o alinhamento de IDs de transparência e memórias nos motores Python e manuais técnicos. | 0.0005s | 🟢 PASS |
 | `test_09_cache_key_safe_hash_and_no_oversized_keys_in_gas` | Assegura blindagem contra 'Argumento grande demais: key' no Google Apps Script (limite de 250 chars). | 0.0002s | 🟢 PASS |
-| `test_10_pincel_licencas_and_readaptacoes_planilhas_integration` | Valida que o Pincel de Homero carrega as planilhas oficiais de Licenças e Readaptações e expõe valores reais. | 0.0027s | 🟢 PASS |
+| `test_10_pincel_licencas_and_readaptacoes_planilhas_integration` | Valida que o Pincel de Homero carrega as planilhas oficiais de Licenças e Readaptações e expõe valores reais. | 0.0023s | 🟢 PASS |
 
 ### 3.8. Módulo M8: `test_fases_1_a_5_expansion.py`
 **Nome**: Bateria Expandida Fases 1 a 5 (Boletim, Gemini, PWA, UI/UX, Permutas e pgvector)  
 **Objetivo**: Validação integral e genuína das 5 novas fases: boletim diário editorial, Gemini companion, PWA manifest e SW seguro, UI skeletons e touch targets 44px, permutas Leaflet/Hera e migração pgvector.  
-**Duração**: 0.190s | **Casos Executados**: 23 | **Aprovados**: 23  
+**Duração**: 0.246s | **Casos Executados**: 23 | **Aprovados**: 23  
 
 | Caso de Teste | Descrição da Verificação | Duração | Resultado |
 |---|---|:---:|:---:|
 | `test_01_fase1_prometheus_boletim_email_editorial_template` | Assegura a existência do template editorial responsivo do boletim diário com paleta institucional. | 0.0004s | 🟢 PASS |
-| `test_02_fase1_prometheus_boletim_multiple_recipients_and_regex` | Valida resolução em cascata e extração com regex de múltiplos destinatários de e-mail. | 0.0005s | 🟢 PASS |
-| `test_03_fase1_prometheus_resumo_texto_retention_and_drive_bypass` | Assegura retenção de resumo_texto e bypass de decodificação Base64 quando url_drive já existir. | 0.0009s | 🟢 PASS |
-| `test_04_fase1_router_gateway_new_routes` | Verifica a presença das novas rotas de configuração e disparo do boletim no gateway Hub GAS. | 0.0005s | 🟢 PASS |
-| `test_05_fase1_scraper_femurn_drive_sa_upload_and_fallback` | Valida upload direto no Google Drive via Service Account e pastas de governança 2026. | 0.0150s | 🟢 PASS |
-| `test_06_fase2_gemini_companion_button_markup` | Verifica a presença do botão ✨ Gemini (#topGeminiBtn) na barra de topo (.masthead-controls). | 0.0007s | 🟢 PASS |
-| `test_07_fase2_gemini_desktop_only_media_query_css` | Garante a regra estrita @media (max-width: 768px) { display: none !important; } para o botão Gemini. | 0.0008s | 🟢 PASS |
-| `test_08_fase2_gemini_companion_window_js_implementation` | Valida a função de abertura ergonômica da Companion Window (520x780 à direita) em js/app.js. | 0.0003s | 🟢 PASS |
-| `test_09_fase3_pwa_manifest_json_validation` | Valida integridade do manifest.json, tema #0B1120, display standalone e ícones institucionais. | 0.0003s | 🟢 PASS |
-| `test_10_fase3_pwa_service_worker_caching_and_api_bypass` | Valida que o sw.js faz bypass estrito de POST, Supabase e GAS sem interferir em requisições de API. | 0.0702s | 🟢 PASS |
-| `test_11_fase3_pwa_meta_tags_and_registration_in_index_html` | Verifica meta tags de PWA móvel e registro assíncrono seguro do Service Worker no index.html. | 0.0004s | 🟢 PASS |
-| `test_12_fase4_skeleton_loaders_css_and_js_implementation` | Valida regras de Skeleton Loaders animados e função renderSkeletonTable no frontend. | 0.0006s | 🟢 PASS |
-| `test_13_fase4_microinteractions_active_scale` | Garante microinterações táteis (:active transform: scale(0.97)) em botões e cards. | 0.0004s | 🟢 PASS |
-| `test_14_fase4_touch_targets_wcag_mobile` | Valida que em telas móveis (<= 768px) alvos de toque possuem altura mínima de 44px. | 0.0002s | 🟢 PASS |
-| `test_15_fase4_rich_empty_states_markup_and_css` | Assegura estilos e renderização de Empty States ricos com botões de ação na interface. | 0.0004s | 🟢 PASS |
-| `test_16_fase4_rbac_session_storage_cache` | Valida cache de sessão e claims RBAC em sessionStorage com método getCachedProfile. | 0.0004s | 🟢 PASS |
-| `test_17_fase4_cadmo_extractors_thread_pool_executor` | Valida orquestração concorrente com ThreadPoolExecutor na extração dos 16 portais do Papiro de Cadmo. | 0.0051s | 🟢 PASS |
-| `test_18_fase5_permutas_panel_markup_and_leaflet_assets` | Verifica a presença dos assets do Leaflet 1.9.4 e o painel de permutas (#painelPermutasCadmo). | 0.0010s | 🟢 PASS |
-| `test_19_fase5_papiro_cadmo_georeferenced_points_and_hera_matching` | Valida catálogo georreferenciado, Leaflet map e motor de matching da persona Hera (40/30/30). | 0.0818s | 🟢 PASS |
-| `test_20_fase5_semantic_search_pgvector_migration_syntax_sqlglot` | Valida que a migração 004_semantic_search_pgvector.sql compila perfeitamente no analisador sqlglot. | 0.0043s | 🟢 PASS |
-| `test_21_fase5_supabase_client_semantic_search_integration` | Assegura a integração de busca semântica vetorial no cliente Supabase frontend com fallback. | 0.0008s | 🟢 PASS |
+| `test_02_fase1_prometheus_boletim_multiple_recipients_and_regex` | Valida resolução em cascata e extração com regex de múltiplos destinatários de e-mail. | 0.0004s | 🟢 PASS |
+| `test_03_fase1_prometheus_resumo_texto_retention_and_drive_bypass` | Assegura retenção de resumo_texto e bypass de decodificação Base64 quando url_drive já existir. | 0.0006s | 🟢 PASS |
+| `test_04_fase1_router_gateway_new_routes` | Verifica a presença das novas rotas de configuração e disparo do boletim no gateway Hub GAS. | 0.0004s | 🟢 PASS |
+| `test_05_fase1_scraper_femurn_drive_sa_upload_and_fallback` | Valida upload direto no Google Drive via Service Account e pastas de governança 2026. | 0.0167s | 🟢 PASS |
+| `test_06_fase2_gemini_companion_button_markup` | Verifica a presença do botão ✨ Gemini (#topGeminiBtn) na barra de topo (.masthead-controls). | 0.0009s | 🟢 PASS |
+| `test_07_fase2_gemini_desktop_only_media_query_css` | Garante a regra estrita @media (max-width: 768px) { display: none !important; } para o botão Gemini. | 0.0016s | 🟢 PASS |
+| `test_08_fase2_gemini_companion_window_js_implementation` | Valida a função de abertura ergonômica da Companion Window (520x780 à direita) em js/app.js. | 0.0009s | 🟢 PASS |
+| `test_09_fase3_pwa_manifest_json_validation` | Valida integridade do manifest.json, tema #0B1120, display standalone e ícones institucionais. | 0.0006s | 🟢 PASS |
+| `test_10_fase3_pwa_service_worker_caching_and_api_bypass` | Valida que o sw.js faz bypass estrito de POST, Supabase e GAS sem interferir em requisições de API. | 0.0988s | 🟢 PASS |
+| `test_11_fase3_pwa_meta_tags_and_registration_in_index_html` | Verifica meta tags de PWA móvel e registro assíncrono seguro do Service Worker no index.html. | 0.0007s | 🟢 PASS |
+| `test_12_fase4_skeleton_loaders_css_and_js_implementation` | Valida regras de Skeleton Loaders animados e função renderSkeletonTable no frontend. | 0.0011s | 🟢 PASS |
+| `test_13_fase4_microinteractions_active_scale` | Garante microinterações táteis (:active transform: scale(0.97)) em botões e cards. | 0.0008s | 🟢 PASS |
+| `test_14_fase4_touch_targets_wcag_mobile` | Valida que em telas móveis (<= 768px) alvos de toque possuem altura mínima de 44px. | 0.0006s | 🟢 PASS |
+| `test_15_fase4_rich_empty_states_markup_and_css` | Assegura estilos e renderização de Empty States ricos com botões de ação na interface. | 0.0009s | 🟢 PASS |
+| `test_16_fase4_rbac_session_storage_cache` | Valida cache de sessão e claims RBAC em sessionStorage com método getCachedProfile. | 0.0006s | 🟢 PASS |
+| `test_17_fase4_cadmo_extractors_thread_pool_executor` | Valida orquestração concorrente com ThreadPoolExecutor na extração dos 16 portais do Papiro de Cadmo. | 0.0061s | 🟢 PASS |
+| `test_18_fase5_permutas_panel_markup_and_leaflet_assets` | Verifica a presença dos assets do Leaflet 1.9.4 e o painel de permutas (#painelPermutasCadmo). | 0.0008s | 🟢 PASS |
+| `test_19_fase5_papiro_cadmo_georeferenced_points_and_hera_matching` | Valida catálogo georreferenciado, Leaflet map e motor de matching da persona Hera (40/30/30). | 0.1031s | 🟢 PASS |
+| `test_20_fase5_semantic_search_pgvector_migration_syntax_sqlglot` | Valida que a migração 004_semantic_search_pgvector.sql compila perfeitamente no analisador sqlglot. | 0.0044s | 🟢 PASS |
+| `test_21_fase5_supabase_client_semantic_search_integration` | Assegura a integração de busca semântica vetorial no cliente Supabase frontend com fallback. | 0.0005s | 🟢 PASS |
 | `test_22_fase1_boletim_ui_settings_integration` | Valida a presença de campos para configuração de e-mails do boletim nas telas do Frontend. | 0.0008s | 🟢 PASS |
-| `test_23_parity_and_mirrors_strict_integrity` | Assegura paridade estrita de 100% entre arquivos CSS, manifestos de workflows e espelhos GAS. | 0.0032s | 🟢 PASS |
+| `test_23_parity_and_mirrors_strict_integrity` | Assegura paridade estrita de 100% entre arquivos CSS, manifestos de workflows e espelhos GAS. | 0.0030s | 🟢 PASS |
 
 ### 3.9. Módulo M9: `test_escolas_map.py`
 **Nome**: Georreferenciamento Cartográfico e Gestão das Escolas Municipais  
 **Objetivo**: Validação integral do catálogo de 20 escolas, bounding box Ceará-Mirim, CRUD de coordenadas, modal acessível e integração ao router.  
-**Duração**: 0.654s | **Casos Executados**: 7 | **Aprovados**: 7  
+**Duração**: 0.534s | **Casos Executados**: 7 | **Aprovados**: 7  
 
 | Caso de Teste | Descrição da Verificação | Duração | Resultado |
 |---|---|:---:|:---:|
-| `test_01_seed_dataset_integrity` | Assegura a existência e integridade do catálogo com no mínimo 20 escolas de Ceará-Mirim. | 0.1163s | 🟢 PASS |
-| `test_02_geographic_bounding_box_ceara_mirim` | Assegura que 100% das coordenadas estejam dentro dos limites territoriais de Ceará-Mirim/RN. | 0.1501s | 🟢 PASS |
-| `test_03_js_views_escolas_syntax_and_structure` | Valida que escolas.js e escolasCearaMirim.js compilam no V8 e expõem a API requerida. | 0.2418s | 🟢 PASS |
-| `test_04_spa_dom_page_escolas_and_map_container` | Valida no index.html a presença da section #page-escolas, container do mapa e controles. | 0.0013s | 🟢 PASS |
-| `test_05_modal_cadastro_escola_and_wcag_compliance` | Valida que o modal de cadastro/edição existe e respeita estritamente as diretrizes WCAG (sem senhas). | 0.0044s | 🟢 PASS |
-| `test_06_router_and_navigation_integration` | Valida o registro da rota 'escolas' em router.js, navbar superior e mobile drawer. | 0.0008s | 🟢 PASS |
-| `test_07_crud_logic_and_filtering_simulation` | Simula em Node.js o ciclo de vida CRUD, validação de limites geográficos e cálculos de KPI. | 0.1387s | 🟢 PASS |
+| `test_01_seed_dataset_integrity` | Assegura a existência e integridade do catálogo com no mínimo 20 escolas de Ceará-Mirim. | 0.1040s | 🟢 PASS |
+| `test_02_geographic_bounding_box_ceara_mirim` | Assegura que 100% das coordenadas estejam dentro dos limites territoriais de Ceará-Mirim/RN. | 0.0981s | 🟢 PASS |
+| `test_03_js_views_escolas_syntax_and_structure` | Valida que escolas.js e escolasCearaMirim.js compilam no V8 e expõem a API requerida. | 0.2074s | 🟢 PASS |
+| `test_04_spa_dom_page_escolas_and_map_container` | Valida no index.html a presença da section #page-escolas, container do mapa e controles. | 0.0012s | 🟢 PASS |
+| `test_05_modal_cadastro_escola_and_wcag_compliance` | Valida que o modal de cadastro/edição existe e respeita estritamente as diretrizes WCAG (sem senhas). | 0.0019s | 🟢 PASS |
+| `test_06_router_and_navigation_integration` | Valida o registro da rota 'escolas' em router.js, navbar superior e mobile drawer. | 0.0010s | 🟢 PASS |
+| `test_07_crud_logic_and_filtering_simulation` | Simula em Node.js o ciclo de vida CRUD, validação de limites geográficos e cálculos de KPI. | 0.1197s | 🟢 PASS |
 
 ---
 

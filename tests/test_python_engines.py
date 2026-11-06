@@ -93,6 +93,17 @@ class TestFogoDePrometheusEngine(unittest.TestCase):
         self.assertEqual(fn("CESSÃO DE SERVIDOR PÚBLICO"), "PERMUTA_RH")
         self.assertEqual(fn("DESPACHO INFORMATIVO DO GABINETE"), "ATO_GABINETE")
 
+        # Validações M1: Republicações e Diretores Escolares
+        self.assertEqual(fn("REPUBLICAÇÃO POR INCORREÇÃO DA PORTARIA Nº 105/2026"), "REPUBLICACAO")
+        self.assertEqual(fn("REPUBLICADO POR INCORREÇÃO DO DECRETO Nº 45/2026"), "REPUBLICACAO")
+        self.assertEqual(fn("PORTARIA Nº 200/2026 - NOMEAR DIRETOR ESCOLAR DA ESCOLA MUNICIPAL"), "NOMEACAO_DIRETOR")
+        self.assertEqual(fn("DECRETO Nº 88/2026 - NOMEIA PARA CARGO EM COMISSÃO DE DIRETOR DE ESCOLA"), "NOMEACAO_DIRETOR")
+        self.assertEqual(fn("PORTARIA Nº 210/2026 - DESIGNA PARA FUNÇÃO GRATIFICADA DE DIREÇÃO ESCOLAR"), "NOMEACAO_DIRETOR")
+        self.assertEqual(fn("PORTARIA Nº 10/2026 - RESOLVE NOMEIA O SERVIDOR PARA O CARGO DE DIRETOR"), "NOMEACAO_DIRETOR")
+        self.assertEqual(fn("PORTARIA Nº 10/2026 - RESOLVE NOMEIA PARA O CARGO DE DIRETOR"), "NOMEACAO_DIRETOR")
+        self.assertEqual(fn("PORTARIA Nº 10/2026 - DESIGNA O SERVIDOR PARA O CARGO DE DIRETOR"), "NOMEACAO_DIRETOR")
+        self.assertEqual(fn("PORTARIA COM INCORREÇÃO Nº 77/2026"), "REPUBLICACAO")
+
     def test_04_extrair_entidades_estruturadas_ner(self):
         """Testa o extrator de entidades nomeadas (NER Leve) para identificar número do ato, matrícula e servidor."""
         fn = scraper_femurn.extrair_entidades_estruturadas
@@ -110,6 +121,49 @@ class TestFogoDePrometheusEngine(unittest.TestCase):
         self.assertIn("9988-0", res["matriculas"])
         self.assertIn("MARIA HELENA DOS SANTOS", res["servidores"])
         self.assertIn("ANA PAULA ROCHA", res["servidores"])
+
+        # Validação M1: Nomeação de diretora escolar sem matrícula imediata
+        texto_nomeacao = (
+            "PORTARIA Nº 088/2026 - GP/SMEB\n"
+            "O Prefeito Municipal resolve NOMEAR a Senhora CLAUDIA REGINA BARBOSA "
+            "para exercer o Cargo em Comissão de Diretora Escolar da Escola Municipal Alice Garcia Freire."
+        )
+        res_nom = fn(texto_nomeacao, "Nomeação de Diretora")
+        self.assertEqual(res_nom["numero_ato"], "088/2026")
+        self.assertIn("CLAUDIA REGINA BARBOSA", res_nom["servidores"])
+
+        # Remediation M1: Conjugação verbal no presente indicativo (NOMEIA, DESIGNA)
+        texto_conjugado = (
+            "PORTARIA Nº 10/2026 - GP\n"
+            "Art. 1º NOMEIA a senhora CLAUDIA REGINA BARBOSA para exercer o cargo de Diretora Escolar.\n"
+            "Art. 2º DESIGNA o senhor JOÃO DA SILVA para responder pela função de Vice-Diretor."
+        )
+        res_conj = fn(texto_conjugado, "Nomeações SMEB")
+        self.assertEqual(res_conj["numero_ato"], "10/2026")
+        self.assertIn("CLAUDIA REGINA BARBOSA", res_conj["servidores"])
+        self.assertIn("JOÃO DA SILVA", res_conj["servidores"])
+
+        # Remediation M1: Formas conjugadas de conceder, exonerar, readaptar
+        texto_atos_rh = (
+            "PORTARIA Nº 15/2026\n"
+            "RESOLVE: CONCEDE ao servidor MARCOS PEREIRA DOS SANTOS, matrícula nº 12345-6, licença prêmio.\n"
+            "RESOLVE: EXONERA a servidora MARIA DE SOUZA, matrícula nº 54321, a pedido.\n"
+            "RESOLVE: READAPTA o servidor CARLOS ALBERTO, matrícula nº 9988, por laudo pericial."
+        )
+        res_rh = fn(texto_atos_rh, "Portarias de Pessoal")
+        self.assertIn("MARCOS PEREIRA DOS SANTOS", res_rh["servidores"])
+        self.assertIn("MARIA DE SOUZA", res_rh["servidores"])
+        self.assertIn("CARLOS ALBERTO", res_rh["servidores"])
+
+        # Remediation M1: Extração flexível de números com descritores intermediários
+        res_inc = fn("PORTARIA COM INCORREÇÃO Nº 77/2026\nTexto do ato...")
+        self.assertEqual(res_inc["numero_ato"], "77/2026")
+
+        res_rep_ext = fn("REPUBLICADO POR INCORREÇÃO - EXTRATO DE CONTRATO Nº 09/2026\nObjeto contratual...")
+        self.assertEqual(res_rep_ext["numero_ato"], "09/2026")
+
+        res_pss = fn("EDITAL DE PROCESSO SELETIVO Nº 001/2026 - REPUBLICADO\nRegulamento do PSS...")
+        self.assertEqual(res_pss["numero_ato"], "001/2026")
 
     def test_04b_formatar_nome_arquivo_oficial(self):
         """Valida a padronização oficial de nomes de arquivos do Diário Oficial (ex: Portaria - SMEB nº 163 de 29 de Outubro de 2026.pdf)."""
@@ -136,6 +190,15 @@ class TestFogoDePrometheusEngine(unittest.TestCase):
         # 5. Ato sem número estruturado -> fallback por código
         nome4, tit4 = fn_nome("PORTARIA", "", "29/10/2026", "SMEB", cod_id="DD6CE488")
         self.assertEqual(nome4, "Portaria - SMEB (DD6CE488) de 29 de Outubro de 2026.pdf")
+
+        # 6. Validações M1: Republicação e Nomeação de Diretor
+        nome5, tit5 = fn_nome("REPUBLICACAO", "105/2026", "29/10/2026", "SMEB")
+        self.assertEqual(nome5, "Republicação - SMEB nº 105 de 29 de Outubro de 2026.pdf")
+        self.assertEqual(tit5, "Republicação - SMEB nº 105 de 29 de Outubro de 2026")
+
+        nome6, tit6 = fn_nome("NOMEACAO_DIRETOR", "088/2026", "29/10/2026", "Gabinete")
+        self.assertEqual(nome6, "Portaria - Gabinete nº 088 de 29 de Outubro de 2026.pdf")
+        self.assertEqual(tit6, "Portaria - Gabinete nº 088 de 29 de Outubro de 2026")
 
     def test_05_obter_intervalo_datas(self):
         """Testa o comportamento do seletor de datas com e sem variáveis customizadas."""

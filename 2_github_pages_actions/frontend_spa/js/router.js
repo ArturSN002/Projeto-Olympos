@@ -52,6 +52,12 @@ window.OlymposRouter = (function() {
       subtitle: 'Localização cartográfica, cadastro georreferenciado (CRUD com latitude e longitude) e distribuição territorial das unidades da SMEB de Ceará-Mirim.',
       category: 'gestao'
     },
+    'calendario': {
+      eyebrow: 'CALENDÁRIO ESCOLAR & AGENDA INTERSETORIAL • SMEB 2026–2027',
+      title: 'Calendário Escolar e Planejamento.',
+      subtitle: 'Controle de 203 dias letivos, 4 bimestres, recessos, cronograma de matrículas, eventos intersetoriais e exportação iCal.',
+      category: 'gestao'
+    },
     'personas': {
       eyebrow: 'ARQUITETURA COGNITIVA • 17 PERSONAS & 11 MEMÓRIAS',
       title: 'Ecossistema Olympos e Memórias .md.',
@@ -91,6 +97,9 @@ window.OlymposRouter = (function() {
 
   function navegarPara(pageId, replaceState) {
     let targetSubtab = null;
+    if (pageId === 'permutas') {
+      pageId = 'papiro-cadmo';
+    }
     if (pageId === 'licencas') {
       pageId = 'portarias';
       targetSubtab = 'licencas';
@@ -118,8 +127,24 @@ window.OlymposRouter = (function() {
 
     document.querySelectorAll('.nav-link').forEach(function(link) {
       const linkPage = link.getAttribute('data-page');
-      link.classList.toggle('active', linkPage === pageId);
+      if (linkPage) {
+        link.classList.toggle('active', linkPage === pageId);
+      }
     });
+
+    // Destaque ativo para container e trigger do dropdown Documentos
+    const isDocPage = ['oficios', 'portarias', 'certificados'].includes(pageId);
+    document.querySelectorAll('.nav-dropdown').forEach(function(dd) {
+      dd.classList.toggle('active', isDocPage);
+    });
+    document.querySelectorAll('.nav-dropdown-trigger').forEach(function(trigger) {
+      trigger.classList.toggle('active', isDocPage);
+    });
+
+    // Fechar dropdowns de navegação ao navegar
+    if (window.OlymposApp && typeof window.OlymposApp.fecharDropdowns === 'function') {
+      window.OlymposApp.fecharDropdowns();
+    }
 
     const meta = PAGES[pageId];
     const eyebrowElem = document.getElementById('pageHeaderEyebrow');
@@ -153,6 +178,7 @@ window.OlymposRouter = (function() {
       'diario-oficial': 'diarioOficial',
       'papiro-cadmo': 'papiroCadmo',
       'escolas': 'escolas',
+      'calendario': 'calendario',
       'personas': 'personas',
       'busca': 'busca',
       'configuracoes': 'configuracoes'

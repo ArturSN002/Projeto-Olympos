@@ -35,6 +35,42 @@ window.OlymposViews.papiroCadmo = (function() {
     { id: 'sme_rio_do_fogo', nome: 'SME Rio do Fogo', municipio: 'Rio do Fogo', regiao: 'Litoral Norte', tipo: 'Secretaria Municipal Parceira', coords: [-5.2750, -35.3814], cor: '#059669', icone: '🏛️', endereco: 'Rua José Severiano, Centro', contato: '(84) 3694-0112' }
   ];
 
+  const STORAGE_KEY_SECRETARIAS = 'olympos_secretarias_parceiras';
+
+  function obterPontosSecretarias() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY_SECRETARIAS);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return PONTOS_GEORREFERENCIADOS.map(function(padrao) {
+            const custom = parsed.find(function(p) { return p.id === padrao.id; });
+            if (custom) {
+              return {
+                id: padrao.id,
+                nome: custom.nome || padrao.nome,
+                municipio: custom.municipio || padrao.municipio,
+                regiao: custom.regiao || padrao.regiao,
+                tipo: custom.tipo || padrao.tipo,
+                coords: (Array.isArray(custom.coords) && custom.coords.length === 2 && !isNaN(custom.coords[0]) && !isNaN(custom.coords[1]))
+                  ? [Number(custom.coords[0]), Number(custom.coords[1])]
+                  : padrao.coords,
+                cor: custom.cor || padrao.cor,
+                icone: custom.icone || padrao.icone,
+                endereco: custom.endereco || padrao.endereco,
+                contato: custom.contato || padrao.contato
+              };
+            }
+            return Object.assign({}, padrao);
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('[PapiroCadmo] Erro ao carregar secretarias do localStorage:', e);
+    }
+    return PONTOS_GEORREFERENCIADOS.map(function(p) { return Object.assign({}, p); });
+  }
+
   function obterEscolasDinamicasCadmo() {
     // 1. Tenta API modular de Escolas
     if (window.OlymposViews && window.OlymposViews.escolas && typeof window.OlymposViews.escolas.obterEscolas === 'function') {
@@ -63,7 +99,7 @@ window.OlymposViews.papiroCadmo = (function() {
   }
 
   function obterTodosPontosMapa() {
-    const pontos = PONTOS_GEORREFERENCIADOS.slice();
+    const pontos = obterPontosSecretarias();
     const escolas = obterEscolasDinamicasCadmo();
 
     escolas.forEach(function(esc) {
@@ -780,6 +816,7 @@ window.OlymposViews.papiroCadmo = (function() {
     inicializarMapa();
     executarMatchingHera();
     observarVisibilidadePagina();
+    alternarColapsoHera(true);
   }
 
   function bindEvents() {
@@ -874,6 +911,65 @@ window.OlymposViews.papiroCadmo = (function() {
       btnToggleHera.addEventListener('click', function(e) {
         e.stopPropagation();
         alternarColapsoHera();
+      });
+    }
+
+    // Eventos do Modal de Edição de Secretarias Parceiras
+    const btnGerenciarSec = document.getElementById('btnGerenciarSecretarias');
+    if (btnGerenciarSec && !btnGerenciarSec._bound) {
+      btnGerenciarSec._bound = true;
+      btnGerenciarSec.addEventListener('click', function() {
+        abrirModalEdicaoSecretaria();
+      });
+    }
+
+    const selectPontoModal = document.getElementById('editSecSelectPonto');
+    if (selectPontoModal && !selectPontoModal._bound) {
+      selectPontoModal._bound = true;
+      selectPontoModal.addEventListener('change', function() {
+        carregarDadosPontoNoModal(this.value);
+      });
+    }
+
+    const btnFecharModalSec = document.getElementById('closeModalEdicaoSecretariaBtn');
+    if (btnFecharModalSec && !btnFecharModalSec._bound) {
+      btnFecharModalSec._bound = true;
+      btnFecharModalSec.addEventListener('click', function() {
+        fecharModalEdicaoSecretaria();
+      });
+    }
+
+    const btnCancelarModalSec = document.getElementById('btnCancelarEdicaoSecretaria');
+    if (btnCancelarModalSec && !btnCancelarModalSec._bound) {
+      btnCancelarModalSec._bound = true;
+      btnCancelarModalSec.addEventListener('click', function() {
+        fecharModalEdicaoSecretaria();
+      });
+    }
+
+    const btnRestaurarPadraoSec = document.getElementById('btnRestaurarPadraoSecretarias');
+    if (btnRestaurarPadraoSec && !btnRestaurarPadraoSec._bound) {
+      btnRestaurarPadraoSec._bound = true;
+      btnRestaurarPadraoSec.addEventListener('click', function() {
+        restaurarPadraoSecretarias();
+      });
+    }
+
+    const formEdicaoSec = document.getElementById('formEdicaoSecretaria');
+    if (formEdicaoSec && !formEdicaoSec._bound) {
+      formEdicaoSec._bound = true;
+      formEdicaoSec.addEventListener('submit', function(e) {
+        salvarEdicaoSecretaria(e);
+      });
+    }
+
+    const modalSec = document.getElementById('modalEdicaoSecretaria');
+    if (modalSec && !modalSec._bound) {
+      modalSec._bound = true;
+      modalSec.addEventListener('click', function(e) {
+        if (e.target === modalSec) {
+          fecharModalEdicaoSecretaria();
+        }
       });
     }
 
@@ -1011,7 +1107,7 @@ window.OlymposViews.papiroCadmo = (function() {
 
     todosPontos.forEach(function(ponto) {
       const isSede = ponto.tipo.includes('Sede');
-      const isSecretaria = ponto.tipo.includes('Secretaria Municipal');
+      const isSecretaria = ponto.tipo.includes('Secretaria Municipal') || (ponto.id && ponto.id.startsWith('sme_'));
       const iconeDisplay = ponto.icone || (isSede ? '★' : (isSecretaria ? '🏛️' : 'E'));
 
       const markerHtml =
@@ -1033,6 +1129,10 @@ window.OlymposViews.papiroCadmo = (function() {
           ? '<span class="pill-badge pill-green" style="font-size:10px;">🏛️ Secretaria Parceira</span>'
           : '<span class="pill-badge pill-blue" style="font-size:10px;">🏫 Rede Municipal</span>');
 
+      const btnEditarSec = (isSecretaria || isSede)
+        ? '<button type="button" class="btn btn-secondary btn-sm" style="font-size:10.5px; padding:3px 8px; border-color: var(--brand-gold, #D4AF37); color: var(--brand-gold, #D4AF37);" onclick="window.OlymposViews.papiroCadmo.abrirModalEdicaoSecretaria(\'' + window.OlymposApp.escapeHtml(ponto.id) + '\')">✏️ Editar Polo</button>'
+        : '';
+
       const popupContent =
         '<div class="cadmo-map-popup" style="font-family: var(--font-body, sans-serif); min-width: 230px; padding: 4px;">' +
           '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; gap:6px;">' +
@@ -1048,9 +1148,10 @@ window.OlymposViews.papiroCadmo = (function() {
             (ponto.endereco ? ('<br/><span style="color:#64748B;">End: ' + window.OlymposApp.escapeHtml(ponto.endereco) + '</span>') : '') +
             (ponto.contato ? ('<br/><span style="color:#64748B;">Contato: ' + window.OlymposApp.escapeHtml(ponto.contato) + '</span>') : '') +
           '</div>' +
-          '<div style="display:flex; gap:6px; margin-top:8px;">' +
+          '<div style="display:flex; gap:6px; margin-top:8px; flex-wrap:wrap;">' +
             '<button type="button" class="btn btn-secondary btn-sm" style="font-size:10.5px; padding:3px 8px;" onclick="window.OlymposViews.papiroCadmo.definirOrigemForm(\'' + window.OlymposApp.escapeHtml(ponto.nome) + '\')">Definir Origem</button>' +
             '<button type="button" class="btn btn-primary btn-sm" style="font-size:10.5px; padding:3px 8px;" onclick="window.OlymposViews.papiroCadmo.definirDestinoForm(\'' + window.OlymposApp.escapeHtml(ponto.municipio) + '\')">Definir Destino</button>' +
+            btnEditarSec +
           '</div>' +
         '</div>';
 
@@ -1062,6 +1163,7 @@ window.OlymposViews.papiroCadmo = (function() {
   function popularSelectsFormularioPermuta() {
     const selOrig = document.getElementById('permutaEscolaOrigem');
     const selDest = document.getElementById('permutaPoloDestino');
+    const secretarias = obterPontosSecretarias();
 
     if (selOrig) {
       const valorOrigAtual = selOrig.value;
@@ -1077,7 +1179,7 @@ window.OlymposViews.papiroCadmo = (function() {
       htmlOrig += '</optgroup>';
 
       htmlOrig += '<optgroup label="Secretarias Municipais Parceiras (Polos Intermunicipais)">';
-      PONTOS_GEORREFERENCIADOS.forEach(function(sec) {
+      secretarias.forEach(function(sec) {
         if (sec.municipio === 'Ceará-Mirim') return;
         htmlOrig += '<option value="' + window.OlymposApp.escapeHtml(sec.nome) + '">' + window.OlymposApp.escapeHtml(sec.nome) + '</option>';
       });
@@ -1090,7 +1192,7 @@ window.OlymposViews.papiroCadmo = (function() {
     if (selDest) {
       const valorDestAtual = selDest.value;
       let htmlDest = '';
-      PONTOS_GEORREFERENCIADOS.forEach(function(sec) {
+      secretarias.forEach(function(sec) {
         const desc = sec.municipio === 'Ceará-Mirim'
           ? 'Ceará-Mirim (Rede Municipal SMEB)'
           : (sec.municipio + ' (' + sec.nome.split('(')[0].trim() + ')');
@@ -1112,9 +1214,148 @@ window.OlymposViews.papiroCadmo = (function() {
     const newStateCollapsed = typeof forcado === 'boolean' ? forcado : !isCurrentlyCollapsed;
 
     body.classList.toggle('is-collapsed', newStateCollapsed);
+    if (newStateCollapsed) {
+      body.style.display = 'none';
+    } else {
+      body.style.display = '';
+    }
     header.setAttribute('aria-expanded', String(!newStateCollapsed));
     if (btnToggle) btnToggle.classList.toggle('hera-chevron-rotated', newStateCollapsed);
     if (label) label.textContent = newStateCollapsed ? 'Expandir' : 'Recolher';
+  }
+
+  function abrirModalEdicaoSecretaria(pontoId) {
+    const modal = document.getElementById('modalEdicaoSecretaria');
+    if (!modal) return;
+
+    const selectPonto = document.getElementById('editSecSelectPonto');
+    const secretarias = obterPontosSecretarias();
+
+    if (selectPonto) {
+      let optionsHtml = '';
+      secretarias.forEach(function(p) {
+        optionsHtml += '<option value="' + window.OlymposApp.escapeHtml(p.id) + '">' +
+          window.OlymposApp.escapeHtml(p.nome) + ' (' + window.OlymposApp.escapeHtml(p.municipio) + ')' +
+          '</option>';
+      });
+      selectPonto.innerHTML = optionsHtml;
+    }
+
+    const idAlvo = pontoId || (secretarias[0] ? secretarias[0].id : 'sme_ceara_mirim');
+    carregarDadosPontoNoModal(idAlvo);
+
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+  }
+
+  function fecharModalEdicaoSecretaria() {
+    const modal = document.getElementById('modalEdicaoSecretaria');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+  }
+
+  function carregarDadosPontoNoModal(pontoId) {
+    const secretarias = obterPontosSecretarias();
+    const ponto = secretarias.find(function(p) { return p.id === pontoId; }) || secretarias[0];
+    if (!ponto) return;
+
+    const inputId = document.getElementById('editSecId');
+    const inputNome = document.getElementById('editSecNome');
+    const inputMun = document.getElementById('editSecMunicipio');
+    const inputContato = document.getElementById('editSecContato');
+    const inputLat = document.getElementById('editSecLat');
+    const inputLng = document.getElementById('editSecLng');
+    const selectPonto = document.getElementById('editSecSelectPonto');
+
+    if (inputId) inputId.value = ponto.id;
+    if (inputNome) inputNome.value = ponto.nome || '';
+    if (inputMun) inputMun.value = ponto.municipio || '';
+    if (inputContato) inputContato.value = ponto.contato || '';
+    if (inputLat && Array.isArray(ponto.coords)) inputLat.value = ponto.coords[0];
+    if (inputLng && Array.isArray(ponto.coords)) inputLng.value = ponto.coords[1];
+    if (selectPonto && selectPonto.value !== ponto.id) selectPonto.value = ponto.id;
+  }
+
+  function salvarEdicaoSecretaria(e) {
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
+
+    const inputId = document.getElementById('editSecId');
+    const inputNome = document.getElementById('editSecNome');
+    const inputMun = document.getElementById('editSecMunicipio');
+    const inputContato = document.getElementById('editSecContato');
+    const inputLat = document.getElementById('editSecLat');
+    const inputLng = document.getElementById('editSecLng');
+
+    if (!inputId || !inputNome || !inputMun || !inputLat || !inputLng) return;
+
+    const pontoId = inputId.value;
+    const nome = inputNome.value.trim();
+    const municipio = inputMun.value.trim();
+    const contato = inputContato ? inputContato.value.trim() : '';
+    const lat = parseFloat(inputLat.value);
+    const lng = parseFloat(inputLng.value);
+
+    if (!nome || !municipio) {
+      if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+        window.OlymposApp.showToast('Preencha o Nome e o Município da secretaria parceira.', 'error');
+      }
+      return;
+    }
+
+    if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+        window.OlymposApp.showToast('Coordenadas de latitude e longitude inválidas.', 'error');
+      }
+      return;
+    }
+
+    const secretarias = obterPontosSecretarias();
+    const idx = secretarias.findIndex(function(p) { return p.id === pontoId; });
+    if (idx === -1) {
+      if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+        window.OlymposApp.showToast('Secretaria parceira não encontrada.', 'error');
+      }
+      return;
+    }
+
+    secretarias[idx].nome = nome;
+    secretarias[idx].municipio = municipio;
+    secretarias[idx].contato = contato;
+    secretarias[idx].coords = [lat, lng];
+    if (pontoId === 'sme_ceara_mirim') {
+      secretarias[idx].nomeSimples = nome;
+    }
+
+    try {
+      localStorage.setItem(STORAGE_KEY_SECRETARIAS, JSON.stringify(secretarias));
+    } catch (err) {
+      console.warn('[PapiroCadmo] Erro ao salvar no localStorage:', err);
+    }
+
+    plotarMarcadores();
+    popularSelectsFormularioPermuta();
+    fecharModalEdicaoSecretaria();
+
+    if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+      window.OlymposApp.showToast('Secretaria parceira "' + nome + '" salva com sucesso!', 'success');
+    }
+  }
+
+  function restaurarPadraoSecretarias() {
+    try {
+      localStorage.removeItem(STORAGE_KEY_SECRETARIAS);
+    } catch (err) {
+      console.warn('[PapiroCadmo] Erro ao limpar localStorage:', err);
+    }
+
+    plotarMarcadores();
+    popularSelectsFormularioPermuta();
+    fecharModalEdicaoSecretaria();
+
+    if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+      window.OlymposApp.showToast('Pontos das 15 secretarias parceiras restaurados para os padrões originais!', 'info');
+    }
   }
 
   function definirOrigemForm(nomePonto) {
@@ -1724,6 +1965,12 @@ window.OlymposViews.papiroCadmo = (function() {
     obterEscolasDinamicasCadmo: obterEscolasDinamicasCadmo,
     obterTodosPontosMapa: obterTodosPontosMapa,
     popularSelectsFormularioPermuta: popularSelectsFormularioPermuta,
+    obterPontosSecretarias: obterPontosSecretarias,
+    abrirModalEdicaoSecretaria: abrirModalEdicaoSecretaria,
+    fecharModalEdicaoSecretaria: fecharModalEdicaoSecretaria,
+    salvarEdicaoSecretaria: salvarEdicaoSecretaria,
+    restaurarPadraoSecretarias: restaurarPadraoSecretarias,
+    PONTOS_GEORREFERENCIADOS: PONTOS_GEORREFERENCIADOS,
     obterDocentesCearaMirim: function() { return DOCENTES_CEARA_MIRIM; },
     obterVinculosTransparencia: function() { return VINCULOS_TRANSPARENCIA; }
   };

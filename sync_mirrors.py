@@ -74,6 +74,7 @@ def sync_gas_templates():
         "js/views/certificados.js",
         "js/views/diarioOficial.js",
         "js/views/papiroCadmo.js",
+        "js/views/calendario.js",
         "js/data/escolasCearaMirim.js",
         "js/views/escolas.js",
         "js/memorias_catalogo.js",

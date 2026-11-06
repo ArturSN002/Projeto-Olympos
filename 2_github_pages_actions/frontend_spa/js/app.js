@@ -255,7 +255,7 @@ window.OlymposApp = (function() {
   }
 
   function normalizarPermissoesRbac(listaBruta) {
-    const set = new Set(['visao-geral', 'configuracoes', 'personas', 'busca', 'escolas']);
+    const set = new Set(['visao-geral', 'configuracoes', 'personas', 'busca', 'escolas', 'calendario', 'papiro-cadmo']);
     (listaBruta || []).forEach(function(item) {
       if (LEGACY_TAB_MAP[item]) {
         LEGACY_TAB_MAP[item].forEach(function(p) { set.add(p); });
@@ -287,10 +287,21 @@ window.OlymposApp = (function() {
     const permitidas = normalizarPermissoesRbac(sessao.perfil.abasPermitidas);
     document.querySelectorAll('.nav-link').forEach(function(link) {
       const pageTarget = link.getAttribute('data-page');
+      if (!pageTarget) return;
       if (permitidas.includes(pageTarget) || permitidas.includes('TODOS')) {
         link.classList.remove('hidden');
       } else {
         link.classList.add('hidden');
+      }
+    });
+
+    document.querySelectorAll('.nav-dropdown').forEach(function(dd) {
+      const items = dd.querySelectorAll('.dropdown-item');
+      if (items.length > 0) {
+        const hasVisible = Array.from(items).some(function(item) {
+          return !item.classList.contains('hidden');
+        });
+        dd.classList.toggle('hidden', !hasVisible);
       }
     });
 
@@ -458,6 +469,15 @@ window.OlymposApp = (function() {
     }
   }
 
+  function fecharDropdowns() {
+    document.querySelectorAll('.nav-dropdown').forEach(function(dd) {
+      dd.classList.remove('open');
+    });
+    document.querySelectorAll('.nav-dropdown-trigger').forEach(function(btn) {
+      btn.setAttribute('aria-expanded', 'false');
+    });
+  }
+
   // =========================================================================
   // EVENTOS GLOBAIS E ATALHOS DE TECLADO
   // =========================================================================
@@ -505,11 +525,41 @@ window.OlymposApp = (function() {
 
     document.querySelectorAll('.nav-link').forEach(function(link) {
       link.addEventListener('click', function(e) {
-        e.preventDefault();
         const page = link.getAttribute('data-page');
+        if (!page) return;
+        e.preventDefault();
         document.body.classList.remove('nav-drawer-open');
+        fecharDropdowns();
         window.OlymposRouter.navegarPara(page);
       });
+    });
+
+    // Gatilho de abertura/fechamento do dropdown Documentos
+    document.querySelectorAll('.nav-dropdown-trigger').forEach(function(trigger) {
+      trigger.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const parent = trigger.closest('.nav-dropdown');
+        if (!parent) return;
+        const isOpen = parent.classList.contains('open');
+        fecharDropdowns();
+        if (!isOpen) {
+          parent.classList.add('open');
+          trigger.setAttribute('aria-expanded', 'true');
+        }
+      });
+    });
+
+    // Fechamento defensivo de dropdowns ao clicar fora ou pressionar Escape
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.nav-dropdown')) {
+        fecharDropdowns();
+      }
+    });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        fecharDropdowns();
+      }
     });
 
     document.querySelectorAll('[data-nav-target]').forEach(function(el) {
@@ -1026,6 +1076,7 @@ window.OlymposApp = (function() {
     carregarConfiguracaoBoletimEmails: carregarConfiguracaoBoletimEmails,
     salvarBoletimEmails: salvarBoletimEmails,
     testarEnvioBoletim: testarEnvioBoletim,
+    fecharDropdowns: fecharDropdowns,
     escapeHtml: escapeHtml
   };
 })();

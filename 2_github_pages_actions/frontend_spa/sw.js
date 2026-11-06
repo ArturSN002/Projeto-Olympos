@@ -1,9 +1,9 @@
-/**
- * Service Worker Oficial — Hub Olympos V2.2
- * Estratégia: Cache de Shell Estático Offline com proteção absoluta de chamadas dinâmicas.
+﻿/**
+ * Service Worker Oficial â€” Hub Olympos V2.2
+ * EstratÃ©gia: Cache de Shell EstÃ¡tico Offline com proteÃ§Ã£o absoluta de chamadas dinÃ¢micas.
  */
 
-const CACHE_NAME = 'olympos-shell-v2.5.0';
+const CACHE_NAME = 'olympos-shell-v2.6.0';
 
 const SHELL_ASSETS = [
   './',
@@ -30,6 +30,7 @@ const SHELL_ASSETS = [
   './js/views/diarioOficial.js',
   './js/views/papiroCadmo.js',
   './js/views/escolas.js',
+  './js/views/calendario.js',
   './js/views/personas.js',
   './js/views/busca.js',
   './js/views/configuracoes.js'
@@ -64,14 +65,14 @@ self.addEventListener('activate', function(event) {
 self.addEventListener('fetch', function(event) {
   const req = event.request;
 
-  // 1. REQUISITO CRÍTICO: Zero interferência em requisições que não sejam GET (POST, PUT, DELETE)
+  // 1. REQUISITO CRÃTICO: Zero interferÃªncia em requisiÃ§Ãµes que nÃ£o sejam GET (POST, PUT, DELETE)
   if (req.method !== 'GET') {
     return;
   }
 
   const url = new URL(req.url);
 
-  // 2. REQUISITO CRÍTICO: Bypass irrestrito para APIs dinâmicas e serviços de terceiros
+  // 2. REQUISITO CRÃTICO: Bypass irrestrito para APIs dinÃ¢micas e serviÃ§os de terceiros
   const isSupabase = url.hostname.includes('supabase.co');
   const isGoogleAppsScript = url.hostname.includes('script.google.com') || url.hostname.includes('script.googleusercontent.com');
   const isGoogleApis = url.hostname.includes('drive.google.com') || url.hostname.includes('docs.google.com') || url.hostname.includes('googleapis.com');
@@ -80,7 +81,7 @@ self.addEventListener('fetch', function(event) {
     return;
   }
 
-  // 3. Navegação (HTML): Network-First com fallback para cache de ./index.html
+  // 3. NavegaÃ§Ã£o (HTML): Network-First com fallback para cache de ./index.html
   if (req.mode === 'navigate') {
     event.respondWith(
       fetch(req).catch(function() {
@@ -90,7 +91,7 @@ self.addEventListener('fetch', function(event) {
     return;
   }
 
-  // 4. Recursos do Shell Estático (CSS, JS, Imagens, Fontes, Manifest): Network-First com fallback para Cache
+  // 4. Recursos do Shell EstÃ¡tico (CSS, JS, Imagens, Fontes, Manifest): Network-First com fallback para Cache
   event.respondWith(
     fetch(req).then(function(networkResponse) {
       if (networkResponse && networkResponse.status === 200) {

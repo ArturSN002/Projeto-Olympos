@@ -437,8 +437,90 @@ class TestUiResponsivenessAndDesignSystem(unittest.TestCase):
         self.assertIn("pageId = 'portarias'", router_text)
         self.assertIn("targetSubtab = 'licencas'", router_text)
 
+    def test_21_calendario_view_and_data_integrity(self):
+        """Valida a implementação do Módulo Calendário Escolar (Milestone 4): dados 2026/2027, DOM, router e iCal."""
+        cal_js_path = SPA_DIR / "js" / "views" / "calendario.js"
+        html_text = HTML_INDEX.read_text(encoding="utf-8")
+        css_text = CSS_FILE.read_text(encoding="utf-8")
+        router_text = (SPA_DIR / "js" / "router.js").read_text(encoding="utf-8")
+        sync_text = (OLYMPOS_ROOT / "sync_mirrors.py").read_text(encoding="utf-8")
+
+        # 1. Arquivo calendario.js existe e exporta a view modular
+        self.assertTrue(cal_js_path.exists(), f"calendario.js não encontrado em {cal_js_path}")
+        cal_code = cal_js_path.read_text(encoding="utf-8")
+        self.assertIn("window.OlymposViews.calendario", cal_code)
+        self.assertIn("init: init", cal_code)
+        self.assertIn("exportarIcal: exportarIcal", cal_code)
+
+        # 2. Dados Oficiais 2026: 203 dias letivos e distribuição mensal canônica
+        self.assertIn("totalDiasLetivos: 203", cal_code)
+        self.assertIn("1: 7", cal_code)   # Fev: 7
+        self.assertIn("2: 23", cal_code)  # Mar: 23
+        self.assertIn("3: 21", cal_code)  # Abr: 21
+        self.assertIn("4: 21", cal_code)  # Mai: 21
+        self.assertIn("5: 19", cal_code)  # Jun: 19
+        self.assertIn("6: 15", cal_code)  # Jul: 15
+        self.assertIn("7: 21", cal_code)  # Ago: 21
+        self.assertIn("8: 22", cal_code)  # Set: 22
+        self.assertIn("9: 19", cal_code)  # Out: 19
+        self.assertIn("10: 19", cal_code) # Nov: 19
+        self.assertIn("11: 16", cal_code) # Dez: 16
+
+        # 3. 4 Bimestres canônicos (45d, 46d, 56d, 56d = 203d)
+        self.assertIn("diasLetivos: 45", cal_code)
+        self.assertIn("diasLetivos: 46", cal_code)
+        self.assertIn("diasLetivos: 56", cal_code)
+        self.assertIn("2026-02-19", cal_code)
+        self.assertIn("2026-04-23", cal_code)
+        self.assertIn("2026-06-25", cal_code)
+        self.assertIn("2026-09-28", cal_code)
+        self.assertIn("2026-12-23", cal_code)
+
+        # 4. Recesso escolar e feriados de Ceará-Mirim
+        self.assertIn("2026-06-29", cal_code)
+        self.assertIn("2026-07-13", cal_code)
+        self.assertIn("Emancipação Política de Ceará-Mirim", cal_code)
+        self.assertIn("Nossa Senhora da Conceição (Padroeira de Ceará-Mirim)", cal_code)
+
+        # 5. 8 Sábados letivos temáticos
+        self.assertIn("1º Sábado Letivo: Acolhimento", cal_code)
+        self.assertIn("8º Sábado Letivo: Consciência Negra", cal_code)
+
+        # 6. Dados de 2027 Planejamento (202 dias letivos previstos)
+        self.assertIn("totalDiasLetivos: 202", cal_code)
+        self.assertIn("DADOS_2027", cal_code)
+
+        # 7. Estrutura DOM em index.html (#page-calendario, KPIs, toolbar, modal)
+        self.assertIn('id="page-calendario"', html_text)
+        self.assertIn('id="calKpiDiasLetivos"', html_text)
+        self.assertIn('id="calKpiBimestres"', html_text)
+        self.assertIn('id="calKpiRecesso"', html_text)
+        self.assertIn('id="calKpiSabados"', html_text)
+        self.assertIn('id="calKpiMatriculas"', html_text)
+        self.assertIn('id="btnAno2026"', html_text)
+        self.assertIn('id="btnAno2027"', html_text)
+        self.assertIn('id="btnCalTabMes"', html_text)
+        self.assertIn('id="btnCalTabBimestre"', html_text)
+        self.assertIn('id="btnExportarIcal"', html_text)
+        self.assertIn('id="calendarioViewMes"', html_text)
+        self.assertIn('id="calendarioViewBimestre"', html_text)
+        self.assertIn('id="modalDetalhesDiaCalendario"', html_text)
+        self.assertIn('<script src="js/views/calendario.js"></script>', html_text)
+
+        # 8. Roteador e sincronizador
+        self.assertIn("'calendario': 'calendario'", router_text)
+        self.assertIn('"js/views/calendario.js"', sync_text)
+
+        # 9. Estilos dedicados em styles.css
+        self.assertIn(".calendario-kpis-grid", css_text)
+        self.assertIn(".cal-grid-days", css_text)
+        self.assertIn(".cal-bimestres-grid", css_text)
+        self.assertIn(".cal-pill", css_text)
+        self.assertIn(".cal-day-cell", css_text)
+
 
 if __name__ == "__main__":
     unittest.main()
+
 
 

@@ -26,7 +26,7 @@ function extrairEntidadesNerPrometheus_(pub) {
   }
 
   const texto = `${pub.titulo_ato || pub.resumo || ''} ${pub.resumo_texto || ''}`;
-  const mNum = texto.match(/(?:PORTARIA|EDITAL|DECRETO|LEI)\s*(?:N[º°.]?\s*)?(\d{1,4}(?:[.\/\-]\d{2,4})?)/i);
+  const mNum = texto.match(/(?:(?:REPUBLICA[ÇC][ÃA]O(?:\s+POR\s+INCORRE[ÇC][ÃA]O)?|REPUBLICAD[OA](?:\s+POR\s+INCORRE[ÇC][ÃA]O)?)\s+(?:D[AEO]\s+)?(?:PORTARIA|EDITAL|DECRETO|LEI|EXTRATO|CONTRATO)|PORTARIA|EDITAL|DECRETO|LEI|REPUBLICA[ÇC][ÃA]O|REPUBLICAD[OA]|EXTRATO|CONTRATO)(?:[^\d\n]{1,40})?(?:N[º°.]?\s*)?(\d{1,4}(?:[.]\d{3})?(?:[.\/\-]\d{2,4})?)/i);
   const numeroAto = mNum ? mNum[1] : '';
 
   const matriculas = [];
@@ -37,11 +37,21 @@ function extrairEntidadesNerPrometheus_(pub) {
   }
 
   const servidores = [];
-  const regSrv = /servidor(?:\(a\)|a)?\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ][A-ZÁÉÍÓÚÂÊÔÃÕÇ\s']{5,65}?)(?=\s*[-–,]\s*matr[íi]cula)/gi;
-  while ((m = regSrv.exec(texto)) !== null) {
-    const nome = m[1].trim().toUpperCase();
-    if (servidores.indexOf(nome) === -1) servidores.push(nome);
-  }
+  const padroesSrv = [
+    /servidor(?:\(a\)|a)?\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ][A-ZÁÉÍÓÚÂÊÔÃÕÇ\s']{5,65}?)(?=\s*[-–,]\s*matr[íi]cula|\s*,\s*matr[íi]cula|\s*,\s*portador|\s*,\s*ocupante|\s*,\s*lotad)/gi,
+    /(?:conceder|concede|designar|designa|nomear|nomeia|exonerar|exonera|readaptar|readapta)\s+(?:(?:a|o|ao|à|o\(a\)|a\(o\))\s+servidor(?:\(a\)|a)?\s+)?([A-ZÁÉÍÓÚÂÊÔÃÕÇ][A-ZÁÉÍÓÚÂÊÔÃÕÇ\s']{5,65}?)(?=\s*[-–,]\s*matr[íi]cula|\s*,\s*matr[íi]cula|\s*,\s*CPF)/gi,
+    /(?:nomear|nomeia|designar|designa)\s+(?:a\s+senhora|o\s+senhor|o\(a\)\s+servidor\(a\)|a\s+servidora|o\s+servidor)?\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ][A-ZÁÉÍÓÚÂÊÔÃÕÇ\s']{5,65}?)(?=\s*,\s*para\s+|\s+para\s+(?:exercer|ocupar|responder|assumir|a\s+fun[çc][ãa]o|o\s+cargo))/gi,
+    /(?:cargo\s+em\s+comissão|função\s+gratificada)\s+de\s+diretor(?:a)?\s+(?:escolar|de\s+escola)[^,\n]*?,\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ][A-ZÁÉÍÓÚÂÊÔÃÕÇ\s']{5,65}?)(?=\s*[-–,.\n]|\s+matr[íi]cula)/gi
+  ];
+  padroesSrv.forEach(function(reg) {
+    let matchSrv;
+    while ((matchSrv = reg.exec(texto)) !== null) {
+      const nome = matchSrv[1].replace(/\s+/g, ' ').replace(/^[-–,.\s]+|[-–,.\s]+$/g, '').trim().toUpperCase();
+      if (nome.split(' ').length >= 2 && servidores.indexOf(nome) === -1) {
+        servidores.push(nome);
+      }
+    }
+  });
 
   return { numeroAto: numeroAto, servidores: servidores, matriculas: matriculas };
 }
@@ -193,7 +203,11 @@ function montarHtmlBoletimEditorial_(dataRef, resultadosSalvos) {
     const cat = String(r.categoria || 'ATO_GABINETE').toUpperCase();
     let badgeBg = '#DBEAFE';
     let badgeColor = '#1E40AF';
-    if (cat.includes('EDITAL') || cat.includes('PSS')) {
+    if (cat.includes('REPUBLIC')) {
+      badgeBg = '#FEE2E2'; badgeColor = '#991B1B';
+    } else if (cat.includes('DIRETOR') || cat.includes('NOMEACAO')) {
+      badgeBg = '#E0E7FF'; badgeColor = '#3730A3';
+    } else if (cat.includes('EDITAL') || cat.includes('PSS')) {
       badgeBg = '#F3E8FF'; badgeColor = '#6B21A8';
     } else if (cat.includes('DECRETO') || cat.includes('LEI') || cat.includes('NORMATIVO')) {
       badgeBg = '#FEF3C7'; badgeColor = '#92400E';
@@ -635,6 +649,12 @@ function processarPacotePrometheus(payload) {
     } else if (categoria === 'NORMATIVO_JURIDICO') {
       registrarAlertaMemoriaOlympos('_memoria_temis.md', `[${dataISO}] [HÉLIO/FEMURN]: Publicado ${tituloAto} (${fileUrl})`);
       alertasDespachados.push('Têmis (Normativo Jurídico)');
+    } else if (categoria === 'NOMEACAO_DIRETOR' || String(tituloAto).toLowerCase().includes('diretor')) {
+      registrarAlertaMemoriaOlympos('_memoria_atena.md', `[${dataISO}] [HÉLIO/FEMURN]: Publicado ${tituloAto} (${fileUrl})`);
+      alertasDespachados.push('Atena (Gestão Escolar/Diretores)');
+    } else if (categoria === 'REPUBLICACAO' || String(tituloAto).toLowerCase().includes('republica')) {
+      registrarAlertaMemoriaOlympos('_memoria_helio.md', `[${dataISO}] [HÉLIO/FEMURN]: Republicação Detectada ${tituloAto} (${fileUrl})`);
+      alertasDespachados.push('Hélio (Republicação/Correção)');
     }
   });
 

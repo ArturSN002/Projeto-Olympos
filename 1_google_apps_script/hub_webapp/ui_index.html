@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR" data-theme="light">
   <head>
     <meta charset="UTF-8" />
@@ -28,11 +28,11 @@
           }
           if ('caches' in window) {
             caches.keys().then(function(keys) {
-              var stale = keys.filter(function(k) { return k !== 'olympos-shell-v2.5.0'; });
+              var stale = keys.filter(function(k) { return k !== 'olympos-shell-v2.6.0'; });
               if (stale.length > 0) {
                 Promise.all(stale.map(function(k) { return caches.delete(k); })).then(function() {
-                  if (!sessionStorage.getItem('olympos_sw_purged_v250')) {
-                    sessionStorage.setItem('olympos_sw_purged_v250', '1');
+                  if (!sessionStorage.getItem('olympos_sw_purged_v260')) {
+                    sessionStorage.setItem('olympos_sw_purged_v260', '1');
                     if ('serviceWorker' in navigator) {
                       navigator.serviceWorker.getRegistrations().then(function(regs) {
                         regs.forEach(function(r) { r.update(); });
@@ -148,14 +148,25 @@
         <div class="nav-rail-inner">
           <a href="#visao-geral" class="nav-link active" data-page="visao-geral">Visão Geral</a>
           <span class="nav-divider-dot" aria-hidden="true"></span>
-          <a href="#oficios" class="nav-link" data-page="oficios">Ofícios</a>
-          <a href="#portarias" class="nav-link" data-page="portarias">Portarias</a>
-          <a href="#certificados" class="nav-link" data-page="certificados">Certificados</a>
+          <div class="nav-dropdown" id="navDropdownDocumentos">
+            <button type="button" class="nav-link nav-dropdown-trigger" id="dropdownDocsBtn" aria-haspopup="true" aria-expanded="false" aria-controls="dropdownDocsMenu">
+              <span>Documentos</span>
+              <svg class="dropdown-caret" viewBox="0 0 20 20" width="12" height="12" fill="currentColor" aria-hidden="true">
+                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+              </svg>
+            </button>
+            <div class="dropdown-menu" id="dropdownDocsMenu" role="menu" aria-labelledby="dropdownDocsBtn">
+              <a href="#oficios" class="nav-link dropdown-item" role="menuitem" data-page="oficios">Ofícios</a>
+              <a href="#portarias" class="nav-link dropdown-item" role="menuitem" data-page="portarias">Portarias</a>
+              <a href="#certificados" class="nav-link dropdown-item" role="menuitem" data-page="certificados">Certificados</a>
+            </div>
+          </div>
           <span class="nav-divider-dot" aria-hidden="true"></span>
           <a href="#diario-oficial" class="nav-link" data-page="diario-oficial">Diário Oficial</a>
-          <a href="#papiro-cadmo" class="nav-link" data-page="papiro-cadmo">Papiro de Cadmo</a>
+          <a href="#papiro-cadmo" class="nav-link" data-page="papiro-cadmo">Permutas</a>
+          <a href="#calendario" class="nav-link" data-page="calendario">Calendário</a>
           <a href="#escolas" class="nav-link" data-page="escolas">Escolas</a>
-          <a href="#personas" class="nav-link" data-page="personas">Personas &amp; Memórias</a>
+          <a href="#personas" class="nav-link" data-page="personas">Personas</a>
           <a href="#busca" class="nav-link hidden" data-page="busca" style="display: none !important;">Busca no Acervo</a>
           <span class="nav-divider-dot" aria-hidden="true"></span>
           <a href="#configuracoes" class="nav-link" data-page="configuracoes">Ajustes</a>
@@ -175,13 +186,24 @@
       </div>
       <div class="nav-rail-inner mobile-nav-inner">
         <a href="#visao-geral" class="nav-link active" data-page="visao-geral">Visão Geral</a>
-        <a href="#oficios" class="nav-link" data-page="oficios">Ofícios</a>
-        <a href="#portarias" class="nav-link" data-page="portarias">Portarias</a>
-        <a href="#certificados" class="nav-link" data-page="certificados">Certificados</a>
+        <div class="nav-dropdown mobile-nav-dropdown" id="mobileNavDropdownDocumentos">
+          <button type="button" class="nav-link nav-dropdown-trigger" id="mobileDropdownDocsBtn" aria-haspopup="true" aria-expanded="false" aria-controls="mobileDropdownDocsMenu">
+            <span>Documentos</span>
+            <svg class="dropdown-caret" viewBox="0 0 20 20" width="12" height="12" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+            </svg>
+          </button>
+          <div class="dropdown-menu mobile-dropdown-menu" id="mobileDropdownDocsMenu" role="menu" aria-labelledby="mobileDropdownDocsBtn">
+            <a href="#oficios" class="nav-link dropdown-item" role="menuitem" data-page="oficios">Ofícios</a>
+            <a href="#portarias" class="nav-link dropdown-item" role="menuitem" data-page="portarias">Portarias</a>
+            <a href="#certificados" class="nav-link dropdown-item" role="menuitem" data-page="certificados">Certificados</a>
+          </div>
+        </div>
         <a href="#diario-oficial" class="nav-link" data-page="diario-oficial">Diário Oficial</a>
-        <a href="#papiro-cadmo" class="nav-link" data-page="papiro-cadmo">Papiro de Cadmo</a>
+        <a href="#papiro-cadmo" class="nav-link" data-page="papiro-cadmo">Permutas</a>
+        <a href="#calendario" class="nav-link" data-page="calendario">Calendário</a>
         <a href="#escolas" class="nav-link" data-page="escolas">Escolas</a>
-        <a href="#personas" class="nav-link" data-page="personas">Personas &amp; Memórias</a>
+        <a href="#personas" class="nav-link" data-page="personas">Personas</a>
         <a href="#busca" class="nav-link hidden" data-page="busca" style="display: none !important;">Busca no Acervo</a>
         <a href="#configuracoes" class="nav-link" data-page="configuracoes">Ajustes</a>
       </div>
@@ -195,7 +217,7 @@
         <div id="pageHeaderEyebrow" class="eyebrow-pill">GOVERNANÇA EXECUTIVA • SMEB 2026</div>
         <h1 id="pageHeaderTitle" class="hero-display-title">Inteligência documental e governança pública.</h1>
         <p id="pageHeaderSubtitle" class="hero-lead-subtitle">
-          Painel central da Secretaria Municipal de Educação Básica de Ceará-Mirim: numeração sequencial oficial, atalhos operacionais e constelação das 17 personas Olympos.
+          Painel central da Secretaria Municipal de Educação Básica de Ceará-Mirim: numeração sequencial oficial, atalhos operacionais e calendário escolar.
         </p>
 
         <div class="hero-shortcuts-bar">
@@ -344,20 +366,6 @@
                 <span class="qm-action">Abrir página dedicada →</span>
               </div>
             </div>
-          </div>
-
-          <!-- CONSTELAÇÃO DAS 17 PERSONAS NA PÁGINA INICIAL (ÍCONES VETORIAIS ÚNICOS) -->
-          <div class="surface-card">
-            <div class="card-header-row">
-              <div>
-                <span class="section-eyebrow">ECOSSISTEMA COGNITIVO SMEB</span>
-                <h2 class="section-title">Constelação Olympos — 17 Personas Especializadas</h2>
-                <p class="section-desc">Emblemas vetoriais exclusivos para cada persona do ecossistema (11 com memória operacional própria e 6 roteadas por anfitriã, sem criação de arquivos duplicados).</p>
-              </div>
-              <button type="button" class="btn btn-secondary btn-sm" data-nav-target="personas">Gerenciar Memórias .md →</button>
-            </div>
-
-            <div id="homePersonasConstellation" class="home-personas-grid"></div>
           </div>
         </section>
 
@@ -843,10 +851,13 @@
                   <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10B981;"></span>
                   Mapa Interativo de Polos &amp; Escolas Polo — Ceará-Mirim &amp; Grande Natal
                 </span>
-                <div style="display: flex; gap: 14px; font-size: 11.5px; color: var(--text-muted);">
+                <div style="display: flex; gap: 14px; font-size: 11.5px; color: var(--text-muted); align-items: center; flex-wrap: wrap;">
                   <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #D4AF37;"></span> SMEB Sede</span>
                   <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #38BDF8;"></span> Escolas Ceará-Mirim</span>
                   <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10B981;"></span> Polos Parceiros</span>
+                  <button type="button" id="btnGerenciarSecretarias" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 2px 8px; margin-left: 6px;" title="Editar secretarias municipais parceiras" onclick="window.OlymposViews.papiroCadmo.abrirModalEdicaoSecretaria()">
+                    <span>🏛️ Secretarias Parceiras</span>
+                  </button>
                 </div>
               </div>
               <div id="mapaPermutasCadmo" style="height: 420px; width: 100%; border-radius: var(--radius-lg); position: relative; z-index: 1;"></div>
@@ -950,7 +961,7 @@
             <!-- COMPONENTE ERGONÔMICO COLAPSÁVEL DE MATCHING DA PERSONA HERA -->
             <div id="heraMatchingCollapsibleCard" class="surface-card hera-collapsible-card" style="margin-top: 20px; border: 1px solid var(--border-hairline); border-radius: var(--radius-lg, 16px); overflow: hidden; background: var(--bg-surface); box-shadow: var(--shadow-subtle);">
               <!-- CABEÇALHO / TRIGGER DO DROPDOWN COLAPSÁVEL -->
-              <div id="heraCollapsibleHeader" class="hera-collapsible-header" role="button" tabindex="0" aria-expanded="true" aria-controls="heraCollapsibleBody" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; background: var(--bg-tonal); cursor: pointer; user-select: none; border-bottom: 1px solid var(--border-hairline); transition: background 0.2s ease;">
+              <div id="heraCollapsibleHeader" class="hera-collapsible-header" role="button" tabindex="0" aria-expanded="false" aria-controls="heraCollapsibleBody" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; background: var(--bg-tonal); cursor: pointer; user-select: none; border-bottom: 1px solid var(--border-hairline); transition: background 0.2s ease;">
                 <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
                   <div style="display: flex; align-items: center; gap: 8px;">
                     <span style="font-size: 1.2rem;" aria-hidden="true">🤝</span>
@@ -962,15 +973,15 @@
                 </div>
 
                 <div style="display: flex; align-items: center; gap: 10px;">
-                  <span id="heraToggleLabel" style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">Recolher</span>
-                  <button type="button" id="btnToggleHeraMatching" class="icon-capsule-btn" aria-label="Expandir ou recolher sugestões de matching" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 12px; transition: transform 0.25s ease;">
+                  <span id="heraToggleLabel" style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">Expandir</span>
+                  <button type="button" id="btnToggleHeraMatching" class="icon-capsule-btn hera-chevron-rotated" aria-label="Expandir ou recolher sugestões de matching" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 12px; transition: transform 0.25s ease;">
                     <span id="heraChevronIcon">▼</span>
                   </button>
                 </div>
               </div>
 
               <!-- CORPO COLAPSÁVEL (COM SCROLL INTERNO ERGONÔMICO) -->
-              <div id="heraCollapsibleBody" class="hera-collapsible-body" style="padding: 18px 20px; transition: all 0.3s ease;">
+              <div id="heraCollapsibleBody" class="hera-collapsible-body is-collapsed" style="padding: 18px 20px; transition: all 0.3s ease; display: none;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
                   <div style="display: flex; gap: 8px; align-items: center;">
                     <button type="button" id="tabAbaPermutas" class="btn btn-secondary btn-sm active" style="font-size: 12px; font-weight: 600;">
@@ -985,6 +996,298 @@
 
                 <div id="resultadoMatchingHera" class="resultado-matching-container" style="max-height: 520px; overflow-y: auto; padding-right: 4px;">
                   <!-- Tabela ou Cards de Matching Injetados via JS -->
+                </div>
+              </div>
+            </div>
+
+            <!-- MODAL DE EDIÇÃO DE SECRETARIAS MUNICIPAIS PARCEIRAS (#modalEdicaoSecretaria) -->
+            <div id="modalEdicaoSecretaria" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalEdicaoSecretariaTitulo" style="display: none;">
+              <div class="modal-card" style="max-width: 580px; width: 92%;">
+                <div class="modal-header">
+                  <div class="modal-title-wrap">
+                    <span class="sec-edit-header-badge">🏛️ Inteligência Cartográfica &bull; Polos Parceiros</span>
+                    <h3 id="modalEdicaoSecretariaTitulo" style="margin: 0; font-size: 1.18rem; font-weight: 700; color: var(--text-main);">Editar Secretaria Municipal Parceira</h3>
+                  </div>
+                  <button id="closeModalEdicaoSecretariaBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal">&times;</button>
+                </div>
+
+                <form id="formEdicaoSecretaria">
+                  <input type="hidden" id="editSecId" name="editSecId" />
+                  <div class="modal-body" style="padding: 20px 24px; max-height: 75vh; overflow-y: auto;">
+                    <p class="section-desc" style="margin-top: 0; margin-bottom: 14px; font-size: 12px; color: var(--text-secondary);">
+                      Edite as informações cadastrais e as coordenadas georreferenciadas dos polos parceiros da rede intermunicipal de permutas. Os dados são salvos localmente e podem ser restaurados a qualquer momento.
+                    </p>
+
+                    <!-- Seleção rápida entre os 15 polos -->
+                    <div class="field-group" style="margin-bottom: 14px;">
+                      <label for="editSecSelectPonto">Selecionar Secretaria / Polo para Edição</label>
+                      <select id="editSecSelectPonto" class="input-clean" style="font-weight: 600;"></select>
+                    </div>
+
+                    <!-- Nome da Secretaria -->
+                    <div class="field-group" style="margin-bottom: 12px;">
+                      <label for="editSecNome">Nome da Secretaria / Unidade *</label>
+                      <input type="text" id="editSecNome" name="editSecNome" class="input-clean" placeholder="Ex: SME Natal (Polo Natal)" required />
+                    </div>
+
+                    <!-- Grid: Município e Responsável / Contato -->
+                    <div class="sec-edit-grid" style="margin-bottom: 12px;">
+                      <div class="field-group">
+                        <label for="editSecMunicipio">Município *</label>
+                        <input type="text" id="editSecMunicipio" name="editSecMunicipio" class="input-clean" placeholder="Ex: Natal" required />
+                      </div>
+                      <div class="field-group">
+                        <label for="editSecContato">Responsável / Contato Telefônico</label>
+                        <input type="text" id="editSecContato" name="editSecContato" class="input-clean" placeholder="Ex: (84) 3232-4700" />
+                      </div>
+                    </div>
+
+                    <!-- Bloco de Coordenadas Georreferenciadas -->
+                    <div class="sec-edit-coords-box">
+                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <strong style="font-size: 12.5px; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
+                          <span>📍</span> Coordenadas Cartográficas (Graus Decimais WGS84)
+                        </strong>
+                        <span style="font-size: 11px; color: var(--text-muted);">Precisão GPS</span>
+                      </div>
+                      <div class="sec-edit-grid">
+                        <div class="field-group">
+                          <label for="editSecLat">Latitude (Decimal) *</label>
+                          <input type="number" id="editSecLat" name="editSecLat" class="input-clean" step="0.000001" placeholder="-5.789000" required />
+                        </div>
+                        <div class="field-group">
+                          <label for="editSecLng">Longitude (Decimal) *</label>
+                          <input type="number" id="editSecLng" name="editSecLng" class="input-clean" step="0.000001" placeholder="-35.202000" required />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="modal-footer">
+                    <button type="button" id="btnRestaurarPadraoSecretarias" class="btn btn-ghost btn-sm" style="color: var(--accent-red, #EF4444); border-color: rgba(239,68,68,0.3);">
+                      ↺ Restaurar Padrões Originais
+                    </button>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                      <button type="button" id="btnCancelarEdicaoSecretaria" class="btn btn-secondary btn-sm">Cancelar</button>
+                      <button type="submit" id="btnSalvarSecretaria" class="btn btn-primary btn-sm">Salvar Alterações</button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- =========================================================================
+             PÁGINA: CALENDÁRIO ESCOLAR & AGENDA INTERSETORIAL (SMEB 2026–2027)
+             ========================================================================= -->
+        <section class="page-view hidden" id="page-calendario">
+          <div class="surface-card">
+            <div class="card-header-row">
+              <div>
+                <span class="section-eyebrow">CALENDÁRIO ESCOLAR &amp; AGENDA INTERSETORIAL • SMEB DE CEARÁ-MIRIM/RN</span>
+                <h2 class="section-title">Calendário Escolar e Planejamento</h2>
+                <p class="section-desc">Controle oficial de 203 dias letivos (LDB 9.394/96), 4 bimestres, recessos, cronograma de matrículas, feriados municipais/nacionais, 8 sábados letivos temáticos e exportação iCal.</p>
+              </div>
+              <div class="button-group">
+                <button type="button" id="btnExportarIcalTop" class="btn btn-primary btn-sm" title="Exportar Calendário Oficial (.ics) para Google Calendar">
+                  <span>📅 Exportar Calendário (.ics)</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- KPIs Executivos do Calendário -->
+            <div class="calendario-kpis-grid" id="calendarioKpisGrid">
+              <div class="cal-kpi-card">
+                <div class="cal-kpi-header">
+                  <span class="cal-kpi-icon">📚</span>
+                  <span class="cal-kpi-badge letivo">LDB 200+</span>
+                </div>
+                <div class="cal-kpi-value" id="calKpiDiasLetivos">203</div>
+                <div class="cal-kpi-label">Dias Letivos</div>
+                <div class="cal-kpi-meta" id="calKpiDiasLetivosMeta">Oficial: 203d (Meta: 200d)</div>
+              </div>
+
+              <div class="cal-kpi-card">
+                <div class="cal-kpi-header">
+                  <span class="cal-kpi-icon">📊</span>
+                  <span class="cal-kpi-badge bimestre">4 Bimestres</span>
+                </div>
+                <div class="cal-kpi-value" id="calKpiBimestres">4</div>
+                <div class="cal-kpi-label">Etapas de Avaliação</div>
+                <div class="cal-kpi-meta" id="calKpiBimestresMeta">19/02 a 23/12/2026</div>
+              </div>
+
+              <div class="cal-kpi-card">
+                <div class="cal-kpi-header">
+                  <span class="cal-kpi-icon">🏖️</span>
+                  <span class="cal-kpi-badge recesso">15 Dias</span>
+                </div>
+                <div class="cal-kpi-value" id="calKpiRecesso">15d</div>
+                <div class="cal-kpi-label">Recesso Meio de Ano</div>
+                <div class="cal-kpi-meta" id="calKpiRecessoMeta">29/06 a 13/07/2026</div>
+              </div>
+
+              <div class="cal-kpi-card">
+                <div class="cal-kpi-header">
+                  <span class="cal-kpi-icon">⭐</span>
+                  <span class="cal-kpi-badge sabado">8 Sábados</span>
+                </div>
+                <div class="cal-kpi-value" id="calKpiSabados">8</div>
+                <div class="cal-kpi-label">Sábados Letivos</div>
+                <div class="cal-kpi-meta" id="calKpiSabadosMeta">2 por Bimestre (Temáticos)</div>
+              </div>
+
+              <div class="cal-kpi-card">
+                <div class="cal-kpi-header">
+                  <span class="cal-kpi-icon">📝</span>
+                  <span class="cal-kpi-badge matricula">4 Fases</span>
+                </div>
+                <div class="cal-kpi-value" id="calKpiMatriculas">4</div>
+                <div class="cal-kpi-label">Fases de Matrícula</div>
+                <div class="cal-kpi-meta" id="calKpiMatriculasMeta">Renovação, Rede, Novos &amp; NEE</div>
+              </div>
+            </div>
+
+            <!-- Toolbar de Controle: Ano, Abas de Visualização e Exportador -->
+            <div class="calendario-controls-toolbar">
+              <!-- Seletor de Ano: 2026 Oficial vs 2027 Planejamento -->
+              <div class="cal-year-toggle-group" role="group" aria-label="Seletor de Ano Letivo">
+                <button type="button" class="btn-cal-year active" id="btnAno2026" data-year="2026">
+                  <span>🏛️ 2026 Oficial</span>
+                </button>
+                <button type="button" class="btn-cal-year" id="btnAno2027" data-year="2027">
+                  <span>🔮 2027 Planejamento</span>
+                </button>
+              </div>
+
+              <!-- Abas de Visualização: Mês vs Bimestre -->
+              <div class="cal-view-tabs-group" role="tablist" aria-label="Visualizações do Calendário">
+                <button type="button" class="btn-cal-tab active" id="btnCalTabMes" data-tab="mes" role="tab" aria-selected="true">
+                  <span>📅 Visualização Mensal</span>
+                </button>
+                <button type="button" class="btn-cal-tab" id="btnCalTabBimestre" data-tab="bimestre" role="tab" aria-selected="false">
+                  <span>📊 Visão por Bimestre</span>
+                </button>
+              </div>
+
+              <div class="cal-export-group">
+                <button type="button" class="btn btn-secondary btn-sm" id="btnExportarIcal">
+                  <span>📥 Exportar .ics (Google Calendar)</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Barra de Filtros por Categoria -->
+            <div class="calendario-filter-bar" role="toolbar" aria-label="Filtros por Categoria de Evento">
+              <span class="cal-filter-label">Filtrar por:</span>
+              <div class="cal-filter-pills" id="calFilterPillsContainer">
+                <button type="button" class="cal-pill active" data-category="todos">Todos (<span id="countFiltroTodos">0</span>)</button>
+                <button type="button" class="cal-pill" data-category="letivo">Dias Letivos (<span id="countFiltroLetivos">0</span>)</button>
+                <button type="button" class="cal-pill" data-category="feriado">Feriados &amp; Recessos (<span id="countFiltroFeriados">0</span>)</button>
+                <button type="button" class="cal-pill" data-category="matricula">Matrículas (<span id="countFiltroMatriculas">0</span>)</button>
+                <button type="button" class="cal-pill" data-category="jornada">Jornadas Pedagógicas (<span id="countFiltroJornadas">0</span>)</button>
+                <button type="button" class="cal-pill" data-category="sabado_letivo">Sábados Letivos (<span id="countFiltroSabados">0</span>)</button>
+                <button type="button" class="cal-pill" data-category="exame">Exames &amp; Avaliações (<span id="countFiltroExames">0</span>)</button>
+              </div>
+            </div>
+
+            <!-- Container Principal Dinâmico -->
+            <div id="calendarioContainer" class="calendario-main-container">
+              <!-- Visualização 1: Mês a Mês -->
+              <div id="calendarioViewMes" class="cal-view-subpage">
+                <!-- Barra de Navegação de Mês -->
+                <div class="cal-month-nav-bar">
+                  <div class="cal-month-nav-left">
+                    <button type="button" id="btnMesAnterior" class="btn btn-secondary btn-sm" title="Mês anterior">
+                      <span>&larr; Anterior</span>
+                    </button>
+                    <button type="button" id="btnMesHoje" class="btn btn-secondary btn-sm" title="Ir para o mês inicial letivo">
+                      <span>Hoje / Início</span>
+                    </button>
+                    <button type="button" id="btnMesProximo" class="btn btn-secondary btn-sm" title="Próximo mês">
+                      <span>Próximo &rarr;</span>
+                    </button>
+                  </div>
+                  <div class="cal-month-title-wrap">
+                    <h3 id="calTituloMes" class="cal-month-title">Fevereiro de 2026</h3>
+                    <span id="calSubtituloMes" class="cal-month-subtitle">7 dias letivos</span>
+                  </div>
+                  <div class="cal-month-nav-right">
+                    <select id="selectMesCalendario" class="input-clean cal-select-mes" aria-label="Selecionar mês">
+                      <option value="0">Janeiro</option>
+                      <option value="1" selected>Fevereiro</option>
+                      <option value="2">Março</option>
+                      <option value="3">Abril</option>
+                      <option value="4">Maio</option>
+                      <option value="5">Junho</option>
+                      <option value="6">Julho</option>
+                      <option value="7">Agosto</option>
+                      <option value="8">Setembro</option>
+                      <option value="9">Outubro</option>
+                      <option value="10">Novembro</option>
+                      <option value="11">Dezembro</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Banner Informativo do Mês Selecionado -->
+                <div id="calResumoMes" class="cal-month-info-banner">
+                  <!-- Inserido dinamicamente via JS -->
+                </div>
+
+                <!-- Grade Mensal do Calendário -->
+                <div class="cal-grid-wrapper">
+                  <div class="cal-grid-weekdays">
+                    <div class="cal-weekday dom">Dom</div>
+                    <div class="cal-weekday">Seg</div>
+                    <div class="cal-weekday">Ter</div>
+                    <div class="cal-weekday">Qua</div>
+                    <div class="cal-weekday">Qui</div>
+                    <div class="cal-weekday">Sex</div>
+                    <div class="cal-weekday sab">Sáb</div>
+                  </div>
+                  <div class="cal-grid-days" id="calGridDias">
+                    <!-- Gerado dinamicamente via JS -->
+                  </div>
+                </div>
+
+                <!-- Lista de Eventos do Mês -->
+                <div class="cal-events-list-section">
+                  <h4 class="cal-events-section-title">Eventos &amp; Marcos do Mês Selecionado</h4>
+                  <div id="calListaEventosMes" class="cal-events-timeline">
+                    <!-- Gerado dinamicamente via JS -->
+                  </div>
+                </div>
+              </div>
+
+              <!-- Visualização 2: Por Bimestre -->
+              <div id="calendarioViewBimestre" class="cal-view-subpage hidden" style="display: none;">
+                <div class="cal-bimestres-header">
+                  <h3 class="section-title" style="font-size: 1.25rem;">Quadro Demonstrativo dos 4 Bimestres Letivos</h3>
+                  <p class="section-desc">Detalhamento dos períodos letivos, cumprimento da meta de 203 dias, distribuição de sábados temáticos e conselhos de classe.</p>
+                </div>
+                <div class="cal-bimestres-grid" id="calBimestresGrid">
+                  <!-- Gerado dinamicamente via JS -->
+                </div>
+              </div>
+            </div>
+
+            <!-- MODAL DE DETALHES DO DIA SELECIONADO -->
+            <div id="modalDetalhesDiaCalendario" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalDetalhesDiaTitulo" style="display: none;">
+              <div class="modal-card" style="max-width: 580px; width: 92%;">
+                <div class="modal-header">
+                  <div class="modal-title-wrap">
+                    <span class="cal-modal-badge" id="modalDetalhesDiaBadge">📅 Agenda Escolar</span>
+                    <h3 id="modalDetalhesDiaTitulo" style="margin: 0; font-size: 1.18rem; font-weight: 700; color: var(--text-main);">Detalhes do Dia</h3>
+                  </div>
+                  <button id="closeModalDetalhesDiaBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal">&times;</button>
+                </div>
+                <div class="modal-body" id="modalDetalhesDiaBody" style="padding: 20px 24px; max-height: 75vh; overflow-y: auto;">
+                  <!-- Conteúdo dinâmico injetado via JS -->
+                </div>
+                <div class="modal-footer" style="padding: 12px 24px; display: flex; justify-content: flex-end;">
+                  <button type="button" id="btnFecharModalDetalhesDia" class="btn btn-secondary btn-sm">Fechar</button>
                 </div>
               </div>
             </div>

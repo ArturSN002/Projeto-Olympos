@@ -70,7 +70,7 @@ def obter_pasta_drive_destino(categoria: str, entidade: str) -> str:
     cat_upper = str(categoria or "").upper()
     if "CÂMARA" in entidade_upper or "CAMARA" in entidade_upper:
         return FOLDER_JURIDICO_2026
-    if cat_upper == "PORTARIA":
+    if cat_upper in ("PORTARIA", "NOMEACAO_DIRETOR", "REPUBLICACAO"):
         return FOLDER_PORTARIAS_2026
     return FOLDER_GABINETE_2026
 
@@ -127,8 +127,14 @@ def upload_pdf_direto_drive(pdf_bytes: bytes, nome_arquivo: str, folder_id: str)
 KEYWORDS_EDUCACAO = [
     "educação", "smeb", "professor", "magistério", "pedagog", "escola",
     "creche", "cme", "fundeb", "permuta", "cessão", "processo seletivo",
-    "readaptação", "licença", "merenda", "transporte escolar", "diretor",
-    "coordenador", "cuidador", "mediador", "ensino"
+    "readaptação", "licença", "merenda", "transporte escolar",
+    "diretor", "diretora", "diretor escolar", "diretora escolar",
+    "diretor de escola", "diretora de escola", "direção escolar",
+    "gestor escolar", "gestora escolar", "gestão escolar",
+    "coordenador", "coordenadora", "cuidador", "mediador", "ensino",
+    "republicação", "republicado", "republicada",
+    "republicado por incorreção", "republicada por incorreção",
+    "incorreção", "retificação"
 ]
 
 KEYWORDS_LEGISLATIVO = [
@@ -162,14 +168,42 @@ def contem_palavra_chave(texto, lista_termos):
 
 def classificar_tipo_ato(titulo_e_texto):
     t = normalizar_texto_sem_acentos(titulo_e_texto).upper()
-    if "PORTARIA" in t:
-        return "PORTARIA"
-    if "EDITAL" in t or "PROCESSO SELETIVO" in t or "CONVOCACAO" in t:
-        return "EDITAL_PSS"
-    if "DECRETO" in t or "LEI " in t:
-        return "NORMATIVO_JURIDICO"
+
+    # 1. Prioridade: Republicações e Retificações de Atos
+    if any(k in t for k in ["REPUBLICAC", "REPUBLICAD", "RETIFICAC", "INCORRECAO"]):
+        return "REPUBLICACAO"
+
+    # 2. Prioridade: Nomeações e Funções Gratificadas de Direção Escolar
+    padrao_diretor = (
+        r"(?:DIRETOR(?:A)?\s+ESCOLAR|DIRETOR(?:A)?\s+DE\s+ESCOLA|DIRECAO\s+ESCOLAR|"
+        r"GESTOR(?:A)?\s+ESCOLAR|GESTAO\s+ESCOLAR|"
+        r"(?:NOMEAR|NOMEIA|NOMEIO|DESIGNAR|DESIGNA)[\s\S]*?(?:DIRETOR|DIRETORA)|"
+        r"FUNCAO\s+GRATIFICADA[\s\S]*?(?:DIRETOR|DIRETORA)|"
+        r"CARGO\s+EM\s+COMISSAO[\s\S]*?(?:DIRETOR|DIRETORA))"
+    )
+    if (
+        "DIRETOR ESCOLAR" in t or "DIRETORA ESCOLAR" in t or
+        "DIRETOR DE ESCOLA" in t or "DIRETORA DE ESCOLA" in t or
+        "DIRECAO ESCOLAR" in t or re.search(padrao_diretor, t)
+    ):
+        return "NOMEACAO_DIRETOR"
+
+    # 3. Permutas e Cessões Funcionais
     if "PERMUTA" in t or "CESSAO" in t:
         return "PERMUTA_RH"
+
+    # 4. Editais, PSS e Convocatórias
+    if "EDITAL" in t or "PROCESSO SELETIVO" in t or "CONVOCACAO" in t:
+        return "EDITAL_PSS"
+
+    # 5. Portarias Gerais
+    if "PORTARIA" in t:
+        return "PORTARIA"
+
+    # 6. Decretos e Leis
+    if "DECRETO" in t or "LEI " in t or "LEI MUNICIPAL" in t:
+        return "NORMATIVO_JURIDICO"
+
     return "ATO_GABINETE"
 
 
@@ -182,7 +216,8 @@ def extrair_entidades_estruturadas(texto_integral, titulo_ato=""):
 
     # 1. Número do Ato (ex: 045/2026)
     match_num = re.search(
-        r"(?:PORTARIA|EDITAL|DECRETO|LEI)\s*(?:N[º°.]?\s*)?(\d{1,4}(?:[./-]\d{2,4})?)",
+        r"(?:(?:REPUBLICA[ÇC][ÃA]O(?:\s+POR\s+INCORRE[ÇC][ÃA]O)?|REPUBLICAD[OA](?:\s+POR\s+INCORRE[ÇC][ÃA]O)?)\s+(?:D[AEO]\s+)?(?:PORTARIA|EDITAL|DECRETO|LEI|EXTRATO|CONTRATO)|"
+        r"PORTARIA|EDITAL|DECRETO|LEI|REPUBLICA[ÇC][ÃA]O|REPUBLICAD[OA]|EXTRATO|CONTRATO)(?:[^\d\n]{1,40})?(?:N[º°.]?\s*)?(\d{1,4}(?:[.]\d{3})?(?:[./-]\d{2,4})?)",
         texto_combinado,
         re.IGNORECASE
     )
@@ -199,11 +234,13 @@ def extrair_entidades_estruturadas(texto_integral, titulo_ato=""):
         if val and val not in matriculas:
             matriculas.append(val)
 
-    # 3. Nomes de Servidores (padrões comuns em portarias da SMEB/Prefeitura)
+    # 3. Nomes de Servidores (padrões comuns em portarias da SMEB/Prefeitura e nomeação de diretores)
     servidores = []
     padroes_servidor = [
         r"servidor(?:\(a\)|a)?\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ][A-ZÁÉÍÓÚÂÊÔÃÕÇ\s']{5,70}?)(?=\s*[-–,]\s*matr[íi]cula|\s*,\s*matr[íi]cula|\s*,\s*portador|\s*,\s*ocupante|\s*,\s*lotad)",
-        r"(?:conceder|designar|nomear|exonerar|readaptar)\s+(?:a(?:\(o\))?\s+servidor(?:\(a\))?\s+)?([A-ZÁÉÍÓÚÂÊÔÃÕÇ][A-ZÁÉÍÓÚÂÊÔÃÕÇ\s']{5,70}?)(?=\s*[-–,]\s*matr[íi]cula|\s*,\s*matr[íi]cula|\s*,\s*CPF)"
+        r"(?:conceder|concede|designar|designa|nomear|nomeia|exonerar|exonera|readaptar|readapta)\s+(?:(?:a|o|ao|à|o\(a\)|a\(o\))\s+servidor(?:\(a\)|a)?\s+)?([A-ZÁÉÍÓÚÂÊÔÃÕÇ][A-ZÁÉÍÓÚÂÊÔÃÕÇ\s']{5,70}?)(?=\s*[-–,]\s*matr[íi]cula|\s*,\s*matr[íi]cula|\s*,\s*CPF)",
+        r"(?:nomear|nomeia|designar|designa)\s+(?:a\s+senhora|o\s+senhor|o\(a\)\s+servidor\(a\)|a\s+servidora|o\s+servidor)?\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ][A-ZÁÉÍÓÚÂÊÔÃÕÇ\s']{5,70}?)(?=\s*,\s*para\s+|\s+para\s+(?:exercer|ocupar|responder|assumir|a\s+fun[çc][ãa]o|o\s+cargo))",
+        r"(?:cargo\s+em\s+comissão|função\s+gratificada)\s+de\s+diretor(?:a)?\s+(?:escolar|de\s+escola)[^,\n]*?,\s*([A-ZÁÉÍÓÚÂÊÔÃÕÇ][A-ZÁÉÍÓÚÂÊÔÃÕÇ\s']{5,70}?)(?=\s*[-–,.\n]|\s+matr[íi]cula)"
     ]
     for pat in padroes_servidor:
         for m_srv in re.finditer(pat, texto_combinado, re.IGNORECASE):
@@ -251,7 +288,9 @@ def formatar_nome_arquivo_oficial(categoria, numero_ato, data_circulacao, orgao=
     """
     cat_upper = str(categoria or "").upper()
     tipo = "Portaria"
-    if "EDITAL" in cat_upper:
+    if "REPUBLIC" in cat_upper:
+        tipo = "Republicação"
+    elif "EDITAL" in cat_upper:
         tipo = "Edital"
     elif "DECRETO" in cat_upper:
         tipo = "Decreto"
@@ -264,6 +303,8 @@ def formatar_nome_arquivo_oficial(categoria, numero_ato, data_circulacao, orgao=
     elif "AVISO" in cat_upper:
         tipo = "Aviso"
     elif "PERMUTA" in cat_upper:
+        tipo = "Portaria"
+    elif "NOMEACAO" in cat_upper or "DIRETOR" in cat_upper:
         tipo = "Portaria"
 
     orgao_tag = "SMEB"
@@ -732,7 +773,10 @@ def executar_ciclo_pesquisa(
 
             # Extrair primeira linha relevante como título do ato
             match_titulo = re.search(
-                r"((?:PORTARIA|EDITAL|DECRETO|LEI|EXTRATO|AVISO|TERMO|RESOLU[ÇC][ÃA]O)\s+N?[º°]?\s*[\d./-]+[^\n]*)",
+                r"((?:REPUBLICA[ÇC][ÃA]O(?:\s+POR\s+INCORRE[ÇC][ÃA]O)?|REPUBLICAD[OA](?:\s+POR\s+INCORRE[ÇC][ÃA]O)?|"
+                r"PORTARIA|EDITAL|DECRETO|LEI|EXTRATO|AVISO|TERMO|RESOLU[ÇC][ÃA]O)"
+                r"(?:\s+(?:D[AEO]\s+)?(?:PORTARIA|EDITAL|DECRETO|LEI))?"
+                r"\s*(?:N[º°.]?\s*[\d./-]+)?[^\n]*)",
                 texto_integral,
                 re.IGNORECASE
             )
