@@ -649,7 +649,7 @@ function processarPacotePrometheus(payload) {
     } else if (categoria === 'NORMATIVO_JURIDICO') {
       registrarAlertaMemoriaOlympos('_memoria_temis.md', `[${dataISO}] [HÉLIO/FEMURN]: Publicado ${tituloAto} (${fileUrl})`);
       alertasDespachados.push('Têmis (Normativo Jurídico)');
-    } else if (categoria === 'NOMEACAO_DIRETOR' || String(tituloAto).toLowerCase().includes('diretor')) {
+    } else if (categoria === 'NOMEACAO_DIRETOR' || (String(tituloAto).toLowerCase().includes('diretor') && (String(tituloAto).toLowerCase().includes('escolar') || String(tituloAto).toLowerCase().includes('educação') || String(tituloAto).toLowerCase().includes('educacao') || String(tituloAto).toLowerCase().includes('smeb')))) {
       registrarAlertaMemoriaOlympos('_memoria_atena.md', `[${dataISO}] [HÉLIO/FEMURN]: Publicado ${tituloAto} (${fileUrl})`);
       alertasDespachados.push('Atena (Gestão Escolar/Diretores)');
     } else if (categoria === 'REPUBLICACAO' || String(tituloAto).toLowerCase().includes('republica')) {
@@ -864,10 +864,11 @@ function dispararWorkflowGitHubOlympos_(workflowFileName, inputsObj) {
 /**
  * Dispara sob demanda o Fogo de Prometheus (GitHub Actions -> Webhook GAS Hub Olympos).
  */
-function dispararColetaPrometheusRemota(dataInicio, dataFim) {
+function dispararColetaPrometheusRemota(dataInicio, dataFim, secaoDiario) {
   const inputs = {};
   if (dataInicio) inputs.data_inicio = String(dataInicio).trim();
   if (dataFim) inputs.data_fim = String(dataFim).trim();
+  if (secaoDiario) inputs.secao_diario = String(secaoDiario).trim();
   return dispararWorkflowGitHubOlympos_('fogo_prometheus_cron.yml', inputs);
 }
 
@@ -926,5 +927,5 @@ function dispararColetaPapiroCadmoRemota(competencia, filtroEnte) {
   const inputs = {};
   if (competencia) inputs.competencia = String(competencia).trim();
   if (filtroEnte) inputs.filtro_ente = String(filtroEnte).trim();
-  return dispararWorkflowGitHubOlympos_('papiro_cadmo_mensal.yml', inputs);
+  return dispararWorkflowGitHubOlympos_('papiro_cadmo_cron.yml', inputs);
 }

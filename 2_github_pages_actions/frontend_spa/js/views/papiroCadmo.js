@@ -12,7 +12,8 @@ window.OlymposViews.papiroCadmo = (function() {
   let markersLayer = null;
   let routeLayer = null;
   let observerCadmo = null;
-  let abaAtiva = 'permutas'; // 'permutas' ou 'vinculos'
+  let abaAtiva = 'permutas'; // 'permutas', 'vinculos' ou 'docentes'
+  let termoBuscaServidor = '';
 
   const BANCO_STORAGE_KEY = 'olympos_permutas_banco';
 
@@ -877,6 +878,7 @@ window.OlymposViews.papiroCadmo = (function() {
 
     const tabPermutas = document.getElementById('tabAbaPermutas');
     const tabVinculos = document.getElementById('tabAbaVinculos');
+    const tabDocentes = document.getElementById('tabAbaDocentesGeral');
     if (tabPermutas && !tabPermutas._bound) {
       tabPermutas._bound = true;
       tabPermutas.addEventListener('click', function() {
@@ -887,6 +889,48 @@ window.OlymposViews.papiroCadmo = (function() {
       tabVinculos._bound = true;
       tabVinculos.addEventListener('click', function() {
         alternarAbaResultados('vinculos');
+      });
+    }
+    if (tabDocentes && !tabDocentes._bound) {
+      tabDocentes._bound = true;
+      tabDocentes.addEventListener('click', function() {
+        alternarAbaResultados('docentes');
+      });
+    }
+
+    // Campo de busca em tempo real de servidores em permutas
+    const inBuscaServidor = document.getElementById('cadmoBuscaServidorInput');
+    const btnLimparBusca = document.getElementById('btnLimparBuscaServidor');
+    const btnRemoverFiltro = document.getElementById('btnRemoverFiltroPesquisa');
+
+    if (inBuscaServidor && !inBuscaServidor._bound) {
+      inBuscaServidor._bound = true;
+      inBuscaServidor.addEventListener('input', function(e) {
+        termoBuscaServidor = (e.target.value || '').trim();
+        if (btnLimparBusca) {
+          if (termoBuscaServidor) {
+            btnLimparBusca.classList.remove('hidden');
+            btnLimparBusca.style.display = 'block';
+          } else {
+            btnLimparBusca.classList.add('hidden');
+            btnLimparBusca.style.display = 'none';
+          }
+        }
+        renderizarAbaAtivaComFiltro();
+      });
+    }
+
+    if (btnLimparBusca && !btnLimparBusca._bound) {
+      btnLimparBusca._bound = true;
+      btnLimparBusca.addEventListener('click', function() {
+        limparBuscaServidor();
+      });
+    }
+
+    if (btnRemoverFiltro && !btnRemoverFiltro._bound) {
+      btnRemoverFiltro._bound = true;
+      btnRemoverFiltro.addEventListener('click', function() {
+        limparBuscaServidor();
       });
     }
 
@@ -984,6 +1028,7 @@ window.OlymposViews.papiroCadmo = (function() {
     abaAtiva = aba;
     const tabP = document.getElementById('tabAbaPermutas');
     const tabV = document.getElementById('tabAbaVinculos');
+    const tabD = document.getElementById('tabAbaDocentesGeral');
     if (tabP) {
       if (aba === 'permutas') tabP.classList.add('active');
       else tabP.classList.remove('active');
@@ -992,12 +1037,12 @@ window.OlymposViews.papiroCadmo = (function() {
       if (aba === 'vinculos') tabV.classList.add('active');
       else tabV.classList.remove('active');
     }
-
-    if (aba === 'vinculos') {
-      executarCruzamentoVinculosHera();
-    } else {
-      executarMatchingHera();
+    if (tabD) {
+      if (aba === 'docentes') tabD.classList.add('active');
+      else tabD.classList.remove('active');
     }
+
+    renderizarAbaAtivaComFiltro();
   }
 
   function observarVisibilidadePagina() {
@@ -1333,6 +1378,12 @@ window.OlymposViews.papiroCadmo = (function() {
       console.warn('[PapiroCadmo] Erro ao salvar no localStorage:', err);
     }
 
+    if (window.OlymposSupabase && typeof window.OlymposSupabase.sincronizarSecretariaParceira === 'function') {
+      window.OlymposSupabase.sincronizarSecretariaParceira(secretarias[idx]).catch(function(eSup) {
+        console.warn('[PapiroCadmo] Falha na sincronização assíncrona da secretaria com Supabase:', eSup);
+      });
+    }
+
     plotarMarcadores();
     popularSelectsFormularioPermuta();
     fecharModalEdicaoSecretaria();
@@ -1496,6 +1547,90 @@ window.OlymposViews.papiroCadmo = (function() {
     };
   }
 
+  // =========================================================================
+  // MOTOR DE BUSCA EM TEMPO REAL DE SERVIDORES EM PERMUTAS
+  // =========================================================================
+
+  function normalizarBusca(txt) {
+    if (!txt) return '';
+    return String(txt)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase()
+      .trim();
+  }
+
+  function filtrarMatchesPorTermo(matches, termo) {
+    if (!termo) return matches;
+    const q = normalizarBusca(termo);
+    return matches.filter(function(m) {
+      const a = m.candidatoA || {};
+      const b = m.candidatoB || {};
+      const corpusA = [a.nome, a.matricula, a.cargo, a.disciplina, a.origem, a.destino, a.municipioOrigem].map(normalizarBusca).join(' ');
+      const corpusB = [b.nome, b.matricula, b.cargo, b.disciplina, b.origem, b.destino, b.municipioOrigem].map(normalizarBusca).join(' ');
+      return corpusA.includes(q) || corpusB.includes(q);
+    });
+  }
+
+  function filtrarVinculosPorTermo(vinculos, termo) {
+    if (!termo) return vinculos;
+    const q = normalizarBusca(termo);
+    return vinculos.filter(function(v) {
+      const sr = v.servidor_referencia || {};
+      const ve = v.vinculo_externo_detectado || {};
+      const corpusSr = [sr.nome_completo, sr.matricula, sr.cargo, sr.escola_origem, sr.municipio].map(normalizarBusca).join(' ');
+      const corpusVe = [ve.ente_origem, ve.matricula, ve.cargo, ve.lotacao_orgao].map(normalizarBusca).join(' ');
+      return corpusSr.includes(q) || corpusVe.includes(q);
+    });
+  }
+
+  function filtrarDocentesPorTermo(docentes, termo) {
+    if (!termo) return docentes;
+    const q = normalizarBusca(termo);
+    return docentes.filter(function(d) {
+      const corpus = [d.n, d.m, d.g, d.l, d.h].map(normalizarBusca).join(' ');
+      return corpus.includes(q);
+    });
+  }
+
+  function atualizarResumoBusca(encontrados, total, tipo) {
+    const row = document.getElementById('cadmoResumoBuscaRow');
+    const texto = document.getElementById('cadmoResumoBuscaTexto');
+    if (!row || !texto) return;
+
+    if (termoBuscaServidor) {
+      row.classList.remove('hidden');
+      row.style.display = 'flex';
+      const rotulo = tipo === 'permutas' ? 'oportunidade(s)' : (tipo === 'vinculos' ? 'vínculo(s)' : 'docente(s)');
+      texto.innerHTML = 'Filtro ativo: "<strong>' + window.OlymposApp.escapeHtml(termoBuscaServidor) + '</strong>" — <strong>' + encontrados + '</strong> de ' + total + ' ' + rotulo + ' exibido(s)';
+    } else {
+      row.classList.add('hidden');
+      row.style.display = 'none';
+    }
+  }
+
+  function limparBuscaServidor() {
+    termoBuscaServidor = '';
+    const inBusca = document.getElementById('cadmoBuscaServidorInput');
+    const btnLimpar = document.getElementById('btnLimparBuscaServidor');
+    if (inBusca) inBusca.value = '';
+    if (btnLimpar) {
+      btnLimpar.classList.add('hidden');
+      btnLimpar.style.display = 'none';
+    }
+    renderizarAbaAtivaComFiltro();
+  }
+
+  function renderizarAbaAtivaComFiltro() {
+    if (abaAtiva === 'vinculos') {
+      executarCruzamentoVinculosHera();
+    } else if (abaAtiva === 'docentes') {
+      executarListagemDocentesGeral();
+    } else {
+      executarMatchingHera();
+    }
+  }
+
   function executarMatchingHera() {
     const container = document.getElementById('resultadoMatchingHera');
     const badgeTotal = document.getElementById('badgeTotalMatches');
@@ -1531,32 +1666,50 @@ window.OlymposViews.papiroCadmo = (function() {
       return b.resultado.score - a.resultado.score;
     });
 
+    const matchesFiltrados = filtrarMatchesPorTermo(matches, termoBuscaServidor);
+
     if (badgeTotal) {
-      badgeTotal.textContent = matches.length + (matches.length === 1 ? ' oportunidade' : ' oportunidades');
+      if (termoBuscaServidor) {
+        badgeTotal.textContent = matchesFiltrados.length + ' de ' + matches.length + ' oportunidades';
+      } else {
+        badgeTotal.textContent = matches.length + (matches.length === 1 ? ' oportunidade' : ' oportunidades');
+      }
     }
 
     const previewPill = document.getElementById('heraMatchPreviewPill');
     if (previewPill) {
-      if (matches.length > 0) {
-        previewPill.textContent = 'Top Match: ' + matches[0].resultado.score + '% (' + matches[0].resultado.nivel + ')';
+      if (matchesFiltrados.length > 0) {
+        previewPill.textContent = 'Top Match: ' + matchesFiltrados[0].resultado.score + '% (' + matchesFiltrados[0].resultado.nivel + ')';
         previewPill.classList.remove('hidden');
       } else {
         previewPill.classList.add('hidden');
       }
     }
 
-    if (matches.length === 0) {
-      container.innerHTML =
-        '<div class="output-panel text-center" style="padding: 32px 20px;">' +
-          '<div style="font-size: 1.8rem; margin-bottom: 8px;">🤝</div>' +
-          '<strong style="display:block; font-size:15px; margin-bottom:6px; color:var(--text-main);">Nenhum cruzamento de permuta recíproca identificado ainda</strong>' +
-          '<p style="font-size:13px; color:var(--text-muted); max-width:480px; margin:0 auto 16px;">Cadastre novas intenções de permuta no formulário acima para que o motor de inteligência da persona Hera processe os cruzamentos recíprocos.</p>' +
-        '</div>';
+    atualizarResumoBusca(matchesFiltrados.length, matches.length, 'permutas');
+
+    if (matchesFiltrados.length === 0) {
+      if (termoBuscaServidor) {
+        container.innerHTML =
+          '<div class="output-panel text-center" style="padding: 32px 20px;">' +
+            '<div style="font-size: 1.8rem; margin-bottom: 8px;">🔍</div>' +
+            '<strong style="display:block; font-size:15px; margin-bottom:6px; color:var(--text-main);">Nenhum servidor ou oportunidade de permuta localizada</strong>' +
+            '<p style="font-size:13px; color:var(--text-muted); max-width:480px; margin:0 auto 14px;">Não foram identificadas permutas para o termo "<strong>' + window.OlymposApp.escapeHtml(termoBuscaServidor) + '</strong>". Tente buscar por matrícula funcional de 7 dígitos, nome, escola de lotação ou município.</p>' +
+            '<button type="button" class="btn btn-secondary btn-sm" onclick="window.OlymposViews.papiroCadmo.limparBuscaServidor()">Limpar Busca</button>' +
+          '</div>';
+      } else {
+        container.innerHTML =
+          '<div class="output-panel text-center" style="padding: 32px 20px;">' +
+            '<div style="font-size: 1.8rem; margin-bottom: 8px;">🤝</div>' +
+            '<strong style="display:block; font-size:15px; margin-bottom:6px; color:var(--text-main);">Nenhum cruzamento de permuta recíproca identificado ainda</strong>' +
+            '<p style="font-size:13px; color:var(--text-muted); max-width:480px; margin:0 auto 16px;">Cadastre novas intenções de permuta no formulário acima para que o motor de inteligência da persona Hera processe os cruzamentos recíprocos.</p>' +
+          '</div>';
+      }
       return;
     }
 
     let html = '<div class="hera-matches-grid">';
-    matches.forEach(function(m, idx) {
+    matchesFiltrados.forEach(function(m, idx) {
       const res = m.resultado;
       const cA = m.candidatoA;
       const cB = m.candidatoB;
@@ -1636,29 +1789,46 @@ window.OlymposViews.papiroCadmo = (function() {
     if (!container) return;
 
     const vinculos = VINCULOS_TRANSPARENCIA || [];
+    const vinculosFiltrados = filtrarVinculosPorTermo(vinculos, termoBuscaServidor);
 
     if (badgeTotal) {
-      badgeTotal.textContent = vinculos.length + (vinculos.length === 1 ? ' vínculo identificado' : ' vínculos identificados');
+      if (termoBuscaServidor) {
+        badgeTotal.textContent = vinculosFiltrados.length + ' de ' + vinculos.length + ' vínculos';
+      } else {
+        badgeTotal.textContent = vinculos.length + (vinculos.length === 1 ? ' vínculo identificado' : ' vínculos identificados');
+      }
     }
 
     const previewPill = document.getElementById('heraMatchPreviewPill');
     if (previewPill) {
-      previewPill.textContent = 'Acúmulos: ' + vinculos.length;
+      previewPill.textContent = 'Acúmulos: ' + vinculosFiltrados.length;
       previewPill.classList.remove('hidden');
     }
 
-    if (vinculos.length === 0) {
-      container.innerHTML =
-        '<div class="output-panel text-center" style="padding: 32px 20px;">' +
-          '<div style="font-size: 1.8rem; margin-bottom: 8px;">🏛️</div>' +
-          '<strong style="display:block; font-size:15px; margin-bottom:6px; color:var(--text-main);">Nenhum vínculo externo localizado</strong>' +
-          '<p style="font-size:13px; color:var(--text-muted); max-width:480px; margin:0 auto 16px;">Carregue arquivos CSV adicionais de outros entes federativos (SEEC/RN, Natal, Extremoz, etc.) para auditar acúmulos de cargo.</p>' +
-        '</div>';
+    atualizarResumoBusca(vinculosFiltrados.length, vinculos.length, 'vinculos');
+
+    if (vinculosFiltrados.length === 0) {
+      if (termoBuscaServidor) {
+        container.innerHTML =
+          '<div class="output-panel text-center" style="padding: 32px 20px;">' +
+            '<div style="font-size: 1.8rem; margin-bottom: 8px;">🔍</div>' +
+            '<strong style="display:block; font-size:15px; margin-bottom:6px; color:var(--text-main);">Nenhum vínculo externo localizado</strong>' +
+            '<p style="font-size:13px; color:var(--text-muted); max-width:480px; margin:0 auto 14px;">Não foram identificados vínculos externos para o termo "<strong>' + window.OlymposApp.escapeHtml(termoBuscaServidor) + '</strong>". Tente buscar por matrícula funcional, nome do servidor ou ente parceiro.</p>' +
+            '<button type="button" class="btn btn-secondary btn-sm" onclick="window.OlymposViews.papiroCadmo.limparBuscaServidor()">Limpar Busca</button>' +
+          '</div>';
+      } else {
+        container.innerHTML =
+          '<div class="output-panel text-center" style="padding: 32px 20px;">' +
+            '<div style="font-size: 1.8rem; margin-bottom: 8px;">🏛️</div>' +
+            '<strong style="display:block; font-size:15px; margin-bottom:6px; color:var(--text-main);">Nenhum vínculo externo localizado</strong>' +
+            '<p style="font-size:13px; color:var(--text-muted); max-width:480px; margin:0 auto 16px;">Carregue arquivos CSV adicionais de outros entes federativos (SEEC/RN, Natal, Extremoz, etc.) para auditar acúmulos de cargo.</p>' +
+          '</div>';
+      }
       return;
     }
 
     let html = '<div class="hera-matches-grid">';
-    vinculos.forEach(function(v, idx) {
+    vinculosFiltrados.forEach(function(v, idx) {
       const sr = v.servidor_referencia;
       const ve = v.vinculo_externo_detectado;
       const ac = v.auditoria_constitucional;
@@ -1754,6 +1924,143 @@ window.OlymposViews.papiroCadmo = (function() {
     if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
       window.OlymposApp.showToast('Dados do servidor ' + nome + ' transferidos para o formulário de permuta!');
     }
+  }
+
+  function preencherFormComDocente(nome, matricula, cargo, ch, lotacao) {
+    const inNome = document.getElementById('permutaNome');
+    if (inNome) inNome.value = nome;
+
+    const inMat = document.getElementById('permutaMatricula');
+    if (inMat) inMat.value = matricula;
+
+    const selCH = document.getElementById('permutaCargaHoraria');
+    if (selCH && ch) {
+      const chFmt = ch.includes('h') ? ch : (ch + 'h');
+      for (let i = 0; i < selCH.options.length; i++) {
+        if (selCH.options[i].value === chFmt) {
+          selCH.selectedIndex = i;
+          break;
+        }
+      }
+    }
+
+    const selCargo = document.getElementById('permutaCargo');
+    if (selCargo && cargo) {
+      const gNorm = normalizarBusca(cargo);
+      if (gNorm.includes('INFANTIL')) {
+        selCargo.value = 'Professor de Educação Infantil';
+      } else if (gNorm.includes('INICIAIS') || gNorm.includes('MAGISTERIO') || gNorm.includes('POLIVALENTE')) {
+        selCargo.value = 'Professor dos Anos Iniciais';
+      } else if (gNorm.includes('PEDAGOGO') || gNorm.includes('ESPECIALISTA')) {
+        selCargo.value = 'Especialista em Educação';
+      } else {
+        selCargo.value = 'Professor dos Anos Finais';
+      }
+    }
+
+    const selOrig = document.getElementById('permutaEscolaOrigem');
+    if (selOrig && lotacao) {
+      const lotNorm = normalizarBusca(lotacao);
+      for (let i = 0; i < selOrig.options.length; i++) {
+        const optNorm = normalizarBusca(selOrig.options[i].value);
+        if (lotNorm.includes(optNorm) || optNorm.includes(lotNorm)) {
+          selOrig.selectedIndex = i;
+          break;
+        }
+      }
+    }
+
+    const wrapper = document.getElementById('wrapperFormPermuta');
+    if (wrapper && wrapper.classList.contains('hidden')) {
+      wrapper.classList.remove('hidden');
+    }
+
+    const form = document.getElementById('formPermutaCadmo');
+    if (form) {
+      form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+      window.OlymposApp.showToast('Professor(a) ' + nome + ' transferido(a) para o formulário de permuta!');
+    }
+  }
+
+  function executarListagemDocentesGeral() {
+    const container = document.getElementById('resultadoMatchingHera');
+    const badgeTotal = document.getElementById('badgeTotalMatches');
+    if (!container) return;
+
+    const docentes = DOCENTES_CEARA_MIRIM || [];
+    const docentesFiltrados = filtrarDocentesPorTermo(docentes, termoBuscaServidor);
+
+    if (badgeTotal) {
+      if (termoBuscaServidor) {
+        badgeTotal.textContent = docentesFiltrados.length + ' de ' + docentes.length + ' docentes';
+      } else {
+        badgeTotal.textContent = docentes.length + ' docentes na base';
+      }
+    }
+
+    const previewPill = document.getElementById('heraMatchPreviewPill');
+    if (previewPill) {
+      previewPill.textContent = 'Docentes: ' + docentesFiltrados.length;
+      previewPill.classList.remove('hidden');
+    }
+
+    atualizarResumoBusca(docentesFiltrados.length, docentes.length, 'docentes');
+
+    if (docentesFiltrados.length === 0) {
+      container.innerHTML =
+        '<div class="output-panel text-center" style="padding: 32px 20px;">' +
+          '<div style="font-size: 1.8rem; margin-bottom: 8px;">🔍</div>' +
+          '<strong style="display:block; font-size:15px; margin-bottom:6px; color:var(--text-main);">Nenhum docente localizado na base oficial</strong>' +
+          '<p style="font-size:13px; color:var(--text-muted); max-width:480px; margin:0 auto 14px;">Não foram identificados professores para o termo "<strong>' + window.OlymposApp.escapeHtml(termoBuscaServidor) + '</strong>". Busque por matrícula funcional de 7 dígitos, nome, escola de lotação ou cargo.</p>' +
+          '<button type="button" class="btn btn-secondary btn-sm" onclick="window.OlymposViews.papiroCadmo.limparBuscaServidor()">Limpar Busca</button>' +
+        '</div>';
+      return;
+    }
+
+    const limiteExibicao = 80;
+    const exibidos = docentesFiltrados.slice(0, limiteExibicao);
+
+    let html = '<div style="margin-bottom: 8px; font-size: 12px; color: var(--text-muted); display:flex; justify-content:space-between; align-items:center;">' +
+      '<span>Exibindo <strong>' + exibidos.length + '</strong> de <strong>' + docentesFiltrados.length + '</strong> docentes ativos da SMEB Ceará-Mirim</span>' +
+      (docentesFiltrados.length > limiteExibicao ? '<span class="pill-badge pill-gold" style="font-size:11px;">Refine a busca para ver resultados específicos</span>' : '') +
+      '</div>';
+
+    html += '<div class="table-responsive" style="max-height: 480px; overflow-y: auto;">' +
+      '<table class="data-table" style="width:100%; font-size:12.5px;">' +
+        '<thead>' +
+          '<tr>' +
+            '<th style="width:90px;">Matrícula</th>' +
+            '<th>Nome do Servidor</th>' +
+            '<th>Cargo / Função</th>' +
+            '<th style="width:70px; text-align:center;">C.H.</th>' +
+            '<th>Escola / Lotação</th>' +
+            '<th style="width:130px; text-align:right;">Ação</th>' +
+          '</tr>' +
+        '</thead>' +
+        '<tbody>';
+
+    exibidos.forEach(function(d) {
+      html +=
+        '<tr>' +
+          '<td style="font-family:var(--font-mono); font-weight:600; color:var(--text-main);">' + window.OlymposApp.escapeHtml(d.m) + '</td>' +
+          '<td><strong>' + window.OlymposApp.escapeHtml(d.n) + '</strong></td>' +
+          '<td style="font-size:11.5px; color:var(--text-secondary);">' + window.OlymposApp.escapeHtml(d.g) + '</td>' +
+          '<td style="text-align:center;"><span class="pill-badge pill-green" style="font-size:11px;">' + window.OlymposApp.escapeHtml(d.h) + '</span></td>' +
+          '<td style="font-size:11.5px; color:var(--text-muted);">' + window.OlymposApp.escapeHtml(d.l || 'SMEB / Rede Municipal') + '</td>' +
+          '<td style="text-align:right;">' +
+            '<button type="button" class="btn btn-secondary btn-sm" style="font-size:11px; padding:3px 8px;" ' +
+              'onclick="window.OlymposViews.papiroCadmo.preencherFormComDocente(\'' + window.OlymposApp.escapeHtml(d.n) + '\', \'' + window.OlymposApp.escapeHtml(d.m) + '\', \'' + window.OlymposApp.escapeHtml(d.g) + '\', \'' + window.OlymposApp.escapeHtml(d.h) + '\', \'' + window.OlymposApp.escapeHtml(d.l || '') + '\')">' +
+              '⚡ Permuta' +
+            '</button>' +
+          '</td>' +
+        '</tr>';
+    });
+
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
   }
 
   function tracarRotaPermuta(origemA, origemB, score) {
@@ -1972,6 +2279,11 @@ window.OlymposViews.papiroCadmo = (function() {
     restaurarPadraoSecretarias: restaurarPadraoSecretarias,
     PONTOS_GEORREFERENCIADOS: PONTOS_GEORREFERENCIADOS,
     obterDocentesCearaMirim: function() { return DOCENTES_CEARA_MIRIM; },
-    obterVinculosTransparencia: function() { return VINCULOS_TRANSPARENCIA; }
+    obterVinculosTransparencia: function() { return VINCULOS_TRANSPARENCIA; },
+    preencherFormComDocente: preencherFormComDocente,
+    executarListagemDocentesGeral: executarListagemDocentesGeral,
+    limparBuscaServidor: limparBuscaServidor,
+    filtrarMatchesPorTermo: filtrarMatchesPorTermo,
+    normalizarBusca: normalizarBusca
   };
 })();

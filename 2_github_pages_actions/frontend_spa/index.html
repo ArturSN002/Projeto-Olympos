@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR" data-theme="light">
   <head>
     <meta charset="UTF-8" />
@@ -206,6 +206,41 @@
         <a href="#personas" class="nav-link" data-page="personas">Personas</a>
         <a href="#busca" class="nav-link hidden" data-page="busca" style="display: none !important;">Busca no Acervo</a>
         <a href="#configuracoes" class="nav-link" data-page="configuracoes">Ajustes</a>
+      </div>
+
+      <!-- ATALHOS DRIVE NO MENU LATERAL MOBILE -->
+      <div class="mobile-drawer-drive-section">
+        <span class="drawer-section-title">Atalhos Drive</span>
+        <a href="https://drive.google.com/drive/folders/1W9mGmQCrX8BRPsGcK_vqUwfXw1dRmSya" target="_blank" rel="noopener" class="drawer-drive-item">
+          <span class="drive-icon">📁</span>
+          <span>Pasta Central Olympo</span>
+          <span class="drive-arrow">↗</span>
+        </a>
+        <a href="https://drive.google.com/drive/folders/1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu" target="_blank" rel="noopener" class="drawer-drive-item">
+          <span class="drive-icon">📝</span>
+          <span>Memórias Operacionais</span>
+          <span class="drive-arrow">↗</span>
+        </a>
+        <a href="https://drive.google.com/drive/folders/1qGq5uqxOtN_V63itUheYatLIcj5R86O3" target="_blank" rel="noopener" class="drawer-drive-item">
+          <span class="drive-icon">📜</span>
+          <span>Portarias 2026</span>
+          <span class="drive-arrow">↗</span>
+        </a>
+        <a href="https://drive.google.com/drive/folders/1H4bJXClx66Mr5PmRmSQBQLHDpAaKwdab" target="_blank" rel="noopener" class="drawer-drive-item">
+          <span class="drive-icon">✉️</span>
+          <span>Ofícios 2026</span>
+          <span class="drive-arrow">↗</span>
+        </a>
+        <a href="https://docs.google.com/spreadsheets/d/1AIncS3ITYx_kT_tmfkAL5cYnw7nnuMAAUgiCd2lluqY/edit" target="_blank" rel="noopener" class="drawer-drive-item">
+          <span class="drive-icon">📊</span>
+          <span>Planilha Diário Oficial</span>
+          <span class="drive-arrow">↗</span>
+        </a>
+        <a href="https://drive.google.com/drive/folders/1VxVVONEJya4XqI2GfxHK7AFqk8dpwX9I" target="_blank" rel="noopener" class="drawer-drive-item">
+          <span class="drive-icon">🔄</span>
+          <span>Acervo Papiro de Cadmo</span>
+          <span class="drive-arrow">↗</span>
+        </a>
       </div>
     </aside>
 
@@ -688,7 +723,7 @@
             </div>
 
             <!-- PAINEL ARQUITETURAL DAS 2 FRENTES (GITHUB + GAS) -->
-            <div class="architecture-banner">
+            <div class="architecture-banner" id="diarioArchBanner" style="display: none !important;">
               <div class="arch-front-col">
                 <span class="pill-badge pill-gold" style="align-self: flex-start;">FRENTE 1 • GITHUB ACTIONS (MOTOR PESADO)</span>
                 <strong style="font-size: 14px;" id="promWebhookStatus">Verificando integração...</strong>
@@ -775,7 +810,7 @@
                 <strong style="font-size: 15px;" id="cadmoLastCompetencia">Verificando acervo no Drive...</strong>
                 <span style="font-size: 12.5px; color: var(--text-secondary);" id="cadmoLastUploadMeta">Consumo direto por Cadmo (busca cadastral) e Hera (auditoria de permutas).</span>
               </div>
-              <div class="arch-front-col">
+              <div class="arch-front-col" id="cadmoEsquemaCanonicoCol" style="display: none !important;">
                 <span class="pill-badge pill-blue" style="align-self: flex-start;">ESQUEMA CANÔNICO UNIFICADO (8 COLUNAS)</span>
                 <div class="schema-chips-row">
                   <span class="schema-chip">ente_origem</span>
@@ -982,16 +1017,35 @@
 
               <!-- CORPO COLAPSÁVEL (COM SCROLL INTERNO ERGONÔMICO) -->
               <div id="heraCollapsibleBody" class="hera-collapsible-body is-collapsed" style="padding: 18px 20px; transition: all 0.3s ease; display: none;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
-                  <div style="display: flex; gap: 8px; align-items: center;">
-                    <button type="button" id="tabAbaPermutas" class="btn btn-secondary btn-sm active" style="font-size: 12px; font-weight: 600;">
-                      <span>🤝 Permutas Recíprocas (Hera)</span>
-                    </button>
-                    <button type="button" id="tabAbaVinculos" class="btn btn-secondary btn-sm" style="font-size: 12px; font-weight: 600;">
-                      <span>🏛️ Cruzamento de Vínculos (CF Art. 37)</span>
-                    </button>
+                <!-- Toolbar de Busca de Servidores e Seleção de Abas Cadmo -->
+                <div class="cadmo-toolbar-filtros" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <!-- Campo de Busca em Tempo Real -->
+                    <div style="position: relative; flex: 1; min-width: 260px; max-width: 480px;">
+                      <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--text-muted); pointer-events: none;" aria-hidden="true">🔍</span>
+                      <input type="search" id="cadmoBuscaServidorInput" class="input-clean" style="padding-left: 34px; padding-right: 32px; font-size: 13px; width: 100%; border-radius: var(--radius-md, 8px);" placeholder="Buscar por servidor, matrícula, cargo, escola ou município..." autocomplete="off" aria-label="Buscar servidor por nome, matrícula, cargo, escola ou município" />
+                      <button type="button" id="btnLimparBuscaServidor" class="icon-capsule-btn hidden" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; font-size: 12px; border: none; background: transparent; cursor: pointer; color: var(--text-muted);" title="Limpar busca">&times;</button>
+                    </div>
+
+                    <!-- Abas de Visualização (Permutas Recíprocas, Acúmulos CF/88 e Base Geral) -->
+                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                      <button type="button" id="tabAbaPermutas" class="btn btn-secondary btn-sm active" style="font-size: 12px; font-weight: 600;">
+                        <span>🤝 Permutas Recíprocas (Hera)</span>
+                      </button>
+                      <button type="button" id="tabAbaVinculos" class="btn btn-secondary btn-sm" style="font-size: 12px; font-weight: 600;">
+                        <span>🏛️ Cruzamento de Vínculos (CF Art. 37)</span>
+                      </button>
+                      <button type="button" id="tabAbaDocentesGeral" class="btn btn-secondary btn-sm" style="font-size: 12px; font-weight: 600;">
+                        <span>📋 Base 890 Docentes</span>
+                      </button>
+                    </div>
                   </div>
-                  <span style="font-size: 11.5px; color: var(--text-muted);">Ponderação: Cargo/Disciplina (40 pts) + Carga Horária (30 pts) + Rota Inversa (30 pts)</span>
+
+                  <!-- Resumo da Pesquisa Ativa -->
+                  <div id="cadmoResumoBuscaRow" class="hidden" style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding: 6px 12px; background: var(--bg-tonal); border-radius: var(--radius-sm, 6px); border: 1px solid var(--border-hairline);">
+                    <span id="cadmoResumoBuscaTexto" style="color: var(--text-secondary);">Exibindo resultados filtrados</span>
+                    <button type="button" id="btnRemoverFiltroPesquisa" class="btn btn-ghost btn-sm" style="font-size: 11px; padding: 2px 8px; color: var(--brand-gold);">Restaurar todos</button>
+                  </div>
                 </div>
 
                 <div id="resultadoMatchingHera" class="resultado-matching-container" style="max-height: 520px; overflow-y: auto; padding-right: 4px;">
@@ -1171,15 +1225,18 @@
                 </button>
               </div>
 
-              <div class="cal-export-group">
+              <div class="cal-export-group" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                <button type="button" class="btn btn-secondary btn-sm" id="btnNovoEventoAgenda" title="Agendar nova reunião ou evento intersetorial">
+                  <span>+ Novo Evento da Agenda</span>
+                </button>
                 <button type="button" class="btn btn-secondary btn-sm" id="btnExportarIcal">
                   <span>📥 Exportar .ics (Google Calendar)</span>
                 </button>
               </div>
             </div>
 
-            <!-- Barra de Filtros por Categoria -->
-            <div class="calendario-filter-bar" role="toolbar" aria-label="Filtros por Categoria de Evento">
+            <!-- Barra de Filtros por Categoria e Setor -->
+            <div class="calendario-filter-bar" role="toolbar" aria-label="Filtros por Categoria de Evento e Setor Responsável">
               <span class="cal-filter-label">Filtrar por:</span>
               <div class="cal-filter-pills" id="calFilterPillsContainer">
                 <button type="button" class="cal-pill active" data-category="todos">Todos (<span id="countFiltroTodos">0</span>)</button>
@@ -1189,6 +1246,25 @@
                 <button type="button" class="cal-pill" data-category="jornada">Jornadas Pedagógicas (<span id="countFiltroJornadas">0</span>)</button>
                 <button type="button" class="cal-pill" data-category="sabado_letivo">Sábados Letivos (<span id="countFiltroSabados">0</span>)</button>
                 <button type="button" class="cal-pill" data-category="exame">Exames &amp; Avaliações (<span id="countFiltroExames">0</span>)</button>
+                <button type="button" class="cal-pill" data-category="agenda_intersetorial">Agenda Intersetorial (<span id="countFiltroAgenda">0</span>)</button>
+              </div>
+
+              <!-- Seletor de Filtro por Setor Homologado -->
+              <div class="cal-sector-filter-wrap" style="display: flex; align-items: center; gap: 6px; margin-left: auto;">
+                <label for="selectFiltroSetorCalendario" style="font-size: 12px; color: var(--text-muted); margin: 0; white-space: nowrap;">Setor:</label>
+                <select id="selectFiltroSetorCalendario" class="input-clean" style="font-size: 12px; padding: 4px 10px; width: auto;" aria-label="Filtrar por setor responsável">
+                  <option value="todos">Todos os Setores</option>
+                  <option value="Gabinete SMEB">Gabinete SMEB</option>
+                  <option value="Pedagógico">Pedagógico (Atena)</option>
+                  <option value="Recursos Humanos">Recursos Humanos (RH / Pessoal)</option>
+                  <option value="Transporte Escolar">Transporte Escolar</option>
+                  <option value="Alimentação Escolar">Alimentação Escolar (Nutrição / PNAE)</option>
+                  <option value="Educação Especial">Educação Especial &amp; Inclusão</option>
+                  <option value="Tecnologia & Inovação">Tecnologia &amp; Inovação (Dédalo)</option>
+                  <option value="Cultura & Esporte">Cultura &amp; Esporte (Dionísio)</option>
+                  <option value="Jurídico">Jurídico &amp; Controle Interno</option>
+                  <option value="Conselho Municipal de Educação">Conselho Municipal de Educação (CME)</option>
+                </select>
               </div>
             </div>
 
@@ -1289,6 +1365,94 @@
                 <div class="modal-footer" style="padding: 12px 24px; display: flex; justify-content: flex-end;">
                   <button type="button" id="btnFecharModalDetalhesDia" class="btn btn-secondary btn-sm">Fechar</button>
                 </div>
+              </div>
+            </div>
+
+            <!-- MODAL DE CADASTRO / EDIÇÃO DE EVENTO DA AGENDA INTERSETORIAL -->
+            <div id="modalFormAgendaEvento" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalFormAgendaTitulo" style="display: none;">
+              <div class="modal-card" style="max-width: 580px; width: 92%;">
+                <div class="modal-header">
+                  <div class="modal-title-wrap">
+                    <span class="cal-modal-badge" style="background: rgba(139,92,246,0.15); color: #8B5CF6;">🗓️ Agenda Intersetorial</span>
+                    <h3 id="modalFormAgendaTitulo" style="margin: 0; font-size: 1.18rem; font-weight: 700; color: var(--text-main);">Novo Evento da Agenda</h3>
+                  </div>
+                  <button id="closeModalFormAgendaBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal">&times;</button>
+                </div>
+
+                <form id="formAgendaEventoCalendario">
+                  <input type="hidden" id="agendaEventoId" name="agendaEventoId" />
+                  <div class="modal-body" style="padding: 20px 24px; max-height: 75vh; overflow-y: auto;">
+                    <div class="field-group" style="margin-bottom: 12px;">
+                      <label for="agendaTitulo">Título do Evento / Reunião *</label>
+                      <input type="text" id="agendaTitulo" name="agendaTitulo" class="input-clean" placeholder="Ex: Reunião do CAE - Prestação de Contas PNAE" required />
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                      <div class="field-group">
+                        <label for="agendaDataInicio">Data Início *</label>
+                        <input type="date" id="agendaDataInicio" name="agendaDataInicio" class="input-clean" required />
+                      </div>
+                      <div class="field-group">
+                        <label for="agendaDataFim">Data Término *</label>
+                        <input type="date" id="agendaDataFim" name="agendaDataFim" class="input-clean" required />
+                      </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                      <div class="field-group">
+                        <label for="agendaHorario">Horário / Turno</label>
+                        <input type="text" id="agendaHorario" name="agendaHorario" class="input-clean" placeholder="Ex: 09:00 - 11:30" />
+                      </div>
+                      <div class="field-group">
+                        <label for="agendaSetor">Setor Responsável *</label>
+                        <select id="agendaSetor" name="agendaSetor" class="input-clean" required>
+                          <option value="Gabinete SMEB">Gabinete SMEB</option>
+                          <option value="Pedagógico">Pedagógico (Atena)</option>
+                          <option value="Recursos Humanos">Recursos Humanos (RH / Pessoal)</option>
+                          <option value="Transporte Escolar">Transporte Escolar</option>
+                          <option value="Alimentação Escolar">Alimentação Escolar (Nutrição / PNAE)</option>
+                          <option value="Educação Especial">Educação Especial &amp; Inclusão</option>
+                          <option value="Tecnologia & Inovação">Tecnologia &amp; Inovação (Dédalo)</option>
+                          <option value="Cultura & Esporte">Cultura &amp; Esporte (Dionísio)</option>
+                          <option value="Jurídico">Jurídico &amp; Controle Interno</option>
+                          <option value="Conselho Municipal de Educação">Conselho Municipal de Educação (CME)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                      <div class="field-group">
+                        <label for="agendaCategoria">Tipo de Evento</label>
+                        <select id="agendaCategoria" name="agendaCategoria" class="input-clean">
+                          <option value="reuniao">Reunião Setorial / Colegiado</option>
+                          <option value="capacitacao">Capacitação / Formação Técnica</option>
+                          <option value="visita_tecnica">Visita Técnica / Inspeção Predial</option>
+                          <option value="audiencia">Audiência Pública / Conferência</option>
+                          <option value="agenda_intersetorial">Outros Eventos Intersetoriais</option>
+                        </select>
+                      </div>
+                      <div class="field-group">
+                        <label for="agendaLocal">Local / Sala</label>
+                        <input type="text" id="agendaLocal" name="agendaLocal" class="input-clean" placeholder="Ex: Auditório SMEB Sede ou Sala 02" />
+                      </div>
+                    </div>
+
+                    <div class="field-group" style="margin-bottom: 12px;">
+                      <label for="agendaDescricao">Descrição / Pauta da Reunião</label>
+                      <textarea id="agendaDescricao" name="agendaDescricao" class="input-clean" rows="3" placeholder="Informações complementares, objetivos e pauta do encontro..."></textarea>
+                    </div>
+                  </div>
+
+                  <div class="modal-footer" style="padding: 14px 24px; display: flex; justify-content: space-between; align-items: center;">
+                    <button type="button" id="btnExcluirEventoAgenda" class="btn btn-ghost btn-sm hidden" style="color: var(--accent-red, #EF4444); border-color: rgba(239,68,68,0.3);">
+                      🗑️ Excluir Evento
+                    </button>
+                    <div style="display: flex; gap: 10px; margin-left: auto;">
+                      <button type="button" id="btnCancelarFormAgenda" class="btn btn-secondary btn-sm">Cancelar</button>
+                      <button type="submit" id="btnSalvarEventoAgenda" class="btn btn-primary btn-sm">Salvar Evento</button>
+                    </div>
+                  </div>
+                </form>
               </div>
             </div>
           </div>

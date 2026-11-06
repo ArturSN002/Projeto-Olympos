@@ -125,13 +125,24 @@ def upload_pdf_direto_drive(pdf_bytes: bytes, nome_arquivo: str, folder_id: str)
         return None
 
 KEYWORDS_EDUCACAO = [
-    "educação", "smeb", "professor", "magistério", "pedagog", "escola",
-    "creche", "cme", "fundeb", "permuta", "cessão", "processo seletivo",
+    # Termos institucionais e de carreira docente
+    "educação", "smeb", "professor", "professora", "magistério", "pedagog", "escola",
+    "creche", "cme", "cmei", "fundeb", "permuta", "cessão", "processo seletivo",
     "readaptação", "licença", "merenda", "transporte escolar",
-    "diretor", "diretora", "diretor escolar", "diretora escolar",
-    "diretor de escola", "diretora de escola", "direção escolar",
-    "gestor escolar", "gestora escolar", "gestão escolar",
-    "coordenador", "coordenadora", "cuidador", "mediador", "ensino",
+    
+    # Termos de liderança estritamente educacional / escolar (sem palavras isoladas genéricas)
+    "diretor escolar", "diretora escolar", "diretor de escola", "diretora de escola",
+    "direção escolar", "gestor escolar", "gestora escolar", "gestão escolar",
+    "vice-diretor escolar", "vice-diretora escolar", "vice-direção escolar",
+    "coordenação pedagógica", "coordenador pedagógico", "coordenadora pedagógica",
+    "cuidador", "mediador", "ensino",
+    
+    # Vínculo formal de lotação na Educação
+    "junto à secretaria municipal de educação", "junto a secretaria municipal de educacao",
+    "junto à secretaria de educação", "junto a secretaria de educacao",
+    "secretaria municipal de educação básica",
+    
+    # Republicações e retificações (avaliadas com contexto educacional)
     "republicação", "republicado", "republicada",
     "republicado por incorreção", "republicada por incorreção",
     "incorreção", "retificação"
@@ -166,26 +177,60 @@ def contem_palavra_chave(texto, lista_termos):
     return False
 
 
-def classificar_tipo_ato(titulo_e_texto):
+# Padrões de validação de contexto educacional estrito
+PADRAO_VINCULO_EDUCACAO = (
+    r"(?:JUNTO\s+[AÀÁ]\s+SECRETARIA\s+(?:MUNICIPAL\s+)?(?:DE\s+)?EDUCACAO|"
+    r"SECRETARIA\s+MUNICIPAL\s+DE\s+EDUCACAO|SECRETARIA\s+DE\s+EDUCACAO|\bSMEB\b|"
+    r"ESCOLA\s+MUNICIPAL|CENTRO\s+MUNICIPAL\s+DE\s+EDUCACAO\s+INFANTIL|\bCMEI\b|"
+    r"UNIDADE\s+ESCOLAR|REDE\s+MUNICIPAL\s+DE\s+ENSINO|ENSINO\s+FUNDAMENTAL)"
+)
+
+# Padrões que identificam secretarias de terceiros sem vínculo com Educação
+PADRAO_SECRETARIAS_TERCEIROS = (
+    r"(?:SECRETARIA\s+MUNICIPAL\s+DE\s+SAUDE|SECRETARIA\s+DE\s+SAUDE|"
+    r"SECRETARIA\s+MUNICIPAL\s+DE\s+OBRAS|SECRETARIA\s+DE\s+OBRAS|"
+    r"SECRETARIA\s+MUNICIPAL\s+DE\s+TRIBUTACAO|SECRETARIA\s+DE\s+TRIBUTACAO|"
+    r"SECRETARIA\s+MUNICIPAL\s+DE\s+FINANCAS|SECRETARIA\s+DE\s+FINANCAS|"
+    r"SECRETARIA\s+MUNICIPAL\s+DE\s+ADMINISTRACAO|"
+    r"SECRETARIA\s+MUNICIPAL\s+DE\s+ASSISTENCIA\s+SOCIAL|"
+    r"SECRETARIA\s+MUNICIPAL\s+DE\s+TURISMO|"
+    r"SECRETARIA\s+MUNICIPAL\s+DE\s+AGRICULTURA|"
+    r"SECRETARIA\s+MUNICIPAL\s+DE\s+JUVENTUDE|"
+    r"SECRETARIA\s+MUNICIPAL\s+DE\s+SEGURANCA|HOSPITAL\s+MUNICIPAL)"
+)
+
+
+def classificar_tipo_ato(titulo_e_texto, orgao_origem: str = ""):
     t = normalizar_texto_sem_acentos(titulo_e_texto).upper()
+    orgao_origem_norm = normalizar_texto_sem_acentos(orgao_origem).upper()
+    origem_educacao = "EDUCACAO" in orgao_origem_norm or "SMEB" in orgao_origem_norm
 
     # 1. Prioridade: Republicações e Retificações de Atos
     if any(k in t for k in ["REPUBLICAC", "REPUBLICAD", "RETIFICAC", "INCORRECAO"]):
         return "REPUBLICACAO"
 
     # 2. Prioridade: Nomeações e Funções Gratificadas de Direção Escolar
-    padrao_diretor = (
-        r"(?:DIRETOR(?:A)?\s+ESCOLAR|DIRETOR(?:A)?\s+DE\s+ESCOLA|DIRECAO\s+ESCOLAR|"
-        r"GESTOR(?:A)?\s+ESCOLAR|GESTAO\s+ESCOLAR|"
-        r"(?:NOMEAR|NOMEIA|NOMEIO|DESIGNAR|DESIGNA)[\s\S]*?(?:DIRETOR|DIRETORA)|"
+    termos_diretor_escolar_explicito = (
+        "DIRETOR ESCOLAR" in t or "DIRETORA ESCOLAR" in t or
+        "DIRETOR DE ESCOLA" in t or "DIRETORA DE ESCOLA" in t or
+        "DIRECAO ESCOLAR" in t or "GESTOR ESCOLAR" in t or
+        "GESTORA ESCOLAR" in t or "GESTAO ESCOLAR" in t or
+        "VICE-DIRETOR ESCOLAR" in t or "VICE-DIRETORA ESCOLAR" in t
+    )
+
+    padrao_verbo_nomeacao_diretor = (
+        r"(?:(?:NOMEAR|NOMEIA|NOMEIO|DESIGNAR|DESIGNA)[\s\S]*?(?:DIRETOR|DIRETORA)|"
         r"FUNCAO\s+GRATIFICADA[\s\S]*?(?:DIRETOR|DIRETORA)|"
         r"CARGO\s+EM\s+COMISSAO[\s\S]*?(?:DIRETOR|DIRETORA))"
     )
-    if (
-        "DIRETOR ESCOLAR" in t or "DIRETORA ESCOLAR" in t or
-        "DIRETOR DE ESCOLA" in t or "DIRETORA DE ESCOLA" in t or
-        "DIRECAO ESCOLAR" in t or re.search(padrao_diretor, t)
-    ):
+
+    tem_verbo_diretor = bool(re.search(padrao_verbo_nomeacao_diretor, t))
+    tem_contexto_educacao = origem_educacao or bool(re.search(PADRAO_VINCULO_EDUCACAO, t))
+    pertence_outra_secretaria = bool(re.search(PADRAO_SECRETARIAS_TERCEIROS, t))
+
+    # Regra estrita: Para classificar como NOMEACAO_DIRETOR, deve ser explicitamente diretor escolar
+    # OU conter verbo de nomeação + diretor E validação de contexto educacional E não ser de secretaria de terceiro
+    if termos_diretor_escolar_explicito or (tem_verbo_diretor and tem_contexto_educacao and not (pertence_outra_secretaria and not termos_diretor_escolar_explicito)):
         return "NOMEACAO_DIRETOR"
 
     # 3. Permutas e Cessões Funcionais
@@ -631,7 +676,7 @@ def executar_ciclo_pesquisa(
         pass
 
     if orgao_alvo:
-        seletor_orgao = "select[name*='orgao'], select[id*='orgao'], select[id*='unidade'], select[name*='unidade']"
+        seletor_orgao = "select[name*='busca_avancada[orgao]'], select[id*='busca_avancada_orgao'], select[name*='orgao'], select[id*='orgao'], select[id*='unidade'], select[name*='unidade']"
         fallbacks_orgao = []
         if "Educação" in orgao_alvo:
             fallbacks_orgao = ["Secretaria Municipal de Educação", "Educação Básica", "Educação"]
@@ -783,7 +828,7 @@ def executar_ciclo_pesquisa(
             titulo_ato = match_titulo.group(1).strip()[:100] if match_titulo else f"Ato_FEMURN_{cod_id}"
 
             pdf_b64 = base64.b64encode(pdf_bytes).decode("utf-8") if pdf_bytes else ""
-            categoria = classificar_tipo_ato(f"{titulo_ato} {texto_integral[:600]}")
+            categoria = classificar_tipo_ato(f"{titulo_ato} {texto_integral[:600]}", orgao_origem=orgao_alvo or "")
 
             # Sugestão 3.4.1: Extração estruturada NER (Servidores, Matrículas, Nº do Ato)
             entidades_ner = extrair_entidades_estruturadas(texto_integral, titulo_ato)
@@ -971,6 +1016,19 @@ def main():
             lista_keywords=KEYWORDS_LEGISLATIVO,
             urls_ja_processadas=urls_ja_processadas
         ))
+
+        # Ciclo Customizado Opcional: Seção/Órgão Específico do Diário Oficial
+        secao_custom = os.getenv("SECAO_DIARIO_OFICIAL", "").strip()
+        if secao_custom:
+            print(f"[PROMETHEUS] Executando ciclo para seção solicitada via SECAO_DIARIO_OFICIAL: {secao_custom}")
+            todas_publicacoes.extend(executar_ciclo_pesquisa(
+                page,
+                entidade_alvo="Prefeitura Municipal de Ceará-Mirim",
+                orgao_alvo=secao_custom,
+                aplicar_filtro_keywords=True,
+                lista_keywords=KEYWORDS_EDUCACAO,
+                urls_ja_processadas=urls_ja_processadas
+            ))
 
         browser.close()
 

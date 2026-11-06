@@ -14,6 +14,10 @@ on:
         description: 'Data Final (DD/MM/AAAA) - Vazio = Hoje'
         required: false
         default: ''
+      secao_diario:
+        description: 'Nome da Seção do Diário Oficial (ex: Secretaria Municipal de Educação)'
+        required: false
+        default: ''
 
 jobs:
   monitorar-femurn:
@@ -52,5 +56,6 @@ jobs:
           GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
           DATA_INICIO_CUSTOM: ${{ github.event.inputs.data_inicio }}
           DATA_FIM_CUSTOM: ${{ github.event.inputs.data_fim }}
+          SECAO_DIARIO_OFICIAL: ${{ github.event.inputs.secao_diario || '' }}
         run: |
           python src/scraper_femurn.py

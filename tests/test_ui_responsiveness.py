@@ -518,6 +518,56 @@ class TestUiResponsivenessAndDesignSystem(unittest.TestCase):
         self.assertIn(".cal-pill", css_text)
         self.assertIn(".cal-day-cell", css_text)
 
+    def test_22_m1_m2_navbar_theme_search_and_dropdown(self):
+        """Valida as melhorias de M1 e M2: tema circular, dropdown Documentos sem overflow e busca de servidores."""
+        html_text = HTML_INDEX.read_text(encoding="utf-8")
+        css_text = CSS_FILE.read_text(encoding="utf-8")
+        papiro_text = (SPA_DIR / "js" / "views" / "papiroCadmo.js").read_text(encoding="utf-8")
+
+        # 1. Botão de tema circular (#themeToggleBtn)
+        self.assertIn('id="themeToggleBtn"', html_text)
+        self.assertIn('#themeToggleBtn', css_text)
+        self.assertIn('border-radius: 50% !important;', css_text)
+        self.assertIn('aspect-ratio: 1 / 1 !important;', css_text)
+        self.assertIn('width: 36px !important;', css_text)
+        self.assertIn('height: 36px !important;', css_text)
+
+        # 2. Menu dropdown Documentos sem overflow-clipping
+        self.assertIn('id="navDropdownDocumentos"', html_text)
+        self.assertIn('id="dropdownDocsBtn"', html_text)
+        self.assertIn('id="dropdownDocsMenu"', html_text)
+        self.assertIn('data-page="oficios">Ofícios</a>', html_text)
+        self.assertIn('data-page="portarias">Portarias</a>', html_text)
+        self.assertIn('data-page="certificados">Certificados</a>', html_text)
+        self.assertIn('.masthead-nav-rail', css_text)
+        self.assertIn('.nav-rail-inner', css_text)
+        self.assertIn('.dropdown-menu', css_text)
+        self.assertIn('z-index: 1000;', css_text)
+
+        # 3. Nova barra de busca de servidores em Permutas (#cadmoBuscaServidorInput)
+        self.assertIn('id="cadmoBuscaServidorInput"', html_text)
+        self.assertIn('id="btnLimparBuscaServidor"', html_text)
+        self.assertIn('id="tabAbaDocentesGeral"', html_text)
+        self.assertIn('id="cadmoResumoBuscaRow"', html_text)
+        self.assertIn('id="btnRemoverFiltroPesquisa"', html_text)
+        self.assertIn('normalizarBusca', papiro_text)
+        self.assertIn('filtrarMatchesPorTermo', papiro_text)
+        self.assertIn('filtrarDocentesPorTermo', papiro_text)
+        self.assertIn('filtrarVinculosPorTermo', papiro_text)
+        self.assertIn('executarListagemDocentesGeral', papiro_text)
+
+        # 4. Atalhos Drive mobile no drawer lateral e ocultação na barra hero
+        self.assertIn('mobile-drawer-drive-section', html_text)
+        self.assertIn('Atalhos Drive', html_text)
+        self.assertIn('.hero-shortcuts-bar', css_text)
+        self.assertIn('display: none !important;', css_text)
+
+        # 5. Ocultação de cards técnicos (GitHub Actions/GAS e Esquema Canônico)
+        self.assertIn('id="diarioArchBanner"', html_text)
+        self.assertIn('id="cadmoEsquemaCanonicoCol"', html_text)
+        self.assertIn('#diarioArchBanner', css_text)
+        self.assertIn('#cadmoEsquemaCanonicoCol', css_text)
+
 
 if __name__ == "__main__":
     unittest.main()

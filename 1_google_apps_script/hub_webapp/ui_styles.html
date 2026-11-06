@@ -221,7 +221,7 @@ body.nav-drawer-open .sidebar-backdrop,
 .top-masthead {
   position: sticky;
   top: 0;
-  z-index: 90;
+  z-index: 100;
   background: var(--bg-glass);
   backdrop-filter: blur(20px) saturate(160%);
   -webkit-backdrop-filter: blur(20px) saturate(160%);
@@ -377,28 +377,37 @@ body.nav-drawer-open .sidebar-backdrop,
   background: var(--danger);
 }
 
-.icon-capsule-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-pill);
+.icon-capsule-btn,
+#themeToggleBtn {
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  max-width: 36px !important;
+  aspect-ratio: 1 / 1 !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
   border: 1px solid var(--border-hairline);
   background: var(--bg-surface);
   color: var(--text-main);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   cursor: pointer;
+  flex-shrink: 0 !important;
+  box-sizing: border-box !important;
   transition: background 0.18s ease, border-color 0.18s ease, transform 0.15s ease;
 }
 
-.icon-capsule-btn:hover {
+.icon-capsule-btn:hover,
+#themeToggleBtn:hover {
   background: var(--bg-tonal);
   border-color: var(--border-strong);
 }
 
-.icon-capsule-btn svg {
-  width: 17px;
-  height: 17px;
+.icon-capsule-btn svg,
+#themeToggleBtn svg {
+  width: 17px !important;
+  height: 17px !important;
 }
 
 /* ==========================================================================
@@ -500,6 +509,9 @@ body.nav-drawer-open .sidebar-backdrop,
 .masthead-nav-rail {
   border-top: 1px solid var(--border-hairline);
   background: transparent;
+  position: relative;
+  overflow: visible;
+  z-index: 105;
 }
 
 .nav-rail-inner {
@@ -509,8 +521,7 @@ body.nav-drawer-open .sidebar-backdrop,
   display: flex;
   align-items: center;
   gap: 6px;
-  overflow-x: auto;
-  scrollbar-width: none;
+  overflow: visible;
 }
 
 .nav-rail-inner::-webkit-scrollbar {
@@ -559,6 +570,7 @@ body.nav-drawer-open .sidebar-backdrop,
   position: relative;
   display: inline-flex;
   align-items: center;
+  z-index: 110;
 }
 
 .nav-dropdown-trigger {
@@ -1726,6 +1738,64 @@ body.nav-drawer-open .sidebar-backdrop,
   border: 1px solid var(--border-hairline);
 }
 
+/* Ocultação de Cards Técnicos (Diário Oficial e Permutas) */
+#diarioArchBanner,
+#cadmoEsquemaCanonicoCol {
+  display: none !important;
+}
+
+/* Seção de Atalhos Drive na Gaveta Lateral Mobile */
+.mobile-drawer-drive-section {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-hairline);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.drawer-section-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent-gold);
+  padding: 0 14px 6px;
+  display: block;
+}
+
+.drawer-drive-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm, 10px);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: none;
+  min-height: 44px;
+  box-sizing: border-box;
+  transition: background 0.16s ease, color 0.16s ease;
+}
+
+.drawer-drive-item:hover {
+  background: var(--bg-tonal);
+  color: var(--text-main);
+}
+
+.drawer-drive-item .drive-icon {
+  font-size: 15px;
+}
+
+.drawer-drive-item .drive-arrow {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+
 /* ==========================================================================
    MODAIS, TELA DE LOGIN EDITORIAL & TOAST
    ========================================================================== */
@@ -2022,7 +2092,7 @@ body.nav-drawer-open .sidebar-backdrop,
     margin-bottom: 14px !important;
   }
   .hero-shortcuts-bar {
-    gap: 6px !important;
+    display: none !important;
   }
   .folder-chip {
     padding: 5px 11px !important;
@@ -2372,6 +2442,10 @@ body.nav-drawer-open .sidebar-backdrop,
     width: 32px !important;
     height: 32px !important;
     min-width: 32px !important;
+    max-width: 32px !important;
+    border-radius: 50% !important;
+    aspect-ratio: 1 / 1 !important;
+    padding: 0 !important;
   }
   #themeToggleBtn svg {
     width: 15px !important;
@@ -3887,7 +3961,9 @@ body.nav-drawer-open .sidebar-backdrop,
   font-size: 16px;
 }
 
-/* Responsividade Mobile e Tablet do Calendário */
+/* ==========================================================================
+   RESPONSIVIDADE MOBILE & TABLET DO CALENDÁRIO ESCOLAR
+   ========================================================================== */
 @media (max-width: 860px) {
   .calendario-kpis-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -3895,13 +3971,129 @@ body.nav-drawer-open .sidebar-backdrop,
   .cal-bimestres-grid {
     grid-template-columns: 1fr;
   }
+  .cal-bimestre-card {
+    padding: 18px 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Toolbar empilhada e com touch targets acessíveis */
+  .calendario-controls-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .cal-year-toggle-group,
+  .cal-view-tabs-group,
+  .cal-export-group {
+    width: 100%;
+    display: flex;
+  }
+
+  .btn-cal-year,
+  .btn-cal-tab {
+    flex: 1;
+    justify-content: center;
+    text-align: center;
+    padding: 9px 8px;
+    font-size: 12px;
+    min-height: 44px;
+    box-sizing: border-box;
+  }
+
+  .cal-export-group .btn {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+  }
+
+  /* Pílulas de filtro em carrossel horizontal contínuo */
+  .calendario-filter-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .cal-filter-pills {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    padding-bottom: 6px;
+    scrollbar-width: none;
+    gap: 8px;
+  }
+
+  .cal-filter-pills::-webkit-scrollbar {
+    display: none;
+  }
+
+  .cal-pill {
+    flex-shrink: 0;
+    white-space: nowrap;
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+  }
+
+  /* Navegação do mês */
   .cal-month-nav-bar {
     flex-direction: column;
     align-items: stretch;
+    gap: 10px;
   }
+
   .cal-month-title-wrap {
     order: -1;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
+  }
+
+  .cal-month-nav-left {
+    width: 100%;
+    display: flex;
+    gap: 6px;
+  }
+
+  .cal-month-nav-left .btn {
+    flex: 1;
+    justify-content: center;
+    min-height: 44px;
+    font-size: 12px;
+    padding: 8px 4px;
+  }
+
+  .cal-month-nav-right {
+    width: 100%;
+  }
+
+  .cal-select-mes {
+    width: 100%;
+    min-height: 44px;
+    box-sizing: border-box;
+  }
+
+  /* Modal de Detalhes do Dia */
+  #modalDetalhesDiaCalendario .modal-card {
+    width: 95%;
+    max-width: 95%;
+    margin: 16px auto;
+    max-height: 85vh;
+    border-radius: 20px;
+  }
+
+  #modalDetalhesDiaCalendario .modal-header,
+  #modalDetalhesDiaCalendario .modal-body,
+  #modalDetalhesDiaCalendario .modal-footer {
+    padding: 14px 16px;
+  }
+
+  #btnFecharModalDetalhesDia {
+    min-height: 44px;
+    min-width: 100px;
   }
 }
 
@@ -3909,21 +4101,40 @@ body.nav-drawer-open .sidebar-backdrop,
   .calendario-kpis-grid {
     grid-template-columns: 1fr;
   }
-  .cal-day-cell {
-    min-height: 60px;
-    padding: 4px;
+
+  /* Rolagem horizontal fluida na grade do calendário para nunca quebrar colunas */
+  .cal-grid-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 14px;
   }
+
+  .cal-grid-weekdays,
+  .cal-grid-days {
+    min-width: 500px; /* Garante ~71px por dia para toque acessível e sem corte */
+  }
+
+  .cal-day-cell {
+    min-height: 70px;
+    padding: 5px;
+  }
+
   .cal-day-tag {
     display: none;
   }
+
   .cal-event-chip {
-    padding: 1px 3px;
-    font-size: 8px;
+    padding: 1px 4px;
+    font-size: 8.5px;
   }
+
   .cal-summary-card {
     flex-direction: column;
     align-items: flex-start;
+    padding: 14px 16px;
+    gap: 12px;
   }
+
   .cal-summary-divider {
     display: none;
   }

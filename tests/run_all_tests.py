@@ -96,6 +96,12 @@ TEST_MODULES = [
         "module": "test_escolas_map",
         "name": "Georreferenciamento Cartográfico e Gestão das Escolas Municipais",
         "description": "Validação integral do catálogo de 20 escolas, bounding box Ceará-Mirim, CRUD de coordenadas, modal acessível e integração ao router."
+    },
+    {
+        "id": "M10",
+        "module": "test_m2_verification",
+        "name": "Marco 2: Busca de Servidores, Agenda Intersetorial e Persistência Supabase",
+        "description": "Validação de migração 007, métodos de sincronização do SupabaseClient, motor de busca com NFD em Permutas, CRUD da agenda intersetorial e integridade do DOM."
     }
 ]
 

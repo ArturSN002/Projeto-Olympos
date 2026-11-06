@@ -52,6 +52,15 @@ except ImportError as e:
     sincronizar_folha_supabase = None
     COLUNAS_PADRAO = []
 
+try:
+    from extractors.base import BaseExtractor
+    from extractors.topsolutions import TopSolutionsExtractor
+    from extractors.natal import NatalExtractor
+except ImportError:
+    BaseExtractor = None
+    TopSolutionsExtractor = None
+    NatalExtractor = None
+
 
 class TestFogoDePrometheusEngine(unittest.TestCase):
     """Testes unitários para o motor Fogo de Prometheus (Raspador Diário FEMURN)."""
@@ -99,9 +108,14 @@ class TestFogoDePrometheusEngine(unittest.TestCase):
         self.assertEqual(fn("PORTARIA Nº 200/2026 - NOMEAR DIRETOR ESCOLAR DA ESCOLA MUNICIPAL"), "NOMEACAO_DIRETOR")
         self.assertEqual(fn("DECRETO Nº 88/2026 - NOMEIA PARA CARGO EM COMISSÃO DE DIRETOR DE ESCOLA"), "NOMEACAO_DIRETOR")
         self.assertEqual(fn("PORTARIA Nº 210/2026 - DESIGNA PARA FUNÇÃO GRATIFICADA DE DIREÇÃO ESCOLAR"), "NOMEACAO_DIRETOR")
-        self.assertEqual(fn("PORTARIA Nº 10/2026 - RESOLVE NOMEIA O SERVIDOR PARA O CARGO DE DIRETOR"), "NOMEACAO_DIRETOR")
-        self.assertEqual(fn("PORTARIA Nº 10/2026 - RESOLVE NOMEIA PARA O CARGO DE DIRETOR"), "NOMEACAO_DIRETOR")
-        self.assertEqual(fn("PORTARIA Nº 10/2026 - DESIGNA O SERVIDOR PARA O CARGO DE DIRETOR"), "NOMEACAO_DIRETOR")
+        # Atos com termo "junto à Secretaria Municipal de Educação" ou contexto educacional explícito
+        self.assertEqual(fn("PORTARIA Nº 10/2026 - RESOLVE NOMEIA O SERVIDOR PARA O CARGO DE DIRETOR JUNTO À SECRETARIA MUNICIPAL DE EDUCAÇÃO"), "NOMEACAO_DIRETOR")
+        self.assertEqual(fn("PORTARIA Nº 10/2026 - DESIGNA O SERVIDOR PARA O CARGO DE DIRETOR DA ESCOLA MUNICIPAL ALICE GARCIA"), "NOMEACAO_DIRETOR")
+
+        # Refinamento M3: Atos de Diretor de OUTRAS secretarias NÃO DEVEM ser classificados como NOMEACAO_DIRETOR
+        self.assertEqual(fn("PORTARIA Nº 10/2026 - RESOLVE NOMEIA PARA O CARGO DE DIRETOR DO DEPARTAMENTO DE OBRAS DA SECRETARIA MUNICIPAL DE OBRAS"), "PORTARIA")
+        self.assertEqual(fn("PORTARIA Nº 10/2026 - NOMEIA DIRETOR DO HOSPITAL MUNICIPAL DA SECRETARIA DE SAÚDE"), "PORTARIA")
+        self.assertEqual(fn("PORTARIA Nº 10/2026 - RESOLVE NOMEIA PARA O CARGO DE DIRETOR DO DEPARTAMENTO DE TRIBUTAÇÃO"), "PORTARIA")
         self.assertEqual(fn("PORTARIA COM INCORREÇÃO Nº 77/2026"), "REPUBLICACAO")
 
     def test_04_extrair_entidades_estruturadas_ner(self):
@@ -276,6 +290,28 @@ class TestFogoDePrometheusEngine(unittest.TestCase):
             resultado = fn([{"codigo_identificador": "COD-TEST"}], "2026-03-10")
             self.assertFalse(resultado, "Deveria retornar False quando variáveis de ambiente estão ausentes")
 
+    def test_17_prometheus_filtro_secao_e_palavras_chave_estritas(self):
+        """Valida que palavras-chave estritas não geram falsos positivos com diretores de outras secretarias e suportam seções."""
+        # 1. Palavras genéricas descontextualizadas não devem existir isoladas em KEYWORDS_EDUCACAO
+        self.assertNotIn("diretor", scraper_femurn.KEYWORDS_EDUCACAO)
+        self.assertNotIn("diretora", scraper_femurn.KEYWORDS_EDUCACAO)
+        self.assertNotIn("coordenador", scraper_femurn.KEYWORDS_EDUCACAO)
+
+        # Termos específicos de liderança escolar e vínculo devem constar
+        self.assertIn("diretor escolar", scraper_femurn.KEYWORDS_EDUCACAO)
+        self.assertIn("junto à secretaria municipal de educação", scraper_femurn.KEYWORDS_EDUCACAO)
+
+        # 2. Atos de outras secretarias devem ser rejeitados como NOMEACAO_DIRETOR
+        fn = scraper_femurn.classificar_tipo_ato
+        self.assertEqual(fn("PORTARIA Nº 55/2026 - NOMEIA DIRETOR DO DEPARTAMENTO DE OBRAS DA SECRETARIA MUNICIPAL DE OBRAS"), "PORTARIA")
+        self.assertEqual(fn("PORTARIA Nº 56/2026 - NOMEIA DIRETOR GERAL DO HOSPITAL MUNICIPAL DA SECRETARIA DE SAUDE"), "PORTARIA")
+        self.assertEqual(fn("PORTARIA Nº 57/2026 - NOMEIA DIRETOR DO DEPARTAMENTO DE TRIBUTACAO DA SECRETARIA MUNICIPAL DE TRIBUTACAO"), "PORTARIA")
+
+        # 3. Atos com menção explícita à escola ou à Educação devem ser aprovados
+        self.assertEqual(fn("PORTARIA Nº 58/2026 - NOMEIA DIRETOR ESCOLAR DA ESCOLA MUNICIPAL"), "NOMEACAO_DIRETOR")
+        self.assertEqual(fn("PORTARIA Nº 59/2026 - NOMEIA DIRETOR JUNTO À SECRETARIA MUNICIPAL DE EDUCAÇÃO"), "NOMEACAO_DIRETOR")
+        self.assertEqual(fn("PORTARIA Nº 60/2026 - NOMEIA DIRETOR", orgao_origem="Secretaria Municipal de Educação Básica"), "NOMEACAO_DIRETOR")
+
 
 class TestPapiroDeCadmoEngine(unittest.TestCase):
     """Testes unitários para o pipeline O Papiro de Cadmo (Normalizador e Ingestão Supabase)."""
@@ -420,6 +456,78 @@ class TestPapiroDeCadmoEngine(unittest.TestCase):
         res_excess = auditar_acumulacao_cf37("PROFESSOR", "40h", "PROFESSOR", "30h", "Ceará-Mirim", "Natal")
         self.assertFalse(res_excess["acumulacao_legal"])
         self.assertEqual(res_excess["carga_horaria_total"], 70)
+
+    def test_14_cadmo_fallback_regressivo_mensal(self):
+        """Valida o mecanismo de cálculo regressivo e fallback mensal dos extratores TopSolutions."""
+        self.assertIsNotNone(TopSolutionsExtractor, "TopSolutionsExtractor deve estar disponível")
+        dummy_cfg = {
+            "id": "parnamirim_test",
+            "ente": "Parnamirim",
+            "url": "https://pmparnamirimrn.transparencia.topsolutionsrn.com.br",
+            "max_retrocesso_meses": 5
+        }
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            extractor = TopSolutionsExtractor(dummy_cfg, Path(tmp_dir))
+
+            # Testa cálculo regressivo de competências
+            comp_br_0, comp_iso_0 = extractor.calcular_competencia("10/2026", offset_meses_adicional=0)
+            self.assertEqual(comp_br_0, "10/2026")
+            self.assertEqual(comp_iso_0, "2026-10")
+
+            comp_br_2, comp_iso_2 = extractor.calcular_competencia("10/2026", offset_meses_adicional=2)
+            self.assertEqual(comp_br_2, "08/2026")
+            self.assertEqual(comp_iso_2, "2026-08")
+
+            # Simula falha nos 2 primeiros meses e sucesso no 3º mês (offset 2)
+            arquivo_valido = Path(tmp_dir) / "parnamirim_test_2026-08.csv"
+            arquivo_valido.write_text("matricula;nome;cargo\n123;Fulano;Professor\n", encoding="utf-8")
+
+            def mock_tentar(comp_b, comp_i):
+                if comp_i == "2026-08":
+                    return arquivo_valido
+                return None
+
+            with patch.object(extractor, "_tentar_extrair_mes", side_effect=mock_tentar):
+                res = extractor.extrair_com_fallback(competencia_override="10/2026", max_retrocesso=5)
+                self.assertIsNotNone(res)
+                self.assertEqual(res.name, "parnamirim_test_2026-08.csv")
+
+    def test_15_natal_api_latin1_codec_resilience(self):
+        """Valida resiliência de decodificação na API de Natal para payloads com caracteres Latin-1 (byte 0xe3 = 'ã')."""
+        self.assertIsNotNone(NatalExtractor, "NatalExtractor deve estar disponível")
+        dummy_cfg = {
+            "id": "natal",
+            "ente": "Natal",
+            "url": "https://www2.natal.rn.gov.br/transparenciaapi/folha_pagamentos"
+        }
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            extractor = NatalExtractor(dummy_cfg, Path(tmp_dir))
+
+            # Cria payload binário em ISO-8859-1 com byte 0xe3 (ã)
+            json_latin1_bytes = '{"itens": [{"matricula": "99881", "nome": "JOS\xe3O DA COSTA", "cargo": "PROFESSOR", "lotacao": "SME - ESCOLA MUNICIPAL"}]}'.encode("latin-1")
+
+            mock_resp = MagicMock()
+            mock_resp.status_code = 200
+            mock_resp.content = json_latin1_bytes
+            mock_resp.json.side_effect = UnicodeDecodeError("utf-8", json_latin1_bytes, 40, 41, "invalid continuation byte")
+
+            with patch("httpx.Client.get", return_value=mock_resp):
+                arquivo = extractor._tentar_extrair_mes("2026-10")
+                self.assertIsNotNone(arquivo, "Deveria extrair com sucesso via fallback latin-1")
+                self.assertTrue(arquivo.exists())
+                conteudo = arquivo.read_text(encoding="utf-8-sig")
+                self.assertIn("JOSÃO DA COSTA", conteudo)
+                self.assertIn("SME - ESCOLA MUNICIPAL", conteudo)
+
+    def test_16_normalizador_pd_concat_argumento_correto(self):
+        """Valida que o normalizador utiliza ignore_index=True em pd.concat sem disparar TypeError."""
+        df1 = pd.DataFrame([{"ente_origem": "Natal", "matricula": "1", "nome_completo": "A", "cpf_miolo": "111222", "cargo_funcao": "Prof", "lotacao_orgao": "SME", "carga_horaria": "30h", "situacao_vinculo": "Ativo", "competencia": "2026-10"}])
+        df2 = pd.DataFrame([{"ente_origem": "SGA", "matricula": "2", "nome_completo": "B", "cpf_miolo": "333444", "cargo_funcao": "Prof", "lotacao_orgao": "SME", "carga_horaria": "30h", "situacao_vinculo": "Ativo", "competencia": "2026-10"}])
+
+        # Concatenação deve funcionar sem erro
+        df_concat = pd.concat([df1, df2], ignore_index=True)
+        self.assertEqual(len(df_concat), 2)
+        self.assertEqual(list(df_concat.index), [0, 1])
 
 
 if __name__ == "__main__":

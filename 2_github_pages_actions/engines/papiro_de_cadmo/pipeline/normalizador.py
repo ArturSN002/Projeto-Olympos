@@ -239,7 +239,7 @@ def processar_todos():
             logger.error(f"Erro ao processar {arq.name}: {e}")
 
     if dfs_consolidados:
-        df_final = pd.concat(dfs_consolidados, ignore_errors=True)
+        df_final = pd.concat(dfs_consolidados, ignore_index=True)
         # Deduplica registros idênticos por ente + matrícula + nome
         df_final.drop_duplicates(subset=["ente_origem", "matricula", "nome_completo"], inplace=True)
         df_final.sort_values(by=["ente_origem", "nome_completo"], inplace=True)

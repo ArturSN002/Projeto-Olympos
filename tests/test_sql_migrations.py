@@ -52,19 +52,21 @@ class TestSqlMigrationsAndSecuritySchema(unittest.TestCase):
         self.migration_002 = MIGRATIONS_DIR / "20261031_002_rls_policies.sql"
         self.migration_003 = MIGRATIONS_DIR / "20261031_003_pgcrypto_rpc.sql"
         self.migration_004 = MIGRATIONS_DIR / "20261101_004_security_advisor_remediation.sql"
+        self.migration_007 = MIGRATIONS_DIR / "20261106_007_escolas_secretarias_agenda.sql"
         self.seed_file = SEEDS_DIR / "seed_roles_mock.sql"
 
     def test_01_migrations_and_seed_files_exist(self):
-        """Assegura a presença dos 4 arquivos de migração ordenados e do arquivo de seed."""
+        """Assegura a presença dos arquivos de migração ordenados e do arquivo de seed."""
         self.assertTrue(self.migration_001.exists(), f"Migração 001 não encontrada: {self.migration_001}")
         self.assertTrue(self.migration_002.exists(), f"Migração 002 não encontrada: {self.migration_002}")
         self.assertTrue(self.migration_003.exists(), f"Migração 003 não encontrada: {self.migration_003}")
         self.assertTrue(self.migration_004.exists(), f"Migração 004 não encontrada: {self.migration_004}")
+        self.assertTrue(self.migration_007.exists(), f"Migração 007 não encontrada: {self.migration_007}")
         self.assertTrue(self.seed_file.exists(), f"Seed não encontrado: {self.seed_file}")
 
     def test_02_sqlglot_syntax_validation(self):
         """Valida que todos os arquivos de migração possuem sintaxe SQL PostgreSQL válida via sqlglot."""
-        for m_file in [self.migration_001, self.migration_002, self.migration_003, self.migration_004]:
+        for m_file in [self.migration_001, self.migration_002, self.migration_003, self.migration_004, self.migration_007]:
             content = m_file.read_text(encoding="utf-8")
             try:
                 expressions = sqlglot.parse(content, read="postgres")
@@ -276,6 +278,56 @@ class TestSqlMigrationsAndSecuritySchema(unittest.TestCase):
             r"REVOKE\s+EXECUTE\s+ON\s+FUNCTION\s+public\.obter_licenca_detalhada_decrypted\(UUID,\s*TEXT\)\s+FROM\s+authenticated;",
             "Ausência de REVOKE EXECUTE para authenticated em obter_licenca_detalhada_decrypted"
         )
+
+    def test_12_migration_007_escolas_secretarias_agenda(self):
+        """Valida a migração 007: DDL das tabelas escolas, secretarias e agenda, índices, triggers e RLS."""
+        self.assertTrue(self.migration_007.exists(), f"Migração 007 não encontrada: {self.migration_007}")
+        sql_007 = self.migration_007.read_text(encoding="utf-8")
+
+        # 1. Tabelas criadas com campos canônicos
+        self.assertIn("CREATE TABLE IF NOT EXISTS public.escolas", sql_007)
+        self.assertIn("CREATE TABLE IF NOT EXISTS public.secretarias_parceiras", sql_007)
+        self.assertIn("CREATE TABLE IF NOT EXISTS public.calendario_agenda", sql_007)
+
+        # 2. Definições de colunas e constraints
+        self.assertIn("id TEXT PRIMARY KEY", sql_007)
+        self.assertIn("latitude DOUBLE PRECISION NOT NULL", sql_007)
+        self.assertIn("longitude DOUBLE PRECISION NOT NULL", sql_007)
+        self.assertIn("ano INTEGER NOT NULL", sql_007)
+        self.assertIn("data_inicio DATE NOT NULL", sql_007)
+        self.assertIn("data_fim DATE NOT NULL", sql_007)
+        self.assertIn("setor TEXT NOT NULL", sql_007)
+        self.assertIn("letivo BOOLEAN NOT NULL DEFAULT false", sql_007)
+        self.assertIn("criado_por UUID REFERENCES auth.users(id)", sql_007)
+
+        # 3. Triggers atualizados
+        self.assertIn("trg_escolas_updated_at", sql_007)
+        self.assertIn("trg_secretarias_parceiras_updated_at", sql_007)
+        self.assertIn("trg_calendario_agenda_updated_at", sql_007)
+        self.assertIn("EXECUTE FUNCTION public.handle_updated_at_timestamp()", sql_007)
+
+        # 4. RLS habilitada em todas as tabelas e ausência de FORCE RLS
+        self.assertIn("ALTER TABLE public.escolas ENABLE ROW LEVEL SECURITY;", sql_007)
+        self.assertIn("ALTER TABLE public.secretarias_parceiras ENABLE ROW LEVEL SECURITY;", sql_007)
+        self.assertIn("ALTER TABLE public.calendario_agenda ENABLE ROW LEVEL SECURITY;", sql_007)
+        self.assertNotIn("FORCE ROW LEVEL SECURITY", sql_007.upper())
+
+        # 5. Políticas públicas de SELECT
+        self.assertIn("CREATE POLICY \"escolas_select_public\"", sql_007)
+        self.assertIn("CREATE POLICY \"secretarias_select_public\"", sql_007)
+        self.assertIn("CREATE POLICY \"agenda_select_public\"", sql_007)
+        self.assertIn("TO anon, authenticated", sql_007)
+
+        # 6. Políticas de modificação restritas aos papéis autorizados
+        self.assertIn("CREATE POLICY \"escolas_insert_auth\"", sql_007)
+        self.assertIn("CREATE POLICY \"escolas_update_auth\"", sql_007)
+        self.assertIn("CREATE POLICY \"escolas_delete_auth\"", sql_007)
+        self.assertIn("CREATE POLICY \"secretarias_modify_auth\"", sql_007)
+        self.assertIn("CREATE POLICY \"agenda_modify_auth\"", sql_007)
+        self.assertIn("'ADMIN_GABINETE'", sql_007)
+        self.assertIn("'PEDAGOGICO_EVENTOS'", sql_007)
+        self.assertIn("'RH_COMISSAO'", sql_007)
+        self.assertIn("'JURIDICO'", sql_007)
 
 
 if __name__ == "__main__":

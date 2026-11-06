@@ -325,6 +325,284 @@ window.OlymposSupabase = (function() {
     return [];
   }
 
+  // =========================================================================
+  // PERSISTÊNCIA: ESCOLAS MUNICIPAIS DE CEARÁ-MIRIM
+  // =========================================================================
+
+  async function carregarEscolas() {
+    const client = getClient();
+    if (client) {
+      try {
+        const { data, error } = await client
+          .from('escolas')
+          .select('*')
+          .order('nome');
+        if (!error && Array.isArray(data) && data.length > 0) {
+          const adaptadas = data.map(function(e) {
+            return {
+              id: e.id,
+              nome: e.nome,
+              inep: e.inep,
+              categoria: e.categoria,
+              zona: e.zona,
+              bairroDistrito: e.bairro_distrito,
+              endereco: e.endereco,
+              lat: e.latitude,
+              lng: e.longitude,
+              turnos: e.turnos || [],
+              telefone: e.telefone,
+              diretor: e.diretor,
+              cor: e.cor,
+              icone: e.icone
+            };
+          });
+          try {
+            localStorage.setItem('olympos_escolas_municipais', JSON.stringify(adaptadas));
+          } catch (eStorage) {}
+          return adaptadas;
+        }
+      } catch (err) {
+        console.warn('[OlymposSupabase] Falha ao carregar escolas do Supabase. Utilizando cache local:', err);
+      }
+    }
+    // Fallback offline
+    try {
+      const cached = localStorage.getItem('olympos_escolas_municipais');
+      if (cached) return JSON.parse(cached);
+    } catch (eCache) {}
+    return (window.BANCO_SEMENTE_ESCOLAS || []).slice();
+  }
+
+  async function sincronizarEscola(escola) {
+    if (!escola || !escola.id) return false;
+    const client = getClient();
+    if (client) {
+      const payload = {
+        id: escola.id,
+        inep: escola.inep || '',
+        nome: escola.nome,
+        categoria: escola.categoria || 'Ensino Fundamental',
+        zona: escola.zona || 'Urbana',
+        bairro_distrito: escola.bairroDistrito || '',
+        endereco: escola.endereco || '',
+        latitude: parseFloat(escola.lat),
+        longitude: parseFloat(escola.lng),
+        turnos: Array.isArray(escola.turnos) ? escola.turnos : [],
+        telefone: escola.telefone || '',
+        diretor: escola.diretor || '',
+        cor: escola.cor || '#38BDF8',
+        icone: escola.icone || '🏫',
+        status: escola.status || 'ATIVA'
+      };
+      try {
+        const { error } = await client.from('escolas').upsert(payload);
+        if (error) {
+          console.warn('[OlymposSupabase] Erro ao sincronizar escola no Supabase:', error);
+          return false;
+        }
+        return true;
+      } catch (e) {
+        console.warn('[OlymposSupabase] Exceção ao sincronizar escola:', e);
+        return false;
+      }
+    }
+    return false;
+  }
+
+  async function excluirEscola(escolaId) {
+    if (!escolaId) return false;
+    const client = getClient();
+    if (client) {
+      try {
+        const { error } = await client.from('escolas').delete().eq('id', escolaId);
+        if (error) {
+          console.warn('[OlymposSupabase] Erro ao excluir escola no Supabase:', error);
+          return false;
+        }
+        return true;
+      } catch (e) {
+        console.warn('[OlymposSupabase] Exceção ao excluir escola:', e);
+        return false;
+      }
+    }
+    return false;
+  }
+
+  // =========================================================================
+  // PERSISTÊNCIA: SECRETARIAS MUNICIPAIS PARCEIRAS (PERMUTAS RN)
+  // =========================================================================
+
+  async function carregarSecretariasParceiras() {
+    const client = getClient();
+    if (client) {
+      try {
+        const { data, error } = await client
+          .from('secretarias_parceiras')
+          .select('*')
+          .order('municipio');
+        if (!error && Array.isArray(data) && data.length > 0) {
+          const adaptadas = data.map(function(s) {
+            return {
+              id: s.id,
+              nome: s.nome,
+              municipio: s.municipio,
+              regiao: s.regiao || 'Grande Natal',
+              tipo: s.tipo || 'Secretaria Municipal Parceira',
+              coords: [s.latitude, s.longitude],
+              cor: s.cor || '#10B981',
+              icone: s.icone || '🏛️',
+              endereco: s.endereco || '',
+              contato: s.contato || '',
+              ativo: s.ativo !== false
+            };
+          });
+          try {
+            localStorage.setItem('olympos_secretarias_parceiras', JSON.stringify(adaptadas));
+          } catch (eStore) {}
+          return adaptadas;
+        }
+      } catch (err) {
+        console.warn('[OlymposSupabase] Falha ao carregar secretarias do Supabase:', err);
+      }
+    }
+    try {
+      const cached = localStorage.getItem('olympos_secretarias_parceiras');
+      if (cached) return JSON.parse(cached);
+    } catch (eCache) {}
+    return null;
+  }
+
+  async function sincronizarSecretariaParceira(sec) {
+    if (!sec || !sec.id) return false;
+    const client = getClient();
+    if (client) {
+      const coords = Array.isArray(sec.coords) ? sec.coords : [-5.6344, -35.4245];
+      const payload = {
+        id: sec.id,
+        nome: sec.nome,
+        municipio: sec.municipio,
+        regiao: sec.regiao || 'Grande Natal',
+        tipo: sec.tipo || 'Secretaria Municipal Parceira',
+        latitude: parseFloat(coords[0]),
+        longitude: parseFloat(coords[1]),
+        cor: sec.cor || '#10B981',
+        icone: sec.icone || '🏛️',
+        endereco: sec.endereco || '',
+        contato: sec.contato || '',
+        ativo: sec.ativo !== false
+      };
+      try {
+        const { error } = await client.from('secretarias_parceiras').upsert(payload);
+        if (error) {
+          console.warn('[OlymposSupabase] Erro ao sincronizar secretaria parceira:', error);
+          return false;
+        }
+        return true;
+      } catch (e) {
+        console.warn('[OlymposSupabase] Exceção ao sincronizar secretaria parceira:', e);
+        return false;
+      }
+    }
+    return false;
+  }
+
+  // =========================================================================
+  // PERSISTÊNCIA: AGENDA INTERSETORIAL DO CALENDÁRIO
+  // =========================================================================
+
+  async function carregarAgendaEventos(ano) {
+    const anoInt = parseInt(ano, 10) || 2026;
+    const client = getClient();
+    if (client) {
+      try {
+        const { data, error } = await client
+          .from('calendario_agenda')
+          .select('*')
+          .eq('ano', anoInt)
+          .order('data_inicio');
+        if (!error && Array.isArray(data)) {
+          const adaptados = data.map(function(ev) {
+            return {
+              id: ev.id,
+              ano: ev.ano,
+              titulo: ev.titulo,
+              dataInicio: ev.data_inicio,
+              dataFim: ev.data_fim,
+              horario: ev.horario || '',
+              setor: ev.setor || 'Gabinete SMEB',
+              categoria: ev.categoria || 'agenda_intersetorial',
+              descricao: ev.descricao || '',
+              local: ev.local || '',
+              publicoAlvo: ev.publico_alvo || '',
+              letivo: false,
+              cor: ev.cor || '#8B5CF6',
+              icone: ev.icone || '🗓️',
+              isCustom: true
+            };
+          });
+          return adaptados;
+        }
+      } catch (err) {
+        console.warn('[OlymposSupabase] Erro ao carregar agenda do Supabase:', err);
+      }
+    }
+    return null;
+  }
+
+  async function salvarAgendaEvento(evento) {
+    if (!evento || !evento.id) return false;
+    const client = getClient();
+    if (client) {
+      const payload = {
+        id: evento.id,
+        ano: parseInt(evento.ano, 10) || 2026,
+        titulo: evento.titulo,
+        data_inicio: evento.dataInicio,
+        data_fim: evento.dataFim || evento.dataInicio,
+        horario: evento.horario || '',
+        setor: evento.setor || 'Gabinete SMEB',
+        categoria: evento.categoria || 'agenda_intersetorial',
+        descricao: evento.descricao || '',
+        local: evento.local || '',
+        publico_alvo: evento.publicoAlvo || '',
+        letivo: false,
+        cor: evento.cor || '#8B5CF6',
+        icone: evento.icone || '🗓️'
+      };
+      try {
+        const { error } = await client.from('calendario_agenda').upsert(payload);
+        if (error) {
+          console.warn('[OlymposSupabase] Erro ao salvar evento de agenda no Supabase:', error);
+          return false;
+        }
+        return true;
+      } catch (e) {
+        console.warn('[OlymposSupabase] Exceção ao salvar evento de agenda:', e);
+        return false;
+      }
+    }
+    return false;
+  }
+
+  async function excluirAgendaEvento(eventoId) {
+    if (!eventoId) return false;
+    const client = getClient();
+    if (client) {
+      try {
+        const { error } = await client.from('calendario_agenda').delete().eq('id', eventoId);
+        if (error) {
+          console.warn('[OlymposSupabase] Erro ao excluir evento de agenda no Supabase:', error);
+          return false;
+        }
+        return true;
+      } catch (e) {
+        console.warn('[OlymposSupabase] Exceção ao excluir evento de agenda:', e);
+        return false;
+      }
+    }
+    return false;
+  }
+
   return {
     getConfig: getConfig,
     isConfigured: isConfigured,
@@ -335,7 +613,15 @@ window.OlymposSupabase = (function() {
     getSession: getSession,
     getJwtToken: getJwtToken,
     getCachedProfile: getCachedProfile,
-    buscarPublicacoesSemanticas: buscarPublicacoesSemanticas
+    buscarPublicacoesSemanticas: buscarPublicacoesSemanticas,
+    carregarEscolas: carregarEscolas,
+    sincronizarEscola: sincronizarEscola,
+    excluirEscola: excluirEscola,
+    carregarSecretariasParceiras: carregarSecretariasParceiras,
+    sincronizarSecretariaParceira: sincronizarSecretariaParceira,
+    carregarAgendaEventos: carregarAgendaEventos,
+    salvarAgendaEvento: salvarAgendaEvento,
+    excluirAgendaEvento: excluirAgendaEvento
   };
 })();
 

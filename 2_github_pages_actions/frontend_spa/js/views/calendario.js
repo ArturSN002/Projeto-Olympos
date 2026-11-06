@@ -22,11 +22,13 @@ window.OlymposViews.calendario = (function() {
   'use strict';
 
   // Chaves de armazenamento e estado
+  var STORAGE_AGENDA_KEY = 'olympos_calendario_agenda_custom';
   var STORAGE_CUSTOM_KEY = 'olympos_calendario_eventos_custom';
   var selectedYear = 2026;
   var selectedMonth = 1; // 0 = Jan, 1 = Fev (início das aulas)
   var activeTab = 'mes'; // 'mes' ou 'bimestre'
   var activeCategory = 'todos';
+  var activeSector = 'todos';
   var selectedDate = null;
   var eventsBound = false;
 
@@ -1008,12 +1010,246 @@ window.OlymposViews.calendario = (function() {
     ]
   };
 
+  // =========================================================================
+  // GESTÃO DA AGENDA INTERSETORIAL (CRUD & SUPABASE PERSISTENCE)
+  // =========================================================================
+
+  /**
+   * Obtém os eventos customizados da agenda intersetorial armazenados localmente
+   */
+  function obterEventosAgendaCustom(anoFiltro) {
+    try {
+      var raw = localStorage.getItem(STORAGE_AGENDA_KEY) || localStorage.getItem(STORAGE_CUSTOM_KEY);
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          if (anoFiltro) {
+            return parsed.filter(function(e) {
+              return !e.ano || Number(e.ano) === Number(anoFiltro);
+            });
+          }
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('[Calendario] Erro ao carregar eventos da agenda do localStorage:', e);
+    }
+    return [];
+  }
+
+  /**
+   * Grava lista completa de eventos customizados no localStorage
+   */
+  function salvarListaAgendaCustom(lista) {
+    try {
+      localStorage.setItem(STORAGE_AGENDA_KEY, JSON.stringify(lista));
+      localStorage.setItem(STORAGE_CUSTOM_KEY, JSON.stringify(lista));
+    } catch (e) {
+      console.warn('[Calendario] Erro ao salvar eventos da agenda no localStorage:', e);
+    }
+  }
+
+  /**
+   * Retorna todos os eventos (oficiais do ano + agenda intersetorial customizada)
+   */
+  function obterTodosEventos(dados) {
+    var oficiais = (dados && Array.isArray(dados.eventos)) ? dados.eventos : [];
+    var custom = obterEventosAgendaCustom((dados && dados.ano) ? dados.ano : selectedYear);
+    return oficiais.concat(custom);
+  }
+
+  /**
+   * Salva ou atualiza um evento da agenda
+   */
+  function salvarEventoAgenda(evento) {
+    if (!evento || !evento.titulo || !evento.dataInicio) {
+      if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+        window.OlymposApp.showToast('Título e data de início são obrigatórios!', true);
+      }
+      return false;
+    }
+
+    var lista = obterEventosAgendaCustom();
+    var id = evento.id;
+    var agoraIso = new Date().toISOString();
+    var anoEvt = evento.dataInicio ? parseInt(evento.dataInicio.split('-')[0], 10) : selectedYear;
+
+    var dadosNormalizados = {
+      id: id || ('age_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5)),
+      ano: anoEvt,
+      titulo: String(evento.titulo).trim(),
+      dataInicio: evento.dataInicio,
+      dataFim: evento.dataFim || evento.dataInicio,
+      horario: evento.horario || '',
+      setor: evento.setor || 'Gabinete SMEB',
+      categoria: evento.categoria || 'agenda_intersetorial',
+      local: evento.local || '',
+      descricao: evento.descricao || '',
+      publicoAlvo: evento.publicoAlvo || '',
+      letivo: false, // RIGOR LDB: eventos da agenda intersetorial NUNCA alteram os 203 dias letivos
+      cor: evento.cor || '#8B5CF6',
+      icone: evento.icone || '🗓️',
+      custom: true,
+      updated_at: agoraIso
+    };
+
+    var idx = lista.findIndex(function(e) { return e.id === dadosNormalizados.id; });
+    if (idx >= 0) {
+      lista[idx] = Object.assign({}, lista[idx], dadosNormalizados);
+    } else {
+      lista.push(dadosNormalizados);
+    }
+
+    salvarListaAgendaCustom(lista);
+
+    // Sincronização assíncrona com Supabase
+    if (window.OlymposSupabase && typeof window.OlymposSupabase.salvarAgendaEvento === 'function') {
+      window.OlymposSupabase.salvarAgendaEvento(dadosNormalizados).catch(function(eSup) {
+        console.warn('[Calendario] Sincronização em segundo plano com Supabase falhou:', eSup);
+      });
+    }
+
+    fecharModalFormAgenda();
+    renderizar();
+
+    if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+      window.OlymposApp.showToast('Evento "' + dadosNormalizados.titulo + '" registrado com sucesso na Agenda!');
+    }
+    return true;
+  }
+
+  /**
+   * Exclui um evento da agenda customizada
+   */
+  function excluirEventoAgenda(id) {
+    if (!id) return;
+    var lista = obterEventosAgendaCustom();
+    var novaLista = lista.filter(function(e) { return e.id !== id; });
+    salvarListaAgendaCustom(novaLista);
+
+    // Sincronização assíncrona com Supabase
+    if (window.OlymposSupabase && typeof window.OlymposSupabase.excluirAgendaEvento === 'function') {
+      window.OlymposSupabase.excluirAgendaEvento(id).catch(function(eSup) {
+        console.warn('[Calendario] Falha ao excluir do Supabase:', eSup);
+      });
+    }
+
+    fecharModalFormAgenda();
+    fecharModalDetalhesDia();
+    renderizar();
+
+    if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+      window.OlymposApp.showToast('Evento da agenda excluído com sucesso!');
+    }
+  }
+
+  /**
+   * Abre o modal de formulário da agenda para criar ou editar
+   */
+  function abrirModalFormAgenda(evOuData) {
+    var modal = document.getElementById('modalFormAgendaEvento');
+    var form = document.getElementById('formAgendaEventoCalendario');
+    var tituloModal = document.getElementById('modalFormAgendaTitulo');
+    var btnExcluir = document.getElementById('btnExcluirEventoAgenda');
+    if (!modal || !form) return;
+
+    form.reset();
+
+    var idIn = document.getElementById('agendaEventoId');
+    var tituloIn = document.getElementById('agendaTitulo');
+    var dataInicioIn = document.getElementById('agendaDataInicio');
+    var dataFimIn = document.getElementById('agendaDataFim');
+    var horarioIn = document.getElementById('agendaHorario');
+    var setorIn = document.getElementById('agendaSetor');
+    var catIn = document.getElementById('agendaCategoria');
+    var localIn = document.getElementById('agendaLocal');
+    var descIn = document.getElementById('agendaDescricao');
+
+    var eventoEncontrado = null;
+    if (typeof evOuData === 'string' && evOuData.indexOf('age_') === 0) {
+      var todos = obterEventosAgendaCustom();
+      eventoEncontrado = todos.find(function(e) { return e.id === evOuData; });
+    } else if (typeof evOuData === 'object' && evOuData !== null) {
+      eventoEncontrado = evOuData;
+    }
+
+    if (eventoEncontrado) {
+      if (tituloModal) tituloModal.textContent = 'Editar Evento da Agenda';
+      if (btnExcluir) {
+        btnExcluir.classList.remove('hidden');
+        btnExcluir.style.display = 'block';
+      }
+      if (idIn) idIn.value = eventoEncontrado.id || '';
+      if (tituloIn) tituloIn.value = eventoEncontrado.titulo || '';
+      if (dataInicioIn) dataInicioIn.value = eventoEncontrado.dataInicio || '';
+      if (dataFimIn) dataFimIn.value = eventoEncontrado.dataFim || eventoEncontrado.dataInicio || '';
+      if (horarioIn) horarioIn.value = eventoEncontrado.horario || '';
+      if (setorIn && eventoEncontrado.setor) setorIn.value = eventoEncontrado.setor;
+      if (catIn && eventoEncontrado.categoria) catIn.value = eventoEncontrado.categoria;
+      if (localIn) localIn.value = eventoEncontrado.local || '';
+      if (descIn) descIn.value = eventoEncontrado.descricao || '';
+    } else {
+      if (tituloModal) tituloModal.textContent = 'Novo Evento da Agenda Intersetorial';
+      if (btnExcluir) {
+        btnExcluir.classList.add('hidden');
+        btnExcluir.style.display = 'none';
+      }
+      if (idIn) idIn.value = '';
+
+      var dataPadrao = (typeof evOuData === 'string' && evOuData.match(/^\d{4}-\d{2}-\d{2}$/))
+        ? evOuData
+        : (selectedYear + '-' + padZero(selectedMonth + 1) + '-15');
+      if (dataInicioIn) dataInicioIn.value = dataPadrao;
+      if (dataFimIn) dataFimIn.value = dataPadrao;
+      if (horarioIn) horarioIn.value = '09:00 - 11:30';
+    }
+
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+  }
+
+  /**
+   * Fecha o modal de formulário da agenda
+   */
+  function fecharModalFormAgenda() {
+    var modal = document.getElementById('modalFormAgendaEvento');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.style.display = 'none';
+    }
+  }
+
+  function setSetor(setor) {
+    activeSector = setor || 'todos';
+    var sel = document.getElementById('selectFiltroSetorCalendario');
+    if (sel && sel.value !== activeSector) sel.value = activeSector;
+    renderizarMesView();
+  }
+
   /**
    * Ponto de entrada chamado pelo router modular
    */
   function init() {
     bindEvents();
     renderizar();
+
+    // Sincronização em segundo plano da agenda do Supabase
+    if (window.OlymposSupabase && typeof window.OlymposSupabase.carregarAgendaEventos === 'function') {
+      window.OlymposSupabase.carregarAgendaEventos(selectedYear).then(function(eventosSup) {
+        if (Array.isArray(eventosSup) && eventosSup.length > 0) {
+          var locais = obterEventosAgendaCustom();
+          var mapLocais = {};
+          locais.forEach(function(l) { mapLocais[l.id] = l; });
+          eventosSup.forEach(function(s) {
+            mapLocais[s.id] = Object.assign({}, mapLocais[s.id] || {}, s);
+          });
+          salvarListaAgendaCustom(Object.keys(mapLocais).map(function(k) { return mapLocais[k]; }));
+          renderizar();
+        }
+      }).catch(function(err) {
+        console.warn('[Calendario] Carregamento inicial do Supabase em background:', err);
+      });
+    }
   }
 
   /**
@@ -1106,6 +1342,79 @@ window.OlymposViews.calendario = (function() {
       btnExportTop.addEventListener('click', function() { exportarIcal(); });
     }
 
+    // Botão + Novo Evento da Agenda
+    var btnNovoEvt = document.getElementById('btnNovoEventoAgenda');
+    if (btnNovoEvt) {
+      btnNovoEvt.addEventListener('click', function() {
+        abrirModalFormAgenda();
+      });
+    }
+
+    // Filtro por Setor Homologado
+    var selSetor = document.getElementById('selectFiltroSetorCalendario');
+    if (selSetor) {
+      selSetor.addEventListener('change', function(e) {
+        setSetor(e.target.value);
+      });
+    }
+
+    // Formulário do Modal de Evento da Agenda
+    var formAgenda = document.getElementById('formAgendaEventoCalendario');
+    if (formAgenda) {
+      formAgenda.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var id = (document.getElementById('agendaEventoId') ? document.getElementById('agendaEventoId').value : '') || '';
+        var titulo = (document.getElementById('agendaTitulo') ? document.getElementById('agendaTitulo').value : '') || '';
+        var dataInicio = (document.getElementById('agendaDataInicio') ? document.getElementById('agendaDataInicio').value : '') || '';
+        var dataFim = (document.getElementById('agendaDataFim') ? document.getElementById('agendaDataFim').value : '') || '';
+        var horario = (document.getElementById('agendaHorario') ? document.getElementById('agendaHorario').value : '') || '';
+        var setor = (document.getElementById('agendaSetor') ? document.getElementById('agendaSetor').value : '') || '';
+        var categoria = (document.getElementById('agendaCategoria') ? document.getElementById('agendaCategoria').value : '') || '';
+        var local = (document.getElementById('agendaLocal') ? document.getElementById('agendaLocal').value : '') || '';
+        var descricao = (document.getElementById('agendaDescricao') ? document.getElementById('agendaDescricao').value : '') || '';
+
+        salvarEventoAgenda({
+          id: id,
+          titulo: titulo,
+          dataInicio: dataInicio,
+          dataFim: dataFim,
+          horario: horario,
+          setor: setor,
+          categoria: categoria,
+          local: local,
+          descricao: descricao
+        });
+      });
+    }
+
+    // Botão Excluir Evento da Agenda
+    var btnExcluirAgenda = document.getElementById('btnExcluirEventoAgenda');
+    if (btnExcluirAgenda) {
+      btnExcluirAgenda.addEventListener('click', function() {
+        var idIn = document.getElementById('agendaEventoId');
+        if (idIn && idIn.value && confirm('Deseja realmente excluir este evento da agenda intersetorial?')) {
+          excluirEventoAgenda(idIn.value);
+        }
+      });
+    }
+
+    // Cancelar e Fechar Modal da Agenda
+    var btnCancelarAgenda = document.getElementById('btnCancelarFormAgenda');
+    var btnCloseAgendaX = document.getElementById('closeModalFormAgendaBtn');
+    var modalAgendaBackdrop = document.getElementById('modalFormAgendaEvento');
+
+    if (btnCancelarAgenda) {
+      btnCancelarAgenda.addEventListener('click', fecharModalFormAgenda);
+    }
+    if (btnCloseAgendaX) {
+      btnCloseAgendaX.addEventListener('click', fecharModalFormAgenda);
+    }
+    if (modalAgendaBackdrop) {
+      modalAgendaBackdrop.addEventListener('click', function(e) {
+        if (e.target === modalAgendaBackdrop) fecharModalFormAgenda();
+      });
+    }
+
     // Modal de Detalhes do Dia
     var btnFecharModal = document.getElementById('btnFecharModalDetalhesDia');
     var btnCloseModalX = document.getElementById('closeModalDetalhesDiaBtn');
@@ -1123,7 +1432,10 @@ window.OlymposViews.calendario = (function() {
       });
     }
     document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') fecharModalDetalhesDia();
+      if (e.key === 'Escape') {
+        fecharModalDetalhesDia();
+        fecharModalFormAgenda();
+      }
     });
   }
 
@@ -1273,13 +1585,18 @@ window.OlymposViews.calendario = (function() {
       matricula: 0,
       jornada: 0,
       sabado_letivo: 0,
-      exame: 0
+      exame: 0,
+      agenda: 0
     };
 
-    dados.eventos.forEach(function(ev) {
+    var todos = obterTodosEventos(dados);
+    todos.forEach(function(ev) {
       counts.todos++;
       if (counts[ev.categoria] !== undefined) {
         counts[ev.categoria]++;
+      }
+      if (ev.custom || ev.categoria === 'agenda_intersetorial' || ev.categoria === 'reuniao' || ev.categoria === 'capacitacao') {
+        counts.agenda++;
       }
     });
 
@@ -1291,7 +1608,8 @@ window.OlymposViews.calendario = (function() {
       countFiltroMatriculas: counts.matricula,
       countFiltroJornadas: counts.jornada,
       countFiltroSabados: counts.sabado_letivo,
-      countFiltroExames: counts.exame
+      countFiltroExames: counts.exame,
+      countFiltroAgenda: counts.agenda
     };
 
     Object.keys(map).forEach(function(id) {
@@ -1432,7 +1750,15 @@ window.OlymposViews.calendario = (function() {
       var atendeFiltro = true;
       if (activeCategory !== 'todos') {
         atendeFiltro = eventosDoDia.some(function(ev) {
+          if (activeCategory === 'agenda_intersetorial') {
+            return ev.custom || ev.categoria === 'agenda_intersetorial' || ev.categoria === 'reuniao' || ev.categoria === 'capacitacao';
+          }
           return ev.categoria === activeCategory;
+        });
+      }
+      if (atendeFiltro && activeSector !== 'todos') {
+        atendeFiltro = eventosDoDia.some(function(ev) {
+          return ev.setor && (ev.setor === activeSector || ev.setor.includes(activeSector));
         });
       }
 
@@ -1444,6 +1770,9 @@ window.OlymposViews.calendario = (function() {
       var ehJornada = eventosDoDia.some(function(ev) { return ev.categoria === 'jornada'; });
       var ehMatricula = eventosDoDia.some(function(ev) { return ev.categoria === 'matricula'; });
       var ehExame = eventosDoDia.some(function(ev) { return ev.categoria === 'exame'; });
+      var ehAgenda = eventosDoDia.some(function(ev) {
+        return ev.custom || ev.categoria === 'agenda_intersetorial' || ev.categoria === 'reuniao' || ev.categoria === 'capacitacao';
+      });
 
       var classes = ['cal-day-cell'];
       if (!atendeFiltro) classes.push('cal-day-dimmed');
@@ -1476,6 +1805,8 @@ window.OlymposViews.calendario = (function() {
         html += '    <span class="cal-day-tag exame" title="Exames Finais">Exame</span>';
       } else if (ehLetivo) {
         html += '    <span class="cal-day-tag letivo" title="Dia Letivo Regular">Letivo</span>';
+      } else if (ehAgenda) {
+        html += '    <span class="cal-day-tag" style="background: rgba(139,92,246,0.15); color: #8B5CF6;" title="Agenda Intersetorial">Agenda</span>';
       }
       html += '  </div>';
 
@@ -1483,9 +1814,11 @@ window.OlymposViews.calendario = (function() {
       html += '  <div class="cal-day-events">';
       for (var evIdx = 0; evIdx < Math.min(2, eventosDoDia.length); evIdx++) {
         var ev = eventosDoDia[evIdx];
-        var icone = ev.icone || '📌';
+        var isCustomEvt = ev.custom || (typeof ev.id === 'string' && ev.id.indexOf('age_') === 0);
+        var icone = ev.icone || (isCustomEvt ? '🗓️' : '📌');
         var tituloCurto = ev.titulo.length > 28 ? ev.titulo.substring(0, 26) + '...' : ev.titulo;
-        html += '    <div class="cal-event-chip ' + ev.categoria + '" title="' + escapeAttr(ev.titulo) + '">';
+        var chipCategoria = ev.categoria || 'agenda_intersetorial';
+        html += '    <div class="cal-event-chip ' + chipCategoria + '" title="' + escapeAttr(ev.titulo + (ev.setor ? ' (' + ev.setor + ')' : '')) + '">';
         html += '      <span class="cal-chip-icon">' + icone + '</span>';
         html += '      <span class="cal-chip-text">' + escapeHtml(tituloCurto) + '</span>';
         html += '    </div>';
@@ -1538,13 +1871,23 @@ window.OlymposViews.calendario = (function() {
     var inicioMesStr = ano + '-' + padZero(mes + 1) + '-01';
     var fimMesStr = ano + '-' + padZero(mes + 1) + '-' + padZero(new Date(ano, mes + 1, 0).getDate());
 
-    var eventosMes = dados.eventos.filter(function(ev) {
+    var todos = obterTodosEventos(dados);
+    var eventosMes = todos.filter(function(ev) {
       // Evento intercepta o mês atual
       return (ev.dataInicio <= fimMesStr && ev.dataFim >= inicioMesStr);
     });
 
+    if (activeSector !== 'todos') {
+      eventosMes = eventosMes.filter(function(ev) {
+        return !ev.setor || ev.setor === activeSector || ev.setor.includes(activeSector);
+      });
+    }
+
     if (activeCategory !== 'todos') {
       eventosMes = eventosMes.filter(function(ev) {
+        if (activeCategory === 'agenda_intersetorial') {
+          return ev.custom || ev.categoria === 'agenda_intersetorial' || ev.categoria === 'reuniao' || ev.categoria === 'capacitacao';
+        }
         return ev.categoria === activeCategory;
       });
     }
@@ -1560,23 +1903,33 @@ window.OlymposViews.calendario = (function() {
 
     var html = '<div class="cal-timeline-list">';
     eventosMes.forEach(function(ev) {
-      var icone = ev.icone || '📅';
+      var isCustomEvt = ev.custom || (typeof ev.id === 'string' && ev.id.indexOf('age_') === 0);
+      var icone = ev.icone || (isCustomEvt ? '🗓️' : '📅');
       var periodoFormatado = formatarPeriodoEvento(ev.dataInicio, ev.dataFim);
 
       html += '<div class="cal-timeline-item ' + ev.categoria + '">';
       html += '  <div class="cal-timeline-marker">' + icone + '</div>';
       html += '  <div class="cal-timeline-content">';
-      html += '    <div class="cal-timeline-header">';
-      html += '      <span class="cal-timeline-date">' + periodoFormatado + '</span>';
-      html += '      <span class="cal-pill-badge ' + ev.categoria + '">' + formatarCategoriaLabel(ev.categoria) + '</span>';
+      html += '    <div class="cal-timeline-header" style="display:flex; justify-content:space-between; align-items:center;">';
+      html += '      <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">';
+      html += '        <span class="cal-timeline-date">' + periodoFormatado + '</span>';
+      html += '        <span class="cal-pill-badge ' + ev.categoria + '">' + formatarCategoriaLabel(ev.categoria) + '</span>';
       if (ev.bimestre) {
-        html += '      <span class="cal-pill-badge bimestre">' + ev.bimestre + 'º Bimestre</span>';
+        html += '        <span class="cal-pill-badge bimestre">' + ev.bimestre + 'º Bimestre</span>';
+      }
+      html += '      </div>';
+      if (isCustomEvt) {
+        html += '      <button type="button" class="btn btn-ghost btn-sm" style="font-size:11px; padding:2px 8px; color:var(--brand-gold);" onclick="window.OlymposViews.calendario.abrirModalFormAgenda(\'' + escapeAttr(ev.id) + '\')">✏️ Editar</button>';
       }
       html += '    </div>';
       html += '    <h5 class="cal-timeline-title">' + escapeHtml(ev.titulo) + '</h5>';
       html += '    <p class="cal-timeline-desc">' + escapeHtml(ev.descricao) + '</p>';
-      if (ev.setor) {
-        html += '    <div class="cal-timeline-meta"><strong>Responsável:</strong> ' + escapeHtml(ev.setor) + '</div>';
+      if (ev.setor || ev.horario || ev.local) {
+        html += '    <div class="cal-timeline-meta" style="display:flex; gap:12px; flex-wrap:wrap; font-size:11.5px; color:var(--text-muted);">';
+        if (ev.setor) html += '    <div><strong>Setor:</strong> ' + escapeHtml(ev.setor) + '</div>';
+        if (ev.horario) html += '    <div><strong>Horário:</strong> ' + escapeHtml(ev.horario) + '</div>';
+        if (ev.local) html += '    <div><strong>Local:</strong> ' + escapeHtml(ev.local) + '</div>';
+        html += '    </div>';
       }
       html += '  </div>';
       html += '</div>';
@@ -1724,11 +2077,17 @@ window.OlymposViews.calendario = (function() {
       html += '  <p class="cal-modal-no-events">Nenhum evento especial registrado para esta data. Atividades escolares de acordo com a rotina letiva.</p>';
     } else {
       eventosDoDia.forEach(function(ev) {
+        var isCustom = ev.custom || (typeof ev.id === 'string' && ev.id.indexOf('age_') === 0);
         html += '<div class="cal-modal-event-card ' + ev.categoria + '">';
         html += '  <div class="cal-modal-event-head">';
-        html += '    <span class="cal-modal-event-icon">' + (ev.icone || '📌') + '</span>';
-        html += '    <div>';
-        html += '      <span class="cal-pill-badge ' + ev.categoria + '">' + formatarCategoriaLabel(ev.categoria) + '</span>';
+        html += '    <span class="cal-modal-event-icon">' + (ev.icone || (isCustom ? '🗓️' : '📌')) + '</span>';
+        html += '    <div style="flex:1;">';
+        html += '      <div style="display:flex; justify-content:space-between; align-items:center;">';
+        html += '        <span class="cal-pill-badge ' + ev.categoria + '">' + formatarCategoriaLabel(ev.categoria) + '</span>';
+        if (isCustom) {
+          html += '        <button type="button" class="btn btn-ghost btn-sm" style="font-size:11px; padding:2px 8px; color:var(--brand-gold);" onclick="window.OlymposViews.calendario.abrirModalFormAgenda(\'' + escapeAttr(ev.id) + '\')">✏️ Editar</button>';
+        }
+        html += '      </div>';
         html += '      <h5 class="cal-modal-event-title">' + escapeHtml(ev.titulo) + '</h5>';
         html += '    </div>';
         html += '  </div>';
@@ -1737,6 +2096,12 @@ window.OlymposViews.calendario = (function() {
         if (ev.setor) {
           html += '    <div><strong>Setor:</strong> ' + escapeHtml(ev.setor) + '</div>';
         }
+        if (ev.horario) {
+          html += '    <div><strong>Horário:</strong> ' + escapeHtml(ev.horario) + '</div>';
+        }
+        if (ev.local) {
+          html += '    <div><strong>Local:</strong> ' + escapeHtml(ev.local) + '</div>';
+        }
         if (ev.bimestre) {
           html += '    <div><strong>Bimestre:</strong> ' + ev.bimestre + 'º Bimestre</div>';
         }
@@ -1744,6 +2109,13 @@ window.OlymposViews.calendario = (function() {
         html += '</div>';
       });
     }
+    html += '</div>';
+
+    // Botão de ação rápida para agendar evento na data inspecionada
+    html += '<div style="margin: 12px 0 16px 0; display:flex; justify-content:flex-end;">';
+    html += '  <button type="button" class="btn btn-secondary btn-sm" style="font-size:12px; display:inline-flex; align-items:center; gap:6px;" onclick="window.OlymposViews.calendario.abrirModalFormAgenda(\'' + dataStr + '\')">';
+    html += '    <span>+ Agendar Evento nesta Data</span>';
+    html += '  </button>';
     html += '</div>';
 
     // Informações Logísticas e Operacionais
@@ -1797,10 +2169,11 @@ window.OlymposViews.calendario = (function() {
       'X-WR-CALDESC:Calendário Escolar Oficial (' + dados.totalDiasLetivos + ' dias letivos) - Secretaria Municipal de Educação Básica de Ceará-Mirim/RN'
     ];
 
-    dados.eventos.forEach(function(ev) {
+    var todos = obterTodosEventos(dados);
+    todos.forEach(function(ev) {
       var uid = 'evt-' + selectedYear + '-' + ev.id + '@olympos.smeb.cearamirim.rn.gov.br';
       var dtStart = formatarIcalDate(ev.dataInicio);
-      var dtEnd = formatarIcalDateFimExclusiva(ev.dataFim);
+      var dtEnd = formatarIcalDateFimExclusiva(ev.dataFim || ev.dataInicio);
 
       linhas.push('BEGIN:VEVENT');
       linhas.push('UID:' + uid);
@@ -1808,9 +2181,14 @@ window.OlymposViews.calendario = (function() {
       linhas.push('DTSTART;VALUE=DATE:' + dtStart);
       linhas.push('DTEND;VALUE=DATE:' + dtEnd);
       linhas.push('SUMMARY:' + sanitizarIcalTexto(ev.titulo));
-      linhas.push('DESCRIPTION:' + sanitizarIcalTexto(ev.descricao + (ev.setor ? ' | Responsável: ' + ev.setor : '')));
-      linhas.push('LOCATION:Ceará-Mirim - RN');
-      linhas.push('CATEGORIES:' + sanitizarIcalTexto(formatarCategoriaLabel(ev.categoria)));
+      var descPartes = [];
+      if (ev.descricao) descPartes.push(ev.descricao);
+      if (ev.setor) descPartes.push('Responsável: ' + ev.setor);
+      if (ev.horario) descPartes.push('Horário: ' + ev.horario);
+      if (ev.local) descPartes.push('Local: ' + ev.local);
+      linhas.push('DESCRIPTION:' + sanitizarIcalTexto(descPartes.join(' | ')));
+      linhas.push('LOCATION:' + sanitizarIcalTexto(ev.local || 'Ceará-Mirim - RN'));
+      linhas.push('CATEGORIES:' + sanitizarIcalTexto(formatarCategoriaLabel(ev.categoria) + (ev.setor ? ',' + ev.setor : '')));
       linhas.push('STATUS:CONFIRMED');
       linhas.push('TRANSP:' + (ev.letivo ? 'OPAQUE' : 'TRANSPARENT'));
       linhas.push('END:VEVENT');
@@ -1958,7 +2336,12 @@ window.OlymposViews.calendario = (function() {
       jornada: 'Jornadas Pedagógicas',
       sabado_letivo: 'Sábados Letivos',
       exame: 'Exames & Avaliações',
-      comemorativa: 'Semanas Comemorativas'
+      comemorativa: 'Semanas Comemorativas',
+      agenda_intersetorial: 'Agenda Intersetorial',
+      reuniao: 'Reunião Setorial',
+      capacitacao: 'Capacitação / Formação',
+      visita_tecnica: 'Visita Técnica',
+      audiencia: 'Audiência Pública'
     };
     return labels[cat] || cat;
   }
@@ -2054,9 +2437,15 @@ window.OlymposViews.calendario = (function() {
     setTab: setTab,
     setFiltro: setFiltro,
     setMes: setMes,
+    setSetor: setSetor,
     exportarIcal: exportarIcal,
     abrirModalDetalhesDia: abrirModalDetalhesDia,
     fecharModalDetalhesDia: fecharModalDetalhesDia,
+    abrirModalFormAgenda: abrirModalFormAgenda,
+    fecharModalFormAgenda: fecharModalFormAgenda,
+    salvarEventoAgenda: salvarEventoAgenda,
+    excluirEventoAgenda: excluirEventoAgenda,
+    obterEventosAgendaCustom: obterEventosAgendaCustom,
     getDadosAno: function(ano) {
       return (ano === 2027) ? DADOS_2027 : DADOS_2026;
     }
