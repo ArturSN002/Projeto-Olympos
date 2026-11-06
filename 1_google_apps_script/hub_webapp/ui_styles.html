@@ -1501,6 +1501,109 @@ body.nav-drawer-open .sidebar-backdrop,
   color: var(--danger);
 }
 
+/* Pílulas de Redes de Ensino (Municipal, Estadual, Federal, Privada) */
+.pill-rede {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+}
+
+.pill-rede-municipal {
+  background: rgba(2, 132, 199, 0.15);
+  color: #0284c7;
+  border: 1px solid rgba(2, 132, 199, 0.35);
+}
+
+.pill-rede-estadual {
+  background: rgba(37, 99, 235, 0.15);
+  color: #2563eb;
+  border: 1px solid rgba(37, 99, 235, 0.35);
+}
+
+.pill-rede-federal {
+  background: rgba(22, 163, 74, 0.15);
+  color: #16a34a;
+  border: 1px solid rgba(22, 163, 74, 0.35);
+}
+
+.pill-rede-privada {
+  background: rgba(147, 51, 234, 0.15);
+  color: #9333ea;
+  border: 1px solid rgba(147, 51, 234, 0.35);
+}
+
+/* Pílulas de Segmentos Educacionais */
+.pill-segmento {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 500;
+  background: var(--bg-tonal);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-hairline);
+  margin-right: 4px;
+  margin-bottom: 2px;
+}
+
+.pill-segmento-mini {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 9.5px;
+  font-weight: 600;
+  background: rgba(56, 189, 248, 0.12);
+  color: var(--text-main);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  margin-right: 3px;
+  margin-bottom: 2px;
+}
+
+/* Grid de Checkboxes de Segmentos no Modal */
+.escola-segmentos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.checkbox-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-pill, 20px);
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-main);
+  user-select: none;
+  transition: all 0.15s ease;
+}
+
+.checkbox-pill:hover {
+  background: var(--bg-tonal);
+  border-color: var(--accent-link);
+}
+
+.checkbox-pill input[type="checkbox"] {
+  cursor: pointer;
+  accent-color: var(--accent-link);
+}
+
+.checkbox-pill:has(input[type="checkbox"]:checked) {
+  background: rgba(37, 99, 235, 0.1);
+  border-color: #2563eb;
+  color: #2563eb;
+  font-weight: 600;
+}
+
 /* ==========================================================================
    SUB-ABAS EM PÍLULA (PORTARIAS & LICENÇAS)
    ========================================================================== */

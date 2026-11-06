@@ -53,6 +53,7 @@ class TestSqlMigrationsAndSecuritySchema(unittest.TestCase):
         self.migration_003 = MIGRATIONS_DIR / "20261031_003_pgcrypto_rpc.sql"
         self.migration_004 = MIGRATIONS_DIR / "20261101_004_security_advisor_remediation.sql"
         self.migration_007 = MIGRATIONS_DIR / "20261106_007_escolas_secretarias_agenda.sql"
+        self.migration_008 = MIGRATIONS_DIR / "20261106_008_escolas_multi_rede_segmentos.sql"
         self.seed_file = SEEDS_DIR / "seed_roles_mock.sql"
 
     def test_01_migrations_and_seed_files_exist(self):
@@ -62,11 +63,12 @@ class TestSqlMigrationsAndSecuritySchema(unittest.TestCase):
         self.assertTrue(self.migration_003.exists(), f"Migração 003 não encontrada: {self.migration_003}")
         self.assertTrue(self.migration_004.exists(), f"Migração 004 não encontrada: {self.migration_004}")
         self.assertTrue(self.migration_007.exists(), f"Migração 007 não encontrada: {self.migration_007}")
+        self.assertTrue(self.migration_008.exists(), f"Migração 008 não encontrada: {self.migration_008}")
         self.assertTrue(self.seed_file.exists(), f"Seed não encontrado: {self.seed_file}")
 
     def test_02_sqlglot_syntax_validation(self):
         """Valida que todos os arquivos de migração possuem sintaxe SQL PostgreSQL válida via sqlglot."""
-        for m_file in [self.migration_001, self.migration_002, self.migration_003, self.migration_004, self.migration_007]:
+        for m_file in [self.migration_001, self.migration_002, self.migration_003, self.migration_004, self.migration_007, self.migration_008]:
             content = m_file.read_text(encoding="utf-8")
             try:
                 expressions = sqlglot.parse(content, read="postgres")
@@ -328,6 +330,33 @@ class TestSqlMigrationsAndSecuritySchema(unittest.TestCase):
         self.assertIn("'PEDAGOGICO_EVENTOS'", sql_007)
         self.assertIn("'RH_COMISSAO'", sql_007)
         self.assertIn("'JURIDICO'", sql_007)
+
+    def test_13_migration_008_escolas_multi_rede_segmentos(self):
+        """Valida a migração 008: DDL de rede e segmentos TEXT[], CHECK constraints, índices GIN/B-tree e RLS."""
+        self.assertTrue(self.migration_008.exists(), f"Migração 008 não encontrada: {self.migration_008}")
+        sql_008 = self.migration_008.read_text(encoding="utf-8")
+
+        # 1. Colunas rede e segmentos adicionadas à tabela escolas
+        self.assertIn("ALTER TABLE public.escolas", sql_008)
+        self.assertRegex(sql_008, r"ADD\s+COLUMN\s+IF\s+NOT\s+EXISTS\s+rede\s+TEXT\b")
+        self.assertRegex(sql_008, r"ADD\s+COLUMN\s+IF\s+NOT\s+EXISTS\s+segmentos\s+TEXT\[\]")
+
+        # 2. Constraints de validação
+        self.assertIn("chk_escolas_rede", sql_008)
+        self.assertRegex(sql_008, r"CHECK\s*\(\s*rede\s+IN\s*\(\s*'Municipal'\s*,\s*'Estadual'\s*,\s*'Federal'\s*,\s*'Privada'\s*\)\s*\)")
+        self.assertIn("chk_escolas_segmentos_not_empty", sql_008)
+        self.assertRegex(sql_008, r"CHECK\s*\(\s*cardinality\s*\(\s*segmentos\s*\)\s*>\s*0\s*\)")
+
+        # 3. Índices otimizados (B-Tree para rede e GIN para array de segmentos)
+        self.assertIn("CREATE INDEX IF NOT EXISTS idx_escolas_rede ON public.escolas(rede);", sql_008)
+        self.assertIn("CREATE INDEX IF NOT EXISTS idx_escolas_segmentos_gin ON public.escolas USING GIN (segmentos);", sql_008)
+
+        # 4. Trigger de retrocompatibilidade com categoria legada
+        self.assertIn("handle_escolas_sync_segmentos_categoria", sql_008)
+        self.assertIn("trg_escolas_sync_segmentos_categoria", sql_008)
+
+        # 5. Segurança: RLS e ausência de FORCE RLS
+        self.assertNotIn("FORCE ROW LEVEL SECURITY", sql_008.upper())
 
 
 if __name__ == "__main__":

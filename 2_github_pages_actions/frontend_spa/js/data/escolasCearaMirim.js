@@ -1,7 +1,8 @@
 /**
- * Catálogo Semente Oficial — Escolas Municipais e CEIs de Ceará-Mirim/RN
+ * Catálogo Semente Oficial — Escolas e CEIs de Ceará-Mirim/RN
  * Secretaria Municipal de Educação Básica (SMEB)
  * Georreferenciamento de precisão (Latitude / Longitude) para visualização cartográfica no Leaflet.js
+ * Suporte a Multi-Redes (Municipal, Estadual, Federal, Privada) e Multi-Segmentos Simultâneos
  */
 (function(root) {
   'use strict';
@@ -14,7 +15,9 @@
       id: 'esc_001',
       nome: 'SMEB Sede — Secretaria Municipal de Educação Básica',
       inep: '24021000',
+      rede: 'Municipal',
       categoria: 'Sede Administrativa',
+      segmentos: ['Sede Administrativa'],
       zona: 'Urbana',
       bairroDistrito: 'Centro',
       endereco: 'Rua General João Varela, 120, Centro, Ceará-Mirim/RN',
@@ -28,13 +31,15 @@
     },
 
     // -------------------------------------------------------------------------
-    // ZONA URBANA — ESCOLAS MUNICIPAIS DE ENSINO FUNDAMENTAL
+    // ZONA URBANA — ESCOLAS MUNICIPAIS DE ENSINO FUNDAMENTAL & INFANTIL
     // -------------------------------------------------------------------------
     {
       id: 'esc_002',
       nome: 'E. M. Alice Garcia Freire',
       inep: '24021001',
+      rede: 'Municipal',
       categoria: 'Ensino Fundamental',
+      segmentos: ['Ed. Infantil', 'Ens. Fundamental I'],
       zona: 'Urbana',
       bairroDistrito: 'Centro',
       endereco: 'Rua Presidente Vargas, s/n, Centro',
@@ -50,7 +55,9 @@
       id: 'esc_003',
       nome: 'E. M. Prefeito Roberto Varela',
       inep: '24021002',
+      rede: 'Municipal',
       categoria: 'Ensino Fundamental',
+      segmentos: ['Ens. Fundamental I', 'Ens. Fundamental II'],
       zona: 'Urbana',
       bairroDistrito: 'Santa Águeda',
       endereco: 'Av. Enéas Cavalcante, 450, Santa Águeda',
@@ -66,7 +73,9 @@
       id: 'esc_004',
       nome: 'E. M. Augusto Severo',
       inep: '24021003',
+      rede: 'Municipal',
       categoria: 'Ensino Fundamental',
+      segmentos: ['Ens. Fundamental I', 'Ens. Fundamental II'],
       zona: 'Urbana',
       bairroDistrito: 'Centro',
       endereco: 'Rua Coronel Meira e Sá, 85, Centro',
@@ -82,7 +91,9 @@
       id: 'esc_005',
       nome: 'E. M. Monsenhor Celso Cicco',
       inep: '24021004',
+      rede: 'Municipal',
       categoria: 'Ensino Fundamental',
+      segmentos: ['Ens. Fundamental I', 'Ens. Fundamental II'],
       zona: 'Urbana',
       bairroDistrito: 'Planalto',
       endereco: 'Rua Santa Luzia, 210, Planalto',
@@ -98,7 +109,9 @@
       id: 'esc_006',
       nome: 'E. M. Presidente Tancredo Neves',
       inep: '24021005',
+      rede: 'Municipal',
       categoria: 'Ensino Fundamental',
+      segmentos: ['Ens. Fundamental I', 'Ens. Fundamental II'],
       zona: 'Urbana',
       bairroDistrito: 'São Geraldo',
       endereco: 'Rua São João, s/n, Bairro São Geraldo',
@@ -114,7 +127,9 @@
       id: 'esc_007',
       nome: 'E. M. Adele de Oliveira',
       inep: '24021006',
+      rede: 'Municipal',
       categoria: 'Ensino Fundamental',
+      segmentos: ['Ens. Fundamental I', 'Ens. Fundamental II'],
       zona: 'Urbana',
       bairroDistrito: 'Passa e Fica / Centro',
       endereco: 'Rua Passa e Fica, 140, Centro',
@@ -130,7 +145,9 @@
       id: 'esc_008',
       nome: 'E. M. Herônides Ferreira da Silva',
       inep: '24021007',
+      rede: 'Municipal',
       categoria: 'Ensino Fundamental',
+      segmentos: ['Ens. Fundamental I', 'Ens. Fundamental II'],
       zona: 'Urbana',
       bairroDistrito: 'Cohab',
       endereco: 'Conjunto Habitacional Cohab, Rua 3',
@@ -146,7 +163,9 @@
       id: 'esc_009',
       nome: 'E. M. Barão de Ceará-Mirim',
       inep: '24021008',
+      rede: 'Municipal',
       categoria: 'Ensino Fundamental',
+      segmentos: ['Ens. Fundamental I', 'Ens. Fundamental II'],
       zona: 'Urbana',
       bairroDistrito: 'Barão',
       endereco: 'Estrada do Barão, Km 2',
@@ -162,7 +181,9 @@
       id: 'esc_010',
       nome: 'E. M. Professor Onofre Soares',
       inep: '24021009',
+      rede: 'Municipal',
       categoria: 'Ensino Fundamental',
+      segmentos: ['Ens. Fundamental I', 'Ens. Fundamental II'],
       zona: 'Urbana',
       bairroDistrito: 'Nova Descoberta',
       endereco: 'Rua Projetada, 55, Nova Descoberta',
@@ -178,7 +199,9 @@
       id: 'esc_011',
       nome: 'E. M. São Geraldo',
       inep: '24021010',
+      rede: 'Municipal',
       categoria: 'Ensino Fundamental',
+      segmentos: ['Ens. Fundamental I', 'Ens. Fundamental II'],
       zona: 'Urbana',
       bairroDistrito: 'São Geraldo',
       endereco: 'Travessa dos Coqueiros, 12',
@@ -198,7 +221,9 @@
       id: 'esc_012',
       nome: 'E. M. Dr. Júlio Senna',
       inep: '24021011',
+      rede: 'Municipal',
       categoria: 'Polo Rural',
+      segmentos: ['Ed. Infantil', 'Ens. Fundamental I', 'Ens. Fundamental II'],
       zona: 'Rural',
       bairroDistrito: 'Distrito de Gravatá',
       endereco: 'Vila de Gravatá, Centro Comunitário',
@@ -214,7 +239,9 @@
       id: 'esc_013',
       nome: 'E. M. Madalena Antunes',
       inep: '24021012',
+      rede: 'Municipal',
       categoria: 'Polo Rural',
+      segmentos: ['Ed. Infantil', 'Ens. Fundamental I'],
       zona: 'Rural',
       bairroDistrito: 'Distrito de Massangana',
       endereco: 'Povoado de Massangana, Estrada Principal',
@@ -230,7 +257,9 @@
       id: 'esc_014',
       nome: 'E. M. Felipe Camarão',
       inep: '24021013',
+      rede: 'Municipal',
       categoria: 'Polo Rural',
+      segmentos: ['Ens. Fundamental I', 'Ens. Fundamental II'],
       zona: 'Rural',
       bairroDistrito: 'Comunidade Primeirinho',
       endereco: 'Assentamento Primeirinho, Rodovia RN-160',
@@ -246,7 +275,9 @@
       id: 'esc_015',
       nome: 'E. M. Maria do Carmo de Brito',
       inep: '24021014',
+      rede: 'Municipal',
       categoria: 'Polo Rural',
+      segmentos: ['Ens. Fundamental I', 'Ens. Fundamental II'],
       zona: 'Rural',
       bairroDistrito: 'Comunidade de Pium',
       endereco: 'Zona Agrícola de Pium',
@@ -262,7 +293,9 @@
       id: 'esc_016',
       nome: 'E. M. Rui Barbosa',
       inep: '24021015',
+      rede: 'Municipal',
       categoria: 'Polo Rural',
+      segmentos: ['Ens. Fundamental I', 'Ens. Fundamental II'],
       zona: 'Rural',
       bairroDistrito: 'Comunidade de Coqueiros',
       endereco: 'Distrito de Coqueiros, Estrada da Praia',
@@ -278,7 +311,9 @@
       id: 'esc_017',
       nome: 'E. M. Professora Maria Alice',
       inep: '24021016',
+      rede: 'Municipal',
       categoria: 'Polo Rural',
+      segmentos: ['Ens. Fundamental I', 'Ens. Fundamental II'],
       zona: 'Rural',
       bairroDistrito: 'Capela',
       endereco: 'Povoado Capela, Setor Sul',
@@ -292,13 +327,15 @@
     },
 
     // -------------------------------------------------------------------------
-    // CENTROS DE EDUCAÇÃO INFANTIL (CEIS)
+    // CENTROS DE EDUCAÇÃO INFANTIL (CEIS) MUNICIPAIS
     // -------------------------------------------------------------------------
     {
       id: 'esc_018',
       nome: 'CEI Professora Maria de Lourdes',
       inep: '24021017',
+      rede: 'Municipal',
       categoria: 'Educação Infantil',
+      segmentos: ['Ed. Infantil'],
       zona: 'Urbana',
       bairroDistrito: 'Centro',
       endereco: 'Rua Aristides de Andrade, 30, Centro',
@@ -314,7 +351,9 @@
       id: 'esc_019',
       nome: 'CEI Menino Jesus',
       inep: '24021018',
+      rede: 'Municipal',
       categoria: 'Educação Infantil',
+      segmentos: ['Ed. Infantil'],
       zona: 'Urbana',
       bairroDistrito: 'Planalto',
       endereco: 'Rua São Pedro, 90, Planalto',
@@ -330,7 +369,9 @@
       id: 'esc_020',
       nome: 'CEI Tia Zezé',
       inep: '24021019',
+      rede: 'Municipal',
       categoria: 'Educação Infantil',
+      segmentos: ['Ed. Infantil'],
       zona: 'Urbana',
       bairroDistrito: 'Santa Águeda',
       endereco: 'Rua Projetada B, Santa Águeda',
@@ -341,6 +382,108 @@
       diretor: 'Profª. Patrícia Lima',
       cor: '#F59E0B',
       icone: 'C'
+    },
+
+    // -------------------------------------------------------------------------
+    // REDE ESTADUAL (SEEC/RN - 7ª DIREC)
+    // -------------------------------------------------------------------------
+    {
+      id: 'esc_021',
+      nome: 'E. E. Interventor Ubaldo Bezerra de Melo',
+      inep: '24021020',
+      rede: 'Estadual',
+      categoria: 'Ensino Fundamental e Médio',
+      segmentos: ['Ens. Fundamental II', 'Ensino Médio'],
+      zona: 'Urbana',
+      bairroDistrito: 'Centro',
+      endereco: 'Rua General João Varela, 250, Centro, Ceará-Mirim/RN',
+      lat: -5.632200,
+      lng: -35.424800,
+      turnos: ['Matutino', 'Vespertino', 'Noturno'],
+      telefone: '(84) 3274-5930',
+      diretor: 'Gestão Escolar 7ª DIREC',
+      cor: '#2563EB',
+      icone: '🏛'
+    },
+    {
+      id: 'esc_022',
+      nome: 'E. E. Desembargador Silvino Bezerra',
+      inep: '24021021',
+      rede: 'Estadual',
+      categoria: 'Ensino Fundamental e Médio',
+      segmentos: ['Ens. Fundamental I', 'Ens. Fundamental II'],
+      zona: 'Urbana',
+      bairroDistrito: 'São Geraldo',
+      endereco: 'Rua Santa Luzia, s/n, São Geraldo, Ceará-Mirim/RN',
+      lat: -5.636500,
+      lng: -35.421500,
+      turnos: ['Matutino', 'Vespertino', 'Noturno'],
+      telefone: '(84) 3274-5931',
+      diretor: 'Gestão Escolar SEEC/RN',
+      cor: '#2563EB',
+      icone: '🏛'
+    },
+
+    // -------------------------------------------------------------------------
+    // REDE FEDERAL (IFRN — MINISTÉRIO DA EDUCAÇÃO)
+    // -------------------------------------------------------------------------
+    {
+      id: 'esc_023',
+      nome: 'IFRN — Campus Ceará-Mirim',
+      inep: '24021022',
+      rede: 'Federal',
+      categoria: 'Ensino Técnico e Médio',
+      segmentos: ['Ensino Médio', 'Ensino Técnico'],
+      zona: 'Urbana',
+      bairroDistrito: 'Planalto / BR-406',
+      endereco: 'Rodovia BR-406, Km 145, Planalto, Ceará-Mirim/RN',
+      lat: -5.627500,
+      lng: -35.441200,
+      turnos: ['Matutino', 'Vespertino'],
+      telefone: '(84) 4005-4100',
+      diretor: 'Diretoria Geral IFRN',
+      cor: '#16A34A',
+      icone: '🎓'
+    },
+
+    // -------------------------------------------------------------------------
+    // REDE PRIVADA DE CEARÁ-MIRIM
+    // -------------------------------------------------------------------------
+    {
+      id: 'esc_024',
+      nome: 'Colégio Santa Águeda (Rede Privada)',
+      inep: '24021023',
+      rede: 'Privada',
+      categoria: 'Ensino Regular Privado',
+      segmentos: ['Ed. Infantil', 'Ens. Fundamental I', 'Ens. Fundamental II'],
+      zona: 'Urbana',
+      bairroDistrito: 'Santa Águeda',
+      endereco: 'Av. Enéas Cavalcante, 280, Santa Águeda, Ceará-Mirim/RN',
+      lat: -5.631800,
+      lng: -35.422100,
+      turnos: ['Matutino', 'Vespertino'],
+      telefone: '(84) 3274-2100',
+      diretor: 'Coordenação Pedagógica CSA',
+      cor: '#9333EA',
+      icone: '⭐'
+    },
+    {
+      id: 'esc_025',
+      nome: 'Educandário Sagrada Família (Rede Privada)',
+      inep: '24021024',
+      rede: 'Privada',
+      categoria: 'Ensino Regular Privado',
+      segmentos: ['Ed. Infantil', 'Ens. Fundamental I'],
+      zona: 'Urbana',
+      bairroDistrito: 'Centro',
+      endereco: 'Rua Coronel Meira e Sá, 142, Centro, Ceará-Mirim/RN',
+      lat: -5.634100,
+      lng: -35.423300,
+      turnos: ['Matutino', 'Vespertino'],
+      telefone: '(84) 3274-1580',
+      diretor: 'Direção Pedagógica ESF',
+      cor: '#9333EA',
+      icone: '⭐'
     }
   ];
 

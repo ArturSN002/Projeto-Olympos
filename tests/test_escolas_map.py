@@ -314,6 +314,158 @@ class TestEscolasMapFeature(unittest.TestCase):
         self.assertEqual(proc.returncode, 0, f"Erro na simulação do CRUD em Node: {proc.stderr}")
         self.assertIn("CRUD_OK", proc.stdout)
 
+    def test_08_multi_rede_and_multi_segmentos_in_catalog(self):
+        """Valida que todas as escolas possuem rede válida, segmentos como array não vazio e presença de multi-redes."""
+        escolas = extrair_catalogo_semente()
+        
+        REDES_VALIDAS = {"Municipal", "Estadual", "Federal", "Privada"}
+        SEGMENTOS_CANONICOS = {
+            "Ed. Infantil", "Ens. Fundamental I", "Ens. Fundamental II",
+            "Ensino Médio", "EJA", "Educação Especial", "Ensino Técnico",
+            "Sede Administrativa"
+        }
+
+        redes_encontradas = set()
+        multi_segmentos_count = 0
+        tem_infantil_e_fund1 = False
+
+        for idx, esc in enumerate(escolas, start=1):
+            nome = esc.get("nome", f"Escola #{idx}")
+            
+            # 1. Campo rede obrigatório e válido
+            self.assertIn("rede", esc, f"{nome} não possui o campo 'rede'")
+            self.assertIn(esc["rede"], REDES_VALIDAS, f"{nome} possui rede inválida: '{esc.get('rede')}'")
+            redes_encontradas.add(esc["rede"])
+
+            # 2. Campo segmentos obrigatório, lista e não vazio
+            self.assertIn("segmentos", esc, f"{nome} não possui o campo 'segmentos'")
+            self.assertIsInstance(esc["segmentos"], list, f"Campo 'segmentos' de {nome} deve ser uma lista")
+            self.assertGreater(len(esc["segmentos"]), 0, f"Lista de segmentos de {nome} não pode ser vazia")
+
+            # 3. Cada segmento deve ser canônico
+            for seg in esc["segmentos"]:
+                self.assertIn(seg, SEGMENTOS_CANONICOS, f"Segmento '{seg}' em {nome} não é reconhecido pela SMEB")
+
+            # 4. Detecção de multi-segmentos
+            if len(esc["segmentos"]) >= 2:
+                multi_segmentos_count += 1
+                if "Ed. Infantil" in esc["segmentos"] and "Ens. Fundamental I" in esc["segmentos"]:
+                    tem_infantil_e_fund1 = True
+
+        # Asserções estruturais do catálogo
+        self.assertGreater(multi_segmentos_count, 0, "Deve haver ao menos uma escola com múltiplos segmentos no catálogo")
+        self.assertTrue(tem_infantil_e_fund1, "Deve haver ao menos uma escola ofertando Ed. Infantil e Ens. Fundamental I simultaneamente")
+
+        # Representação de todas as redes
+        self.assertIn("Municipal", redes_encontradas, "Rede Municipal ausente no catálogo")
+        self.assertIn("Estadual", redes_encontradas, "Rede Estadual ausente no catálogo")
+        self.assertIn("Federal", redes_encontradas, "Rede Federal (IFRN) ausente no catálogo")
+        self.assertIn("Privada", redes_encontradas, "Rede Privada ausente no catálogo")
+
+    def test_09_multi_filter_logic_and_segment_intersection_simulation(self):
+        """Simula em Node.js a lógica inclusiva de filtragem por múltiplos segmentos e rede combinada."""
+        node_script = f"""
+        const fs = require('fs');
+        const escolasCode = fs.readFileSync({json.dumps(str(ESCOLAS_VIEW_JS))}, 'utf8');
+        const dataCode = fs.readFileSync({json.dumps(str(ESCOLAS_DATA_JS))}, 'utf8');
+
+        global.window = global;
+        global.document = {{
+          getElementById: () => null,
+          querySelectorAll: () => []
+        }};
+        global.navigator = {{ clipboard: null }};
+        
+        let store = {{}};
+        global.localStorage = {{
+          getItem: (k) => store[k] || null,
+          setItem: (k, v) => {{ store[k] = String(v); }},
+          removeItem: (k) => {{ delete store[k]; }}
+        }};
+
+        eval(dataCode);
+        eval(escolasCode);
+
+        const v = window.OlymposViews.escolas;
+        if (!v) throw new Error('OlymposViews.escolas indefinido');
+
+        store['olympos_escolas_municipais'] = JSON.stringify(window.BANCO_SEMENTE_ESCOLAS);
+
+        // 1. Testa filtro por Rede Estadual
+        if (typeof v.setFiltroRede === 'function') {{
+          v.setFiltroRede('Estadual');
+          const estaduais = v.obterEscolasFiltradas();
+          if (estaduais.length === 0) throw new Error('Filtro por rede Estadual não retornou unidades');
+          if (estaduais.some(e => e.rede !== 'Estadual')) throw new Error('Filtro Estadual retornou escolas de outra rede');
+          v.setFiltroRede('todas');
+        }}
+
+        // 2. Testa filtro inclusivo de segmento em escola multi-segmento
+        if (typeof v.setFiltroSegmento === 'function') {{
+          v.setFiltroSegmento('Ed. Infantil');
+          const infantis = v.obterEscolasFiltradas();
+          const temFund1Tambem = infantis.some(e => Array.isArray(e.segmentos) && e.segmentos.includes('Ens. Fundamental I'));
+          if (!temFund1Tambem) throw new Error('Filtro de Ed. Infantil deve incluir escolas com múltiplos segmentos');
+          v.setFiltroSegmento('todos');
+        }}
+
+        // 3. Testa CRUD com novo modelo multi-segmentos e rede
+        const novaMulti = {{
+          id: 'esc_teste_multi_888',
+          nome: 'Colégio Inovação Ceará-Mirim',
+          rede: 'Privada',
+          categoria: 'Ed. Infantil e Ens. Fundamental I',
+          segmentos: ['Ed. Infantil', 'Ens. Fundamental I'],
+          zona: 'Urbana',
+          bairroDistrito: 'Centro',
+          lat: -5.634000,
+          lng: -35.428000
+        }};
+
+        let list = v.obterEscolas();
+        list.push(novaMulti);
+        localStorage.setItem('olympos_escolas_municipais', JSON.stringify(list));
+
+        const verificada = v.obterEscolas().find(e => e.id === 'esc_teste_multi_888');
+        if (!verificada || verificada.rede !== 'Privada' || !verificada.segmentos.includes('Ed. Infantil')) {{
+          throw new Error('Falha ao persistir escola com rede e múltiplos segmentos');
+        }}
+
+        console.log('MULTI_FILTER_CRUD_OK');
+        """
+        proc = subprocess.run(
+            ["node", "-e", node_script],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=10
+        )
+        self.assertEqual(proc.returncode, 0, f"Erro na simulação Node multi-filtro/CRUD: {proc.stderr}")
+        self.assertIn("MULTI_FILTER_CRUD_OK", proc.stdout)
+
+    def test_10_dom_multi_rede_and_segmentos_controls(self):
+        """Valida a presença no index.html dos seletores de rede e controles de múltiplos segmentos no modal e barra de filtros."""
+        html = INDEX_HTML.read_text(encoding="utf-8")
+
+        # Seletor de Rede no formulário do modal
+        self.assertIn('id="escolaRede"', html, "Campo #escolaRede ausente no modal de cadastro")
+        self.assertIn('value="Municipal"', html, "Opção Municipal ausente no seletor de rede")
+        self.assertIn('value="Estadual"', html, "Opção Estadual ausente no seletor de rede")
+        self.assertIn('value="Federal"', html, "Opção Federal ausente no seletor de rede")
+        self.assertIn('value="Privada"', html, "Opção Privada ausente no seletor de rede")
+
+        # Checkboxes de segmentos no modal
+        self.assertIn('name="escolaSegmentos"', html, "Grupo de checkboxes name='escolaSegmentos' ausente no modal")
+        self.assertIn('value="Ed. Infantil"', html, "Checkbox Ed. Infantil ausente no modal")
+        self.assertIn('value="Ens. Fundamental I"', html, "Checkbox Ens. Fundamental I ausente no modal")
+        self.assertIn('value="Ens. Fundamental II"', html, "Checkbox Ens. Fundamental II ausente no modal")
+
+        # Controles de filtro na barra do mapa
+        self.assertTrue(
+            'id="selectFiltroRedeEscolas"' in html or 'data-filtro-rede' in html,
+            "Controle de filtragem por Rede ausente na barra de filtros do mapa"
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -328,6 +328,47 @@ window.OlymposSupabase = (function() {
   // =========================================================================
   // PERSISTÊNCIA: ESCOLAS MUNICIPAIS DE CEARÁ-MIRIM
   // =========================================================================
+  // PERSISTÊNCIA: ESCOLAS MULTI-REDE E MULTI-SEGMENTOS
+  // =========================================================================
+
+  function normalizarEscola(e) {
+    if (!e) return e;
+    var redeValida = ['Municipal', 'Estadual', 'Federal', 'Privada'].includes(e.rede) ? e.rede : 'Municipal';
+    var segmentos = Array.isArray(e.segmentos) && e.segmentos.length > 0 ? e.segmentos : null;
+    if (!segmentos) {
+      var cat = String(e.categoria || '').toLowerCase();
+      if (cat.includes('infantil') || cat.includes('cei') || cat.includes('cmei') || cat.includes('creche')) {
+        segmentos = ['Ed. Infantil'];
+      } else if (cat.includes('sede')) {
+        segmentos = ['Sede Administrativa'];
+      } else if (cat.includes('especial')) {
+        segmentos = ['Educação Especial'];
+      } else if (cat.includes('medio') || cat.includes('médio')) {
+        segmentos = ['Ensino Médio'];
+      } else {
+        segmentos = ['Ens. Fundamental I', 'Ens. Fundamental II'];
+      }
+    }
+    return {
+      id: e.id,
+      nome: e.nome,
+      inep: e.inep || '',
+      rede: redeValida,
+      segmentos: segmentos,
+      categoria: e.categoria || segmentos.join(', '),
+      zona: e.zona || 'Urbana',
+      bairroDistrito: e.bairroDistrito || e.bairro_distrito || '',
+      endereco: e.endereco || '',
+      lat: typeof e.lat === 'number' ? e.lat : parseFloat(e.latitude || 0),
+      lng: typeof e.lng === 'number' ? e.lng : parseFloat(e.longitude || 0),
+      turnos: Array.isArray(e.turnos) ? e.turnos : ['Matutino', 'Vespertino'],
+      telefone: e.telefone || '',
+      diretor: e.diretor || '',
+      cor: e.cor || '#38BDF8',
+      icone: e.icone || '🏫',
+      status: e.status || 'ATIVA'
+    };
+  }
 
   async function carregarEscolas() {
     const client = getClient();
@@ -338,24 +379,7 @@ window.OlymposSupabase = (function() {
           .select('*')
           .order('nome');
         if (!error && Array.isArray(data) && data.length > 0) {
-          const adaptadas = data.map(function(e) {
-            return {
-              id: e.id,
-              nome: e.nome,
-              inep: e.inep,
-              categoria: e.categoria,
-              zona: e.zona,
-              bairroDistrito: e.bairro_distrito,
-              endereco: e.endereco,
-              lat: e.latitude,
-              lng: e.longitude,
-              turnos: e.turnos || [],
-              telefone: e.telefone,
-              diretor: e.diretor,
-              cor: e.cor,
-              icone: e.icone
-            };
-          });
+          const adaptadas = data.map(normalizarEscola);
           try {
             localStorage.setItem('olympos_escolas_municipais', JSON.stringify(adaptadas));
           } catch (eStorage) {}
@@ -365,34 +389,42 @@ window.OlymposSupabase = (function() {
         console.warn('[OlymposSupabase] Falha ao carregar escolas do Supabase. Utilizando cache local:', err);
       }
     }
-    // Fallback offline
+    // Fallback offline com normalização
     try {
       const cached = localStorage.getItem('olympos_escolas_municipais');
-      if (cached) return JSON.parse(cached);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map(normalizarEscola);
+        }
+      }
     } catch (eCache) {}
-    return (window.BANCO_SEMENTE_ESCOLAS || []).slice();
+    return (window.BANCO_SEMENTE_ESCOLAS || []).map(normalizarEscola);
   }
 
   async function sincronizarEscola(escola) {
     if (!escola || !escola.id) return false;
     const client = getClient();
     if (client) {
+      const normalizada = normalizarEscola(escola);
       const payload = {
-        id: escola.id,
-        inep: escola.inep || '',
-        nome: escola.nome,
-        categoria: escola.categoria || 'Ensino Fundamental',
-        zona: escola.zona || 'Urbana',
-        bairro_distrito: escola.bairroDistrito || '',
-        endereco: escola.endereco || '',
-        latitude: parseFloat(escola.lat),
-        longitude: parseFloat(escola.lng),
-        turnos: Array.isArray(escola.turnos) ? escola.turnos : [],
-        telefone: escola.telefone || '',
-        diretor: escola.diretor || '',
-        cor: escola.cor || '#38BDF8',
-        icone: escola.icone || '🏫',
-        status: escola.status || 'ATIVA'
+        id: normalizada.id,
+        inep: normalizada.inep || '',
+        nome: normalizada.nome,
+        rede: normalizada.rede,
+        segmentos: normalizada.segmentos,
+        categoria: normalizada.categoria,
+        zona: normalizada.zona || 'Urbana',
+        bairro_distrito: normalizada.bairroDistrito || '',
+        endereco: normalizada.endereco || '',
+        latitude: parseFloat(normalizada.lat),
+        longitude: parseFloat(normalizada.lng),
+        turnos: Array.isArray(normalizada.turnos) ? normalizada.turnos : [],
+        telefone: normalizada.telefone || '',
+        diretor: normalizada.diretor || '',
+        cor: normalizada.cor || '#38BDF8',
+        icone: normalizada.icone || '🏫',
+        status: normalizada.status || 'ATIVA'
       };
       try {
         const { error } = await client.from('escolas').upsert(payload);
