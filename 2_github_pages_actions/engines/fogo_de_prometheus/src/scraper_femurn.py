@@ -62,6 +62,7 @@ MAX_PDFS_POR_LOTE_WEBHOOK = 10
 FOLDER_PORTARIAS_2026 = "1QEewN0R3bCksLxLhmOSFq20EQYI3g64Q"
 FOLDER_GABINETE_2026 = "16YaFjfO6DRPVzJtRzLsynrOI0llNXQ8L"
 FOLDER_JURIDICO_2026 = "1N6UgdyGTVdIP4PW02dDBstsi4LIhgmRJ"
+FOLDER_PLANILHAS_DIARIO = "1aj514v29gytXH9j5LY_V76ap9XIblwHS"
 
 
 def obter_pasta_drive_destino(categoria: str, entidade: str) -> str:
@@ -979,6 +980,87 @@ def sincronizar_supabase_publicacoes(publicacoes: list, dt_referencia: str) -> b
     return sucesso_total
 
 
+def gerar_planilha_diaria_csv(publicacoes: list, dt_referencia: str, output_dir: str = ".") -> str:
+    """
+    Gera o arquivo de planilha diária com nome padronizado 'Publicações de dd-mm-yyyy.csv'.
+    Exporta todas as colunas canônicas para arquivamento na pasta FOLDER_PLANILHAS_DIARIO (1aj514v29gytXH9j5LY_V76ap9XIblwHS).
+    """
+    import csv
+
+    dt_clean = str(dt_referencia or "").strip()
+    dia, mes, ano = "01", "01", "2026"
+    if "/" in dt_clean:
+        partes = dt_clean.split("/")
+        if len(partes) == 3:
+            dia, mes, ano = partes[0].zfill(2), partes[1].zfill(2), partes[2]
+    elif "-" in dt_clean:
+        partes = dt_clean.split("-")
+        if len(partes) == 3:
+            if len(partes[0]) == 4:
+                ano, mes, dia = partes[0], partes[1].zfill(2), partes[2].zfill(2)
+            else:
+                dia, mes, ano = partes[0].zfill(2), partes[1].zfill(2), partes[2]
+    else:
+        try:
+            hoje = datetime.now(TZ_FORTALEZA)
+            dia, mes, ano = f"{hoje.day:02d}", f"{hoje.month:02d}", f"{hoje.year}"
+        except Exception:
+            dia, mes, ano = "07", "11", "2026"
+
+    nome_arquivo = f"Publicações de {dia}-{mes}-{ano}.csv"
+    caminho = os.path.join(output_dir, nome_arquivo)
+
+    colunas = [
+        "Data Circulação",
+        "Código FEMURN",
+        "Órgão",
+        "Categoria",
+        "Nº do Ato",
+        "Título do Ato",
+        "Servidores Identificados (NER)",
+        "Matrículas",
+        "URL do PDF no Drive"
+    ]
+
+    try:
+        os.makedirs(output_dir, exist_ok=True)
+        with open(caminho, mode="w", newline="", encoding="utf-8-sig") as f:
+            writer = csv.writer(f)
+            writer.writerow(colunas)
+            for pub in publicacoes:
+                entidades = pub.get("entidades_ner") or {}
+                servidores = entidades.get("servidores") or []
+                servidores_str = ", ".join(servidores) if isinstance(servidores, list) else str(servidores or "")
+
+                matriculas = entidades.get("matriculas") or []
+                matriculas_str = ", ".join(matriculas) if isinstance(matriculas, list) else str(matriculas or "")
+
+                data_pub = pub.get("data_publicacao") or pub.get("data_circulacao") or f"{dia}/{mes}/{ano}"
+                cod = pub.get("codigo_identificador") or pub.get("codigo") or ""
+                orgao = pub.get("orgao") or "SMEB"
+                cat = pub.get("categoria") or "ATO_OFICIAL"
+                num_ato = entidades.get("numero_ato") or ""
+                titulo = pub.get("titulo_ato") or pub.get("resumo") or "Ato Oficial"
+                url_pdf = pub.get("url_drive") or pub.get("urlDrive") or pub.get("link_pdf") or ""
+
+                writer.writerow([
+                    data_pub,
+                    cod,
+                    orgao,
+                    cat,
+                    num_ato,
+                    titulo,
+                    servidores_str,
+                    matriculas_str,
+                    url_pdf
+                ])
+        print(f"[PROMETHEUS] Planilha diária gerada: {nome_arquivo} ({len(publicacoes)} matérias)")
+    except Exception as errCsv:
+        print(f"[PROMETHEUS AVISO] Não foi possível gerar CSV local: {errCsv}")
+
+    return caminho
+
+
 def main():
     todas_publicacoes = []
     urls_ja_processadas = set()
@@ -1037,6 +1119,9 @@ def main():
     lista_final = list(unicos.values())
 
     dt_ini, _ = obter_intervalo_datas()
+
+    # Gera planilha diária padronizada "Publicações de dd-mm-yyyy.csv"
+    gerar_planilha_diaria_csv(lista_final, dt_ini)
 
     # Persistência Atômica no Supabase (se configurado)
     sincronizar_supabase_publicacoes(lista_final, dt_ini)

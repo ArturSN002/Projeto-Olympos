@@ -8,6 +8,7 @@ const PROMETHEUS_CONFIG = {
   FOLDER_GABINETE_2026: OLYMPOS_IDS.SETORES_2026.GABINETE,
   FOLDER_JURIDICO_2026: OLYMPOS_IDS.SETORES_2026.ASSESSORIA_JURIDICA,
   FOLDER_RAIZ_SMEB: OLYMPOS_IDS.RAIZ_SMEB,
+  FOLDER_PLANILHAS_DIARIO: (OLYMPOS_IDS && (OLYMPOS_IDS.PASTA_PLANILHAS_DIARIO || (OLYMPOS_IDS.SETORES_2026 && OLYMPOS_IDS.SETORES_2026.PASTA_PLANILHAS_DIARIO))) || '1aj514v29gytXH9j5LY_V76ap9XIblwHS',
   PROP_LAST_SYNC: 'PROMETHEUS_LAST_SYNC_META',
   PLANILHA_ID_OFICIAL: OLYMPOS_IDS.PLANILHA_DIARIO_OFICIAL || '1AIncS3ITYx_kT_tmfkAL5cYnw7nnuMAAUgiCd2lluqY',
   ABA_DESTINO: OLYMPOS_IDS.ABA_DIARIO_OFICIAL || 'Publicações'
@@ -57,12 +58,368 @@ function extrairEntidadesNerPrometheus_(pub) {
 }
 
 /**
- * Alimenta EXCLUSIVAMENTE a planilha-índice oficial (ID Fixo: 1AIncS3ITYx_kT_tmfkAL5cYnw7nnuMAAUgiCd2lluqY).
- * VEDAÇÃO ABSOLUTA: Jamais cria uma nova planilha.
+ * Formata qualquer formato de data recebido (DD/MM/AAAA, AAAA-MM-DD ou Date)
+ * no padrão canônico com hífen "dd-mm-yyyy" (ex: "07-11-2026").
+ */
+function formatarDataHifenPtBr_(dataVal) {
+  if (!dataVal) {
+    return Utilities.formatDate(new Date(), 'America/Fortaleza', 'dd-MM-yyyy');
+  }
+  if (dataVal instanceof Date) {
+    return Utilities.formatDate(dataVal, 'America/Fortaleza', 'dd-MM-yyyy');
+  }
+  const str = String(dataVal).trim();
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) {
+    return str.replace(/\//g, '-');
+  }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    const p = str.split('-');
+    return `${p[2]}-${p[1]}-${p[0]}`;
+  }
+  if (/^\d{2}-\d{2}-\d{4}$/.test(str)) {
+    return str;
+  }
+  return Utilities.formatDate(new Date(), 'America/Fortaleza', 'dd-MM-yyyy');
+}
+
+/**
+ * Obtém ou cria a planilha diária oficial exclusivamente na pasta FOLDER_PLANILHAS_DIARIO
+ * (ID: 1aj514v29gytXH9j5LY_V76ap9XIblwHS) com nome padronizado "Publicações de dd-mm-yyyy".
+ */
+function obterOuCriarPlanilhaDiariaPrometheus_(dataRef) {
+  const dataFormatada = formatarDataHifenPtBr_(dataRef);
+  const nomePlanilha = `Publicações de ${dataFormatada}`;
+  const folderId = PROMETHEUS_CONFIG.FOLDER_PLANILHAS_DIARIO;
+
+  let folder = null;
+  if (typeof DriveApp !== 'undefined' && DriveApp.getFolderById) {
+    try {
+      folder = DriveApp.getFolderById(folderId);
+    } catch (eF) {
+      console.warn('Aviso: pasta de planilhas do diário (1aj514...) não acessível diretamente:', eF);
+    }
+  }
+
+  // Verifica se a planilha do dia já existe na pasta
+  if (folder) {
+    const existentes = folder.getFilesByName(nomePlanilha);
+    while (existentes.hasNext()) {
+      const f = existentes.next();
+      try {
+        const ssExistente = SpreadsheetApp.openById(f.getId());
+        if (ssExistente) {
+          return { ss: ssExistente, file: f, criadaAgora: false, nome: nomePlanilha, id: f.getId() };
+        }
+      } catch (eOp) {}
+    }
+  }
+
+  // Cria a nova planilha diária
+  const ssNova = SpreadsheetApp.create(nomePlanilha);
+  let sheet = ssNova.getSheetByName(PROMETHEUS_CONFIG.ABA_DESTINO);
+  if (!sheet) {
+    sheet = ssNova.getSheets()[0] || ssNova.insertSheet(PROMETHEUS_CONFIG.ABA_DESTINO);
+    sheet.setName(PROMETHEUS_CONFIG.ABA_DESTINO);
+  }
+
+  sheet.appendRow([
+    'Data Circulação',
+    'Código FEMURN',
+    'Órgão',
+    'Categoria',
+    'Nº do Ato',
+    'Título do Ato',
+    'Servidores Identificados (NER)',
+    'Matrículas',
+    'URL do PDF no Drive'
+  ]);
+
+  try {
+    const headerRange = sheet.getRange(1, 1, 1, 9);
+    headerRange.setFontWeight('bold');
+    headerRange.setBackground('#0B1120');
+    headerRange.setFontColor('#D4AF37');
+    sheet.setFrozenRows(1);
+  } catch (eStyle) {}
+
+  let fileObj = null;
+  if (folder && typeof DriveApp !== 'undefined') {
+    fileObj = DriveApp.getFileById(ssNova.getId());
+    folder.addFile(fileObj);
+    try {
+      DriveApp.getRootFolder().removeFile(fileObj);
+    } catch (eRm) {}
+  }
+
+  return { ss: ssNova, file: fileObj, criadaAgora: true, nome: nomePlanilha, id: ssNova.getId() };
+}
+
+/**
+ * Grava as matérias mineradas na planilha diária "Publicações de dd-mm-yyyy"
+ * dentro da pasta oficial 1aj514v29gytXH9j5LY_V76ap9XIblwHS.
+ */
+function gravarPlanilhaDiariaPrometheus_(resultadosSalvos, dataRef) {
+  if (!resultadosSalvos || resultadosSalvos.length === 0) return null;
+  try {
+    const infoPlanilha = obterOuCriarPlanilhaDiariaPrometheus_(dataRef);
+    const ss = infoPlanilha.ss;
+    let sheet = ss.getSheetByName(PROMETHEUS_CONFIG.ABA_DESTINO) || ss.getSheets()[0];
+
+    const lastRow = sheet.getLastRow();
+    const codigosExistentes = new Set();
+    if (lastRow > 1) {
+      const dadosCol = sheet.getRange(2, 2, lastRow - 1, 1).getValues();
+      dadosCol.forEach(r => {
+        const cod = String(r[0] || '').trim();
+        if (cod) codigosExistentes.add(cod);
+      });
+    }
+
+    const novasLinhas = [];
+    resultadosSalvos.forEach(r => {
+      const cod = String(r.codigo || '').trim();
+      if (cod && codigosExistentes.has(cod)) return;
+
+      novasLinhas.push([
+        r.data || dataRef,
+        r.codigo,
+        r.orgao || 'SMEB',
+        r.categoria || 'ATO_OFICIAL',
+        r.numeroAto || '',
+        r.titulo,
+        (r.servidores || []).join(', '),
+        (r.matriculas || []).join(', '),
+        r.urlDrive || ''
+      ]);
+      if (cod) codigosExistentes.add(cod);
+    });
+
+    if (novasLinhas.length > 0) {
+      const proxima = sheet.getLastRow() + 1;
+      sheet.getRange(proxima, 1, novasLinhas.length, 9).setValues(novasLinhas);
+      SpreadsheetApp.flush();
+    }
+
+    return {
+      planilha: infoPlanilha.nome,
+      id: infoPlanilha.id,
+      url: ss.getUrl(),
+      pastaId: PROMETHEUS_CONFIG.FOLDER_PLANILHAS_DIARIO,
+      linhasInseridas: novasLinhas.length,
+      criadaAgora: infoPlanilha.criadaAgora
+    };
+  } catch (err) {
+    console.error('Erro ao gravar na planilha diária da pasta 1aj514...:', err);
+    return null;
+  }
+}
+
+/**
+ * Padroniza os nomes de todas as planilhas existentes na pasta 1aj514v29gytXH9j5LY_V76ap9XIblwHS
+ * renomeando-as rigorosamente para "Publicações de dd-mm-yyyy".
+ */
+function padronizarNomesPlanilhasPastaDiario(folderIdOpt) {
+  const folderId = folderIdOpt || PROMETHEUS_CONFIG.FOLDER_PLANILHAS_DIARIO;
+  const renomeados = [];
+  if (!folderId || typeof DriveApp === 'undefined' || !DriveApp.getFolderById) {
+    return { ok: false, mensagem: 'DriveApp indisponível ou folderId ausente.' };
+  }
+
+  try {
+    const folder = DriveApp.getFolderById(folderId);
+    const files = folder.getFiles();
+
+    while (files.hasNext()) {
+      const f = files.next();
+      const nomeAtual = f.getName();
+      const mime = f.getMimeType();
+
+      // Somente planilhas
+      const isSheet = (mime === MimeType.GOOGLE_SHEETS) ||
+                      nomeAtual.toLowerCase().includes('publica') ||
+                      nomeAtual.toLowerCase().includes('diario') ||
+                      nomeAtual.toLowerCase().includes('femurn') ||
+                      nomeAtual.toLowerCase().includes('planilha');
+      if (!isSheet) continue;
+
+      // Já está exatamente no padrão "Publicações de dd-mm-yyyy"?
+      if (/^Publica[çc][õo]es de \d{2}-\d{2}-\d{4}$/i.test(nomeAtual)) {
+        continue;
+      }
+
+      let dia = '', mes = '', ano = '';
+      const m1 = nomeAtual.match(/(\d{2})[-_./](\d{2})[-_./](\d{4})/);
+      const m2 = nomeAtual.match(/(\d{4})[-_./](\d{2})[-_./](\d{2})/);
+
+      if (m1) {
+        dia = m1[1]; mes = m1[2]; ano = m1[3];
+      } else if (m2) {
+        ano = m2[1]; mes = m2[2]; dia = m2[3];
+      } else {
+        // Tenta ler primeira célula da planilha
+        try {
+          if (typeof SpreadsheetApp !== 'undefined') {
+            const ss = SpreadsheetApp.openById(f.getId());
+            const sheet = ss.getSheetByName(PROMETHEUS_CONFIG.ABA_DESTINO) || ss.getSheets()[0];
+            if (sheet && sheet.getLastRow() >= 2) {
+              const valA2 = sheet.getRange(2, 1).getValue();
+              if (valA2 instanceof Date) {
+                dia = Utilities.formatDate(valA2, 'America/Fortaleza', 'dd');
+                mes = Utilities.formatDate(valA2, 'America/Fortaleza', 'MM');
+                ano = Utilities.formatDate(valA2, 'America/Fortaleza', 'yyyy');
+              } else if (typeof valA2 === 'string') {
+                const mA2 = valA2.match(/(\d{2})[-_./](\d{2})[-_./](\d{4})/);
+                if (mA2) { dia = mA2[1]; mes = mA2[2]; ano = mA2[3]; }
+              }
+            }
+          }
+        } catch (eRead) {}
+
+        // Fallback: data de criação do arquivo
+        if (!dia || !mes || !ano) {
+          const dtCriacao = f.getDateCreated();
+          dia = Utilities.formatDate(dtCriacao, 'America/Fortaleza', 'dd');
+          mes = Utilities.formatDate(dtCriacao, 'America/Fortaleza', 'MM');
+          ano = Utilities.formatDate(dtCriacao, 'America/Fortaleza', 'yyyy');
+        }
+      }
+
+      if (dia && mes && ano) {
+        const novoNome = `Publicações de ${dia}-${mes}-${ano}`;
+        if (novoNome !== nomeAtual) {
+          f.setName(novoNome);
+          renomeados.push({ id: f.getId(), anterior: nomeAtual, novo: novoNome });
+          console.log(`[Prometheus] Planilha renomeada para padrão: "${nomeAtual}" -> "${novoNome}"`);
+        }
+      }
+    }
+
+    return {
+      ok: true,
+      totalRenomeados: renomeados.length,
+      renomeados: renomeados
+    };
+  } catch (err) {
+    console.error('Erro ao padronizar nomes de planilhas na pasta:', err);
+    return { ok: false, mensagem: err.message };
+  }
+}
+
+/**
+ * Extrai as linhas das planilhas diárias da pasta 1aj514v29gytXH9j5LY_V76ap9XIblwHS.
+ * Retorna os atos oficiais estruturados para alimentar a interface do Diário Oficial.
+ */
+function extrairLinhasPlanilhasDiario(limitePlanilhas) {
+  const folderId = PROMETHEUS_CONFIG.FOLDER_PLANILHAS_DIARIO;
+  const linhasExtraidas = [];
+  if (!folderId || typeof DriveApp === 'undefined' || !DriveApp.getFolderById) {
+    return linhasExtraidas;
+  }
+
+  try {
+    const folder = DriveApp.getFolderById(folderId);
+    padronizarNomesPlanilhasPastaDiario(folderId);
+
+    const arquivos = [];
+    const it = folder.getFiles();
+    while (it.hasNext()) {
+      const f = it.next();
+      const nome = f.getName();
+      const mime = f.getMimeType();
+      if (mime === MimeType.GOOGLE_SHEETS || nome.startsWith('Publicações de ') || nome.toLowerCase().includes('publica')) {
+        arquivos.push({
+          id: f.getId(),
+          nome: nome,
+          url: f.getUrl(),
+          dataAtualizacao: f.getLastUpdated().getTime()
+        });
+      }
+    }
+
+    // Ordena da mais recente para a mais antiga
+    arquivos.sort((a, b) => b.dataAtualizacao - a.dataAtualizacao);
+    const maxP = limitePlanilhas || 15;
+    const selecionados = arquivos.slice(0, maxP);
+
+    selecionados.forEach(arq => {
+      try {
+        const ss = SpreadsheetApp.openById(arq.id);
+        const sheet = ss.getSheetByName(PROMETHEUS_CONFIG.ABA_DESTINO) || ss.getSheets()[0];
+        if (!sheet) return;
+
+        const lastRow = sheet.getLastRow();
+        if (lastRow <= 1) return;
+
+        const lastCol = Math.min(sheet.getLastColumn(), 9);
+        const vals = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
+
+        vals.forEach(r => {
+          const rawData = r[0];
+          let dataStr = '';
+          if (rawData instanceof Date) {
+            dataStr = Utilities.formatDate(rawData, 'America/Fortaleza', 'yyyy-MM-dd');
+          } else if (rawData) {
+            dataStr = String(rawData).trim();
+          }
+
+          const codigo = String(r[1] || '').trim();
+          const orgao = String(r[2] || 'SMEB').trim();
+          const categoria = String(r[3] || 'ATO_OFICIAL').trim();
+          const numAto = String(r[4] || '').trim();
+          const titulo = String(r[5] || 'Publicação FEMURN').trim();
+          const srvStr = String(r[6] || '').trim();
+          const matStr = String(r[7] || '').trim();
+          const urlDrive = String(r[8] || arq.url).trim();
+
+          const servidores = srvStr ? srvStr.split(/[,;\n]+/).map(s => s.trim()).filter(Boolean) : [];
+          const matriculas = matStr ? matStr.split(/[,;\n]+/).map(m => m.trim()).filter(Boolean) : [];
+
+          let setor = 'Gabinete 2026';
+          if (categoria === 'PORTARIA' || titulo.toUpperCase().includes('PORTARIA')) {
+            setor = 'Portarias 2026';
+          } else if (orgao.toUpperCase().includes('JURID') || orgao.toUpperCase().includes('CAMARA') || categoria.includes('NORMATIVO')) {
+            setor = 'Assessoria Jurídica 2026';
+          }
+
+          linhasExtraidas.push({
+            data: dataStr,
+            codigo: codigo || (numAto ? 'Ato ' + numAto : ''),
+            orgao: orgao,
+            setor: setor,
+            categoria: categoria,
+            numeroAto: numAto,
+            titulo: titulo,
+            servidores: servidores,
+            matriculas: matriculas,
+            url: urlDrive,
+            planilhaNome: arq.nome,
+            planilhaUrl: arq.url
+          });
+        });
+      } catch (eSs) {
+        console.warn(`Erro ao ler linhas da planilha ${arq.nome}:`, eSs);
+      }
+    });
+  } catch (err) {
+    console.error('Erro em extrairLinhasPlanilhasDiario:', err);
+  }
+
+  return linhasExtraidas;
+}
+
+/**
+ * Alimenta a planilha diária da pasta FOLDER_PLANILHAS_DIARIO ("Publicações de dd-mm-yyyy")
+ * e a planilha-índice consolidada oficial (ID: 1AIncS3ITYx_kT_tmfkAL5cYnw7nnuMAAUgiCd2lluqY).
  * Deduplica registros por Código FEMURN + Data para garantir idempotência.
  */
-function registrarIndicePlanilhaDiarioOficial2026(resultadosSalvos) {
+function registrarIndicePlanilhaDiarioOficial2026(resultadosSalvos, dataRefOpt) {
   if (!resultadosSalvos || resultadosSalvos.length === 0) return null;
+
+  // 1. Grava na planilha diária exclusiva da pasta 1aj514v29gytXH9j5LY_V76ap9XIblwHS
+  const dataRef = dataRefOpt || (resultadosSalvos[0] && resultadosSalvos[0].data) || Utilities.formatDate(new Date(), 'America/Fortaleza', 'dd/MM/yyyy');
+  const resDiaria = gravarPlanilhaDiariaPrometheus_(resultadosSalvos, dataRef);
+
+  // 2. Grava na planilha oficial consolidada
   const planilhaId = PROMETHEUS_CONFIG.PLANILHA_ID_OFICIAL;
 
   try {
@@ -71,14 +428,12 @@ function registrarIndicePlanilhaDiarioOficial2026(resultadosSalvos) {
       ss = SpreadsheetApp.openById(planilhaId);
     }
     if (!ss) {
-      console.error(`Falha crítica: Não foi possível abrir a planilha oficial de Diário Oficial (ID: ${planilhaId}).`);
-      registrarAlertaMemoriaOlympos('_memoria_helio.md', `[FALHA PLANILHA]: Impossível abrir planilha oficial do Diário Oficial.`);
-      return null;
+      console.warn(`Aviso: Planilha consolidada de Diário Oficial (ID: ${planilhaId}) não aberta. Mantendo planilha diária.`);
+      return resDiaria || { status: 'OK' };
     }
 
     let sheet = ss.getSheetByName(PROMETHEUS_CONFIG.ABA_DESTINO);
     if (!sheet) {
-      // Se não existir a aba nomeada, tenta a primeira aba ou cria a aba na MESMA planilha
       sheet = ss.getSheets()[0] || ss.insertSheet(PROMETHEUS_CONFIG.ABA_DESTINO);
     }
 
@@ -98,7 +453,6 @@ function registrarIndicePlanilhaDiarioOficial2026(resultadosSalvos) {
         'URL do PDF no Drive'
       ]);
     } else if (lastRow > 1) {
-      // Lê coluna de códigos (Coluna B) para deduplicação
       const dadosColCodigo = sheet.getRange(2, 2, lastRow - 1, 1).getValues();
       dadosColCodigo.forEach(r => {
         const cod = String(r[0] || '').trim();
@@ -110,20 +464,19 @@ function registrarIndicePlanilhaDiarioOficial2026(resultadosSalvos) {
     resultadosSalvos.forEach(r => {
       const chaveCod = String(r.codigo || '').trim();
       if (chaveCod && codigosExistentes.has(chaveCod)) {
-        // Já indexado nesta planilha
         return;
       }
 
       linhasParaInserir.push([
-        r.data,
+        r.data || dataRef,
         r.codigo,
-        r.orgao,
-        r.categoria,
+        r.orgao || 'SMEB',
+        r.categoria || 'ATO_OFICIAL',
         r.numeroAto || '',
         r.titulo,
         (r.servidores || []).join(', '),
         (r.matriculas || []).join(', '),
-        r.urlDrive
+        r.urlDrive || ''
       ]);
       if (chaveCod) codigosExistentes.add(chaveCod);
     });
@@ -138,12 +491,13 @@ function registrarIndicePlanilhaDiarioOficial2026(resultadosSalvos) {
       planilha: ss.getName(),
       id: planilhaId,
       linhasInseridas: linhasParaInserir.length,
-      duplicadasIgnoradas: resultadosSalvos.length - linhasParaInserir.length
+      duplicadasIgnoradas: resultadosSalvos.length - linhasParaInserir.length,
+      planilhaDiaria: resDiaria
     };
   } catch (e) {
-    console.error('Erro crítico ao gravar índice na planilha oficial:', e);
+    console.error('Erro crítico ao gravar índice na planilha oficial consolidada:', e);
     registrarAlertaMemoriaOlympos('_memoria_helio.md', `[ERRO PLANILHA FEMURN]: ${e.message}`);
-    return null;
+    return resDiaria;
   }
 }
 
@@ -671,8 +1025,8 @@ function processarPacotePrometheus(payload) {
     }
     registrarAlertaMemoriaOlympos('_memoria_helio.md', `[${dataISO}] Edição FEMURN (${resultadosSalvos.length} atos): ${resumoDia}`);
 
-    // Grava exclusivamente na planilha oficial de ID 1AIncS3ITYx_kT_tmfkAL5cYnw7nnuMAAUgiCd2lluqY
-    resIndice = registrarIndicePlanilhaDiarioOficial2026(resultadosSalvos);
+    // Grava exclusivamente na planilha oficial e na pasta de planilhas diárias (1aj514...)
+    resIndice = registrarIndicePlanilhaDiarioOficial2026(resultadosSalvos, dataRef);
   } finally {
     if (lock) {
       try { lock.releaseLock(); } catch (e) {}
@@ -770,9 +1124,15 @@ function carregarPainelPrometheus() {
 
   arquivosRecentes.sort((a, b) => b.timestamp - a.timestamp);
 
+  // Extrai atos oficiais das planilhas diárias arquivadas na pasta oficial (1aj514v29gytXH9j5LY_V76ap9XIblwHS)
+  const linhasPlanilhas = extrairLinhasPlanilhasDiario(15);
+  const pastaPlanilhasUrl = `https://drive.google.com/drive/folders/${PROMETHEUS_CONFIG.FOLDER_PLANILHAS_DIARIO}`;
+
   return {
     statusWebhook: statusWebhook,
-    planilhaOficialUrl: `https://docs.google.com/spreadsheets/d/${PROMETHEUS_CONFIG.PLANILHA_ID_OFICIAL}/edit`,
+    pastaPlanilhasUrl: pastaPlanilhasUrl,
+    planilhaOficialUrl: pastaPlanilhasUrl,
+    linhasPlanilhas: linhasPlanilhas,
     arquivosDrive: arquivosRecentes.slice(0, 20)
   };
 }

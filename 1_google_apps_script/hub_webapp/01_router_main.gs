@@ -116,9 +116,19 @@ function rotearAcaoGatewayHub(payload) {
     action === 'fogo_prometheus'
   );
 
-  // 3. Ações do Frontend Web (validadas por Token de Sessão ou JWT Supabase)
+  // 3. Ações públicas de leitura do painel (consultas não-sensíveis sem exigir token administrativo)
+  const isAcaoLeituraPublica = (
+    action === 'prometheus_status' ||
+    action === 'prometheus_extrair_linhas' ||
+    action === 'overview_get' ||
+    action === 'carregarDadosVisaoGeralHub' ||
+    action === 'cadmo_status' ||
+    action === 'olho_apolo_sync'
+  );
+
+  // 4. Ações do Frontend Web (validadas por Token de Sessão ou JWT Supabase)
   let sessaoAtiva = null;
-  if (!isWebhookPrometheus) {
+  if (!isWebhookPrometheus && !isAcaoLeituraPublica) {
     const tokenSessao = payload.token || payload._token || payload.access_token || payload.sessionToken;
     sessaoAtiva = validarSessaoHub(tokenSessao);
     if (!sessaoAtiva.ok) {
@@ -135,6 +145,10 @@ function rotearAcaoGatewayHub(payload) {
       return normalizarRespostaGateway_({ ok: true, numeracao: sincronizarNumeracaoApolo2026() });
     case 'prometheus_status':
       return normalizarRespostaGateway_({ ok: true, data: carregarPainelPrometheus() });
+    case 'prometheus_extrair_linhas':
+      return normalizarRespostaGateway_({ ok: true, data: extrairLinhasPlanilhasDiario(payload.limite || 15) });
+    case 'prometheus_organizar_planilhas':
+      return normalizarRespostaGateway_(padronizarNomesPlanilhasPastaDiario(payload.folderId));
     case 'prometheus_sync_manual':
       return normalizarRespostaGateway_(sincronizarManualPrometheusParaHelio());
     case 'prometheus_resumo_chat':

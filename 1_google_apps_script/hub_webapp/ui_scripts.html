@@ -3071,6 +3071,7 @@ window.OlymposViews.diarioOficial = (function() {
     bind('prometheusSyncBtn', 'click', sincronizarMemoriaManual);
     bind('prometheusChatSummaryBtn', 'click', dispararResumoChat);
     bind('prometheusTriggerActionBtn', 'click', dispararColetaGitHubActions);
+    bind('prometheusPeriodFilter', 'change', renderizarTabela);
     bind('prometheusSectorFilter', 'change', renderizarTabela);
     bind('prometheusSearchInput', 'input', renderizarTabela);
     bind('diarioSalvarBoletimEmailBtn', 'click', function() {
@@ -3110,6 +3111,104 @@ window.OlymposViews.diarioOficial = (function() {
 
     console.log('[Olympos Diário Oficial] Acervo oficial unificado (' + publicacoesUnificadas.length + ' atos):', publicacoesUnificadas);
     renderizarTabela();
+  }
+
+  function integrarLinhasPlanilhas(linhas) {
+    if (!Array.isArray(linhas) || linhas.length === 0) return;
+    const chavesVistas = new Set(publicacoesUnificadas.map(function(x) {
+      return (x.url || '') + '|' + (x.codigo || '') + '|' + (x.titulo || '');
+    }));
+
+    linhas.forEach(function(item) {
+      const chave = (item.url || '') + '|' + (item.codigo || '') + '|' + (item.titulo || '');
+      if (chavesVistas.has(chave)) return;
+      chavesVistas.add(chave);
+
+      const cat = (item.categoria || 'ATO_OFICIAL').toUpperCase();
+      let setor = item.setor || 'Gabinete 2026';
+      if (cat.includes('PORTARIA')) setor = 'Portarias 2026';
+      else if (cat.includes('EDITAL') || cat.includes('PSS') || cat.includes('JURIDICO')) setor = 'Assessoria Jurídica 2026';
+
+      publicacoesUnificadas.push({
+        data: item.data || '--',
+        setor: setor,
+        categoria: cat,
+        titulo: item.titulo || 'Publicação Oficial',
+        codigo: item.codigo || (item.numeroAto ? ('Ato ' + item.numeroAto) : ''),
+        servidores: item.servidores || [],
+        matriculas: item.matriculas || [],
+        url: item.url || '',
+        origem: item.planilhaNome ? ('Planilha: ' + item.planilhaNome) : 'Planilha Diária'
+      });
+    });
+
+    console.log('[Olympos Diário Oficial] Linhas de planilhas integradas (' + linhas.length + ' novas, total acumulado: ' + publicacoesUnificadas.length + ')');
+    renderizarTabela();
+  }
+
+  function parseDataPublicacao(dataStr) {
+    if (!dataStr) return null;
+    if (dataStr instanceof Date) return isNaN(dataStr.getTime()) ? null : dataStr;
+    const s = String(dataStr).trim();
+    // yyyy-mm-dd
+    const mIso = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
+    if (mIso) {
+      return new Date(parseInt(mIso[1], 10), parseInt(mIso[2], 10) - 1, parseInt(mIso[3], 10));
+    }
+    // dd-mm-yyyy or dd/mm/yyyy
+    const mPt = s.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})/);
+    if (mPt) {
+      return new Date(parseInt(mPt[3], 10), parseInt(mPt[2], 10) - 1, parseInt(mPt[1], 10));
+    }
+    const d = new Date(s);
+    return isNaN(d.getTime()) ? null : d;
+  }
+
+  function verificarFiltroPeriodo(dataStr, filtroPeriodo) {
+    if (!filtroPeriodo || filtroPeriodo === 'TODOS') return true;
+
+    const dataAto = parseDataPublicacao(dataStr);
+    if (!dataAto) {
+      return true;
+    }
+
+    const agora = new Date();
+    const hoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+    const timestampAto = dataAto.getTime();
+    const msPorDia = 24 * 60 * 60 * 1000;
+
+    if (filtroPeriodo === 'SEMANA') {
+      const diaSemana = hoje.getDay();
+      const diffSegunda = (diaSemana === 0 ? -6 : 1) - diaSemana;
+      const inicioSemana = new Date(hoje);
+      inicioSemana.setDate(hoje.getDate() + diffSegunda);
+      inicioSemana.setHours(0, 0, 0, 0);
+
+      const fimSemana = new Date(inicioSemana);
+      fimSemana.setDate(inicioSemana.getDate() + 6);
+      fimSemana.setHours(23, 59, 59, 999);
+
+      const limiteSeteDias = new Date(hoje.getTime() - 7 * msPorDia);
+
+      return (timestampAto >= inicioSemana.getTime() && timestampAto <= fimSemana.getTime()) ||
+             (timestampAto >= limiteSeteDias.getTime() && timestampAto <= fimSemana.getTime());
+    }
+
+    if (filtroPeriodo === '15DIAS') {
+      const limite15 = new Date(hoje.getTime() - 15 * msPorDia);
+      return timestampAto >= limite15.getTime();
+    }
+
+    if (filtroPeriodo === 'MES') {
+      return (dataAto.getFullYear() === hoje.getFullYear() && dataAto.getMonth() === hoje.getMonth());
+    }
+
+    if (filtroPeriodo === '30DIAS') {
+      const limite30 = new Date(hoje.getTime() - 30 * msPorDia);
+      return timestampAto >= limite30.getTime();
+    }
+
+    return true;
   }
 
   function carregarPainel() {
@@ -3169,8 +3268,13 @@ window.OlymposViews.diarioOficial = (function() {
         lrElem.textContent = 'Última recepção: ' + (sw.ultimaExecucao || 'Edição 3452 FEMURN (06/11/2026)') +
           (sw.totalSalvos !== undefined ? (' • ' + sw.totalSalvos + ' ato(s) na última edição') : '');
       }
-      if (sheetBtn && data.planilhaOficialUrl) {
-        sheetBtn.href = data.planilhaOficialUrl;
+      if (sheetBtn && (data.pastaPlanilhasUrl || data.planilhaOficialUrl)) {
+        sheetBtn.href = data.pastaPlanilhasUrl || data.planilhaOficialUrl;
+      }
+
+      // 3. Extrai linhas das planilhas diárias recebidas do receptor GAS
+      if (Array.isArray(data.linhasPlanilhas) && data.linhasPlanilhas.length > 0) {
+        integrarLinhasPlanilhas(data.linhasPlanilhas);
       }
 
       // Mescla publicações ricas com NER do último webhook + arquivos reais das pastas 2026
@@ -3223,26 +3327,45 @@ window.OlymposViews.diarioOficial = (function() {
     const tbody = document.getElementById('prometheusTableBody');
     if (!tbody) return;
 
+    const periodSelect = document.getElementById('prometheusPeriodFilter');
+    const periodFilter = periodSelect ? periodSelect.value : 'SEMANA';
     const sectorFilter = document.getElementById('prometheusSectorFilter').value;
     const termFilter = document.getElementById('prometheusSearchInput').value.toLowerCase().trim();
 
     const filtered = publicacoesUnificadas.filter(function(p) {
+      const matchPeriod = verificarFiltroPeriodo(p.data, periodFilter);
       const matchSector = (sectorFilter === 'TODOS' || p.setor === sectorFilter);
-      const blob = [p.titulo, p.codigo, p.categoria, (p.servidores || []).join(' '), (p.matriculas || []).join(' ')].join(' ').toLowerCase();
+      const blob = [p.titulo, p.codigo, p.categoria, (p.servidores || []).join(' '), (p.matriculas || []).join(' '), p.origem || ''].join(' ').toLowerCase();
       const matchTerm = (!termFilter || blob.includes(termFilter));
-      return matchSector && matchTerm;
+      return matchPeriod && matchSector && matchTerm;
     });
+
+    const activeBadge = document.getElementById('prometheusActivePeriodBadge');
+    const countSummary = document.getElementById('prometheusCountSummary');
+    if (activeBadge && periodSelect) {
+      const opt = periodSelect.options[periodSelect.selectedIndex];
+      activeBadge.textContent = opt ? opt.text.replace(/^[^\wÀ-ÿ]+/g, '').trim() : 'Esta Semana';
+    }
+    if (countSummary) {
+      countSummary.textContent = 'Exibindo ' + filtered.length + ' ato(s) • Total no acervo: ' + publicacoesUnificadas.length + ' ato(s)';
+    }
 
     tbody.innerHTML = '';
     if (filtered.length === 0) {
+      const isPeriodoRestrito = (periodFilter === 'SEMANA' || periodFilter === '15DIAS' || periodFilter === 'MES');
+      const mensagemVazia = isPeriodoRestrito && !termFilter && sectorFilter === 'TODOS'
+        ? 'Nenhuma publicação localizada no período selecionado (' + (activeBadge ? activeBadge.textContent : 'Esta Semana') + '). O acervo monitorado conta com ' + publicacoesUnificadas.length + ' ato(s) de edições anteriores.'
+        : 'Não foram encontrados atos oficiais ou arquivos para os filtros e termos selecionados. Tente ajustar os parâmetros de pesquisa ou ampliar o período.';
+
       tbody.innerHTML =
         '<tr>' +
           '<td colspan="4" style="padding: 28px 12px; border: none;">' +
             '<div class="empty-state-card">' +
               '<div class="empty-state-icon">📰</div>' +
-              '<div class="empty-state-title">Nenhuma publicação localizada</div>' +
-              '<div class="empty-state-desc">Não foram encontrados atos oficiais ou arquivos para os filtros e termos selecionados. Tente ajustar os parâmetros de pesquisa ou atualizar o acervo.</div>' +
+              '<div class="empty-state-title">Nenhuma publicação localizada no período</div>' +
+              '<div class="empty-state-desc">' + mensagemVazia + '</div>' +
               '<div class="empty-state-actions">' +
+                (isPeriodoRestrito ? '<button type="button" id="diarioVerTodoAcervoBtn" class="btn btn-accent btn-sm">Ver Todo o Acervo (' + publicacoesUnificadas.length + ')</button>' : '') +
                 '<button type="button" id="diarioLimparFiltrosBtn" class="btn btn-secondary btn-sm">Limpar Filtros</button>' +
                 '<button type="button" id="diarioAtualizarListaBtn" class="btn btn-primary btn-sm">Atualizar Lista</button>' +
               '</div>' +
@@ -3250,9 +3373,18 @@ window.OlymposViews.diarioOficial = (function() {
           '</td>' +
         '</tr>';
 
+      const btnVerTudo = document.getElementById('diarioVerTodoAcervoBtn');
+      if (btnVerTudo) {
+        btnVerTudo.addEventListener('click', function() {
+          if (periodSelect) periodSelect.value = 'TODOS';
+          renderizarTabela();
+        });
+      }
+
       const btnClear = document.getElementById('diarioLimparFiltrosBtn');
       if (btnClear) {
         btnClear.addEventListener('click', function() {
+          if (periodSelect) periodSelect.value = 'SEMANA';
           const sec = document.getElementById('prometheusSectorFilter');
           const srch = document.getElementById('prometheusSearchInput');
           if (sec) sec.value = 'TODOS';
@@ -3276,6 +3408,7 @@ window.OlymposViews.diarioOficial = (function() {
       if (item.codigo) nerBadges.push('Cód. ' + item.codigo);
       if (item.servidores && item.servidores.length) nerBadges.push('Servidor(es): ' + item.servidores.join(', '));
       if (item.matriculas && item.matriculas.length) nerBadges.push('Mat.: ' + item.matriculas.join(', '));
+      if (item.planilhaNome) nerBadges.push('📄 ' + item.planilhaNome);
 
       tr.innerHTML =
         '<td data-label="Data" style="font-family:var(--font-mono); font-size:12px;">' + window.OlymposApp.escapeHtml(item.data) + '</td>' +

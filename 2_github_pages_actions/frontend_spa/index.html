@@ -234,9 +234,9 @@
           <span>Ofícios 2026</span>
           <span class="drive-arrow">↗</span>
         </a>
-        <a href="https://docs.google.com/spreadsheets/d/1AIncS3ITYx_kT_tmfkAL5cYnw7nnuMAAUgiCd2lluqY/edit" target="_blank" rel="noopener" class="drawer-drive-item">
+        <a href="https://drive.google.com/drive/folders/1aj514v29gytXH9j5LY_V76ap9XIblwHS" target="_blank" rel="noopener" class="drawer-drive-item">
           <span class="drive-icon">📊</span>
-          <span>Planilha Diário Oficial</span>
+          <span>Planilhas Diário Oficial</span>
           <span class="drive-arrow">↗</span>
         </a>
         <a href="https://drive.google.com/drive/folders/1VxVVONEJya4XqI2GfxHK7AFqk8dpwX9I" target="_blank" rel="noopener" class="drawer-drive-item">
@@ -274,7 +274,7 @@
           <a href="https://drive.google.com/drive/folders/1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu" target="_blank" rel="noopener" class="folder-chip">Memórias Operacionais (.md) ↗</a>
           <a href="https://drive.google.com/drive/folders/1qGq5uqxOtN_V63itUheYatLIcj5R86O3" target="_blank" rel="noopener" class="folder-chip">Portarias 2026 ↗</a>
           <a href="https://drive.google.com/drive/folders/1H4bJXClx66Mr5PmRmSQBQLHDpAaKwdab" target="_blank" rel="noopener" class="folder-chip">Ofícios 2026 ↗</a>
-          <a href="https://docs.google.com/spreadsheets/d/1AIncS3ITYx_kT_tmfkAL5cYnw7nnuMAAUgiCd2lluqY/edit" target="_blank" rel="noopener" class="folder-chip">Planilha Diário Oficial ↗</a>
+          <a href="https://drive.google.com/drive/folders/1aj514v29gytXH9j5LY_V76ap9XIblwHS" target="_blank" rel="noopener" class="folder-chip">Planilhas Diário Oficial ↗</a>
           <a href="https://drive.google.com/drive/folders/1VxVVONEJya4XqI2GfxHK7AFqk8dpwX9I" target="_blank" rel="noopener" class="folder-chip">Acervo Papiro de Cadmo ↗</a>
         </div>
       </section>
@@ -727,8 +727,8 @@
                 <p class="section-desc">Coleta pesada com Chromium + OCR no GitHub Actions conectada diretamente ao receptor único no GAS do Hub Olympos, gravando sempre na planilha oficial fixa (aba <code>Publicações</code>).</p>
               </div>
               <div class="button-group">
-                <a id="promSheetLinkBtn" href="https://docs.google.com/spreadsheets/d/1AIncS3ITYx_kT_tmfkAL5cYnw7nnuMAAUgiCd2lluqY/edit" target="_blank" rel="noopener" class="folder-chip">
-                  Abrir Planilha Oficial do Diário ↗
+                <a id="promSheetLinkBtn" href="https://drive.google.com/drive/folders/1aj514v29gytXH9j5LY_V76ap9XIblwHS" target="_blank" rel="noopener" class="folder-chip">
+                  Pasta de Planilhas Diárias (Drive) ↗
                 </a>
                 <button id="prometheusTriggerActionBtn" class="btn btn-accent btn-sm">Coletar Agora (GitHub Actions)</button>
                 <button id="prometheusChatSummaryBtn" class="btn btn-secondary btn-sm">Enviar Resumo ao Chat</button>
@@ -766,15 +766,28 @@
             </div>
 
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
-              <strong style="font-family: var(--font-display); font-size: 15px;">Publicações e PDFs Arquivados nas Pastas Oficiais (2026)</strong>
-              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <div>
+                <strong style="font-family: var(--font-display); font-size: 15px;">Publicações e Atos Oficiais das Planilhas Diárias</strong>
+                <div id="prometheusFilterSummary" style="font-size: 12px; color: var(--text-secondary); margin-top: 4px; display: flex; align-items: center; gap: 8px;">
+                  <span class="pill-badge pill-gold" id="prometheusActivePeriodBadge">Esta Semana</span>
+                  <span id="prometheusCountSummary">Carregando atos oficiais...</span>
+                </div>
+              </div>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                <select id="prometheusPeriodFilter" class="input-clean" style="width: auto; padding: 7px 12px; font-size: 13px; font-weight: 600; border-color: var(--accent-gold);" title="Filtro de período de publicação">
+                  <option value="SEMANA" selected>📅 Esta Semana (Padrão)</option>
+                  <option value="15DIAS">📅 Últimos 15 Dias</option>
+                  <option value="MES">📅 Este Mês</option>
+                  <option value="30DIAS">📅 Últimos 30 Dias</option>
+                  <option value="TODOS">📚 Todo o Acervo</option>
+                </select>
                 <select id="prometheusSectorFilter" class="input-clean" style="width: auto; padding: 7px 12px; font-size: 13px;">
                   <option value="TODOS">Todos os Setores</option>
                   <option value="Portarias 2026">Portarias 2026</option>
                   <option value="Gabinete 2026">Gabinete 2026</option>
                   <option value="Assessoria Jurídica 2026">Assessoria Jurídica 2026</option>
                 </select>
-                <input type="search" id="prometheusSearchInput" class="input-clean" style="width: 240px; padding: 7px 12px; font-size: 13px;" placeholder="Filtrar ato, servidor ou código..." />
+                <input type="search" id="prometheusSearchInput" class="input-clean" style="width: 220px; padding: 7px 12px; font-size: 13px;" placeholder="Filtrar ato, servidor ou código..." />
               </div>
             </div>
 

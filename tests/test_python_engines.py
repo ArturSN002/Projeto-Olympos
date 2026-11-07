@@ -314,6 +314,61 @@ class TestFogoDePrometheusEngine(unittest.TestCase):
         self.assertEqual(fn("PORTARIA Nº 59/2026 - NOMEIA DIRETOR JUNTO À SECRETARIA MUNICIPAL DE EDUCAÇÃO"), "NOMEACAO_DIRETOR")
         self.assertEqual(fn("PORTARIA Nº 60/2026 - NOMEIA DIRETOR", orgao_origem="Secretaria Municipal de Educação Básica"), "NOMEACAO_DIRETOR")
 
+    def test_18_prometheus_planilha_diaria_pasta_e_nome_padronizado(self):
+        """Valida que o Fogo de Prometheus direciona planilhas para a pasta 1aj514... com nomenclatura 'Publicações de dd-mm-yyyy'."""
+        import tempfile
+
+        # 1. Valida constante da pasta oficial em Python
+        self.assertEqual(scraper_femurn.FOLDER_PLANILHAS_DIARIO, "1aj514v29gytXH9j5LY_V76ap9XIblwHS")
+
+        # 2. Testa geração de arquivo diário em CSV com nome padronizado
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            sample_pubs = [{
+                "data_publicacao": "2026-11-07",
+                "codigo_identificador": "COD-ABC-01",
+                "orgao": "Secretaria Municipal de Educação Básica",
+                "categoria": "PORTARIA",
+                "titulo_ato": "PORTARIA Nº 412/2026 - DISPÕE SOBRE REGIME DE TRABALHO",
+                "entidades_ner": {
+                    "numero_ato": "412/2026",
+                    "servidores": ["FRANCISCO GOMES DA SILVA"],
+                    "matriculas": ["12345-6"]
+                },
+                "link_pdf": "https://drive.google.com/file/d/test12345"
+            }]
+
+            caminho_gerado = scraper_femurn.gerar_planilha_diaria_csv(sample_pubs, "07/11/2026", output_dir=tmp_dir)
+            arquivo_path = Path(caminho_gerado)
+            self.assertTrue(arquivo_path.exists(), "O arquivo de planilha diária deve ser gerado")
+            self.assertEqual(arquivo_path.name, "Publicações de 07-11-2026.csv")
+
+            conteudo = arquivo_path.read_text(encoding="utf-8-sig")
+            self.assertIn("Data Circulação", conteudo)
+            self.assertIn("Código FEMURN", conteudo)
+            self.assertIn("COD-ABC-01", conteudo)
+            self.assertIn("FRANCISCO GOMES DA SILVA", conteudo)
+
+        # 3. Valida que o módulo GAS (04_module_prometheus.gs) contém a pasta oficial e funções de padronização/extração
+        gas_file = OLYMPOS_ROOT / "1_google_apps_script" / "hub_webapp" / "04_module_prometheus.gs"
+        code_gas = gas_file.read_text(encoding="utf-8")
+        self.assertIn("1aj514v29gytXH9j5LY_V76ap9XIblwHS", code_gas)
+        self.assertIn("Publicações de ", code_gas)
+        self.assertIn("padronizarNomesPlanilhasPastaDiario", code_gas)
+        self.assertIn("extrairLinhasPlanilhasDiario", code_gas)
+        self.assertIn("gravarPlanilhaDiariaPrometheus_", code_gas)
+
+        # 4. Valida que a SPA (index.html e diarioOficial.js) contém o filtro de período e links para a pasta de planilhas
+        spa_index = OLYMPOS_ROOT / "2_github_pages_actions" / "frontend_spa" / "index.html"
+        html_content = spa_index.read_text(encoding="utf-8")
+        self.assertIn("1aj514v29gytXH9j5LY_V76ap9XIblwHS", html_content)
+        self.assertIn("prometheusPeriodFilter", html_content)
+
+        spa_js = OLYMPOS_ROOT / "2_github_pages_actions" / "frontend_spa" / "js" / "views" / "diarioOficial.js"
+        js_content = spa_js.read_text(encoding="utf-8")
+        self.assertIn("verificarFiltroPeriodo", js_content)
+        self.assertIn("integrarLinhasPlanilhas", js_content)
+        self.assertIn("prometheusPeriodFilter", js_content)
+
 
 class TestPapiroDeCadmoEngine(unittest.TestCase):
     """Testes unitários para o pipeline O Papiro de Cadmo (Normalizador e Ingestão Supabase)."""
