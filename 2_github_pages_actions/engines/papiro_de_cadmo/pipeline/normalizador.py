@@ -241,8 +241,8 @@ def processar_todos():
     if dfs_consolidados:
         df_final = pd.concat(dfs_consolidados, ignore_index=True)
         # Deduplica registros idênticos por ente + matrícula + nome
-        df_final.drop_duplicates(subset=["ente_origem", "matricula", "nome_completo"], inplace=True)
-        df_final.sort_values(by=["ente_origem", "nome_completo"], inplace=True)
+        df_final = df_final.drop_duplicates(subset=["ente_origem", "matricula", "nome_completo"])
+        df_final = df_final.sort_values(by=["ente_origem", "nome_completo"])
 
         nome_saida = f"servidores-intermunicipais-{competencia_padrao}.csv"
         caminho_saida = processed_dir / nome_saida
