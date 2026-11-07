@@ -57,6 +57,7 @@ class TestSqlMigrationsAndSecuritySchema(unittest.TestCase):
         self.migration_009 = MIGRATIONS_DIR / "20261107_009_escolas_categoria_institucional_catalogo_json.sql"
         self.migration_010 = MIGRATIONS_DIR / "20261107_010_security_advisor_hardening.sql"
         self.migration_011 = MIGRATIONS_DIR / "20261107_011_vault_secrets_and_key_rotation.sql"
+        self.migration_012 = MIGRATIONS_DIR / "20261107_012_advisor_rls_refinement_and_fk_index.sql"
         self.seed_file = SEEDS_DIR / "seed_roles_mock.sql"
 
     def test_01_migrations_and_seed_files_exist(self):
@@ -70,6 +71,7 @@ class TestSqlMigrationsAndSecuritySchema(unittest.TestCase):
         self.assertTrue(self.migration_009.exists(), f"Migração 009 não encontrada: {self.migration_009}")
         self.assertTrue(self.migration_010.exists(), f"Migração 010 não encontrada: {self.migration_010}")
         self.assertTrue(self.migration_011.exists(), f"Migração 011 não encontrada: {self.migration_011}")
+        self.assertTrue(self.migration_012.exists(), f"Migração 012 não encontrada: {self.migration_012}")
         self.assertTrue(self.seed_file.exists(), f"Seed não encontrado: {self.seed_file}")
 
     def test_02_sqlglot_syntax_validation(self):
@@ -77,7 +79,8 @@ class TestSqlMigrationsAndSecuritySchema(unittest.TestCase):
         for m_file in [
             self.migration_001, self.migration_002, self.migration_003,
             self.migration_004, self.migration_007, self.migration_008,
-            self.migration_009, self.migration_010, self.migration_011
+            self.migration_009, self.migration_010, self.migration_011,
+            self.migration_012
         ]:
             content = m_file.read_text(encoding="utf-8")
             try:
@@ -412,6 +415,29 @@ class TestSqlMigrationsAndSecuritySchema(unittest.TestCase):
         self.assertIn("rotate_encryption_master_key(TEXT, TEXT) TO service_role, postgres;", sql_011)
         self.assertIn("REVOKE ALL ON FUNCTION public.rotate_blind_index_salt(TEXT, TEXT) FROM PUBLIC, anon, authenticated;", sql_011)
         self.assertIn("rotate_blind_index_salt(TEXT, TEXT) TO service_role, postgres;", sql_011)
+
+    def test_16_migration_012_advisor_rls_refinement_and_fk_index(self):
+        """Valida a migração 012: eliminação de políticas múltiplas permissivas (Lint 0006) e índice FK (Lint 0001)."""
+        self.assertTrue(self.migration_012.exists(), f"Migração 012 não encontrada: {self.migration_012}")
+        sql_012 = self.migration_012.read_text(encoding="utf-8")
+
+        # 1. Índice de cobertura para FK calendario_agenda(criado_por)
+        self.assertIn("idx_calendario_agenda_criado_por", sql_012)
+        self.assertIn("ON public.calendario_agenda (criado_por)", sql_012)
+
+        # 2. Remoção das políticas 'FOR ALL' redundantes
+        self.assertIn('DROP POLICY IF EXISTS "agenda_modify_auth"', sql_012)
+        self.assertIn('DROP POLICY IF EXISTS "catalogos_json_modify_auth"', sql_012)
+        self.assertIn('DROP POLICY IF EXISTS "secretarias_modify_auth"', sql_012)
+
+        # 3. Políticas granulares FOR INSERT, FOR UPDATE, FOR DELETE
+        for prefix in ["agenda", "catalogos_json", "secretarias"]:
+            self.assertIn(f'CREATE POLICY "{prefix}_insert_auth"', sql_012)
+            self.assertIn(f'CREATE POLICY "{prefix}_update_auth"', sql_012)
+            self.assertIn(f'CREATE POLICY "{prefix}_delete_auth"', sql_012)
+
+        # 4. Ausência de FORCE RLS
+        self.assertNotIn("FORCE ROW LEVEL SECURITY", sql_012.upper())
 
 
 if __name__ == "__main__":
