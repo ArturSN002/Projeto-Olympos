@@ -21,12 +21,13 @@ class BaseExtractor(ABC):
     def obter_data_referencia_inicial(self, competencia_override: Optional[str] = None) -> datetime:
         """Determina a data de referência inicial para o ciclo de extração."""
         if competencia_override:
-            partes = competencia_override.strip().split('/')
+            limpo = competencia_override.strip()
+            partes = limpo.split('/') if '/' in limpo else limpo.split('-')
             if len(partes) == 2:
-                return datetime(int(partes[1]), int(partes[0]), 1)
-            partes_iso = competencia_override.strip().split('-')
-            if len(partes_iso) == 2:
-                return datetime(int(partes_iso[0]), int(partes_iso[1]), 1)
+                p0, p1 = int(partes[0]), int(partes[1])
+                if p0 > 12:
+                    return datetime(p0, p1, 1)
+                return datetime(p1, p0, 1)
 
         offset = int(self.config.get("competencia_offset_meses", 1))
         return datetime.now() - relativedelta(months=offset)

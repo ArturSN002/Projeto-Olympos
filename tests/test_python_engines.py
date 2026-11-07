@@ -478,6 +478,11 @@ class TestPapiroDeCadmoEngine(unittest.TestCase):
             self.assertEqual(comp_br_2, "08/2026")
             self.assertEqual(comp_iso_2, "2026-08")
 
+            # Testa formato MM-AAAA com hífen (ex: "08-2026") e AAAA-MM (ex: "2026-08")
+            comp_br_h, comp_iso_h = extractor.calcular_competencia("08-2026", offset_meses_adicional=0)
+            self.assertEqual(comp_br_h, "08/2026")
+            self.assertEqual(comp_iso_h, "2026-08")
+
             # Simula falha nos 2 primeiros meses e sucesso no 3º mês (offset 2)
             arquivo_valido = Path(tmp_dir) / "parnamirim_test_2026-08.csv"
             arquivo_valido.write_text("matricula;nome;cargo\n123;Fulano;Professor\n", encoding="utf-8")

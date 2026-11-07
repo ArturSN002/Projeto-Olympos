@@ -17,7 +17,7 @@ on:
 
 jobs:
   executar-etl:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     defaults:
       run:
@@ -25,10 +25,10 @@ jobs:
 
     steps:
       - name: 1. Checkout do Monorepo Olympos
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: 2. Configurar Python 3.11 com Cache
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
           cache: 'pip'

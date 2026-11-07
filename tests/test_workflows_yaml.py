@@ -77,9 +77,13 @@ class TestWorkflowsYaml(unittest.TestCase):
         self.assertIn("workflow_dispatch", on_cadmo, "papiro_cadmo_cron.yml deve possuir 'workflow_dispatch'")
 
     def test_04_runner_environments_are_ubuntu(self):
-        """Garante que todos os jobs executem exclusivamente em runners baseados em Ubuntu Linux."""
+        """Garante que todos os jobs executem em ubuntu-24.04 e sem actions deprecadas de Node.js 20."""
         for wf_file in WORKFLOWS_DIR.glob("*.yml"):
-            data = yaml.safe_load(wf_file.read_text(encoding="utf-8"))
+            raw = wf_file.read_text(encoding="utf-8")
+            self.assertNotIn("actions/checkout@v4", raw, f"Action deprecada checkout@v4 em {wf_file.name}")
+            self.assertNotIn("actions/setup-python@v5", raw, f"Action deprecada setup-python@v5 em {wf_file.name}")
+            self.assertNotIn("ubuntu-latest", raw, f"Label mutável ubuntu-latest encontrada em {wf_file.name}")
+            data = yaml.safe_load(raw)
             jobs = data.get("jobs", {})
             for job_id, job_cfg in jobs.items():
                 runs_on = job_cfg.get("runs-on", "")

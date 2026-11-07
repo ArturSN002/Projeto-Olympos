@@ -21,6 +21,10 @@ WEBAPP_MIRROR = BASE_DIR / "hub-olympos-webapp"
 FRONTEND_MIRROR = BASE_DIR / "hub-olympos-frontend"
 PAPIRO_SRC = OLYMPOS_DIR / "2_github_pages_actions" / "engines" / "papiro_de_cadmo" / "pipeline"
 PAPIRO_MIRROR = BASE_DIR / "papiro-de-cadmo" / "pipeline"
+PAPIRO_EXT_SRC = OLYMPOS_DIR / "2_github_pages_actions" / "engines" / "papiro_de_cadmo" / "extractors"
+PAPIRO_EXT_MIRROR = BASE_DIR / "papiro-de-cadmo" / "extractors"
+WF_SRC = OLYMPOS_DIR / ".github" / "workflows"
+WF_MIRROR = OLYMPOS_DIR / "2_github_pages_actions" / "workflows_mirror"
 
 
 def sync_gas_templates():
@@ -113,14 +117,22 @@ def sync_hub_olympos_webapp():
 
 
 def sync_papiro_pipeline():
-    print("[3/4] Sincronizando papiro-de-cadmo/pipeline/...")
-    if not PAPIRO_MIRROR.exists():
-        print(f"  [AVISO] {PAPIRO_MIRROR} não encontrado!")
-        return
-    for py_file in PAPIRO_SRC.glob("*.py"):
-        dst = PAPIRO_MIRROR / py_file.name
-        shutil.copy2(py_file, dst)
-        print(f"  -> Copiado {py_file.name} para papiro-de-cadmo/pipeline/")
+    print("[3/4] Sincronizando papiro-de-cadmo/ (pipeline e extractors) e workflows_mirror/...")
+    if PAPIRO_MIRROR.exists():
+        for py_file in PAPIRO_SRC.glob("*.py"):
+            dst = PAPIRO_MIRROR / py_file.name
+            shutil.copy2(py_file, dst)
+            print(f"  -> Copiado {py_file.name} para papiro-de-cadmo/pipeline/")
+    if PAPIRO_EXT_MIRROR.exists():
+        for py_file in PAPIRO_EXT_SRC.glob("*.py"):
+            dst = PAPIRO_EXT_MIRROR / py_file.name
+            shutil.copy2(py_file, dst)
+            print(f"  -> Copiado {py_file.name} para papiro-de-cadmo/extractors/")
+    if WF_MIRROR.exists():
+        for yml_file in WF_SRC.glob("*.yml"):
+            dst = WF_MIRROR / yml_file.name
+            shutil.copy2(yml_file, dst)
+            print(f"  -> Copiado {yml_file.name} para 2_github_pages_actions/workflows_mirror/")
 
 
 def sync_hub_olympos_frontend():
