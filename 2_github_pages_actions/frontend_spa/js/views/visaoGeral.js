@@ -74,6 +74,20 @@ window.OlymposViews.visaoGeral = (function() {
     bindClick('editPortariaBtn', function() { window.OlymposApp.abrirModalContadores(); });
   }
 
+  function consultarFallbackSupabase() {
+    console.info('[VisaoGeral] Gateway GAS indisponível ou sem resposta válida. Consultando espelho dinâmico no Supabase...');
+    if (window.OlymposSupabase && typeof window.OlymposSupabase.carregarNumeracaoGabinete === 'function') {
+      window.OlymposSupabase.carregarNumeracaoGabinete().then(function(numData) {
+        if (numData) {
+          atualizarKpis({ numeracao: numData });
+          isLoaded = true;
+        }
+      }).catch(function(eNum) {
+        console.warn('[VisaoGeral] Falha na consulta de contingência via Supabase:', eNum);
+      });
+    }
+  }
+
   function carregarDados() {
     renderizarConstelacao17Personas(lastOverviewData ? lastOverviewData.memorias : null);
     if (!lastOverviewData) {
@@ -93,20 +107,11 @@ window.OlymposViews.visaoGeral = (function() {
           window.OlymposSupabase.sincronizarNumeracaoGabinete(data.numeracao);
         }
         console.log('[Olympos Visão Geral] Dados dinâmicos do Gabinete recebidos do Drive/GAS:', data);
+      } else {
+        consultarFallbackSupabase();
       }
     }, function() {
-      // 2. Contingência offline: utiliza apenas numeração real previamente sincronizada no Supabase (sem fallback estático)
-      console.info('[VisaoGeral] Gateway GAS indisponível. Consultando espelho dinâmico no Supabase...');
-      if (window.OlymposSupabase && typeof window.OlymposSupabase.carregarNumeracaoGabinete === 'function') {
-        window.OlymposSupabase.carregarNumeracaoGabinete().then(function(numData) {
-          if (numData) {
-            atualizarKpis({ numeracao: numData });
-            isLoaded = true;
-          }
-        }).catch(function(eNum) {
-          console.warn('[VisaoGeral] Falha na consulta de contingência via Supabase:', eNum);
-        });
-      }
+      consultarFallbackSupabase();
     });
   }
 

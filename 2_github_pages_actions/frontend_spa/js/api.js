@@ -67,6 +67,15 @@ window.OlymposApi = (function() {
     return null;
   }
 
+  let edgeGatewayDisponivel = (function() {
+    try {
+      if (sessionStorage.getItem('olympos_gateway_unavailable') === 'true') {
+        return false;
+      }
+    } catch (e) {}
+    return true;
+  })();
+
   function processarResposta(data, onSuccess, onError, action) {
     if (data && data.code === 'AUTH_REQUIRED') {
       console.warn('[Olympos Drive/GAS] Autenticação necessária para [' + (action || 'ação') + ']:', data.mensagem);
@@ -79,7 +88,11 @@ window.OlymposApi = (function() {
     if (data && data.status === 'ERRO') {
       console.warn('[Olympos Drive/GAS] Resposta com status de erro do Gateway [' + (action || 'ação') + ']:', data);
       if (data.mensagem && data.mensagem.includes('Token não autorizado')) {
-        console.error('[Olympos Drive/GAS] Token não autorizado no Google Apps Script para a ação [' + (action || '') + ']. Verifique as permissões de acesso ao Drive/GAS.');
+        console.warn('[Olympos Drive/GAS] Token não autorizado no Google Apps Script para a ação [' + (action || '') + ']. Verifique as permissões de acesso ao Drive/GAS.');
+      }
+      if (onError) {
+        onError(new Error(data.mensagem || 'Erro no Gateway GAS'));
+        return;
       }
     } else {
       console.log('[Olympos Drive/GAS] Conteúdo recebido com sucesso [' + (action || 'ação') + ']:', data);
@@ -175,7 +188,7 @@ window.OlymposApi = (function() {
 
     // Frente 2 Principal: Roteamento via Supabase Edge Function (gas-gateway) com fallback automático
     const gatewayUrl = getGasGatewayUrl();
-    const useGateway = localStorage.getItem('olympos_disable_gateway') !== 'true' && Boolean(gatewayUrl);
+    const useGateway = edgeGatewayDisponivel && localStorage.getItem('olympos_disable_gateway') !== 'true' && Boolean(gatewayUrl);
 
     if (!useGateway) {
       executarFallbackDiretoGAS();
@@ -224,7 +237,12 @@ window.OlymposApi = (function() {
         if (onError) onError(err);
         return;
       }
-      console.warn('[OlymposApi] Falha ao contatar Edge Gateway. Acionando fallback transparente para Google Apps Script:', err.message);
+      // Circuit Breaker: desativa chamadas repetidas à Edge Function na sessão se não estiver implantada ou falhar por CORS/rede
+      edgeGatewayDisponivel = false;
+      try {
+        sessionStorage.setItem('olympos_gateway_unavailable', 'true');
+      } catch (e) {}
+      console.info('[OlymposApi] Edge Gateway (gas-gateway) indisponível ou não implantado no Supabase. Alternando para Google Apps Script direto nesta sessão.');
       executarFallbackDiretoGAS();
     });
   }
