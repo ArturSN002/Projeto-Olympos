@@ -67,13 +67,22 @@ window.OlymposApi = (function() {
     return null;
   }
 
-  function processarResposta(data, onSuccess, onError) {
+  function processarResposta(data, onSuccess, onError, action) {
     if (data && data.code === 'AUTH_REQUIRED') {
+      console.warn('[Olympos Drive/GAS] Autenticação necessária para [' + (action || 'ação') + ']:', data.mensagem);
       if (window.OlymposApp && typeof window.OlymposApp.solicitarLogin === 'function') {
         window.OlymposApp.solicitarLogin();
       }
       if (onError) onError(new Error(data.mensagem || 'Sessão expirada. Faça login novamente via Supabase.'));
       return;
+    }
+    if (data && data.status === 'ERRO') {
+      console.warn('[Olympos Drive/GAS] Resposta com status de erro do Gateway [' + (action || 'ação') + ']:', data);
+      if (data.mensagem && data.mensagem.includes('Token não autorizado')) {
+        console.error('[Olympos Drive/GAS] Token não autorizado no Google Apps Script para a ação [' + (action || '') + ']. Verifique as permissões de acesso ao Drive/GAS.');
+      }
+    } else {
+      console.log('[Olympos Drive/GAS] Conteúdo recebido com sucesso [' + (action || 'ação') + ']:', data);
     }
     if (onSuccess) onSuccess(data);
   }
@@ -88,14 +97,16 @@ window.OlymposApi = (function() {
       jwtToken: token
     });
 
+    console.log('[Olympos Drive/GAS] Requisição enviada [' + action + ']:', payload);
+
     // Frente 1: Execução embarcada no Google Apps Script (HtmlService)
     if (typeof google !== 'undefined' && google.script && google.script.run) {
       google.script.run
         .withSuccessHandler(function(data) {
-          processarResposta(data, onSuccess, onError);
+          processarResposta(data, onSuccess, onError, action);
         })
         .withFailureHandler(function(err) {
-          console.error('Erro google.script.run [' + action + ']:', err);
+          console.error('[Olympos Drive/GAS] Erro google.script.run [' + action + ']:', err);
           if (onError) onError(err);
         })
         .executarAcaoHubClient(bodyData);
@@ -138,12 +149,13 @@ window.OlymposApi = (function() {
         try {
           data = JSON.parse(text);
         } catch (e) {
+          console.error('[Olympos Drive/GAS] Resposta não-JSON do Gateway GAS:', text);
           throw new Error('Resposta não-JSON do Gateway GAS: ' + (text ? text.substring(0, 100) : 'vazio'));
         }
-        processarResposta(data, onSuccess, onError);
+        processarResposta(data, onSuccess, onError, action);
       })
       .catch(function(err) {
-        console.warn('Erro de rede/Gateway [' + action + ']:', err.message);
+        console.error('[Olympos Drive/GAS] Erro de rede/Gateway [' + action + ']:', err.message);
         if (onError) onError(err);
       });
   }

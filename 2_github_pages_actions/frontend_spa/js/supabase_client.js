@@ -19,6 +19,7 @@ window.OlymposSupabase = (function() {
   }
 
   const DEFAULT_PUBLIC_SUPABASE_URL = 'https://rbwizevjvbvjwtbwwyif.supabase.co';
+  const DEFAULT_PUBLIC_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJid2l6ZXZqdmJ2and0Ynd3eWlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0NjA1NDgsImV4cCI6MjEwOTAzNjU0OH0.R5WH_n4EXZqO7x1GMIhH1LV4F5DvYnMMsnsdzoQGjIk';
 
   function getConfig() {
     let rawUrl = localStorage.getItem('olympos_supabase_url');
@@ -32,9 +33,16 @@ window.OlymposSupabase = (function() {
     if (rawUrl && cleanUrl && rawUrl !== cleanUrl) {
       localStorage.setItem('olympos_supabase_url', cleanUrl);
     }
+    let key = (localStorage.getItem('olympos_supabase_anon_key') || '').trim();
+    if (!key) {
+      key = DEFAULT_PUBLIC_SUPABASE_ANON_KEY;
+      try {
+        localStorage.setItem('olympos_supabase_anon_key', DEFAULT_PUBLIC_SUPABASE_ANON_KEY);
+      } catch (e) {}
+    }
     return {
       url: cleanUrl,
-      anonKey: (localStorage.getItem('olympos_supabase_anon_key') || '').trim()
+      anonKey: key
     };
   }
 
@@ -371,35 +379,52 @@ window.OlymposSupabase = (function() {
     }
 
     var zonaValida = e.zona || 'Urbana';
-    var corPadrao = '#38BDF8';
-    var iconePadrao = 'U';
+    var isRural = String(zonaValida).toLowerCase().includes('rural');
+
+    // Matriz V2.03 de Cores por Rede e Zona:
+    // Municipal: Urbana #22C55E (Verde claro), Rural #166534 (Verde escuro)
+    // Estadual: Urbana #FACC15 (Amarelo claro), Rural #EA580C (Laranja)
+    // Federal: Urbana #38BDF8 (Azul claro), Rural #1E40AF (Azul escuro)
+    // Privada: Urbana #EF4444 (Vermelho), Rural #EC4899 (Rosa)
+    var corPadrao = isRural ? '#166534' : '#22C55E';
     if (redeValida === 'Estadual') {
-      corPadrao = '#2563EB';
-      iconePadrao = '🏛';
+      corPadrao = isRural ? '#EA580C' : '#FACC15';
     } else if (redeValida === 'Federal') {
-      corPadrao = '#16A34A';
-      iconePadrao = '🎓';
+      corPadrao = isRural ? '#1E40AF' : '#38BDF8';
     } else if (redeValida === 'Privada') {
-      corPadrao = '#9333EA';
-      iconePadrao = '⭐';
-    } else if (categoriaInstitucional === 'Instituição') {
-      corPadrao = '#D4AF37';
+      corPadrao = isRural ? '#EC4899' : '#EF4444';
+    }
+
+    // Matriz V2.03 de Símbolos por Segmento:
+    // Ed. Infantil / CEI: 'C'
+    // Ensino Fundamental I: 'I'
+    // Ensino Fundamental II: 'II'
+    // Ensino Médio / Técnico: 'M'
+    // Mais de um segmento: 'X'
+    // Instituição Sede (SMEB / CEMAI): '★'
+    var iconePadrao = 'I';
+    var validSegs = (segmentos || []).filter(function(s) {
+      return !s.includes('Sede') && !s.includes('Especial');
+    });
+    var nLow = String(e.nome || '').toLowerCase();
+    if (nLow.includes('smeb sede') || nLow.includes('cemai')) {
       iconePadrao = '★';
+    } else if (validSegs.length > 1) {
+      iconePadrao = 'X';
+    } else if (validSegs.length === 1) {
+      var s = validSegs[0].toLowerCase();
+      if (s.includes('infantil') || s.includes('creche') || s.includes('cei')) iconePadrao = 'C';
+      else if (s.includes('fundamental i') || s.includes('anos iniciais')) iconePadrao = 'I';
+      else if (s.includes('fundamental ii') || s.includes('anos finais')) iconePadrao = 'II';
+      else if (s.includes('médio') || s.includes('medio') || s.includes('técnico') || s.includes('tecnico')) iconePadrao = 'M';
     } else if (categoriaInstitucional === 'Centro de Educação Infantil') {
-      corPadrao = '#F59E0B';
       iconePadrao = 'C';
-    } else if (String(zonaValida).toLowerCase() === 'rural') {
-      corPadrao = '#10B981';
-      iconePadrao = 'R';
+    } else if (categoriaInstitucional === 'Instituição') {
+      iconePadrao = '★';
     }
 
     var iconeFinal = e.icone || iconePadrao;
     var corFinal = e.cor || corPadrao;
-    // Corrige caso legado onde uma Escola recebeu indevidamente símbolo 'C' de CEI por ofertar Ed. Infantil
-    if (categoriaInstitucional === 'Escola' && iconeFinal === 'C') {
-      iconeFinal = iconePadrao;
-      corFinal = corPadrao;
-    }
 
     return {
       id: e.id,
@@ -431,11 +456,15 @@ window.OlymposSupabase = (function() {
           .select('*')
           .order('id');
         if (!error && Array.isArray(data) && data.length > 0) {
+          console.log('[Olympos Supabase] Conteúdo recebido da tabela [escolas] (' + data.length + ' unidades):', data);
           const adaptadas = data.map(normalizarEscola);
           try {
             localStorage.setItem('olympos_escolas_municipais', JSON.stringify(adaptadas));
           } catch (eStorage) {}
           return adaptadas;
+        }
+        if (error) {
+          console.error('[Olympos Supabase] Erro ao consultar tabela [escolas]:', error);
         }
 
         // Fallback secundário: carrega arquivo JSON estruturado em public.catalogos_json
@@ -572,6 +601,7 @@ window.OlymposSupabase = (function() {
           .select('*')
           .order('municipio');
         if (!error && Array.isArray(data) && data.length > 0) {
+          console.log('[Olympos Supabase] Conteúdo recebido da tabela [secretarias_parceiras] (' + data.length + ' secretarias):', data);
           const adaptadas = data.map(function(s) {
             return {
               id: s.id,
@@ -741,6 +771,81 @@ window.OlymposSupabase = (function() {
     return false;
   }
 
+  // =========================================================================
+  // PERSISTÊNCIA: NUMERAÇÃO OFICIAL DO GABINETE 2026 (PORTARIAS & OFÍCIOS)
+  // =========================================================================
+
+  async function carregarNumeracaoGabinete() {
+    const client = getClient();
+    if (client) {
+      try {
+        const { data, error } = await client
+          .from('catalogos_json')
+          .select('conteudo')
+          .eq('chave', 'numeracao_gabinete')
+          .maybeSingle();
+        if (!error && data && data.conteudo) {
+          console.log('[Olympos Supabase] Conteúdo recebido do catálogo [numeracao_gabinete]:', data.conteudo);
+          return data.conteudo;
+        }
+        if (error) {
+          console.error('[Olympos Supabase] Erro ao consultar [numeracao_gabinete]:', error);
+        }
+      } catch (err) {
+        console.warn('[Olympos Supabase] Exceção ao consultar numeracao_gabinete:', err);
+      }
+    }
+    // Fallback baseline canônico oficial 2026
+    return {
+      proximoOficio2026: 155,
+      ultimoOficio2026: 154,
+      proximaPortaria2026: 412,
+      ultimaPortaria2026: 411,
+      signatario: 'Maria Margareth da Silva Pereira',
+      signatarioCargo: 'Secretária Municipal de Educação Básica',
+      ano: 2026
+    };
+  }
+
+  // =========================================================================
+  // PERSISTÊNCIA: PUBLICAÇÕES OFICIAIS DO DIÁRIO OFICIAL FEMURN
+  // =========================================================================
+
+  async function carregarPublicacoesDiario() {
+    const client = getClient();
+    if (client) {
+      try {
+        // 1. Tenta recuperar da tabela estruturada public.publicacoes_diario
+        const { data, error } = await client
+          .from('publicacoes_diario')
+          .select('*')
+          .order('data_publicacao', { ascending: false })
+          .limit(100);
+        if (!error && Array.isArray(data) && data.length > 0) {
+          console.log('[Olympos Supabase] Conteúdo recebido da tabela [publicacoes_diario] (' + data.length + ' atos):', data);
+          return data;
+        }
+
+        // 2. Fallback de resiliência: catálogo JSON em public.catalogos_json
+        const { data: catData, error: catError } = await client
+          .from('catalogos_json')
+          .select('conteudo')
+          .eq('chave', 'diario_oficial_publicacoes')
+          .maybeSingle();
+        if (!catError && catData && Array.isArray(catData.conteudo) && catData.conteudo.length > 0) {
+          console.log('[Olympos Supabase] Conteúdo recebido do catálogo [diario_oficial_publicacoes] (' + catData.conteudo.length + ' atos):', catData.conteudo);
+          return catData.conteudo;
+        }
+        if (error) {
+          console.error('[Olympos Supabase] Erro ao consultar [publicacoes_diario]:', error);
+        }
+      } catch (err) {
+        console.warn('[Olympos Supabase] Exceção ao consultar publicações diário:', err);
+      }
+    }
+    return [];
+  }
+
   return {
     getConfig: getConfig,
     isConfigured: isConfigured,
@@ -761,7 +866,9 @@ window.OlymposSupabase = (function() {
     sincronizarSecretariaParceira: sincronizarSecretariaParceira,
     carregarAgendaEventos: carregarAgendaEventos,
     salvarAgendaEvento: salvarAgendaEvento,
-    excluirAgendaEvento: excluirAgendaEvento
+    excluirAgendaEvento: excluirAgendaEvento,
+    carregarNumeracaoGabinete: carregarNumeracaoGabinete,
+    carregarPublicacoesDiario: carregarPublicacoesDiario
   };
 })();
 

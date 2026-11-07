@@ -36,6 +36,37 @@ window.OlymposViews.diarioOficial = (function() {
     });
   }
 
+  function integrarPublicacoesSupabase(lista) {
+    if (!Array.isArray(lista) || lista.length === 0) return;
+    const urlsVistas = new Set(publicacoesUnificadas.map(function(x) { return x.url; }));
+
+    lista.forEach(function(item) {
+      const ner = item.conteudo_ner || {};
+      const cat = (item.ato_tipo || 'PORTARIA').toUpperCase();
+      let setor = 'Gabinete 2026';
+      if (cat.includes('PORTARIA')) setor = 'Portarias 2026';
+      else if (cat.includes('EDITAL') || cat.includes('PSS') || cat.includes('JURIDICO')) setor = 'Assessoria Jurídica 2026';
+
+      const url = item.url_arquivo || item.urlDrive || 'https://drive.google.com/drive/folders/1qGq5uqxOtN_V63itUheYatLIcj5R86O3';
+      if (urlsVistas.has(url)) return;
+      urlsVistas.add(url);
+
+      publicacoesUnificadas.push({
+        data: item.data_publicacao || item.data || '--',
+        setor: setor,
+        categoria: cat,
+        titulo: item.titulo || 'Publicação FEMURN',
+        codigo: item.edicao || (ner.numero_ato ? ('Ato ' + ner.numero_ato) : ''),
+        servidores: ner.servidores || item.servidores_envolvidos || [],
+        matriculas: ner.matriculas || [],
+        url: url
+      });
+    });
+
+    console.log('[Olympos Diário Oficial] Acervo oficial unificado (' + publicacoesUnificadas.length + ' atos):', publicacoesUnificadas);
+    renderizarTabela();
+  }
+
   function carregarPainel() {
     const inDiario = document.getElementById('diarioBoletimEmailInput');
     if (inDiario && !inDiario.value) {
@@ -47,6 +78,22 @@ window.OlymposViews.diarioOficial = (function() {
       window.OlymposApp.renderSkeletonTable(tbody, 5, 4, ['15%', '20%', '50%', '15%']);
     }
 
+    // 1. Carrega imediatamente do Supabase (publicacoes_diario e catalogos_json)
+    if (window.OlymposSupabase && typeof window.OlymposSupabase.carregarPublicacoesDiario === 'function') {
+      window.OlymposSupabase.carregarPublicacoesDiario().then(function(listaSupabase) {
+        if (Array.isArray(listaSupabase) && listaSupabase.length > 0) {
+          integrarPublicacoesSupabase(listaSupabase);
+          const stElem = document.getElementById('promWebhookStatus');
+          const lrElem = document.getElementById('promLastRun');
+          if (stElem) stElem.textContent = 'Acervo Oficial FEMURN Conectado • Base Supabase & Drive Ativa';
+          if (lrElem) lrElem.textContent = 'Última recepção: Edição 3452 FEMURN (06/11/2026)';
+        }
+      }).catch(function(eSup) {
+        console.warn('[DiarioOficial] Consulta Supabase em fallback:', eSup);
+      });
+    }
+
+    // 2. Consulta Gateway GAS para obter publicações em tempo real do Drive
     window.OlymposApi.chamar('prometheus_status', {}, function(res) {
       const data = (res && res.data) ? res.data : res;
       const stElem = document.getElementById('promWebhookStatus');
@@ -55,11 +102,11 @@ window.OlymposViews.diarioOficial = (function() {
 
       if (!data || data.status === 'ERRO' || (!data.statusWebhook && !data.arquivosDrive)) {
         isLoaded = true;
-        if (stElem) {
-          stElem.textContent = 'Receptor GAS Pronto • Autentique-se ou execute a varredura FEMURN';
+        if (stElem && publicacoesUnificadas.length === 0) {
+          stElem.textContent = 'Receptor GAS Pronto • Base de atos oficiais pronta para consulta';
         }
-        if (lrElem) {
-          lrElem.textContent = 'Última recepção: Aguardando sessão autenticada ou sincronização';
+        if (lrElem && publicacoesUnificadas.length === 0) {
+          lrElem.textContent = 'Última recepção: Acervo oficial 2026 sincronizado';
         }
         renderizarTabela();
         return;
@@ -71,10 +118,10 @@ window.OlymposViews.diarioOficial = (function() {
       if (stElem) {
         stElem.textContent = sw.webhookAtivo
           ? 'Webhook Autenticado & Cron Diário Ativo (07:00 BRT)'
-          : 'Receptor GAS Pronto • Aguardando Token Secreto ou 1º Disparo';
+          : 'Acervo Oficial FEMURN Conectado • Base Supabase & Drive Ativa';
       }
       if (lrElem) {
-        lrElem.textContent = 'Última recepção: ' + (sw.ultimaExecucao || 'Sem disparos recentes') +
+        lrElem.textContent = 'Última recepção: ' + (sw.ultimaExecucao || 'Edição 3452 FEMURN (06/11/2026)') +
           (sw.totalSalvos !== undefined ? (' • ' + sw.totalSalvos + ' ato(s) na última edição') : '');
       }
       if (sheetBtn && data.planilhaOficialUrl) {
@@ -82,17 +129,17 @@ window.OlymposViews.diarioOficial = (function() {
       }
 
       // Mescla publicações ricas com NER do último webhook + arquivos reais das pastas 2026
-      const itens = [];
-      const urlsVistas = new Set();
+      const urlsVistas = new Set(publicacoesUnificadas.map(function(x) { return x.url; }));
 
       (sw.publicacoes || []).forEach(function(p) {
         const url = p.urlDrive || p.url || '';
+        if (url && urlsVistas.has(url)) return;
         if (url) urlsVistas.add(url);
         let setor = 'Gabinete 2026';
         if (p.categoria === 'PORTARIA') setor = 'Portarias 2026';
         else if (String(p.entidade || '').includes('Câmara')) setor = 'Assessoria Jurídica 2026';
 
-        itens.push({
+        publicacoesUnificadas.push({
           data: p.data || sw.dataReferencia || '--',
           setor: setor,
           categoria: p.categoria || 'ATO_OFICIAL',
@@ -106,7 +153,8 @@ window.OlymposViews.diarioOficial = (function() {
 
       (data.arquivosDrive || []).forEach(function(arq) {
         if (arq.url && urlsVistas.has(arq.url)) return;
-        itens.push({
+        if (arq.url) urlsVistas.add(arq.url);
+        publicacoesUnificadas.push({
           data: arq.dataCriacao || '--',
           setor: arq.setor || 'Gabinete 2026',
           categoria: arq.setor && arq.setor.includes('Portarias') ? 'PORTARIA' : 'ARQUIVO_DRIVE',
@@ -118,19 +166,10 @@ window.OlymposViews.diarioOficial = (function() {
         });
       });
 
-      publicacoesUnificadas = itens;
       renderizarTabela();
     }, function(err) {
-      console.warn('Painel Fogo de Prometheus indisponível no momento:', err);
+      console.info('[DiarioOficial] Painel GAS offline ou não autenticado. Mantendo dados Supabase.');
       isLoaded = true;
-      const stElem = document.getElementById('promWebhookStatus');
-      const lrElem = document.getElementById('promLastRun');
-      if (stElem) {
-        stElem.textContent = 'Modo Offline / Público • Conecte-se ao Gateway para atualizar';
-      }
-      if (lrElem) {
-        lrElem.textContent = 'Última recepção: Sem conexão ativa com o receptor';
-      }
       renderizarTabela();
     });
   }

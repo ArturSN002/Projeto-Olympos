@@ -129,6 +129,7 @@ window.OlymposViews.escolas = (function() {
       if (promessa && typeof promessa.then === 'function') {
         promessa.then(function(listaRemota) {
           if (Array.isArray(listaRemota) && listaRemota.length > 0) {
+            console.log('[Olympos Supabase] Escolas recebidas do banco (' + listaRemota.length + ' unidades):', listaRemota);
             var saneadas = listaRemota.map(sanitizarRegistroEscola);
             salvarEscolas(saneadas);
             renderizarInterface();
@@ -164,16 +165,17 @@ window.OlymposViews.escolas = (function() {
       copia.segmentos = normalizarSegmentosDeCategoria(catAntiga, copia.nome);
     }
 
-    var corEsperada = obterCorPorRedeECategoria(copia.rede, copia.categoria, copia.zona);
-    var iconeEsperado = obterIconePorRedeECategoria(copia.rede, copia.categoria, copia.zona);
+    var corEsperada = obterCorPorRedeECategoria(copia.rede, copia.categoria, copia.zona, copia.nome);
+    var iconeEsperado = obterIconePorRedeECategoria(copia.rede, copia.categoria, copia.zona, copia.nome, copia.segmentos);
 
-    // Repara unidades Escola que haviam recebido indevidamente ícone 'C' ou cor âmbar de CEI
-    if (!copia.icone || (copia.categoria === 'Escola' && copia.icone === 'C')) {
-      copia.icone = iconeEsperado;
+    // Auto-repara unidades do tipo 'Escola' multi-segmento que haviam recebido indevidamente símbolo 'C' ou cor de CEI
+    if (copia.categoria === 'Escola' && Array.isArray(copia.segmentos) && copia.segmentos.length > 1) {
+      if (copia.icone === 'C') copia.icone = iconeEsperado;
+      if (copia.cor === '#F59E0B') copia.cor = corEsperada;
     }
-    if (!copia.cor || (copia.categoria === 'Escola' && copia.cor === '#F59E0B')) {
-      copia.cor = corEsperada;
-    }
+
+    copia.cor = copia.cor || corEsperada;
+    copia.icone = copia.icone || iconeEsperado;
 
     return copia;
   }
@@ -403,25 +405,71 @@ window.OlymposViews.escolas = (function() {
   }
 
   /**
-   * Determina a cor visual do marcador considerando rede e categoria institucional
+   * Determina a cor visual do marcador considerando rede e zona:
+   * - Rede Municipal: Urbana = Verde claro (#22C55E), Rural = Verde escuro (#166534)
+   * - Rede Estadual: Urbana = Amarelo claro (#FACC15), Rural = Laranja (#EA580C)
+   * - Rede Federal: Urbana = Azul claro (#38BDF8), Rural = Azul escuro (#1E40AF)
+   * - Rede Privada: Urbana = Vermelho (#EF4444), Rural = Rosa (#EC4899)
    */
   function obterCorPorRedeECategoria(rede, categoria, zona, nome) {
     var r = String(rede || 'Municipal').toLowerCase();
-    if (r === 'estadual') return '#2563EB';
-    if (r === 'federal') return '#16A34A';
-    if (r === 'privada') return '#9333EA';
-    return obterCorPorCategoria(categoria, zona, nome);
+    var z = String(zona || 'Urbana').toLowerCase();
+    var isRural = z.includes('rural');
+
+    if (r === 'estadual') {
+      return isRural ? '#EA580C' : '#FACC15';
+    }
+    if (r === 'federal') {
+      return isRural ? '#1E40AF' : '#38BDF8';
+    }
+    if (r === 'privada') {
+      return isRural ? '#EC4899' : '#EF4444';
+    }
+    // Municipal (padrão)
+    return isRural ? '#166534' : '#22C55E';
   }
 
   /**
-   * Determina o ícone ou símbolo do marcador considerando rede e categoria institucional
+   * Determina o ícone ou símbolo do marcador com base nos segmentos atendidos:
+   * - Educação Infantil ou CEI: 'C'
+   * - Ensino Fundamental I: 'I'
+   * - Ensino Fundamental II: 'II'
+   * - Nível Médio / Técnico: 'M'
+   * - Mais de um segmento: 'X'
+   * - Sede Administrativa / Inclusão Especial: '★'
    */
-  function obterIconePorRedeECategoria(rede, categoria, zona, nome) {
-    var r = String(rede || 'Municipal').toLowerCase();
-    if (r === 'estadual') return '🏛';
-    if (r === 'federal') return '🎓';
-    if (r === 'privada') return '⭐';
-    return obterIconePorCategoria(categoria, zona, nome);
+  function obterIconePorRedeECategoria(rede, categoria, zona, nome, segmentos) {
+    var nLow = String(nome || '').toLowerCase();
+    if (nLow.includes('smeb sede') || nLow.includes('cemai')) {
+      return '★';
+    }
+
+    var segs = Array.isArray(segmentos) ? segmentos : [];
+    if (segs.length === 0) {
+      segs = normalizarSegmentosDeCategoria(categoria, nome);
+    }
+
+    var validSegs = segs.filter(function(s) {
+      return !s.includes('Sede') && !s.includes('Especial');
+    });
+
+    if (validSegs.length > 1) {
+      return 'X';
+    }
+
+    if (validSegs.length === 1) {
+      var s = validSegs[0].toLowerCase();
+      if (s.includes('infantil') || s.includes('creche') || s.includes('cei')) return 'C';
+      if (s.includes('fundamental i') || s.includes('anos iniciais')) return 'I';
+      if (s.includes('fundamental ii') || s.includes('anos finais')) return 'II';
+      if (s.includes('médio') || s.includes('medio') || s.includes('técnico') || s.includes('tecnico')) return 'M';
+    }
+
+    var catInst = normalizarCategoriaInstitucional(categoria, nome);
+    if (catInst === 'Centro de Educação Infantil') return 'C';
+    if (catInst === 'Instituição') return '★';
+
+    return 'I';
   }
 
   /**
@@ -442,14 +490,16 @@ window.OlymposViews.escolas = (function() {
       var rede = escola.rede || 'Municipal';
       var catInst = normalizarCategoriaInstitucional(escola.categoria, escola.nome);
       var corCalculada = obterCorPorRedeECategoria(rede, catInst, escola.zona, escola.nome);
-      var iconeCalculado = obterIconePorRedeECategoria(rede, catInst, escola.zona, escola.nome);
+      var iconeCalculado = obterIconePorRedeECategoria(rede, catInst, escola.zona, escola.nome, escola.segmentos);
 
-      // Protege contra ícone 'C' residual em unidades do tipo 'Escola'
-      var cor = (catInst === 'Escola' && escola.cor === '#F59E0B') ? corCalculada : (escola.cor || corCalculada);
-      var icone = (catInst === 'Escola' && escola.icone === 'C') ? iconeCalculado : (escola.icone || iconeCalculado);
+      var cor = escola.cor || corCalculada;
+      var icone = escola.icone || iconeCalculado;
+
+      var textCor = (cor === '#FACC15') ? '#1E293B' : '#FFFFFF';
+      var fontSize = (icone === 'II') ? '10px' : '11px';
 
       var markerHtml =
-        '<div style="background:' + cor + '; width: 24px; height: 24px; border-radius: 50%; border: 2.5px solid #FFFFFF; box-shadow: 0 2px 6px rgba(0,0,0,0.38); display: flex; align-items: center; justify-content: center; font-size: 11px; color: #FFFFFF; font-weight: 700; cursor: pointer; transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);">' +
+        '<div style="background:' + cor + '; width: 24px; height: 24px; border-radius: 50%; border: 2.5px solid #FFFFFF; box-shadow: 0 2px 6px rgba(0,0,0,0.38); display: flex; align-items: center; justify-content: center; font-size: ' + fontSize + '; color: ' + textCor + '; font-weight: 800; cursor: pointer; transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);">' +
         icone +
         '</div>';
 

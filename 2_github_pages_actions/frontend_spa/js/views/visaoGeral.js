@@ -37,31 +37,34 @@ window.OlymposViews.visaoGeral = (function() {
   }
 
   function carregarDados() {
-    // Verifica se há sessão institucional ou token configurado antes de chamar endpoint protegido
-    const sessao = (window.OlymposApp && typeof window.OlymposApp.getSession === 'function')
-      ? window.OlymposApp.getSession()
-      : null;
-    const jwtToken = (window.OlymposApi && typeof window.OlymposApi.getJwtToken === 'function')
-      ? window.OlymposApi.getJwtToken()
-      : null;
+    renderizarConstelacao17Personas(lastOverviewData ? lastOverviewData.memorias : null);
 
-    // Se não há sessão autenticada, renderiza o catálogo local das 17 personas sem emitir erro de rede
-    if (!sessao && !jwtToken) {
-      renderizarConstelacao17Personas(lastOverviewData ? lastOverviewData.memorias : null);
-      return;
+    // 1. Carrega imediatamente os contadores oficiais do Gabinete via Supabase (catalogos_json)
+    if (window.OlymposSupabase && typeof window.OlymposSupabase.carregarNumeracaoGabinete === 'function') {
+      window.OlymposSupabase.carregarNumeracaoGabinete().then(function(numData) {
+        if (numData) {
+          atualizarKpis({ numeracao: numData });
+          isLoaded = true;
+          console.log('[Olympos Visão Geral] Contadores de Gabinete 2026 sincronizados via Supabase:', numData);
+        }
+      }).catch(function(eNum) {
+        console.warn('[VisaoGeral] Falha na consulta de numeração via Supabase:', eNum);
+      });
     }
 
+    // 2. Consulta Gateway GAS para obter dados dinâmicos do Drive / Cotas / Memórias
     window.OlymposApi.chamar('overview_get', {}, function(res) {
       const data = (res && res.data) ? res.data : res;
       if (data && (data.numeracao || data.memorias)) {
         lastOverviewData = data;
         atualizarKpis(data);
-        renderizarConstelacao17Personas(data.memorias || []);
+        if (data.memorias) renderizarConstelacao17Personas(data.memorias || []);
         isLoaded = true;
+        console.log('[Olympos Visão Geral] Dados dinâmicos do Gabinete recebidos do Drive/GAS:', data);
       }
     }, function(err) {
-      // Degradação graciosa para catálogo local sem poluir o console com advertências
-      renderizarConstelacao17Personas(lastOverviewData ? lastOverviewData.memorias : null);
+      // Degradação graciosa mantendo a numeração e personas locais
+      console.info('[VisaoGeral] Gateway GAS em modo offline ou sem sessão. Mantendo dados Supabase.');
     });
   }
 

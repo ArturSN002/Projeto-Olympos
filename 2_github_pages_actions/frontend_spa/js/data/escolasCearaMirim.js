@@ -4,6 +4,7 @@
  * Georreferenciamento de precisão (Latitude / Longitude) para visualização cartográfica no Leaflet.js
  * Suporte a Multi-Redes (Municipal, Estadual, Federal, Privada), Multi-Segmentos Simultâneos
  * e Categorias Institucionais padronizadas ('Escola', 'Centro de Educação Infantil', 'Instituição').
+ * Padrão V2.03: Ícones por Segmento (C, I, II, M, X) e Cores por Rede/Zona.
  */
 (function(root) {
   'use strict';
@@ -25,7 +26,7 @@
     ],
     "telefone": "smeb@cearamirim.rn.gov.br",
     "diretor": "Maria Margareth da Silva Pereira",
-    "cor": "#D4AF37",
+    "cor": "#22C55E",
     "icone": "★",
     "rede": "Municipal",
     "segmentos": [
@@ -49,8 +50,8 @@
     ],
     "telefone": "98862-0738",
     "diretor": "Sônia Maria da Silva",
-    "cor": "#38BDF8",
-    "icone": "U",
+    "cor": "#22C55E",
+    "icone": "X",
     "rede": "Municipal",
     "segmentos": [
       "Ens. Fundamental I",
@@ -74,8 +75,8 @@
     ],
     "telefone": "99214-7633",
     "diretor": "Fazya Gracielle Soares Dantas Pinheiro",
-    "cor": "#38BDF8",
-    "icone": "U",
+    "cor": "#22C55E",
+    "icone": "II",
     "rede": "Municipal",
     "segmentos": [
       "Ens. Fundamental II"
@@ -97,8 +98,8 @@
     ],
     "telefone": "99619-6413",
     "diretor": "Maria Cristina da Silva",
-    "cor": "#38BDF8",
-    "icone": "U",
+    "cor": "#22C55E",
+    "icone": "II",
     "rede": "Municipal",
     "segmentos": [
       "Ens. Fundamental II"
@@ -120,8 +121,8 @@
     ],
     "telefone": "99404-2941",
     "diretor": "Eriberto Bezerra de Brito",
-    "cor": "#38BDF8",
-    "icone": "U",
+    "cor": "#22C55E",
+    "icone": "X",
     "rede": "Municipal",
     "segmentos": [
       "Ens. Fundamental I",
@@ -144,8 +145,8 @@
     ],
     "telefone": "99126-2975",
     "diretor": "Mirian Carvalho Ferreira da Silva",
-    "cor": "#38BDF8",
-    "icone": "U",
+    "cor": "#22C55E",
+    "icone": "II",
     "rede": "Municipal",
     "segmentos": [
       "Ens. Fundamental II"
@@ -167,8 +168,8 @@
     ],
     "telefone": "99121-7968",
     "diretor": "Maria das Dores da Silva Góis",
-    "cor": "#38BDF8",
-    "icone": "U",
+    "cor": "#22C55E",
+    "icone": "I",
     "rede": "Municipal",
     "segmentos": [
       "Ens. Fundamental I"
@@ -190,8 +191,8 @@
     ],
     "telefone": "99490-4351",
     "diretor": "Maria Cristina de Oliveira Barbosa",
-    "cor": "#38BDF8",
-    "icone": "U",
+    "cor": "#22C55E",
+    "icone": "I",
     "rede": "Municipal",
     "segmentos": [
       "Ens. Fundamental I"
@@ -213,8 +214,8 @@
     ],
     "telefone": "99154-7523",
     "diretor": "Maurício Marlisson dos Santos Pessoa",
-    "cor": "#38BDF8",
-    "icone": "U",
+    "cor": "#22C55E",
+    "icone": "I",
     "rede": "Municipal",
     "segmentos": [
       "Ens. Fundamental I"
@@ -236,8 +237,8 @@
     ],
     "telefone": "99162-4435",
     "diretor": "Adriana Nicácio da Silva",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "X",
     "rede": "Municipal",
     "segmentos": [
       "Ed. Infantil",
@@ -260,8 +261,8 @@
     ],
     "telefone": "98810-7409",
     "diretor": "Maria do Carmo Nascimento da Silva",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "X",
     "rede": "Municipal",
     "segmentos": [
       "Ed. Infantil",
@@ -285,8 +286,8 @@
     ],
     "telefone": "99423-4548",
     "diretor": "Iriscélia dos Santos Melo",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "I",
     "rede": "Municipal",
     "segmentos": [
       "Ens. Fundamental I"
@@ -308,8 +309,8 @@
     ],
     "telefone": "99198-1693",
     "diretor": "Sanzia Maria dos Santos",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "X",
     "rede": "Municipal",
     "segmentos": [
       "Ed. Infantil",
@@ -332,8 +333,8 @@
     ],
     "telefone": "99970-0455",
     "diretor": "Fabiana Sérgia Nobre Varela",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "X",
     "rede": "Municipal",
     "segmentos": [
       "Ed. Infantil",
@@ -356,8 +357,8 @@
     ],
     "telefone": "99936-4670",
     "diretor": "Amanda Gomes de Lima",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "X",
     "rede": "Municipal",
     "segmentos": [
       "Ed. Infantil",
@@ -380,8 +381,8 @@
     ],
     "telefone": "99158-2501",
     "diretor": "Jeane Gomes Baracho",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "X",
     "rede": "Municipal",
     "segmentos": [
       "Ed. Infantil",
@@ -404,8 +405,8 @@
     ],
     "telefone": "99987-1861",
     "diretor": "Lecijane de Oliveira de Assis",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "X",
     "rede": "Municipal",
     "segmentos": [
       "Ed. Infantil",
@@ -428,8 +429,8 @@
     ],
     "telefone": "99899-8848",
     "diretor": "Glayson Barbosa do Nascimento",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "II",
     "rede": "Municipal",
     "segmentos": [
       "Ens. Fundamental II"
@@ -451,8 +452,8 @@
     ],
     "telefone": "99170-2049",
     "diretor": "Sebastião da Silva Marques",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "C",
     "rede": "Municipal",
     "segmentos": [
       "Ed. Infantil"
@@ -474,8 +475,8 @@
     ],
     "telefone": "99185-9588",
     "diretor": "Andreza Silva do Nascimento",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "I",
     "rede": "Municipal",
     "segmentos": [
       "Ens. Fundamental I"
@@ -497,8 +498,8 @@
     ],
     "telefone": "99180-2268",
     "diretor": "Dalvani Silva de Oliveira",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "I",
     "rede": "Municipal",
     "segmentos": [
       "Ens. Fundamental I"
@@ -520,8 +521,8 @@
     ],
     "telefone": "99211-7914",
     "diretor": "Maria da Conceição de Araújo Rodrigues",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "X",
     "rede": "Municipal",
     "segmentos": [
       "Ed. Infantil",
@@ -544,8 +545,8 @@
     ],
     "telefone": "99670-0945",
     "diretor": "Maria da Conceição Silva Barbosa",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "X",
     "rede": "Municipal",
     "segmentos": [
       "Ed. Infantil",
@@ -568,8 +569,8 @@
     ],
     "telefone": "99460-8079",
     "diretor": "Francisco Germanico Luiz",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "X",
     "rede": "Municipal",
     "segmentos": [
       "Ed. Infantil",
@@ -592,8 +593,8 @@
     ],
     "telefone": "99153-8080",
     "diretor": "Alda Lúcia Melo de Paiva Medeiros",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "X",
     "rede": "Municipal",
     "segmentos": [
       "Ed. Infantil",
@@ -616,8 +617,8 @@
     ],
     "telefone": "99482-6284 / 99401-4374",
     "diretor": "Fernanda Souza do Nascimento",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "X",
     "rede": "Municipal",
     "segmentos": [
       "Ed. Infantil",
@@ -640,8 +641,8 @@
     ],
     "telefone": "99439-7606",
     "diretor": "Raimunda Rosângela da Silva",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "X",
     "rede": "Municipal",
     "segmentos": [
       "Ed. Infantil",
@@ -664,8 +665,8 @@
     ],
     "telefone": "99235-1954",
     "diretor": "Maria Aparecida dos Santos",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "X",
     "rede": "Municipal",
     "segmentos": [
       "Ed. Infantil",
@@ -688,8 +689,8 @@
     ],
     "telefone": "99122-8618",
     "diretor": "Waleska Vivianny Ferreira de Lima",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "X",
     "rede": "Municipal",
     "segmentos": [
       "Ed. Infantil",
@@ -712,8 +713,8 @@
     ],
     "telefone": "99131-2193",
     "diretor": "Sergio Marçal de Barros",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "I",
     "rede": "Municipal",
     "segmentos": [
       "Ens. Fundamental I"
@@ -735,8 +736,8 @@
     ],
     "telefone": "98149-1349",
     "diretor": "Francinilma Rocha dos Santos",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "X",
     "rede": "Municipal",
     "segmentos": [
       "Ed. Infantil",
@@ -759,8 +760,8 @@
     ],
     "telefone": "99450-2126",
     "diretor": "Maria Jaciara Pereira de Lima",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "X",
     "rede": "Municipal",
     "segmentos": [
       "Ed. Infantil",
@@ -783,8 +784,8 @@
     ],
     "telefone": "99415-8025",
     "diretor": "Wedna Melo dos Santos de Andrade",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "X",
     "rede": "Municipal",
     "segmentos": [
       "Ed. Infantil",
@@ -807,8 +808,8 @@
     ],
     "telefone": "99135-1266",
     "diretor": "Jayne Lima Ribeiro",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "X",
     "rede": "Municipal",
     "segmentos": [
       "Ed. Infantil",
@@ -831,8 +832,8 @@
     ],
     "telefone": "99166-6626",
     "diretor": "Maria da Conceição da Luz",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "I",
     "rede": "Municipal",
     "segmentos": [
       "Ens. Fundamental I"
@@ -854,8 +855,8 @@
     ],
     "telefone": "99127-6425",
     "diretor": "Rayana Lopes de Souza",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "II",
     "rede": "Municipal",
     "segmentos": [
       "Ens. Fundamental II"
@@ -877,8 +878,8 @@
     ],
     "telefone": "99101-3086",
     "diretor": "Rejaneide Pires Macedo Nascimento",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "X",
     "rede": "Municipal",
     "segmentos": [
       "Ed. Infantil",
@@ -901,8 +902,8 @@
     ],
     "telefone": "99149-4077",
     "diretor": "Jacira Soares do Nascimento",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "X",
     "rede": "Municipal",
     "segmentos": [
       "Ed. Infantil",
@@ -925,8 +926,8 @@
     ],
     "telefone": "99430-3421",
     "diretor": "Josenice Lima Ribeiro Martins",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "X",
     "rede": "Municipal",
     "segmentos": [
       "Ed. Infantil",
@@ -949,8 +950,8 @@
     ],
     "telefone": "99155-3802",
     "diretor": "Kaline Oliveira da Silva",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "X",
     "rede": "Municipal",
     "segmentos": [
       "Ed. Infantil",
@@ -974,8 +975,8 @@
     ],
     "telefone": "98895-3914",
     "diretor": "Rejane Avelino Justino Fernandes",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "X",
     "rede": "Municipal",
     "segmentos": [
       "Ens. Fundamental I",
@@ -998,8 +999,8 @@
     ],
     "telefone": "98873-8964",
     "diretor": "Francisco de Assis Praxedes",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "X",
     "rede": "Municipal",
     "segmentos": [
       "Ed. Infantil",
@@ -1022,8 +1023,8 @@
     ],
     "telefone": "99164-8041",
     "diretor": "Idayane da Silva Ferreira",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "II",
     "rede": "Municipal",
     "segmentos": [
       "Ens. Fundamental II"
@@ -1045,8 +1046,8 @@
     ],
     "telefone": "99205-1338",
     "diretor": "Francinalva da Silva Araújo",
-    "cor": "#10B981",
-    "icone": "R",
+    "cor": "#166534",
+    "icone": "C",
     "rede": "Municipal",
     "segmentos": [
       "Ed. Infantil"
@@ -1068,7 +1069,7 @@
     ],
     "telefone": "99605-1840",
     "diretor": "Francisca Rassiana M. Nascimento",
-    "cor": "#F59E0B",
+    "cor": "#166534",
     "icone": "C",
     "rede": "Municipal",
     "segmentos": [
@@ -1091,7 +1092,7 @@
     ],
     "telefone": "99423-4747",
     "diretor": "Maria de Fátima Souza do Nascimento Costa",
-    "cor": "#F59E0B",
+    "cor": "#166534",
     "icone": "C",
     "rede": "Municipal",
     "segmentos": [
@@ -1114,7 +1115,7 @@
     ],
     "telefone": "99485-9229",
     "diretor": "Célia Maria Praxedes da Silva",
-    "cor": "#F59E0B",
+    "cor": "#166534",
     "icone": "C",
     "rede": "Municipal",
     "segmentos": [
@@ -1137,7 +1138,7 @@
     ],
     "telefone": "99428-5926",
     "diretor": "Alessandra Araújo da Silva Frutuoso",
-    "cor": "#F59E0B",
+    "cor": "#22C55E",
     "icone": "C",
     "rede": "Municipal",
     "segmentos": [
@@ -1160,7 +1161,7 @@
     ],
     "telefone": "99491-0332",
     "diretor": "Maria do Socorro Silva de Brito",
-    "cor": "#F59E0B",
+    "cor": "#22C55E",
     "icone": "C",
     "rede": "Municipal",
     "segmentos": [
@@ -1183,7 +1184,7 @@
     ],
     "telefone": "99448-8174",
     "diretor": "Maria Luiza de Castro Pontes",
-    "cor": "#F59E0B",
+    "cor": "#22C55E",
     "icone": "C",
     "rede": "Municipal",
     "segmentos": [
@@ -1206,7 +1207,7 @@
     ],
     "telefone": "99468-7179",
     "diretor": "Rejane Cassiano Dias",
-    "cor": "#F59E0B",
+    "cor": "#166534",
     "icone": "C",
     "rede": "Municipal",
     "segmentos": [
@@ -1229,7 +1230,7 @@
     ],
     "telefone": "99149-5856",
     "diretor": "Marinalva de Castro da Silva",
-    "cor": "#38BDF8",
+    "cor": "#22C55E",
     "icone": "★",
     "rede": "Municipal",
     "segmentos": [
@@ -1258,8 +1259,8 @@
     ],
     "telefone": "(84) 3274-5930",
     "diretor": "Gestão Escolar 7ª DIREC",
-    "cor": "#2563EB",
-    "icone": "🏛"
+    "cor": "#FACC15",
+    "icone": "X"
   },
   {
     "id": "esc_est_002",
@@ -1283,8 +1284,8 @@
     ],
     "telefone": "(84) 3274-5931",
     "diretor": "Gestão Escolar SEEC/RN",
-    "cor": "#2563EB",
-    "icone": "🏛"
+    "cor": "#FACC15",
+    "icone": "X"
   },
   {
     "id": "esc_fed_001",
@@ -1307,8 +1308,8 @@
     ],
     "telefone": "(84) 4005-4100",
     "diretor": "Diretoria Geral IFRN",
-    "cor": "#16A34A",
-    "icone": "🎓"
+    "cor": "#38BDF8",
+    "icone": "X"
   },
   {
     "id": "esc_priv_001",
@@ -1332,8 +1333,8 @@
     ],
     "telefone": "(84) 3274-2100",
     "diretor": "Coordenação Pedagógica CSA",
-    "cor": "#9333EA",
-    "icone": "⭐"
+    "cor": "#EF4444",
+    "icone": "X"
   },
   {
     "id": "esc_priv_002",
@@ -1356,8 +1357,8 @@
     ],
     "telefone": "(84) 3274-1580",
     "diretor": "Direção Pedagógica ESF",
-    "cor": "#9333EA",
-    "icone": "⭐"
+    "cor": "#EF4444",
+    "icone": "X"
   }
 ];
 

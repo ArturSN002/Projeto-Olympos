@@ -520,11 +520,11 @@ class TestEscolasMapFeature(unittest.TestCase):
 
         const v = window.OlymposViews.escolas;
 
-        // 1. Verifica no catálogo semente que nenhuma 'Escola' possui icone 'C' ou cor '#F59E0B'
+        // 1. Verifica no catálogo semente que nenhuma 'Escola' multi-segmento possui icone 'C' ou cor '#F59E0B'
         const escolasMulti = window.BANCO_SEMENTE_ESCOLAS.filter(
-          e => e.categoria === 'Escola' && Array.isArray(e.segmentos) && e.segmentos.includes('Ed. Infantil')
+          e => e.categoria === 'Escola' && Array.isArray(e.segmentos) && e.segmentos.length > 1
         );
-        if (escolasMulti.length === 0) throw new Error('Catálogo deve ter Escolas com Ed. Infantil + Fundamental');
+        if (escolasMulti.length === 0) throw new Error('Catálogo deve ter Escolas com múltiplos segmentos');
         for (const esc of escolasMulti) {{
           if (esc.icone === 'C' || esc.cor === '#F59E0B') {{
             throw new Error('Escola multi-segmento recebeu indevidamente símbolo/cor de CEI: ' + esc.nome);

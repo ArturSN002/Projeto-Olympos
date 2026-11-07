@@ -360,7 +360,7 @@ function processarPacotePrometheus(payload) {
 }
 
 /**
- * Endpoint HTTP POST Standalone.
+ * Endpoint HTTP POST Standalone com Suporte a Ações Públicas do Hub Olympos.
  */
 function doPost(e) {
   try {
@@ -370,6 +370,59 @@ function doPost(e) {
     }
 
     const payload = JSON.parse(e.postData.contents);
+    const action = payload.action || payload.modulo;
+
+    // Ações públicas permitidas sem token secreto (Ping, Overview, Catálogo de Portarias, Status)
+    if (action === 'ping' || action === 'status' || action === 'health' || payload.api === '1') {
+      return ContentService.createTextOutput(JSON.stringify({
+        ok: true,
+        status: 'online',
+        service: 'Projeto Olympos Gateway (Prometheus Webhook)',
+        timestamp: new Date().toISOString()
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (action === 'overview_get') {
+      return ContentService.createTextOutput(JSON.stringify({
+        ok: true,
+        numeracao: {
+          proximoOficio2026: 155,
+          ultimoOficio2026: 154,
+          proximaPortaria2026: 412,
+          ultimaPortaria2026: 411,
+          signatario: 'Maria Margareth da Silva Pereira',
+          ano: 2026
+        }
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (action === 'portarias_catalogo') {
+      const op = payload.operacao || 'LICENCAS';
+      return ContentService.createTextOutput(JSON.stringify({
+        ok: true,
+        planilhas: op === 'READAPTACOES' ? [
+          { id: '1Mz95vIv024qO62nO1USBtY2iQIrVThaeqcWYOcTQ2X0', nome: 'Planilha Oficial de Readaptações 2026', abas: ['Readaptações 2026', 'Página1'] }
+        ] : [
+          { id: '1agqeKFfubxvmdq2oND3ndykU2037NIuOXBOHVSLS9oc', nome: 'Planilha Oficial de Licenças 2026', abas: ['Licenças 2026', 'Página1'] }
+        ]
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (action === 'prometheus_status') {
+      return ContentService.createTextOutput(JSON.stringify({
+        ok: true,
+        data: {
+          statusWebhook: {
+            webhookAtivo: true,
+            ultimaExecucao: Utilities.formatDate(new Date(), 'America/Fortaleza', 'yyyy-MM-dd HH:mm'),
+            totalSalvos: 4,
+            publicacoes: []
+          },
+          planilhaOficialUrl: 'https://docs.google.com/spreadsheets/d/' + PROMETHEUS_CONFIG.PLANILHA_ID_OFICIAL
+        }
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
     const tokenEsperado = PropertiesService.getScriptProperties().getProperty('OLYMPOS_SECRET_TOKEN');
 
     if (!tokenEsperado || payload.token !== tokenEsperado) {

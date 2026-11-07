@@ -859,7 +859,8 @@ window.OlymposViews.papiroCadmo = (function() {
     inicializarMapa();
     executarMatchingHera();
     observarVisibilidadePagina();
-    alternarColapsoHera(true);
+    alternarColapsoHera(false);
+    console.log('[Olympos Permutas] Bases carregadas: ' + ((DOCENTES_CEARA_MIRIM || []).length + SERVIDORES_ESTADO_RN.length) + ' servidores (SMEB + SEEC/RN), ' + (VINCULOS_TRANSPARENCIA || []).length + ' cruzamentos de vínculos.');
   }
 
   function bindEvents() {
@@ -949,6 +950,9 @@ window.OlymposViews.papiroCadmo = (function() {
       inBuscaServidor._bound = true;
       inBuscaServidor.addEventListener('input', function(e) {
         termoBuscaServidor = (e.target.value || '').trim();
+        if (termoBuscaServidor) {
+          console.log('[Olympos Permutas] Pesquisa de servidor disparada para: "' + termoBuscaServidor + '"');
+        }
         if (btnLimparBusca) {
           if (termoBuscaServidor) {
             btnLimparBusca.classList.remove('hidden');
