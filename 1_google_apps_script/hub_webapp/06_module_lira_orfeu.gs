@@ -511,9 +511,63 @@ function gerarHashAutenticidadeLiraHub_(nome, email, evento, dataEvento) {
   return `SMEB-2026-${(h1.toString(16).padStart(8, '0') + h2.toString(16).padStart(2, '0')).substring(0, 10).toUpperCase()}`;
 }
 
-function inserirQrCodeValidacaoLiraHub_(doc, codigoHash, nome, evento) {
+/**
+ * Constrói payload canônico para certificados da Lira de Orfeu (RFC 8785).
+ */
+function gerarPayloadCanonicoCertificadoLiraHub_(codigoHash, aluno, email, evento, dataEvento, cargaHoraria) {
+  let hashAluno = 'anon_hash';
+  try {
+    if (typeof Utilities !== 'undefined' && Utilities.computeDigest) {
+      const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(email || aluno || '').toLowerCase());
+      hashAluno = digest.slice(0, 8).map(b => ('0' + (b & 0xFF).toString(16)).slice(-2)).join('');
+    }
+  } catch (e) {}
+
+  return {
+    cert_id: codigoHash,
+    event_date: String(dataEvento || '2026-11-07'),
+    event_name: String(evento || 'Formação SMEB'),
+    event_type: 'CERTIFICADO',
+    hours: Number(cargaHoraria || 40),
+    issued_at: new Date().toISOString(),
+    issuer: 'SMEB Ceará-Mirim/RN',
+    recipient_id_hash: hashAluno,
+    recipient_name: String(aluno || 'Participante')
+  };
+}
+
+/**
+ * Gera token assinado para o certificado da Lira de Orfeu.
+ */
+function gerarTokenCertificadoLiraHub_(codigoHash, aluno, email, evento, dataEvento, cargaHoraria) {
+  const payload = gerarPayloadCanonicoCertificadoLiraHub_(codigoHash, aluno, email, evento, dataEvento, cargaHoraria);
+  const sortedKeys = Object.keys(payload).sort();
+  const canonicalObj = {};
+  sortedKeys.forEach(function(k) { canonicalObj[k] = payload[k]; });
+  const canonicalJson = JSON.stringify(canonicalObj);
+
+  let payloadB64 = '';
+  let sigB64 = '';
+  try {
+    if (typeof Utilities !== 'undefined' && Utilities.base64EncodeWebSafe) {
+      payloadB64 = Utilities.base64EncodeWebSafe(canonicalJson).replace(/=+$/, '');
+      const secret = PropertiesService.getScriptProperties().getProperty('OLYMPOS_SECRET_TOKEN') || 'OLYMPOS_SECRET_TOKEN_PROD';
+      const sigBytes = Utilities.computeHmacSha256Signature(canonicalJson, secret);
+      sigB64 = Utilities.base64EncodeWebSafe(sigBytes).replace(/=+$/, '');
+    }
+  } catch (e) {}
+
+  return {
+    token: (payloadB64 && sigB64) ? (payloadB64 + '.' + sigB64) : codigoHash,
+    payload: payload,
+    canonicalJson: canonicalJson
+  };
+}
+
+function inserirQrCodeValidacaoLiraHub_(doc, codigoHash, nome, evento, dataEvento, cargaHoraria) {
   if (!doc || !codigoHash) return;
-  const textoValidacao = `VALIDAÇÃO SMEB CEARÁ-MIRIM/RN | Código: ${codigoHash} | Titular: ${nome} | Evento: ${evento}`;
+  const tokenInfo = gerarTokenCertificadoLiraHub_(codigoHash, nome, '', evento, dataEvento, cargaHoraria);
+  const textoValidacao = `https://smeb-cearamirim.github.io/hub-olympos-frontend/#certificados?v=${encodeURIComponent(tokenInfo.token)}`;
   const qrUrl = `https://quickchart.io/qr?size=140&margin=1&text=${encodeURIComponent(textoValidacao)}`;
 
   let qrBlob = null;
@@ -530,6 +584,7 @@ function inserirQrCodeValidacaoLiraHub_(doc, codigoHash, nome, evento) {
     const body = doc.getBody();
     safeReplaceTextPincel_(body, '\\{\\{codigo_validacao\\}\\}', codigoHash);
     safeReplaceTextPincel_(body, '\\{\\{hash\\}\\}', codigoHash);
+    safeReplaceTextPincel_(body, '\\{\\{token_validacao\\}\\}', tokenInfo.token);
     if (qrBlob && typeof body.appendImage === 'function') {
       const img = body.appendImage(qrBlob);
       if (img && typeof img.setWidth === 'function') {

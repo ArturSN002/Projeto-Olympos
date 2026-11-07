@@ -21,18 +21,37 @@ window.OlymposSupabase = (function() {
   const DEFAULT_PUBLIC_SUPABASE_URL = 'https://rbwizevjvbvjwtbwwyif.supabase.co';
   const DEFAULT_PUBLIC_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJid2l6ZXZqdmJ2and0Ynd3eWlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0NjA1NDgsImV4cCI6MjEwOTAzNjU0OH0.R5WH_n4EXZqO7x1GMIhH1LV4F5DvYnMMsnsdzoQGjIk';
 
+  /**
+   * Extrai automaticamente a URL do projeto Supabase a partir do payload JWT da Chave Pública (anon key),
+   * eliminando a necessidade de solicitar manualmente a URL do projeto ao operador.
+   * @param {string} rawKey Chave pública (JWT ou sb_publishable_*)
+   * @returns {string|null} URL HTTPS derivada ou null se a chave for opaca/inválida
+   */
+  function extrairUrlSupabaseDaChave(rawKey) {
+    const k = String(rawKey || '').trim();
+    if (!k) return null;
+    const parts = k.split('.');
+    if (parts.length !== 3) return null;
+    try {
+      let b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      while (b64.length % 4 !== 0) {
+        b64 += '=';
+      }
+      const decoded = atob(b64);
+      const payload = JSON.parse(decoded);
+      if (payload && typeof payload.ref === 'string' && /^[a-z0-9]{15,35}$/i.test(payload.ref.trim())) {
+        return 'https://' + payload.ref.trim().toLowerCase() + '.supabase.co';
+      }
+      if (payload && typeof payload.iss === 'string' && payload.iss.startsWith('https://') && payload.iss.includes('.supabase.')) {
+        return normalizeSupabaseUrl(payload.iss);
+      }
+    } catch (e) {
+      // Chave não é um JWT padrão decodificável; utiliza fallback canônico
+    }
+    return null;
+  }
+
   function getConfig() {
-    let rawUrl = localStorage.getItem('olympos_supabase_url');
-    if (!rawUrl) {
-      rawUrl = DEFAULT_PUBLIC_SUPABASE_URL;
-      try {
-        localStorage.setItem('olympos_supabase_url', DEFAULT_PUBLIC_SUPABASE_URL);
-      } catch (e) {}
-    }
-    const cleanUrl = normalizeSupabaseUrl(rawUrl);
-    if (rawUrl && cleanUrl && rawUrl !== cleanUrl) {
-      localStorage.setItem('olympos_supabase_url', cleanUrl);
-    }
     let key = (localStorage.getItem('olympos_supabase_anon_key') || '').trim();
     if (!key) {
       key = DEFAULT_PUBLIC_SUPABASE_ANON_KEY;
@@ -40,6 +59,28 @@ window.OlymposSupabase = (function() {
         localStorage.setItem('olympos_supabase_anon_key', DEFAULT_PUBLIC_SUPABASE_ANON_KEY);
       } catch (e) {}
     }
+
+    const derivedUrl = extrairUrlSupabaseDaChave(key);
+    let rawUrl = localStorage.getItem('olympos_supabase_url');
+    if (derivedUrl) {
+      rawUrl = derivedUrl;
+      try {
+        localStorage.setItem('olympos_supabase_url', derivedUrl);
+      } catch (e) {}
+    } else if (!rawUrl) {
+      rawUrl = DEFAULT_PUBLIC_SUPABASE_URL;
+      try {
+        localStorage.setItem('olympos_supabase_url', DEFAULT_PUBLIC_SUPABASE_URL);
+      } catch (e) {}
+    }
+
+    const cleanUrl = normalizeSupabaseUrl(rawUrl);
+    if (rawUrl && cleanUrl && rawUrl !== cleanUrl) {
+      try {
+        localStorage.setItem('olympos_supabase_url', cleanUrl);
+      } catch (e) {}
+    }
+
     return {
       url: cleanUrl,
       anonKey: key
@@ -313,8 +354,11 @@ window.OlymposSupabase = (function() {
         .limit(count);
 
       if (typeof queryEmbedding === 'string' && queryEmbedding.trim()) {
-        const term = queryEmbedding.trim();
-        query = query.or(`titulo.ilike.%${term}%,ato_tipo.ilike.%${term}%`);
+        // Sanitiza caracteres reservados do PostgREST (, ( ) * % \) contra injeção de filtro lógico
+        const safeTerm = queryEmbedding.replace(/[,()*%\\]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120);
+        if (safeTerm) {
+          query = query.or(`titulo.ilike.%${safeTerm}%,ato_tipo.ilike.%${safeTerm}%`);
+        }
       }
 
       const { data: textData, error: textErr } = await query;
@@ -637,6 +681,11 @@ window.OlymposSupabase = (function() {
     if (!sec || !sec.id) return false;
     const client = getClient();
     if (client) {
+      const sess = await getSession();
+      if (!sess) {
+        console.info('[OlymposSupabase] Secretaria parceira salva localmente (autentique-se para sincronizar na nuvem).');
+        return false;
+      }
       const coords = Array.isArray(sec.coords) ? sec.coords : [-5.6344, -35.4245];
       const payload = {
         id: sec.id,
@@ -784,9 +833,17 @@ window.OlymposSupabase = (function() {
           .select('conteudo')
           .eq('chave', 'numeracao_gabinete')
           .maybeSingle();
-        if (!error && data && data.conteudo) {
-          console.log('[Olympos Supabase] Conteúdo recebido do catálogo [numeracao_gabinete]:', data.conteudo);
-          return data.conteudo;
+        if (!error && data && data.conteudo && typeof data.conteudo === 'object') {
+          const c = data.conteudo;
+          // Ignora registro de seed estático inicial que não veio de sincronização real do Drive (_memoria_apolo.md)
+          const isStaticSeed = !c.sincronizadoDrive &&
+            c.atualizadoEm === '2026-11-07T14:00:00Z' &&
+            Number(c.proximoOficio2026) === 155 &&
+            Number(c.proximaPortaria2026) === 412;
+          if (!isStaticSeed) {
+            console.log('[Olympos Supabase] Conteúdo dinâmico recebido do catálogo [numeracao_gabinete]:', c);
+            return c;
+          }
         }
         if (error) {
           console.error('[Olympos Supabase] Erro ao consultar [numeracao_gabinete]:', error);
@@ -795,16 +852,30 @@ window.OlymposSupabase = (function() {
         console.warn('[Olympos Supabase] Exceção ao consultar numeracao_gabinete:', err);
       }
     }
-    // Fallback baseline canônico oficial 2026
-    return {
-      proximoOficio2026: 155,
-      ultimoOficio2026: 154,
-      proximaPortaria2026: 412,
-      ultimaPortaria2026: 411,
-      signatario: 'Maria Margareth da Silva Pereira',
-      signatarioCargo: 'Secretária Municipal de Educação Básica',
-      ano: 2026
-    };
+    // Sem valores estáticos hardcoded: mantém estado "--" na UI até os dados reais serem carregados
+    return null;
+  }
+
+  async function sincronizarNumeracaoGabinete(numeracao) {
+    if (!numeracao || typeof numeracao !== 'object') return false;
+    const client = getClient();
+    if (!client) return false;
+    try {
+      const sess = await getSession();
+      if (!sess) return false;
+      const conteudo = Object.assign({}, numeracao, {
+        sincronizadoDrive: true,
+        atualizadoEm: new Date().toISOString()
+      });
+      const { error } = await client.from('catalogos_json').upsert({
+        chave: 'numeracao_gabinete',
+        conteudo: conteudo,
+        updated_at: new Date().toISOString()
+      });
+      return !error;
+    } catch (e) {
+      return false;
+    }
   }
 
   // =========================================================================
@@ -846,7 +917,142 @@ window.OlymposSupabase = (function() {
     return [];
   }
 
+  /**
+   * Verifica o status da Autenticação em Duas Etapas (TOTP MFA) da sessão atual.
+   * Retorna os níveis de garantia AAL (aal1 / aal2) e lista de fatores ativos.
+   */
+  async function checkMfaStatus() {
+    const client = getClient();
+    if (!client || !client.auth || !client.auth.mfa) {
+      return {
+        supported: false,
+        currentLevel: 'aal1',
+        currentAal: 'aal1',
+        nextLevel: 'aal1',
+        nextAal: 'aal1',
+        factors: [],
+        verifiedFactors: [],
+        hasEnrolled: false
+      };
+    }
+    try {
+      const { data: aalData, error: aalErr } = await client.auth.mfa.getAuthenticatorAssuranceLevel();
+      const { data: factorsData, error: factorsErr } = await client.auth.mfa.listFactors();
+
+      const factors = (factorsData && (factorsData.all || factorsData.totp)) || [];
+      const verifiedTotp = factors.filter(function(f) {
+        return (f.status === 'verified') && (f.factor_type === 'totp' || f.type === 'totp');
+      });
+
+      const currentLvl = (aalData && aalData.currentLevel) || 'aal1';
+      const nextLvl = (aalData && aalData.nextLevel) || (verifiedTotp.length > 0 ? 'aal2' : 'aal1');
+
+      return {
+        supported: true,
+        currentLevel: currentLvl,
+        currentAal: currentLvl,
+        nextLevel: nextLvl,
+        nextAal: nextLvl,
+        factors: factors,
+        verifiedFactors: verifiedTotp,
+        hasEnrolled: verifiedTotp.length > 0
+      };
+    } catch (err) {
+      console.warn('[OlymposSupabase] Falha ao verificar status MFA:', err);
+      return {
+        supported: false,
+        currentLevel: 'aal1',
+        currentAal: 'aal1',
+        nextLevel: 'aal1',
+        nextAal: 'aal1',
+        factors: [],
+        verifiedFactors: [],
+        hasEnrolled: false
+      };
+    }
+  }
+
+  /**
+   * Inicia o registro de um novo fator TOTP MFA para o usuário ativo.
+   * @param {string} [friendlyName] Nome identificador do dispositivo autenticador
+   */
+  async function enrollMfaTotp(friendlyName) {
+    const client = getClient();
+    if (!client || !client.auth || !client.auth.mfa) {
+      throw new Error('Supabase MFA não suportado no ambiente.');
+    }
+    const sessionRes = await client.auth.getSession();
+    const userEmail = (sessionRes && sessionRes.data && sessionRes.data.session && sessionRes.data.session.user)
+      ? sessionRes.data.session.user.email
+      : 'Operador';
+    const factorName = friendlyName || 'Olympos SMEB (' + userEmail + ')';
+
+    const { data, error } = await client.auth.mfa.enroll({
+      factorType: 'totp',
+      issuer: 'Olympos SMEB',
+      friendlyName: factorName
+    });
+
+    if (error) throw error;
+    return data;
+  }
+
+  /**
+   * Responde ao desafio TOTP verificando o código de 6 dígitos gerado pelo autenticador.
+   * Promove a sessão ativa para o nível de garantia 'aal2'.
+   * @param {string} factorId UUID do fator registrado
+   * @param {string} code Código de 6 dígitos
+   */
+  async function challengeAndVerifyMfa(factorId, code) {
+    const client = getClient();
+    if (!client || !client.auth || !client.auth.mfa) {
+      throw new Error('Supabase MFA indisponível.');
+    }
+
+    const cleanCode = String(code || '').trim().replace(/\D/g, '');
+    if (cleanCode.length !== 6) {
+      throw new Error('O código de autenticação deve possuir exatamente 6 dígitos numéricos.');
+    }
+
+    const { data, error } = await client.auth.mfa.challengeAndVerify({
+      factorId: factorId,
+      code: cleanCode
+    });
+
+    if (error) throw error;
+
+    if (data && data.session && window.OlymposApp && typeof window.OlymposApp.atualizarTokenSessao === 'function') {
+      window.OlymposApp.atualizarTokenSessao(data.session.access_token);
+    }
+
+    return data;
+  }
+
+  /**
+   * Remove/desvincula um fator TOTP MFA previamente registrado.
+   * @param {string} factorId UUID do fator
+   */
+  async function unenrollMfa(factorId) {
+    const client = getClient();
+    if (!client || !client.auth || !client.auth.mfa) {
+      throw new Error('Supabase MFA indisponível.');
+    }
+    const { data, error } = await client.auth.mfa.unenroll({ factorId: factorId });
+    if (error) throw error;
+    return data;
+  }
+
+  /**
+   * Retorna true se o perfil requer obrigatoriamente aal2 (TOTP MFA).
+   */
+  function isRoleMfaMandatory(role) {
+    const r = String(role || '').toUpperCase();
+    return r === 'ADMIN_GABINETE' || r === 'JURIDICO';
+  }
+
   return {
+    DEFAULT_PUBLIC_SUPABASE_URL: DEFAULT_PUBLIC_SUPABASE_URL,
+    extrairUrlSupabaseDaChave: extrairUrlSupabaseDaChave,
     getConfig: getConfig,
     isConfigured: isConfigured,
     init: init,
@@ -856,6 +1062,11 @@ window.OlymposSupabase = (function() {
     getSession: getSession,
     getJwtToken: getJwtToken,
     getCachedProfile: getCachedProfile,
+    checkMfaStatus: checkMfaStatus,
+    enrollMfaTotp: enrollMfaTotp,
+    challengeAndVerifyMfa: challengeAndVerifyMfa,
+    unenrollMfa: unenrollMfa,
+    isRoleMfaMandatory: isRoleMfaMandatory,
     buscarPublicacoesSemanticas: buscarPublicacoesSemanticas,
     normalizarCategoriaInstitucional: normalizarCategoriaInstitucional,
     carregarEscolas: carregarEscolas,
@@ -868,6 +1079,7 @@ window.OlymposSupabase = (function() {
     salvarAgendaEvento: salvarAgendaEvento,
     excluirAgendaEvento: excluirAgendaEvento,
     carregarNumeracaoGabinete: carregarNumeracaoGabinete,
+    sincronizarNumeracaoGabinete: sincronizarNumeracaoGabinete,
     carregarPublicacoesDiario: carregarPublicacoesDiario
   };
 })();

@@ -58,7 +58,7 @@
    */
   async function checkHaveIBeenPwned(password) {
     if (!password || typeof password !== 'string') {
-      return { leaked: false, breachCount: 0, checked: false };
+      return { leaked: false, pwned: false, count: 0, breachCount: 0, checked: false };
     }
 
     try {
@@ -69,7 +69,7 @@
       var fetchFn = typeof fetch === 'function' ? fetch : (typeof window !== 'undefined' ? window.fetch : null);
       if (!fetchFn) {
         console.warn('[OlymposPasswordSecurity] Função fetch não disponível no ambiente.');
-        return { leaked: false, breachCount: 0, checked: false };
+        return { leaked: false, pwned: false, count: 0, breachCount: 0, checked: false };
       }
 
       var response = await fetchFn('https://api.pwnedpasswords.com/range/' + prefix, {
@@ -81,7 +81,7 @@
 
       if (!response.ok) {
         console.warn('[OlymposPasswordSecurity] API HaveIBeenPwned indisponível (HTTP ' + response.status + '). Prosseguindo em modo defensivo.');
-        return { leaked: false, breachCount: 0, checked: false };
+        return { leaked: false, pwned: false, count: 0, breachCount: 0, checked: false };
       }
 
       var bodyText = await response.text();
@@ -93,15 +93,15 @@
         var parts = line.split(':');
         if (parts[0] && parts[0].toUpperCase() === suffix) {
           var count = parseInt(parts[1], 10) || 1;
-          return { leaked: true, breachCount: count, checked: true };
+          return { leaked: true, pwned: true, count: count, breachCount: count, checked: true };
         }
       }
 
-      return { leaked: false, breachCount: 0, checked: true };
+      return { leaked: false, pwned: false, count: 0, breachCount: 0, checked: true };
     } catch (err) {
       console.warn('[OlymposPasswordSecurity] Falha na verificação de vazamento HaveIBeenPwned:', err);
       // Fallback gracioso: não bloqueia o fluxo em caso de falha de conexão externa
-      return { leaked: false, breachCount: 0, checked: false };
+      return { leaked: false, pwned: false, count: 0, breachCount: 0, checked: false };
     }
   }
 
@@ -143,6 +143,7 @@
   // Exportação em ambiente de navegador
   if (typeof window !== 'undefined') {
     window.OlymposPasswordSecurity = api;
+    window.OlymposPasswordGuard = api;
   }
 
   // Exportação em ambiente CommonJS / Node.js (testes unitários)

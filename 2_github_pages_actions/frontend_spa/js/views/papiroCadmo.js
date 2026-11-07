@@ -913,9 +913,55 @@ window.OlymposViews.papiroCadmo = (function() {
       btnToggleForm.addEventListener('click', function() {
         const wrapper = document.getElementById('wrapperFormPermuta');
         if (!wrapper) return;
-        const isHidden = wrapper.classList.toggle('hidden');
-        btnToggleForm.setAttribute('aria-expanded', String(!isHidden));
-        btnToggleForm.textContent = isHidden ? '+ Nova Intenção' : '− Ocultar Formulário';
+        const abrirIntencao = wrapper.classList.contains('hidden');
+        alternarModoPainelSuperior(abrirIntencao ? 'intencao' : 'consulta');
+      });
+    }
+
+    const btnModoConsulta = document.getElementById('btnModoConsultaServidor');
+    if (btnModoConsulta && !btnModoConsulta._bound) {
+      btnModoConsulta._bound = true;
+      btnModoConsulta.addEventListener('click', function() {
+        alternarModoPainelSuperior('consulta');
+      });
+    }
+
+    const btnModoIntencao = document.getElementById('btnModoIntencaoPermuta');
+    if (btnModoIntencao && !btnModoIntencao._bound) {
+      btnModoIntencao._bound = true;
+      btnModoIntencao.addEventListener('click', function() {
+        alternarModoPainelSuperior('intencao');
+      });
+    }
+
+    const formConsultaSrv = document.getElementById('formConsultaServidorCadmo');
+    const inConsultaSrv = document.getElementById('consultaServidorInput');
+    const btnLimparConsultaSrv = document.getElementById('btnLimparConsultaServidor');
+
+    if (formConsultaSrv && !formConsultaSrv._bound) {
+      formConsultaSrv._bound = true;
+      formConsultaSrv.addEventListener('submit', function(e) {
+        e.preventDefault();
+        executarConsultaServidorCard(inConsultaSrv ? inConsultaSrv.value : '');
+      });
+    }
+
+    if (inConsultaSrv && !inConsultaSrv._bound) {
+      inConsultaSrv._bound = true;
+      inConsultaSrv.addEventListener('input', function() {
+        const val = (inConsultaSrv.value || '').trim();
+        if (!val) {
+          limparConsultaServidorCard();
+        } else if (val.length >= 2) {
+          executarConsultaServidorCard(val);
+        }
+      });
+    }
+
+    if (btnLimparConsultaSrv && !btnLimparConsultaSrv._bound) {
+      btnLimparConsultaSrv._bound = true;
+      btnLimparConsultaSrv.addEventListener('click', function() {
+        limparConsultaServidorCard();
       });
     }
 
@@ -1967,10 +2013,7 @@ window.OlymposViews.papiroCadmo = (function() {
       else if (dNorm.includes('MACAIBA')) selDest.value = 'Macaíba';
     }
 
-    const wrapper = document.getElementById('wrapperFormPermuta');
-    if (wrapper && wrapper.classList.contains('hidden')) {
-      wrapper.classList.remove('hidden');
-    }
+    alternarModoPainelSuperior('intencao');
 
     const form = document.getElementById('formPermutaCadmo');
     if (form) {
@@ -2026,10 +2069,7 @@ window.OlymposViews.papiroCadmo = (function() {
       }
     }
 
-    const wrapper = document.getElementById('wrapperFormPermuta');
-    if (wrapper && wrapper.classList.contains('hidden')) {
-      wrapper.classList.remove('hidden');
-    }
+    alternarModoPainelSuperior('intencao');
 
     const form = document.getElementById('formPermutaCadmo');
     if (form) {
@@ -2039,6 +2079,459 @@ window.OlymposViews.papiroCadmo = (function() {
     if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
       window.OlymposApp.showToast('Professor(a) ' + nome + ' transferido(a) para o formulário de permuta!');
     }
+  }
+
+  /**
+   * Alterna entre a seção padrão de Consulta de Servidor (Nome/Matrícula) e o formulário de Intenção de Permuta.
+   * @param {'consulta'|'intencao'} modo
+   */
+  function alternarModoPainelSuperior(modo) {
+    const isIntencao = modo === 'intencao';
+    const painelConsulta = document.getElementById('painelConsultaServidorCadmo');
+    const wrapperForm = document.getElementById('wrapperFormPermuta');
+    const btnModoConsulta = document.getElementById('btnModoConsultaServidor');
+    const btnModoIntencao = document.getElementById('btnModoIntencaoPermuta');
+    const btnHeaderToggle = document.getElementById('btnAlternarFormPermuta');
+
+    if (painelConsulta) painelConsulta.classList.toggle('hidden', isIntencao);
+    if (wrapperForm) wrapperForm.classList.toggle('hidden', !isIntencao);
+
+    if (btnModoConsulta) {
+      btnModoConsulta.classList.toggle('active', !isIntencao);
+      btnModoConsulta.setAttribute('aria-selected', String(!isIntencao));
+    }
+    if (btnModoIntencao) {
+      btnModoIntencao.classList.toggle('active', isIntencao);
+      btnModoIntencao.setAttribute('aria-selected', String(isIntencao));
+    }
+    if (btnHeaderToggle) {
+      btnHeaderToggle.setAttribute('aria-expanded', String(isIntencao));
+      btnHeaderToggle.innerHTML = isIntencao ? '<span>🔍 Consultar Servidor</span>' : '<span>📝 Intenção de Permuta</span>';
+    }
+  }
+
+  function normalizarMatriculaComparacao(matRaw) {
+    return String(matRaw || '').replace(/[^a-zA-Z0-9]/g, '').replace(/^0+/, '').toUpperCase();
+  }
+
+  /**
+   * Busca informações consolidadas sobre determinado servidor a partir do Nome ou Matrícula,
+   * unificando vínculos da SMEB Ceará-Mirim, SEEC/RN, Transparência Intermunicipal e intenções de permuta.
+   * @param {string} termoRaw Nome completo/parcial ou matrícula funcional
+   * @returns {Array<Object>} Lista de dossiês consolidados dos servidores localizados
+   */
+  function buscarInformacoesServidor(termoRaw) {
+    const termoLimpo = String(termoRaw || '').trim();
+    if (!termoLimpo) return [];
+
+    const termoNorm = normalizarBusca(termoLimpo);
+    const tokensNome = termoNorm.split(' ').filter(Boolean);
+    const termoMatDigitos = normalizarMatriculaComparacao(termoLimpo);
+    const isBuscaNumerica = /\d/.test(termoLimpo);
+
+    function correspondeAoTermo(nomeSrv, matSrv) {
+      const nNorm = normalizarBusca(nomeSrv);
+      const mRawNorm = normalizarBusca(matSrv);
+      const mDig = normalizarMatriculaComparacao(matSrv);
+
+      if (isBuscaNumerica && termoMatDigitos.length >= 2) {
+        if (mRawNorm.includes(termoNorm) || mDig === termoMatDigitos || (termoMatDigitos.length >= 3 && mDig.includes(termoMatDigitos))) {
+          return true;
+        }
+      }
+      if (tokensNome.length > 0) {
+        return tokensNome.every(function(tk) {
+          return nNorm.includes(tk) || mRawNorm.includes(tk);
+        });
+      }
+      return false;
+    }
+
+    const dossiePorChave = {};
+
+    function obterOuCriarDossie(nomeOriginal) {
+      const chave = normalizarBusca(nomeOriginal);
+      if (!chave) return null;
+      if (!dossiePorChave[chave]) {
+        dossiePorChave[chave] = {
+          chave: chave,
+          nome: String(nomeOriginal || '').trim(),
+          cpfMascarado: null,
+          matriculas: [],
+          vinculos: [],
+          intencoesPermuta: [],
+          parecerExternoHera: null
+        };
+      }
+      return dossiePorChave[chave];
+    }
+
+    function adicionarVinculo(dossie, vinculo) {
+      if (!dossie || !vinculo) return;
+      const matStr = String(vinculo.matricula || '').trim();
+      const matKey = normalizarBusca(vinculo.ente) + '|' + normalizarMatriculaComparacao(matStr) + '|' + normalizarBusca(vinculo.cargo);
+      const jaExiste = dossie.vinculos.some(function(v) {
+        return (normalizarBusca(v.ente) + '|' + normalizarMatriculaComparacao(v.matricula) + '|' + normalizarBusca(v.cargo)) === matKey;
+      });
+      if (!jaExiste) {
+        dossie.vinculos.push(vinculo);
+      }
+      if (matStr && dossie.matriculas.indexOf(matStr) === -1) {
+        dossie.matriculas.push(matStr);
+      }
+    }
+
+    // 1. Identifica quais chaves de servidores batem com o termo (Nome ou Matrícula) em qualquer base
+    const chavesEncontradas = {};
+
+    (DOCENTES_CEARA_MIRIM || []).forEach(function(d) {
+      if (correspondeAoTermo(d.n, d.m)) {
+        chavesEncontradas[normalizarBusca(d.n)] = true;
+      }
+    });
+
+    (SERVIDORES_ESTADO_RN || []).forEach(function(d) {
+      if (correspondeAoTermo(d.n, d.m)) {
+        chavesEncontradas[normalizarBusca(d.n)] = true;
+      }
+    });
+
+    (VINCULOS_TRANSPARENCIA || []).forEach(function(v) {
+      const sr = v.servidor_referencia || {};
+      const ve = v.vinculo_externo_detectado || {};
+      if (correspondeAoTermo(sr.nome_completo, sr.matricula) || correspondeAoTermo(sr.nome_completo, ve.matricula)) {
+        chavesEncontradas[normalizarBusca(sr.nome_completo)] = true;
+      }
+    });
+
+    const bancoPermutas = obterBancoPermutas() || [];
+    bancoPermutas.forEach(function(p) {
+      if (correspondeAoTermo(p.nome, p.matricula)) {
+        chavesEncontradas[normalizarBusca(p.nome)] = true;
+      }
+    });
+
+    const listaChaves = Object.keys(chavesEncontradas);
+    if (listaChaves.length === 0) return [];
+
+    // 2. Para cada servidor identificado, consolida TODOS os vínculos municipais, estaduais, externos e intenções
+    (DOCENTES_CEARA_MIRIM || []).forEach(function(d) {
+      const k = normalizarBusca(d.n);
+      if (!chavesEncontradas[k]) return;
+      const dossie = obterOuCriarDossie(d.n);
+      adicionarVinculo(dossie, {
+        ente: d.ente || 'SMEB Ceará-Mirim',
+        matricula: d.m,
+        cargo: d.g,
+        cargaHoraria: parseCargaHoraria(d.h),
+        cargaHorariaTexto: String(d.h || '30h'),
+        lotacao: d.l || 'Rede Municipal SMEB Ceará-Mirim',
+        situacao: 'Efetivo / Ativo'
+      });
+    });
+
+    (SERVIDORES_ESTADO_RN || []).forEach(function(d) {
+      const k = normalizarBusca(d.n);
+      if (!chavesEncontradas[k]) return;
+      const dossie = obterOuCriarDossie(d.n);
+      adicionarVinculo(dossie, {
+        ente: d.ente || 'Governo do Estado (SEEC/RN)',
+        matricula: d.m,
+        cargo: d.g,
+        cargaHoraria: parseCargaHoraria(d.h),
+        cargaHorariaTexto: String(d.h || '30h'),
+        lotacao: d.l || 'Rede Estadual SEEC/RN',
+        situacao: 'Efetivo / Ativo'
+      });
+    });
+
+    (VINCULOS_TRANSPARENCIA || []).forEach(function(v) {
+      const sr = v.servidor_referencia || {};
+      const ve = v.vinculo_externo_detectado || {};
+      const k = normalizarBusca(sr.nome_completo);
+      if (!chavesEncontradas[k]) return;
+      const dossie = obterOuCriarDossie(sr.nome_completo);
+      if (sr.cpf_mascarado && !dossie.cpfMascarado) {
+        dossie.cpfMascarado = sr.cpf_mascarado;
+      }
+      if (sr.matricula) {
+        adicionarVinculo(dossie, {
+          ente: 'SMEB Ceará-Mirim',
+          matricula: sr.matricula,
+          cargo: sr.cargo || 'Professor',
+          cargaHoraria: parseCargaHoraria(sr.carga_horaria),
+          cargaHorariaTexto: sr.carga_horaria + 'h',
+          lotacao: sr.escola_origem || 'Rede Municipal SMEB Ceará-Mirim',
+          situacao: 'Efetivo / Ativo'
+        });
+      }
+      if (ve.matricula) {
+        adicionarVinculo(dossie, {
+          ente: ve.ente_origem || 'Ente Externo',
+          matricula: ve.matricula,
+          cargo: ve.cargo || 'Cargo Público',
+          cargaHoraria: parseCargaHoraria(ve.carga_horaria),
+          cargaHorariaTexto: ve.carga_horaria + 'h',
+          lotacao: ve.lotacao_orgao || ve.ente_origem || 'Órgão Externo',
+          situacao: ve.situacao_vinculo || 'Ativo'
+        });
+      }
+      if (v.auditoria_constitucional) {
+        dossie.parecerExternoHera = {
+          auditoria: v.auditoria_constitucional,
+          potencialPermuta: v.potencial_permuta || null
+        };
+      }
+    });
+
+    bancoPermutas.forEach(function(p) {
+      const k = normalizarBusca(p.nome);
+      if (!chavesEncontradas[k]) return;
+      const dossie = obterOuCriarDossie(p.nome);
+      dossie.intencoesPermuta.push(p);
+      if (dossie.vinculos.length === 0) {
+        adicionarVinculo(dossie, {
+          ente: p.municipioOrigem || 'SMEB Ceará-Mirim',
+          matricula: p.matricula,
+          cargo: p.cargo + (p.disciplina ? ' (' + p.disciplina + ')' : ''),
+          cargaHoraria: parseCargaHoraria(p.cargaHoraria),
+          cargaHorariaTexto: p.cargaHoraria || '30h',
+          lotacao: p.origem || 'Unidade Escolar',
+          situacao: 'Com Intenção de Permuta'
+        });
+      }
+    });
+
+    // 3. Calcula carga horária total e auditoria constitucional CF/88 Art. 37, XVI
+    const resultados = Object.keys(dossiePorChave).map(function(k) {
+      const d = dossiePorChave[k];
+      const chTotal = d.vinculos.reduce(function(acc, item) {
+        return acc + (Number(item.cargaHoraria) || 0);
+      }, 0);
+
+      let auditoria = null;
+      if (d.parecerExternoHera && d.parecerExternoHera.auditoria) {
+        auditoria = {
+          regular: Boolean(d.parecerExternoHera.auditoria.acumulacao_legal) && chTotal <= 60,
+          enquadramento: d.parecerExternoHera.auditoria.enquadramento,
+          parecer: d.parecerExternoHera.auditoria.parecer_hera,
+          potencialPermuta: d.parecerExternoHera.potencialPermuta
+        };
+      } else if (d.vinculos.length === 1) {
+        auditoria = {
+          regular: chTotal <= 60,
+          enquadramento: 'Vínculo Funcional Único',
+          parecer: 'Servidor possui 1 vínculo ativo identificado (' + chTotal + 'h semanais), apto para análise de permuta intermunicipal.',
+          potencialPermuta: null
+        };
+      } else if (d.vinculos.length === 2) {
+        const vA = d.vinculos[0];
+        const vB = d.vinculos[1];
+        const auditCalc = auditarAcumulacaoCF37(vA.cargo, vA.cargaHoraria, vB.cargo, vB.cargaHoraria, vA.ente, vB.ente);
+        auditoria = {
+          regular: auditCalc.acumulacao_legal,
+          enquadramento: auditCalc.enquadramento,
+          parecer: auditCalc.parecer_hera,
+          potencialPermuta: null
+        };
+      } else {
+        auditoria = {
+          regular: false,
+          enquadramento: 'Alerta CF/88 Art. 37, XVI (Múltiplos Vínculos)',
+          parecer: 'Foram identificados ' + d.vinculos.length + ' vínculos ativos somando ' + chTotal + 'h semanais. A Constituição Federal autoriza no máximo 2 vínculos cumuláveis (teto de 60h).',
+          potencialPermuta: null
+        };
+      }
+
+      return {
+        nome: d.nome,
+        cpfMascarado: d.cpfMascarado,
+        matriculas: d.matriculas,
+        cargaHorariaTotal: chTotal,
+        totalVinculos: d.vinculos.length,
+        vinculos: d.vinculos,
+        auditoriaConstitucional: auditoria,
+        intencoesPermuta: d.intencoesPermuta
+      };
+    });
+
+    resultados.sort(function(a, b) {
+      if (b.totalVinculos !== a.totalVinculos) return b.totalVinculos - a.totalVinculos;
+      return a.nome.localeCompare(b.nome, 'pt-BR');
+    });
+
+    return resultados;
+  }
+
+  function focarLotacaoServidorNoMapa(lotacao) {
+    if (!leafletMap || !lotacao) return;
+    const lotNorm = normalizarBusca(lotacao);
+    const pontos = obterTodosPontosMapa();
+    let alvo = pontos.find(function(p) {
+      const pNorm = normalizarBusca(p.nomeSimples || p.nome);
+      return pNorm && (lotNorm.includes(pNorm) || pNorm.includes(lotNorm));
+    });
+    if (!alvo) {
+      const munNorm = normalizarBusca(extrairMunicipioOrigem(lotacao));
+      alvo = pontos.find(function(p) {
+        return normalizarBusca(p.municipio) === munNorm;
+      });
+    }
+    if (alvo && Array.isArray(alvo.coords)) {
+      leafletMap.setView(alvo.coords, 14, { animate: true });
+      const mapEl = document.getElementById('mapaPermutasCadmo');
+      if (mapEl) mapEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+        window.OlymposApp.showToast('Unidade localizada no mapa: ' + (alvo.nomeSimples || alvo.nome));
+      }
+    }
+  }
+
+  function limparConsultaServidorCard() {
+    const input = document.getElementById('consultaServidorInput');
+    const btnLimpar = document.getElementById('btnLimparConsultaServidor');
+    const badge = document.getElementById('badgeStatusConsultaServidor');
+    const box = document.getElementById('resultadoConsultaServidorCadmo');
+
+    if (input) input.value = '';
+    if (btnLimpar) btnLimpar.classList.add('hidden');
+    if (badge) {
+      badge.className = 'pill-badge pill-gold';
+      badge.textContent = 'Pronto para consulta';
+    }
+    if (box) {
+      box.innerHTML =
+        '<div class="servidor-lookup-empty">' +
+          '<span>💡 Informe o <strong>nome</strong> (completo ou parcial) ou a <strong>matrícula funcional</strong> acima para exibir a ficha consolidada de vínculos, carga horária acumulada, lotação escolar e compatibilidade de permuta.</span>' +
+        '</div>';
+    }
+  }
+
+  function executarConsultaServidorCard(termoOpcional) {
+    const input = document.getElementById('consultaServidorInput');
+    const btnLimpar = document.getElementById('btnLimparConsultaServidor');
+    const badge = document.getElementById('badgeStatusConsultaServidor');
+    const box = document.getElementById('resultadoConsultaServidorCadmo');
+
+    const termo = String(termoOpcional !== undefined ? termoOpcional : (input ? input.value : '')).trim();
+    if (input && input.value.trim() !== termo) {
+      input.value = termo;
+    }
+
+    if (!termo) {
+      limparConsultaServidorCard();
+      return [];
+    }
+
+    if (btnLimpar) btnLimpar.classList.remove('hidden');
+
+    const encontrados = buscarInformacoesServidor(termo);
+    if (!box) return encontrados;
+
+    if (encontrados.length === 0) {
+      if (badge) {
+        badge.className = 'pill-badge pill-red';
+        badge.textContent = '0 encontrados';
+      }
+      box.innerHTML =
+        '<div class="servidor-lookup-empty">' +
+          '🔍 Nenhum servidor encontrado para <strong>"' + window.OlymposApp.escapeHtml(termo) + '"</strong>. Verifique a grafia do nome ou o número da matrícula.' +
+        '</div>';
+      return [];
+    }
+
+    if (badge) {
+      badge.className = 'pill-badge pill-green';
+      badge.textContent = encontrados.length + (encontrados.length === 1 ? ' servidor localizado' : ' servidores localizados');
+    }
+
+    const exibidos = encontrados.slice(0, 15);
+    let html = '';
+    if (encontrados.length > exibidos.length) {
+      html += '<div style="margin-bottom: 10px; font-size: 12px; color: var(--text-muted);">Exibindo os primeiros <strong>' + exibidos.length + '</strong> de <strong>' + encontrados.length + '</strong> servidores correspondentes. Refine o nome ou informe a matrícula exata.</div>';
+    }
+
+    html += '<div class="servidor-dossie-list">';
+    exibidos.forEach(function(srv) {
+      const aud = srv.auditoriaConstitucional || { regular: true, enquadramento: '', parecer: '' };
+      const badgeLegal = aud.regular
+        ? '<span class="pill-badge pill-green" style="font-size:11px;">⚖️ Regular (' + srv.cargaHorariaTotal + 'h semanais)</span>'
+        : '<span class="pill-badge pill-red" style="font-size:11px;">⚠️ Alerta CF/88 (' + srv.cargaHorariaTotal + 'h semanais)</span>';
+
+      const primeiroVinculo = srv.vinculos[0] || {};
+      const cpfTag = srv.cpfMascarado
+        ? '<span>CPF: <strong>' + window.OlymposApp.escapeHtml(srv.cpfMascarado) + '</strong></span>'
+        : '';
+
+      html +=
+        '<div class="servidor-dossie-card">' +
+          '<div class="servidor-dossie-top">' +
+            '<div>' +
+              '<h5 class="servidor-dossie-nome">' + window.OlymposApp.escapeHtml(srv.nome) + '</h5>' +
+              '<div class="servidor-dossie-sub">' +
+                '<span>Matrícula(s): <strong>' + window.OlymposApp.escapeHtml(srv.matriculas.join(', ')) + '</strong></span>' +
+                cpfTag +
+                '<span>Vínculos ativos: <strong>' + srv.totalVinculos + '</strong></span>' +
+              '</div>' +
+            '</div>' +
+            '<div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">' +
+              badgeLegal +
+              '<button type="button" class="btn btn-primary btn-sm" style="font-size:11.5px; padding:4px 10px;" ' +
+                'onclick="window.OlymposViews.papiroCadmo.preencherFormComDocente(\'' + window.OlymposApp.escapeHtml(srv.nome) + '\', \'' + window.OlymposApp.escapeHtml(primeiroVinculo.matricula || '') + '\', \'' + window.OlymposApp.escapeHtml(primeiroVinculo.cargo || '') + '\', \'' + window.OlymposApp.escapeHtml(primeiroVinculo.cargaHorariaTexto || '30h') + '\', \'' + window.OlymposApp.escapeHtml(primeiroVinculo.lotacao || '') + '\')">' +
+                '⚡ Iniciar Permuta' +
+              '</button>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="servidor-vinculos-grid">';
+
+      srv.vinculos.forEach(function(v) {
+        const isEstadual = String(v.ente || '').includes('Estado') || String(v.ente || '').includes('SEEC');
+        const isSMEB = String(v.ente || '').includes('Ceará-Mirim') || String(v.ente || '').includes('SMEB');
+        const pillClass = isSMEB ? 'pill-gold' : (isEstadual ? 'pill-blue' : 'pill-green');
+
+        html +=
+          '<div class="servidor-vinculo-item">' +
+            '<div style="display:flex; justify-content:space-between; align-items:center; gap:6px; flex-wrap:wrap;">' +
+              '<span class="pill-badge ' + pillClass + '" style="font-size:10.5px;">🏛️ ' + window.OlymposApp.escapeHtml(v.ente) + '</span>' +
+              '<span style="font-family:var(--font-mono); font-size:11.5px; font-weight:700; color:var(--text-main);">Mat. ' + window.OlymposApp.escapeHtml(v.matricula) + '</span>' +
+            '</div>' +
+            '<strong style="font-size:12.5px; color:var(--text-main);">' + window.OlymposApp.escapeHtml(v.cargo) + '</strong>' +
+            '<div class="servidor-vinculo-meta">Carga Horária: <strong>' + window.OlymposApp.escapeHtml(v.cargaHorariaTexto) + '</strong> • ' + window.OlymposApp.escapeHtml(v.situacao) + '</div>' +
+            '<div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:2px;">' +
+              '<span class="servidor-vinculo-meta">📍 ' + window.OlymposApp.escapeHtml(v.lotacao) + '</span>' +
+              '<button type="button" class="btn-mini" onclick="window.OlymposViews.papiroCadmo.focarLotacaoServidorNoMapa(\'' + window.OlymposApp.escapeHtml(v.lotacao) + '\')">Mapa</button>' +
+            '</div>' +
+          '</div>';
+      });
+
+      html += '</div>';
+
+      if (aud.parecer) {
+        html +=
+          '<div class="parecer-hera-box" style="margin-top:10px; border-left-color:' + (aud.regular ? '#10B981' : '#EF4444') + ';">' +
+            '<span class="parecer-hera-icon">' + (aud.regular ? '⚖️' : '⚠️') + '</span>' +
+            '<div>' +
+              '<strong style="display:block; font-size:11.5px; color:var(--text-main);">' + window.OlymposApp.escapeHtml(aud.enquadramento) + '</strong>' +
+              '<p class="parecer-hera-text" style="margin:2px 0 0 0; font-size:12px;">' + window.OlymposApp.escapeHtml(aud.parecer) + '</p>' +
+            '</div>' +
+          '</div>';
+      }
+
+      if (srv.intencoesPermuta && srv.intencoesPermuta.length > 0) {
+        const ip = srv.intencoesPermuta[0];
+        html +=
+          '<div style="margin-top:8px; padding:8px 12px; border-radius:8px; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.25); font-size:12px; color:var(--text-main);">' +
+            '🤝 <strong>Intenção de Permuta Ativa:</strong> Origem em <em>' + window.OlymposApp.escapeHtml(ip.origem) + '</em> → Destino desejado: <strong>' + window.OlymposApp.escapeHtml(ip.destino) + '</strong> (' + window.OlymposApp.escapeHtml(ip.turno || 'Turno flexível') + ').' +
+          '</div>';
+      }
+
+      html += '</div>';
+    });
+
+    html += '</div>';
+    box.innerHTML = html;
+    return encontrados;
   }
 
   function executarListagemDocentesGeral() {
@@ -2354,6 +2847,12 @@ window.OlymposViews.papiroCadmo = (function() {
     executarListagemDocentesGeral: executarListagemDocentesGeral,
     limparBuscaServidor: limparBuscaServidor,
     filtrarMatchesPorTermo: filtrarMatchesPorTermo,
-    normalizarBusca: normalizarBusca
+    normalizarBusca: normalizarBusca,
+    alternarModoPainelSuperior: alternarModoPainelSuperior,
+    buscarInformacoesServidor: buscarInformacoesServidor,
+    consultarServidorPorNomeOuMatricula: buscarInformacoesServidor,
+    executarConsultaServidorCard: executarConsultaServidorCard,
+    limparConsultaServidorCard: limparConsultaServidorCard,
+    focarLotacaoServidorNoMapa: focarLotacaoServidorNoMapa
   };
 })();

@@ -27,6 +27,7 @@ const SHELL_ASSETS = [
   './js/views/portarias.js',
   './js/views/licencas.js',
   './js/views/certificados.js',
+  './js/certificados_crypto.js',
   './js/views/diarioOficial.js',
   './js/views/papiroCadmo.js',
   './js/views/escolas.js',
@@ -76,8 +77,9 @@ self.addEventListener('fetch', function(event) {
   const isSupabase = url.hostname.includes('supabase.co');
   const isGoogleAppsScript = url.hostname.includes('script.google.com') || url.hostname.includes('script.googleusercontent.com');
   const isGoogleApis = url.hostname.includes('drive.google.com') || url.hostname.includes('docs.google.com') || url.hostname.includes('googleapis.com');
+  const isPwnedPasswords = url.hostname.includes('pwnedpasswords.com');
 
-  if (isSupabase || isGoogleAppsScript || isGoogleApis) {
+  if (isSupabase || isGoogleAppsScript || isGoogleApis || isPwnedPasswords) {
     return;
   }
 

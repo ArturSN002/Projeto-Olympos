@@ -4745,6 +4745,175 @@ body.nav-drawer-open .sidebar-backdrop,
   }
 }
 
+/* =========================================================================
+   CONSULTA DE SERVIDOR EM PERMUTAS (SUBSTITUIÇÃO DE INTENÇÃO DE PERMUTA)
+   ========================================================================= */
+.permuta-mode-switcher {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 5px;
+  margin-bottom: 14px;
+  background: var(--bg-tonal);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-pill, 999px);
+}
+
+.permuta-mode-tab {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-body, sans-serif);
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: var(--radius-pill, 999px);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.permuta-mode-tab:hover {
+  color: var(--text-main);
+}
+
+.permuta-mode-tab.active {
+  background: var(--bg-surface);
+  color: var(--text-main);
+  box-shadow: var(--shadow-subtle, 0 1px 4px rgba(0, 0, 0, 0.08));
+}
+
+.servidor-lookup-panel {
+  padding: 18px 20px;
+  margin-bottom: 24px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-md, 14px);
+  box-shadow: var(--shadow-subtle);
+}
+
+.servidor-lookup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.servidor-lookup-title {
+  margin: 2px 0 4px 0;
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.servidor-lookup-desc {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.servidor-lookup-searchbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.servidor-lookup-input-wrap {
+  flex: 1 1 280px;
+}
+
+.servidor-lookup-empty {
+  padding: 14px 16px;
+  background: var(--bg-tonal);
+  border: 1px dashed var(--border-hairline);
+  border-radius: 10px;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.servidor-dossie-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.servidor-dossie-card {
+  padding: 16px 18px;
+  background: var(--bg-elevated, var(--bg-tonal));
+  border: 1px solid var(--border-hairline);
+  border-radius: 12px;
+}
+
+.servidor-dossie-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.servidor-dossie-nome {
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0 0 4px 0;
+}
+
+.servidor-dossie-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.servidor-vinculos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  gap: 10px;
+}
+
+.servidor-vinculo-item {
+  padding: 12px 14px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.servidor-vinculo-meta {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 640px) {
+  .permuta-mode-switcher {
+    width: 100%;
+    border-radius: 12px;
+  }
+  .permuta-mode-tab {
+    flex: 1 1 100%;
+    text-align: center;
+  }
+  .servidor-lookup-searchbar .button-group {
+    width: 100%;
+  }
+  .servidor-lookup-searchbar .button-group .btn {
+    flex: 1 1 auto;
+  }
+}
+
+
 
 
 </style>

@@ -4,7 +4,7 @@
 Orquestrador Central: run_all_tests.py
 Projeto Olympos — Secretaria Municipal de Educação Básica (SMEB)
 
-Executa sequencialmente todos os 6 módulos de testes automatizados do Projeto Olympos,
+Executa sequencialmente todos os 12 módulos de testes automatizados do Projeto Olympos,
 computa estatísticas de execução (tempo, total, aprovados, falhas, erros),
 gera o relatório consolidado em Markdown (4_relatorios_implementacao/relatorio_bateria_testes.md),
 e retorna exit code 0 (Quality Gate Aprovado) ou 1 (Falha).
@@ -102,6 +102,18 @@ TEST_MODULES = [
         "module": "test_m2_verification",
         "name": "Marco 2: Busca de Servidores, Agenda Intersetorial e Persistência Supabase",
         "description": "Validação de migração 007, métodos de sincronização do SupabaseClient, motor de busca com NFD em Permutas, CRUD da agenda intersetorial e integridade do DOM."
+    },
+    {
+        "id": "M11",
+        "module": "test_m3_security_and_features",
+        "name": "Marco 3: Placeholders Dinâmicos, Dossiê de Servidor, Chave Única Supabase e Blindagem de Segurança",
+        "description": "Validação em Node VM de estado inicial '--', dossiê por nome/matrícula, derivação JWT de URL Supabase, limpeza do modal de login e auditoria CWE/RBAC/CSPRNG/PostgREST."
+    },
+    {
+        "id": "M12",
+        "module": "test_sec_options",
+        "name": "Marco 4: Opções Estratégicas de Segurança (CSP/SRI, MFA GoTrue, Gateway HMAC, Vault e ECDSA P-256)",
+        "description": "Validação das 6 opções estratégicas de segurança: CSP restritivo com SRI, HIBP k-Anonymity e GoTrue TOTP MFA, Deno Edge Gateway com HMAC e anti-replay, Rate Limiting distribuído em CacheService, prioridade Supabase Vault com RPCs de rotação e WebCrypto ECDSA P-256 para certificados."
     }
 ]
 

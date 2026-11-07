@@ -23,7 +23,7 @@ window.OlymposViews.oficios = (function() {
     if (kpiElem && inputNumero) {
       if (kpiElem.textContent.includes('--')) {
         inputNumero.value = '';
-        inputNumero.placeholder = 'Carregando...';
+        inputNumero.placeholder = '--';
       } else {
         const match = kpiElem.textContent.match(/\d+/);
         if (match) inputNumero.value = match[0];

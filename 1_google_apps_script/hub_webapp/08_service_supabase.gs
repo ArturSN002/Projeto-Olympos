@@ -415,8 +415,8 @@ const SupabaseGasClient = (function() {
       return { ok: false, mensagem: 'Papel RBAC inválido. Selecione ADMIN_GABINETE, RH_COMISSAO, PEDAGOGICO_EVENTOS ou JURIDICO.' };
     }
 
-    if (!senha || senha.length < 8) {
-      return { ok: false, mensagem: 'A senha temporária deve conter no mínimo 8 caracteres.' };
+    if (!senha || senha.length < 12) {
+      return { ok: false, mensagem: 'A senha temporária deve conter no mínimo 12 caracteres.' };
     }
 
     try {

@@ -136,6 +136,195 @@ window.OlymposApp = (function() {
     ]
   };
 
+  function atualizarTokenSessao(novoToken) {
+    if (!novoToken) return;
+    if (currentUserSession) {
+      currentUserSession.token = novoToken;
+      currentUserSession.access_token = novoToken;
+      try {
+        localStorage.setItem('olympos_session', JSON.stringify(currentUserSession));
+        sessionStorage.setItem('olympos_session_rbac', JSON.stringify(currentUserSession));
+      } catch (e) {}
+    }
+  }
+
+  function abrirModalMfaDesafio(factorId, onSucesso) {
+    const modal = document.getElementById('modalMfaDesafio');
+    if (!modal) {
+      if (onSucesso) onSucesso();
+      return;
+    }
+    const inputCode = document.getElementById('mfaChallengeCode');
+    const feedback = document.getElementById('mfaDesafioFeedback');
+    const form = document.getElementById('formMfaDesafio');
+    const btnCancel = document.getElementById('btnCancelarMfaDesafio');
+    const btnClose = document.getElementById('closeModalMfaDesafioBtn');
+
+    if (inputCode) inputCode.value = '';
+    if (feedback) {
+      feedback.textContent = '';
+      feedback.classList.add('hidden');
+    }
+    modal.classList.remove('hidden');
+    if (inputCode) inputCode.focus();
+
+    function fechar() {
+      modal.classList.add('hidden');
+      if (form) form.onsubmit = null;
+      if (btnCancel) btnCancel.onclick = null;
+      if (btnClose) btnClose.onclick = null;
+    }
+
+    if (btnCancel) {
+      btnCancel.onclick = function() {
+        fechar();
+        fazerLogout();
+      };
+    }
+    if (btnClose) {
+      btnClose.onclick = function() {
+        fechar();
+        fazerLogout();
+      };
+    }
+
+    if (form) {
+      form.onsubmit = async function(e) {
+        e.preventDefault();
+        const code = inputCode ? inputCode.value.trim() : '';
+        if (code.length !== 6) {
+          if (feedback) {
+            feedback.textContent = 'Informe os 6 dígitos numéricos do autenticador.';
+            feedback.classList.remove('hidden');
+          }
+          return;
+        }
+        try {
+          if (feedback) {
+            feedback.textContent = 'Validando código TOTP...';
+            feedback.classList.remove('hidden');
+          }
+          const verifyData = await window.OlymposSupabase.challengeAndVerifyMfa(factorId, code);
+          fechar();
+          if (onSucesso) onSucesso(verifyData && verifyData.session);
+        } catch (err) {
+          if (feedback) {
+            feedback.textContent = err.message || 'Código TOTP inválido ou expirado. Tente novamente.';
+            feedback.classList.remove('hidden');
+          }
+        }
+      };
+    }
+  }
+
+  async function abrirModalMfaEnroll(onSucesso) {
+    const modal = document.getElementById('modalMfaEnroll');
+    if (!modal) {
+      if (onSucesso) onSucesso();
+      return;
+    }
+    const qrContainer = document.getElementById('mfaQrCodeContainer');
+    const secretText = document.getElementById('mfaSecretKeyText');
+    const inputCode = document.getElementById('mfaEnrollCode');
+    const feedback = document.getElementById('mfaEnrollFeedback');
+    const form = document.getElementById('formMfaEnroll');
+    const btnCopy = document.getElementById('btnCopiarMfaSecret');
+    const btnCancel = document.getElementById('btnCancelarMfaEnroll');
+    const btnClose = document.getElementById('closeModalMfaEnrollBtn');
+
+    if (inputCode) inputCode.value = '';
+    if (feedback) {
+      feedback.textContent = '';
+      feedback.classList.add('hidden');
+    }
+    modal.classList.remove('hidden');
+
+    function fechar() {
+      modal.classList.add('hidden');
+      if (form) form.onsubmit = null;
+      if (btnCancel) btnCancel.onclick = null;
+      if (btnClose) btnClose.onclick = null;
+      if (btnCopy) btnCopy.onclick = null;
+    }
+
+    if (btnCancel) {
+      btnCancel.onclick = function() {
+        fechar();
+        fazerLogout();
+      };
+    }
+    if (btnClose) {
+      btnClose.onclick = function() {
+        fechar();
+        fazerLogout();
+      };
+    }
+
+    try {
+      if (qrContainer) qrContainer.innerHTML = '<span style="font-size:12px;color:var(--text-muted);">Gerando credencial TOTP...</span>';
+      const enrollData = await window.OlymposSupabase.enrollMfaTotp();
+      const factorId = enrollData.id;
+      const totp = enrollData.totp || {};
+
+      if (secretText) {
+        secretText.textContent = totp.secret || 'CHAVE-INDISPONÍVEL';
+      }
+      if (btnCopy) {
+        btnCopy.onclick = function() {
+          if (totp.secret && navigator.clipboard) {
+            navigator.clipboard.writeText(totp.secret).then(function() {
+              showToast('Chave secreta copiada para a área de transferência!');
+            });
+          }
+        };
+      }
+
+      if (qrContainer) {
+        if (totp.qr_code && totp.qr_code.startsWith('data:image')) {
+          qrContainer.innerHTML = '<img src="' + totp.qr_code + '" alt="QR Code TOTP" style="max-width: 170px; border-radius: 8px; border: 1px solid var(--border-hairline);" />';
+        } else if (totp.uri) {
+          qrContainer.innerHTML = '<div style="font-size: 11.5px; word-break: break-all; padding: 8px; background: var(--bg-surface); border-radius: 6px;"><code>' + totp.uri + '</code></div>';
+        } else {
+          qrContainer.innerHTML = '<span style="font-size:12px;color:var(--text-muted);">QR Code indisponível. Utilize a chave manual abaixo.</span>';
+        }
+      }
+
+      if (form) {
+        form.onsubmit = async function(e) {
+          e.preventDefault();
+          const code = inputCode ? inputCode.value.trim() : '';
+          if (code.length !== 6) {
+            if (feedback) {
+              feedback.textContent = 'Informe os 6 dígitos numéricos do autenticador.';
+              feedback.classList.remove('hidden');
+            }
+            return;
+          }
+          try {
+            if (feedback) {
+              feedback.textContent = 'Confirmando ativação TOTP...';
+              feedback.classList.remove('hidden');
+            }
+            const verifyData = await window.OlymposSupabase.challengeAndVerifyMfa(factorId, code);
+            fechar();
+            showToast('Segundo Fator (TOTP MFA) ativado com sucesso!');
+            if (onSucesso) onSucesso(verifyData && verifyData.session);
+          } catch (err) {
+            if (feedback) {
+              feedback.textContent = err.message || 'Código TOTP incorreto. Verifique o horário do seu dispositivo e tente novamente.';
+              feedback.classList.remove('hidden');
+            }
+          }
+        };
+      }
+    } catch (err) {
+      if (feedback) {
+        feedback.textContent = 'Erro ao inicializar MFA: ' + (err.message || err);
+        feedback.classList.remove('hidden');
+      }
+    }
+  }
+
   async function handleLoginSubmit() {
     const userInputEl = document.getElementById('loginUserInput') || document.getElementById('loginEmail');
     const passInputEl = document.getElementById('loginPasswordInput') || document.getElementById('loginSenha');
@@ -162,32 +351,64 @@ window.OlymposApp = (function() {
         const role = profile.role || 'RH_COMISSAO';
         const abas = RBAC_TAB_PERMISSIONS[role] || RBAC_TAB_PERMISSIONS.RH_COMISSAO;
 
-        currentUserSession = {
-          ok: true,
-          token: authResult.session.access_token,
-          access_token: authResult.session.access_token,
-          usuario: authResult.user.email,
-          nome: profile.full_name || authResult.user.email,
-          perfil: {
-            id: role,
-            nome: role,
-            abasPermitidas: abas
+        function concluirSessaoLogin(tokenAal) {
+          currentUserSession = {
+            ok: true,
+            token: tokenAal || authResult.session.access_token,
+            access_token: tokenAal || authResult.session.access_token,
+            usuario: authResult.user.email,
+            nome: profile.full_name || authResult.user.email,
+            perfil: {
+              id: role,
+              nome: role,
+              abasPermitidas: abas
+            }
+          };
+
+          localStorage.setItem('olympos_session', JSON.stringify(currentUserSession));
+          try {
+            sessionStorage.setItem('olympos_session_rbac', JSON.stringify(currentUserSession));
+            sessionStorage.setItem('olympos_rbac_profile_cache', JSON.stringify(profile));
+          } catch (eStore) {}
+          document.getElementById('loginScreen').classList.add('hidden');
+          aplicarSessaoNaInterface(currentUserSession);
+          showToast('Bem-vindo(a), ' + (profile.full_name || authResult.user.email) + '!');
+
+          if (window.OlymposViews && window.OlymposViews.visaoGeral) {
+            window.OlymposViews.visaoGeral.recarregar();
           }
-        };
-
-        localStorage.setItem('olympos_session', JSON.stringify(currentUserSession));
-        try {
-          sessionStorage.setItem('olympos_session_rbac', JSON.stringify(currentUserSession));
-          sessionStorage.setItem('olympos_rbac_profile_cache', JSON.stringify(profile));
-        } catch (eStore) {}
-        document.getElementById('loginScreen').classList.add('hidden');
-        aplicarSessaoNaInterface(currentUserSession);
-        showToast('Bem-vindo(a), ' + (profile.full_name || authResult.user.email) + '!');
-
-        if (window.OlymposViews && window.OlymposViews.visaoGeral) {
-          window.OlymposViews.visaoGeral.recarregar();
+          window.OlymposRouter.navegarPara(window.OlymposRouter.getPaginaAtual(), true);
         }
-        window.OlymposRouter.navegarPara(window.OlymposRouter.getPaginaAtual(), true);
+
+        // 1.1 Verificação de MFA GoTrue (aal1 / aal2)
+        const isMfaMandatory = (typeof window.OlymposSupabase.isRoleMfaMandatory === 'function')
+          ? window.OlymposSupabase.isRoleMfaMandatory(role)
+          : (role === 'ADMIN_GABINETE' || role === 'JURIDICO');
+
+        let mfaStatus = { supported: false, currentLevel: 'aal1', nextLevel: 'aal1', hasEnrolled: false, factors: [], verifiedFactors: [] };
+        if (typeof window.OlymposSupabase.checkMfaStatus === 'function') {
+          mfaStatus = await window.OlymposSupabase.checkMfaStatus();
+        }
+
+        if (mfaStatus && mfaStatus.supported) {
+          const currentAal = mfaStatus.currentAal || mfaStatus.currentLevel;
+          if (mfaStatus.hasEnrolled && currentAal !== 'aal2') {
+            const factorId = mfaStatus.verifiedFactors && mfaStatus.verifiedFactors[0] ? mfaStatus.verifiedFactors[0].id : (mfaStatus.factors[0] && mfaStatus.factors[0].id);
+            abrirModalMfaDesafio(factorId, function(verifiedSession) {
+              concluirSessaoLogin(verifiedSession && verifiedSession.access_token);
+            });
+            return;
+          } else if (isMfaMandatory && (!mfaStatus.hasEnrolled || currentAal !== 'aal2')) {
+            if (!mfaStatus.hasEnrolled) {
+              abrirModalMfaEnroll(function(verifiedSession) {
+                concluirSessaoLogin(verifiedSession && verifiedSession.access_token);
+              });
+              return;
+            }
+          }
+        }
+
+        concluirSessaoLogin();
         return;
       } catch (err) {
         console.warn('[handleLoginSubmit] Falha no Supabase Auth:', err);
@@ -989,6 +1210,20 @@ window.OlymposApp = (function() {
     }
   }
 
+  function csprngIndiceSeguro(maxExclusivo) {
+    if (!maxExclusivo || maxExclusivo <= 1) return 0;
+    const cryptoObj = window.crypto || window.msCrypto;
+    if (cryptoObj && typeof cryptoObj.getRandomValues === 'function') {
+      const limiteSemVies = Math.floor(0x100000000 / maxExclusivo) * maxExclusivo;
+      const buf = new Uint32Array(1);
+      do {
+        cryptoObj.getRandomValues(buf);
+      } while (buf[0] >= limiteSemVies);
+      return buf[0] % maxExclusivo;
+    }
+    throw new Error('CSPRNG (window.crypto.getRandomValues) indisponível neste navegador.');
+  }
+
   function gerarSenhaSeguraAleatoria() {
     const maiusculas = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
     const minusculas = 'abcdefghijkmnopqrstuvwxyz';
@@ -996,16 +1231,25 @@ window.OlymposApp = (function() {
     const simbolos = '!@#$%&*';
     const todos = maiusculas + minusculas + numeros + simbolos;
 
-    let senha = '';
-    senha += maiusculas.charAt(Math.floor(Math.random() * maiusculas.length));
-    senha += minusculas.charAt(Math.floor(Math.random() * minusculas.length));
-    senha += numeros.charAt(Math.floor(Math.random() * numeros.length));
-    senha += simbolos.charAt(Math.floor(Math.random() * simbolos.length));
+    const chars = [
+      maiusculas.charAt(csprngIndiceSeguro(maiusculas.length)),
+      minusculas.charAt(csprngIndiceSeguro(minusculas.length)),
+      numeros.charAt(csprngIndiceSeguro(numeros.length)),
+      simbolos.charAt(csprngIndiceSeguro(simbolos.length))
+    ];
 
-    for (let i = 4; i < 14; i++) {
-      senha += todos.charAt(Math.floor(Math.random() * todos.length));
+    for (let i = 4; i < 16; i++) {
+      chars.push(todos.charAt(csprngIndiceSeguro(todos.length)));
     }
-    return senha.split('').sort(function() { return 0.5 - Math.random(); }).join('');
+
+    // Embaralhamento imparcial de Fisher-Yates via CSPRNG
+    for (let j = chars.length - 1; j > 0; j--) {
+      const k = csprngIndiceSeguro(j + 1);
+      const tmp = chars[j];
+      chars[j] = chars[k];
+      chars[k] = tmp;
+    }
+    return chars.join('');
   }
 
   function gerarSenhaParaFormularioNovoUsuario() {
@@ -1070,9 +1314,24 @@ window.OlymposApp = (function() {
       return;
     }
 
-    if (senha.length < 8) {
-      exibirFeedbackNovoUsuario('A senha temporária deve conter no mínimo 8 caracteres.', 'erro');
+    if (senha.length < 12) {
+      exibirFeedbackNovoUsuario('A senha temporária deve conter no mínimo 12 caracteres.', 'erro');
       return;
+    }
+
+    if (window.OlymposPasswordSecurity) {
+      const comp = window.OlymposPasswordSecurity.validateComplexity(senha);
+      if (!comp.valid) {
+        exibirFeedbackNovoUsuario(comp.errors[0] || 'A senha não atende aos critérios mínimos de complexidade.', 'erro');
+        return;
+      }
+      exibirFeedbackNovoUsuario('Verificando credencial contra base de vazamentos (k-Anonymity HIBP)...', 'info');
+      const hibp = await window.OlymposPasswordSecurity.checkHaveIBeenPwned(senha);
+      if (hibp && (hibp.leaked || hibp.pwned)) {
+        const totalOcorrencias = hibp.breachCount || hibp.count || 1;
+        exibirFeedbackNovoUsuario('Esta senha consta em vazamentos públicos (' + totalOcorrencias + ' ocorrências). Gere outra senha segura.', 'erro');
+        return;
+      }
     }
 
     if (btnSubmit) {

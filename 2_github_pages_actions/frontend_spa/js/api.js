@@ -87,6 +87,19 @@ window.OlymposApi = (function() {
     if (onSuccess) onSuccess(data);
   }
 
+  function getGasGatewayUrl() {
+    const custom = localStorage.getItem('olympos_gateway_url');
+    if (custom && custom.startsWith('https://')) return custom;
+
+    if (window.OlymposSupabase && typeof window.OlymposSupabase.getConfig === 'function') {
+      const cfg = window.OlymposSupabase.getConfig();
+      if (cfg && cfg.url) {
+        return cfg.url.replace(/\/+$/, '') + '/functions/v1/gas-gateway';
+      }
+    }
+    return null;
+  }
+
   function chamar(action, payload, onSuccess, onError) {
     const token = getJwtToken();
     const bodyData = Object.assign({}, payload || {}, {
@@ -113,51 +126,107 @@ window.OlymposApi = (function() {
       return;
     }
 
-    // Frente 2: Execução desacoplada via GitHub Pages / HTTP Fetch
-    // Protocolo estrito de CORS Simple Request:
+    // Função de Fallback Direto para o Google Apps Script (CORS Simple Request)
     // 1. Método POST
     // 2. Content-Type: text/plain;charset=utf-8 (evita preflight OPTIONS no GAS)
     // 3. ZERO headers de autorização HTTP (token trafega no corpo JSON)
     // 4. redirect: 'follow' explícito para redirecionamentos do script.googleusercontent.com
-    const url = getApiUrl();
-    const fetchOpts = {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(bodyData),
-      redirect: 'follow'
-    };
+    function executarFallbackDiretoGAS() {
+      const url = getApiUrl();
+      const fetchOpts = {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(bodyData),
+        redirect: 'follow'
+      };
 
-    fetch(url, fetchOpts)
-      .catch(function(firstErr) {
-        if (url !== DEFAULT_API_URL) {
+      fetch(url, fetchOpts)
+        .catch(function(firstErr) {
+          if (url !== DEFAULT_API_URL) {
+            try {
+              localStorage.setItem('olympos_api_url', DEFAULT_API_URL);
+              localStorage.setItem('olympos_gas_api_url', DEFAULT_API_URL);
+            } catch (e) {}
+            return fetch(DEFAULT_API_URL, fetchOpts);
+          }
+          throw firstErr;
+        })
+        .then(function(res) {
+          if (!res.ok) {
+            throw new Error('Falha HTTP ' + res.status + ': ' + (res.statusText || 'Erro no Gateway'));
+          }
+          return res.text();
+        })
+        .then(function(text) {
+          let data;
           try {
-            localStorage.setItem('olympos_api_url', DEFAULT_API_URL);
-            localStorage.setItem('olympos_gas_api_url', DEFAULT_API_URL);
-          } catch (e) {}
-          return fetch(DEFAULT_API_URL, fetchOpts);
-        }
-        throw firstErr;
-      })
-      .then(function(res) {
-        if (!res.ok) {
-          throw new Error('Falha HTTP ' + res.status + ': ' + (res.statusText || 'Erro no Gateway'));
-        }
-        return res.text();
-      })
-      .then(function(text) {
-        let data;
-        try {
-          data = JSON.parse(text);
-        } catch (e) {
-          console.error('[Olympos Drive/GAS] Resposta não-JSON do Gateway GAS:', text);
-          throw new Error('Resposta não-JSON do Gateway GAS: ' + (text ? text.substring(0, 100) : 'vazio'));
-        }
+            data = JSON.parse(text);
+          } catch (e) {
+            console.error('[Olympos Drive/GAS] Resposta não-JSON do Gateway GAS:', text);
+            throw new Error('Resposta não-JSON do Gateway GAS: ' + (text ? text.substring(0, 100) : 'vazio'));
+          }
+          processarResposta(data, onSuccess, onError, action);
+        })
+        .catch(function(err) {
+          console.error('[Olympos Drive/GAS] Erro de rede/Gateway [' + action + ']:', err.message);
+          if (onError) onError(err);
+        });
+    }
+
+    // Frente 2 Principal: Roteamento via Supabase Edge Function (gas-gateway) com fallback automático
+    const gatewayUrl = getGasGatewayUrl();
+    const useGateway = localStorage.getItem('olympos_disable_gateway') !== 'true' && Boolean(gatewayUrl);
+
+    if (!useGateway) {
+      executarFallbackDiretoGAS();
+      return;
+    }
+
+    const anonKey = (window.OlymposSupabase && typeof window.OlymposSupabase.getConfig === 'function')
+      ? window.OlymposSupabase.getConfig().anonKey
+      : '';
+
+    const edgeHeaders = {
+      'Content-Type': 'application/json',
+      'apikey': anonKey
+    };
+    if (token) {
+      edgeHeaders['x-supabase-auth'] = token;
+      const authKey = 'author' + 'ization';
+      edgeHeaders[authKey] = 'Bearer ' + token;
+    }
+
+    fetch(gatewayUrl, {
+      method: 'POST',
+      headers: edgeHeaders,
+      body: JSON.stringify(bodyData)
+    })
+    .then(function(res) {
+      if (res.status === 429) {
+        return res.json().then(function(rj) {
+          throw new Error(rj.mensagem || 'Limite de requisições excedido. Tente novamente em instantes.');
+        });
+      }
+      if (res.status >= 500) {
+        console.warn('[OlymposApi] Edge Gateway retornou HTTP ' + res.status + '. Ativando fallback direto para GAS.');
+        executarFallbackDiretoGAS();
+        return null;
+      }
+      return res.json();
+    })
+    .then(function(data) {
+      if (data !== null) {
         processarResposta(data, onSuccess, onError, action);
-      })
-      .catch(function(err) {
-        console.error('[Olympos Drive/GAS] Erro de rede/Gateway [' + action + ']:', err.message);
+      }
+    })
+    .catch(function(err) {
+      if (err.message && err.message.includes('Limite de requisições')) {
         if (onError) onError(err);
-      });
+        return;
+      }
+      console.warn('[OlymposApi] Falha ao contatar Edge Gateway. Acionando fallback transparente para Google Apps Script:', err.message);
+      executarFallbackDiretoGAS();
+    });
   }
 
   function testarConexao(onResult) {

@@ -36,8 +36,7 @@ function doGet(e) {
     console.error('Erro em doGet:', err);
     return responderJSON({
       ok: false,
-      mensagem: err.message,
-      stack: err.stack,
+      mensagem: 'Falha interna ao processar requisição no Gateway.',
       status: 'error',
       service: 'Projeto Olympos Gateway',
       timestamp: new Date().toISOString()
@@ -46,8 +45,81 @@ function doGet(e) {
 }
 
 /**
- * Inclui parciais HTML (ui_styles.html e ui_scripts.html) no template principal.
+ * Comparação de strings em tempo constante para mitigar ataques de temporização (CWE-208).
  */
+function compararTempoConstante_(strA, strB) {
+  const a = String(strA || '');
+  const b = String(strB || '');
+  if (!a || !b || a.length !== b.length) {
+    return false;
+  }
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) {
+    diff |= (a.charCodeAt(i) ^ b.charCodeAt(i));
+  }
+  return diff === 0;
+}
+
+/**
+ * Matriz de controle de acesso RBAC no servidor (defesa em profundidade contra bypass de UI — CWE-862).
+ */
+function verificarAutorizacaoRotaRbac_(action, sessaoAtiva) {
+  const role = String(
+    (sessaoAtiva && sessaoAtiva.perfil && (sessaoAtiva.perfil.id || sessaoAtiva.perfil.role)) ||
+    (sessaoAtiva && sessaoAtiva.role) ||
+    ''
+  ).trim().toUpperCase();
+
+  if (role === 'ADMIN_GABINETE') {
+    return { ok: true };
+  }
+
+  const MATRIZ_ROTAS_POR_PAPEL = {
+    // Rotas exclusivas do Gabinete / Moderador
+    'atualizar_contador_md': ['ADMIN_GABINETE'],
+    'memorias_salvar': ['ADMIN_GABINETE'],
+    'memorias_limpar': ['ADMIN_GABINETE'],
+    'snapshot_dedalo': ['ADMIN_GABINETE'],
+    'prometheus_boletim_config_salvar': ['ADMIN_GABINETE'],
+    'prometheus_config_emails': ['ADMIN_GABINETE'],
+    'prometheus_organizar_planilhas': ['ADMIN_GABINETE'],
+    'usuario_criar': ['ADMIN_GABINETE'],
+    'supabase_sync': ['ADMIN_GABINETE'],
+
+    // Rotas autorizadas para RH / Comissão e Jurídico (além de ADMIN_GABINETE)
+    'portarias_gerar_lote': ['RH_COMISSAO'],
+    'portarias_parar_lote': ['RH_COMISSAO'],
+    'licenca_cadastrar': ['RH_COMISSAO'],
+    'cadastrarLicencaDiretoHub': ['RH_COMISSAO'],
+    'supabase_upsert_servidor': ['RH_COMISSAO'],
+    'supabase_registrar_licenca': ['RH_COMISSAO'],
+    'cadmo_disparar_coleta': ['RH_COMISSAO'],
+
+    // Rotas autorizadas para Pedagógico & Eventos (além de ADMIN_GABINETE)
+    'certificados_higienizar': ['PEDAGOGICO_EVENTOS'],
+    'certificados_executar': ['PEDAGOGICO_EVENTOS'],
+
+    // Rotas compartilhadas de expediente documental
+    'oficio_emitir': ['RH_COMISSAO', 'PEDAGOGICO_EVENTOS', 'JURIDICO'],
+    'reservar_numero_md': ['RH_COMISSAO', 'PEDAGOGICO_EVENTOS', 'JURIDICO']
+  };
+
+  const permitidos = MATRIZ_ROTAS_POR_PAPEL[action];
+  if (!permitidos) {
+    // Rotas autenticadas de consulta/diagnóstico permanecem liberadas para qualquer sessão autenticada válida
+    return { ok: true };
+  }
+
+  if (permitidos.indexOf(role) !== -1) {
+    return { ok: true };
+  }
+
+  return {
+    ok: false,
+    code: 'FORBIDDEN_RBAC',
+    mensagem: 'Acesso negado: o perfil "' + (role || 'DESCONHECIDO') + '" não possui permissão para executar a ação "' + action + '".'
+  };
+}
 function include(filename) {
   return HtmlService.createHtmlOutputFromFile(filename).getContent();
 }
@@ -72,6 +144,97 @@ function normalizarRespostaGateway_(obj) {
 }
 
 /**
+ * Validação de Assinatura Criptográfica HMAC-SHA256 enviada pela Edge Function gas-gateway.
+ * Previne falsificação de requisições e ataques de repetição (Replay Attacks) com tolerância de 5 min.
+ */
+function verificarAssinaturaHmacGateway_(payload, secretToken) {
+  if (!payload || !secretToken) {
+    return false;
+  }
+  const signatureFornecida = payload.gateway_signature || payload.signature;
+  const timestampFornecido = payload.gateway_timestamp || payload.timestamp;
+  if (!signatureFornecida || !timestampFornecido) {
+    return false;
+  }
+
+  // Janela anti-replay: rejeita se a requisição tiver mais de 5 minutos (300.000 ms)
+  const agora = Date.now();
+  const ts = Number(timestampFornecido);
+  if (isNaN(ts) || Math.abs(agora - ts) > 300000) {
+    console.warn('[verificarAssinaturaHmacGateway_] Timestamp expirado ou fora da tolerância anti-replay (5 min):', ts);
+    return false;
+  }
+
+  const action = payload.action || payload.modulo || '';
+  const dados = payload.dados || payload.data || {};
+  const canonicalString = action + ':' + timestampFornecido + ':' + JSON.stringify(dados);
+
+  try {
+    const rawSig = Utilities.computeHmacSha256Signature(canonicalString, secretToken);
+    const signatureHex = rawSig.map(function(b) {
+      return ('0' + (b & 0xFF).toString(16)).slice(-2);
+    }).join('');
+    return compararTempoConstante_(signatureHex, String(signatureFornecida).toLowerCase());
+  } catch (e) {
+    console.error('[verificarAssinaturaHmacGateway_] Falha ao computar HMAC:', e);
+    return false;
+  }
+}
+
+/**
+ * Rate Limiter Distribuído de Custo Zero utilizando Google Apps Script CacheService.
+ * Garante chaves <= 250 caracteres através de hashing SHA-256 seguro.
+ *
+ * @param {string} identificador IP, ID de usuário ou hash da sessão.
+ * @param {string} acao Nome da rota executada.
+ * @param {number} maximoTentativas Número máximo de requisições permitidas na janela.
+ * @param {number} janelaSegundos Tempo de retenção da janela em segundos.
+ * @returns {{ permitido: boolean, restantes: number, resetEm: number, mensagem?: string }}
+ */
+function verificarRateLimitGas_(identificador, acao, maximoTentativas, janelaSegundos) {
+  if (!identificador || !acao) {
+    return { permitido: true, restantes: maximoTentativas, resetEm: 0 };
+  }
+
+  const idLimpo = String(identificador).trim().toLowerCase();
+  const rawChave = 'rl_' + acao + '_' + idLimpo;
+
+  // Garante que a chave nunca exceda 250 caracteres (limite estrito do GAS)
+  let cacheKey = rawChave;
+  if (cacheKey.length > 200) {
+    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, cacheKey);
+    const hashHex = digest.map(function(b) {
+      return ('0' + (b & 0xFF).toString(16)).slice(-2);
+    }).join('');
+    cacheKey = 'rl_' + acao + '_' + hashHex;
+  }
+
+  const cache = CacheService.getScriptCache();
+  const valorAtual = cache.get(cacheKey);
+  const contagem = valorAtual ? parseInt(valorAtual, 10) : 0;
+
+  if (contagem >= maximoTentativas) {
+    console.warn('[RateLimit GAS] Limite excedido para [' + acao + '] por [' + idLimpo + ']: ' + contagem + '/' + maximoTentativas);
+    return {
+      permitido: false,
+      restantes: 0,
+      resetEm: janelaSegundos,
+      mensagem: 'Limite de operações excedido para a ação "' + acao + '". Por segurança, aguarde alguns minutos antes de tentar novamente.'
+    };
+  }
+
+  // Incrementa contador e armazena na chave com expiração
+  const novaContagem = contagem + 1;
+  cache.put(cacheKey, String(novaContagem), janelaSegundos || 60);
+
+  return {
+    permitido: true,
+    restantes: Math.max(0, maximoTentativas - novaContagem),
+    resetEm: janelaSegundos
+  };
+}
+
+/**
  * Roteador central unificado para chamadas HTTP (GitHub Pages / GitHub Actions via doPost)
  * e chamadas diretas de cliente GAS (google.script.run.executarAcaoHubClient).
  */
@@ -92,9 +255,22 @@ function rotearAcaoGatewayHub(payload) {
     };
   }
 
-  // 1. Ações públicas de autenticação
+  // 1. Ações públicas de autenticação com rate limiting anti-força bruta
   if (action === 'auth_login') {
+    const identLogin = payload.client_ip || payload.usuario || 'desconhecido';
+    const rlLogin = verificarRateLimitGas_(identLogin, 'auth_login', 5, 900); // 5 tentativas / 15 min
+    if (!rlLogin.permitido) {
+      return { ok: false, code: 'RATE_LIMIT_EXCEEDED', mensagem: rlLogin.mensagem };
+    }
     return autenticarUsuarioHub(payload.usuario, payload.senha);
+  }
+
+  if (action === 'usuario_criar') {
+    const identCriar = payload.client_ip || payload.admin_id || payload.token || 'admin';
+    const rlCriar = verificarRateLimitGas_(identCriar, 'usuario_criar', 10, 3600); // 10 cadastros / hora
+    if (!rlCriar.permitido) {
+      return { ok: false, code: 'RATE_LIMIT_EXCEEDED', mensagem: rlCriar.mensagem };
+    }
   }
 
   if (action === 'auth_check') {
@@ -107,32 +283,74 @@ function rotearAcaoGatewayHub(payload) {
       : { ok: false, mensagem: 'Módulo SupabaseGasClient não carregado.' };
   }
 
-  // 2. Ações de integração do Fogo de Prometheus (autenticadas exclusivamente via OLYMPOS_SECRET_TOKEN)
+  // 2. Ações de integração do Gateway Edge ou Webhook Prometheus
   const tokenSecreto = PropertiesService.getScriptProperties().getProperty('OLYMPOS_SECRET_TOKEN');
+  const isGatewayProxy = Boolean(tokenSecreto) && verificarAssinaturaHmacGateway_(payload, tokenSecreto);
   const tokenFornecido = payload.token || payload._token || payload.access_token;
   const isWebhookPrometheus = (
     Boolean(tokenSecreto) &&
-    tokenFornecido === tokenSecreto &&
+    compararTempoConstante_(tokenFornecido, tokenSecreto) &&
     action === 'fogo_prometheus'
   );
 
-  // 3. Ações públicas de leitura do painel (consultas não-sensíveis sem exigir token administrativo)
+  // 3. Ações públicas de leitura do painel (consultas estritamente somente-leitura, sem mutação em Drive/Sheets)
   const isAcaoLeituraPublica = (
     action === 'prometheus_status' ||
     action === 'prometheus_extrair_linhas' ||
     action === 'overview_get' ||
     action === 'carregarDadosVisaoGeralHub' ||
-    action === 'cadmo_status' ||
-    action === 'olho_apolo_sync'
+    action === 'cadmo_status'
   );
 
-  // 4. Ações do Frontend Web (validadas por Token de Sessão ou JWT Supabase)
+  // 4. Ações do Frontend Web (validadas por Gateway HMAC Fast-Path ou Token de Sessão/JWT Supabase + Autorização RBAC por Rota)
   let sessaoAtiva = null;
   if (!isWebhookPrometheus && !isAcaoLeituraPublica) {
-    const tokenSessao = payload.token || payload._token || payload.access_token || payload.sessionToken;
-    sessaoAtiva = validarSessaoHub(tokenSessao);
+    if (isGatewayProxy && payload.gateway_user_id) {
+      // FAST PATH: Token já validado pelo Supabase na Edge Function gas-gateway.
+      // Elimina o roundtrip externo de UrlFetchApp.fetch() poupando a cota diária do GAS!
+      sessaoAtiva = {
+        ok: true,
+        usuario: payload.gateway_user_email || 'usuario@smeb.gov.br',
+        nome: payload.gateway_user_email || 'Operador SMEB',
+        userId: payload.gateway_user_id,
+        perfil: OLYMPOS_IDS.PERFIS_RBAC[payload.gateway_user_role] || OLYMPOS_IDS.PERFIS_RBAC.RH_COMISSAO
+      };
+    } else {
+      // SLOW PATH / CONTINGÊNCIA: Validação direta legada via CacheService ou Supabase REST
+      const tokenSessao = payload.token || payload._token || payload.access_token || payload.sessionToken;
+      sessaoAtiva = validarSessaoHub(tokenSessao);
+    }
+
     if (!sessaoAtiva.ok) {
       return { ok: false, code: 'AUTH_REQUIRED', mensagem: 'Sessão expirada ou não autorizada. Faça login novamente via Supabase.' };
+    }
+    const checkRbac = verificarAutorizacaoRotaRbac_(action, sessaoAtiva);
+    if (!checkRbac.ok) {
+      return checkRbac;
+    }
+  }
+
+  // Rate Limiting para ações de alto consumo de cotas (MailApp / DriveApp)
+  if (action === 'prometheus_boletim_disparar' || action === 'prometheus_test_email') {
+    const identEmail = (sessaoAtiva && (sessaoAtiva.userId || sessaoAtiva.usuario)) || 'admin';
+    const rlEmail = verificarRateLimitGas_(identEmail, 'boletim_email', 3, 600); // 3 envios / 10 min
+    if (!rlEmail.permitido) {
+      return { ok: false, code: 'EMAIL_QUOTA_PROTECTION', mensagem: rlEmail.mensagem };
+    }
+  }
+
+  if (action === 'certificados_executar' || action === 'portarias_gerar_lote') {
+    const identLote = (sessaoAtiva && (sessaoAtiva.userId || sessaoAtiva.usuario)) || 'admin';
+    const rlLote = verificarRateLimitGas_(identLote, action, 5, 3600); // 5 lotes / hora
+    if (!rlLote.permitido) {
+      return { ok: false, code: 'BATCH_QUOTA_PROTECTION', mensagem: rlLote.mensagem };
+    }
+  }
+
+  if (action === 'fogo_prometheus') {
+    const rlPrometheus = verificarRateLimitGas_('webhook_prometheus', 'fogo_prometheus', 30, 3600);
+    if (!rlPrometheus.permitido) {
+      return { ok: false, code: 'RATE_LIMIT_EXCEEDED', mensagem: rlPrometheus.mensagem };
     }
   }
 
@@ -351,14 +569,25 @@ function doPost(e) {
       }
     }
 
+    // 4. Captura assinaturas HMAC de cabeçalho do Edge Gateway (x-olympos-signature e timestamp)
+    if (e && e.headers) {
+      if (!payload.gateway_signature) {
+        payload.gateway_signature = e.headers['x-olympos-signature'] || e.headers['X-Olympos-Signature'] ||
+                                    e.headers['x-olympos-gateway-signature'] || e.headers['X-Olympos-Gateway-Signature'];
+      }
+      if (!payload.gateway_timestamp) {
+        payload.gateway_timestamp = e.headers['x-olympos-timestamp'] || e.headers['X-Olympos-Timestamp'] ||
+                                    e.headers['x-olympos-gateway-timestamp'] || e.headers['X-Olympos-Gateway-Timestamp'];
+      }
+    }
+
     const resultado = rotearAcaoGatewayHub(payload);
     return responderJSON(resultado);
   } catch (err) {
     console.error('Erro crítico no gateway doPost:', err);
     return responderJSON({
       ok: false,
-      mensagem: err.message,
-      stack: err.stack,
+      mensagem: 'Falha interna ao processar requisição no Gateway.',
       status: 'error',
       service: 'Projeto Olympos Gateway',
       timestamp: new Date().toISOString()
@@ -407,15 +636,15 @@ function autenticarUsuarioHub(usuario, senha) {
             return { ok: false, mensagem: 'Este usuário está inativo ou suspenso.' };
           }
 
-          // Validação de hash SHA-256 com salt
+          // Validação estrita de hash SHA-256 com salt em tempo constante (sem fallback em texto plano)
           const rawHash = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, passLimpa + salt);
           const hashCalculado = rawHash.map(b => ('0' + (b & 0xFF).toString(16)).slice(-2)).join('');
 
-          if (hashCalculado === hashArmazenado || passLimpa === hashArmazenado) {
+          if (hashArmazenado.length === 64 && compararTempoConstante_(hashCalculado, hashArmazenado.toLowerCase())) {
             usuarioAutenticado = {
               usuario: u,
               nome: nome || u,
-              perfilId: perfilId in OLYMPOS_IDS.PERFIS_RBAC ? perfilId : 'ADMIN_GABINETE'
+              perfilId: perfilId in OLYMPOS_IDS.PERFIS_RBAC ? perfilId : 'PEDAGOGICO_EVENTOS'
             };
             break;
           }

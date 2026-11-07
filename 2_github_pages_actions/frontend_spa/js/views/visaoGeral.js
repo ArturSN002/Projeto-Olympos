@@ -7,11 +7,49 @@ window.OlymposViews.visaoGeral = (function() {
   let isLoaded = false;
   let lastOverviewData = null;
 
+  const APOLO_MEMORIA_URL = 'https://drive.google.com/file/d/1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_/view';
+
   function init() {
     bindEvents();
     renderizarConstelacao17Personas(lastOverviewData ? lastOverviewData.memorias : null);
     if (!isLoaded) {
+      definirEstadoInicialNumeracao();
       carregarDados();
+    }
+  }
+
+  function definirEstadoInicialNumeracao() {
+    const elOf = document.getElementById('kpiProximoOficio');
+    const elUltOf = document.getElementById('kpiUltimoOficio');
+    const elPt = document.getElementById('kpiProximaPortaria');
+    const elUltPt = document.getElementById('kpiUltimaPortaria');
+
+    if (elOf) elOf.textContent = '--';
+    if (elUltOf) {
+      elUltOf.innerHTML = '<span>Último emitido: --</span>' +
+        '<a href="' + APOLO_MEMORIA_URL + '" target="_blank" rel="noopener noreferrer" class="folder-chip">Memória de Apolo ↗</a>';
+    }
+    if (elPt) elPt.textContent = '--';
+    if (elUltPt) {
+      elUltPt.innerHTML = '<span>Última emitida: --</span>' +
+        '<a href="' + APOLO_MEMORIA_URL + '" target="_blank" rel="noopener noreferrer" class="folder-chip">Memória de Apolo ↗</a>';
+    }
+
+    const inOf = document.getElementById('inputProximoOficioMd');
+    const inPt = document.getElementById('inputProximaPortariaMd');
+    if (inOf) {
+      inOf.value = '';
+      inOf.placeholder = '--';
+    }
+    if (inPt) {
+      inPt.value = '';
+      inPt.placeholder = '--';
+    }
+
+    const inputOficioForm = document.getElementById('oficioNumeroInput');
+    if (inputOficioForm) {
+      inputOficioForm.value = '';
+      inputOficioForm.placeholder = '--';
     }
   }
 
@@ -38,21 +76,12 @@ window.OlymposViews.visaoGeral = (function() {
 
   function carregarDados() {
     renderizarConstelacao17Personas(lastOverviewData ? lastOverviewData.memorias : null);
-
-    // 1. Carrega imediatamente os contadores oficiais do Gabinete via Supabase (catalogos_json)
-    if (window.OlymposSupabase && typeof window.OlymposSupabase.carregarNumeracaoGabinete === 'function') {
-      window.OlymposSupabase.carregarNumeracaoGabinete().then(function(numData) {
-        if (numData) {
-          atualizarKpis({ numeracao: numData });
-          isLoaded = true;
-          console.log('[Olympos Visão Geral] Contadores de Gabinete 2026 sincronizados via Supabase:', numData);
-        }
-      }).catch(function(eNum) {
-        console.warn('[VisaoGeral] Falha na consulta de numeração via Supabase:', eNum);
-      });
+    if (!lastOverviewData) {
+      definirEstadoInicialNumeracao();
     }
 
-    // 2. Consulta Gateway GAS para obter dados dinâmicos do Drive / Cotas / Memórias
+    // 1. Consulta prioritária à fonte oficial (_memoria_apolo.md no Drive via Gateway GAS).
+    // Enquanto a resposta não chega, os contadores permanecem com "--" (zero números estáticos).
     window.OlymposApi.chamar('overview_get', {}, function(res) {
       const data = (res && res.data) ? res.data : res;
       if (data && (data.numeracao || data.memorias)) {
@@ -60,11 +89,24 @@ window.OlymposViews.visaoGeral = (function() {
         atualizarKpis(data);
         if (data.memorias) renderizarConstelacao17Personas(data.memorias || []);
         isLoaded = true;
+        if (data.numeracao && window.OlymposSupabase && typeof window.OlymposSupabase.sincronizarNumeracaoGabinete === 'function') {
+          window.OlymposSupabase.sincronizarNumeracaoGabinete(data.numeracao);
+        }
         console.log('[Olympos Visão Geral] Dados dinâmicos do Gabinete recebidos do Drive/GAS:', data);
       }
-    }, function(err) {
-      // Degradação graciosa mantendo a numeração e personas locais
-      console.info('[VisaoGeral] Gateway GAS em modo offline ou sem sessão. Mantendo dados Supabase.');
+    }, function() {
+      // 2. Contingência offline: utiliza apenas numeração real previamente sincronizada no Supabase (sem fallback estático)
+      console.info('[VisaoGeral] Gateway GAS indisponível. Consultando espelho dinâmico no Supabase...');
+      if (window.OlymposSupabase && typeof window.OlymposSupabase.carregarNumeracaoGabinete === 'function') {
+        window.OlymposSupabase.carregarNumeracaoGabinete().then(function(numData) {
+          if (numData) {
+            atualizarKpis({ numeracao: numData });
+            isLoaded = true;
+          }
+        }).catch(function(eNum) {
+          console.warn('[VisaoGeral] Falha na consulta de contingência via Supabase:', eNum);
+        });
+      }
     });
   }
 

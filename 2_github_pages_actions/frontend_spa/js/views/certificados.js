@@ -12,6 +12,57 @@ window.OlymposViews.certificados = (function() {
     if (!isCatalogLoaded) {
       carregarCatalogo();
     }
+    verificarTokenUrl();
+  }
+
+  async function verificarTokenUrl() {
+    const hash = window.location.hash || '';
+    let token = '';
+    if (hash.includes('?v=')) {
+      token = hash.split('?v=')[1];
+    } else if (window.location.search && window.location.search.includes('v=')) {
+      const match = window.location.search.match(/v=([^&]+)/);
+      if (match) token = match[1];
+    }
+    if (!token) return;
+
+    token = decodeURIComponent(token);
+    if (window.OlymposCertificadosCrypto) {
+      const res = await window.OlymposCertificadosCrypto.verificarCertificadoOffline(token);
+      exibirBadgeAutenticidade(res);
+    }
+  }
+
+  function exibirBadgeAutenticidade(resultado) {
+    const container = document.getElementById('liraDoneBox') || document.getElementById('view-certificados');
+    if (!container) return;
+
+    let badge = document.getElementById('liraCryptoValidationBadge');
+    if (!badge) {
+      badge = document.createElement('div');
+      badge.id = 'liraCryptoValidationBadge';
+      badge.style.cssText = 'padding:14px; margin-bottom:16px; border-radius:10px; font-size:13px; line-height:1.5; display:block;';
+      if (container.firstChild) {
+        container.insertBefore(badge, container.firstChild);
+      } else {
+        container.appendChild(badge);
+      }
+    }
+
+    if (resultado && resultado.valido) {
+      const c = resultado.certificado || {};
+      badge.className = 'pill-badge pill-green';
+      badge.innerHTML = '<strong>✓ Certificado Autêntico Verificado (ECDSA P-256)</strong><br>' +
+        'Titular: <strong>' + (window.OlymposApp ? window.OlymposApp.escapeHtml(c.recipient_name || '--') : c.recipient_name) + '</strong> • ' +
+        'Evento: <strong>' + (window.OlymposApp ? window.OlymposApp.escapeHtml(c.event_name || '--') : c.event_name) + '</strong> • ' +
+        'Carga Horária: <strong>' + (c.hours || '--') + 'h</strong> • ' +
+        'ID: <code>' + (window.OlymposApp ? window.OlymposApp.escapeHtml(c.cert_id || '--') : c.cert_id) + '</code> ' +
+        '<span style="font-size:11px;opacity:0.8;">(validado offline em ' + (resultado.tempoMs || '<2') + 'ms)</span>';
+    } else {
+      badge.className = 'pill-badge pill-amber';
+      badge.innerHTML = '<strong>⚠️ Assinatura Inválida ou Não Reconhecida</strong><br>' +
+        'O token fornecido não pôde ser autenticado pela chave pública institucional da SMEB Ceará-Mirim/RN.';
+    }
   }
 
   function bindEvents() {
@@ -201,6 +252,8 @@ window.OlymposViews.certificados = (function() {
   }
 
   return {
-    init: init
+    init: init,
+    verificarTokenUrl: verificarTokenUrl,
+    exibirBadgeAutenticidade: exibirBadgeAutenticidade
   };
 })();

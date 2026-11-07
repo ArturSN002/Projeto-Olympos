@@ -55,6 +55,8 @@ class TestSqlMigrationsAndSecuritySchema(unittest.TestCase):
         self.migration_007 = MIGRATIONS_DIR / "20261106_007_escolas_secretarias_agenda.sql"
         self.migration_008 = MIGRATIONS_DIR / "20261106_008_escolas_multi_rede_segmentos.sql"
         self.migration_009 = MIGRATIONS_DIR / "20261107_009_escolas_categoria_institucional_catalogo_json.sql"
+        self.migration_010 = MIGRATIONS_DIR / "20261107_010_security_advisor_hardening.sql"
+        self.migration_011 = MIGRATIONS_DIR / "20261107_011_vault_secrets_and_key_rotation.sql"
         self.seed_file = SEEDS_DIR / "seed_roles_mock.sql"
 
     def test_01_migrations_and_seed_files_exist(self):
@@ -66,6 +68,8 @@ class TestSqlMigrationsAndSecuritySchema(unittest.TestCase):
         self.assertTrue(self.migration_007.exists(), f"Migração 007 não encontrada: {self.migration_007}")
         self.assertTrue(self.migration_008.exists(), f"Migração 008 não encontrada: {self.migration_008}")
         self.assertTrue(self.migration_009.exists(), f"Migração 009 não encontrada: {self.migration_009}")
+        self.assertTrue(self.migration_010.exists(), f"Migração 010 não encontrada: {self.migration_010}")
+        self.assertTrue(self.migration_011.exists(), f"Migração 011 não encontrada: {self.migration_011}")
         self.assertTrue(self.seed_file.exists(), f"Seed não encontrado: {self.seed_file}")
 
     def test_02_sqlglot_syntax_validation(self):
@@ -73,7 +77,7 @@ class TestSqlMigrationsAndSecuritySchema(unittest.TestCase):
         for m_file in [
             self.migration_001, self.migration_002, self.migration_003,
             self.migration_004, self.migration_007, self.migration_008,
-            self.migration_009
+            self.migration_009, self.migration_010, self.migration_011
         ]:
             content = m_file.read_text(encoding="utf-8")
             try:
@@ -379,6 +383,35 @@ class TestSqlMigrationsAndSecuritySchema(unittest.TestCase):
         self.assertIn('CREATE POLICY "catalogos_json_select_public"', sql_009)
         self.assertIn('CREATE POLICY "catalogos_json_modify_auth"', sql_009)
         self.assertNotIn("FORCE ROW LEVEL SECURITY", sql_009.upper())
+
+    def test_15_migration_011_vault_secrets_and_key_rotation(self):
+        """Valida a migração 011: hierarquia Vault -> GUC -> private_config e RPCs de rotação de chave."""
+        self.assertTrue(self.migration_011.exists(), f"Migração 011 não encontrada: {self.migration_011}")
+        sql_011 = self.migration_011.read_text(encoding="utf-8")
+
+        # 1. get_crypto_setting deve consultar na ordem: Vault -> GUC -> private_config
+        self.assertIn("vault.decrypted_secrets", sql_011)
+        self.assertIn("current_setting", sql_011)
+        self.assertIn("private_config.crypto_settings", sql_011)
+        self.assertIn("SET search_path = public, private_config, vault, extensions", sql_011)
+
+        # 2. Inserção idempotente em vault.create_secret
+        self.assertIn("vault.create_secret", sql_011)
+        self.assertIn("DO $$", sql_011)
+
+        # 3. RPCs de rotação com SECURITY DEFINER e registro em audit_logs
+        self.assertIn("rotate_encryption_master_key", sql_011)
+        self.assertIn("rotate_blind_index_salt", sql_011)
+        self.assertIn("SECURITY DEFINER", sql_011)
+        self.assertIn("INSERT INTO public.audit_logs", sql_011)
+        self.assertIn("'KEY_ROTATION_MASTER_KEY'", sql_011)
+        self.assertIn("'KEY_ROTATION_BLIND_INDEX_SALT'", sql_011)
+
+        # 4. Menor privilégio: REVOKE de PUBLIC/anon/authenticated e GRANT exclusivo para postgres/service_role
+        self.assertIn("REVOKE ALL ON FUNCTION public.rotate_encryption_master_key(TEXT, TEXT) FROM PUBLIC, anon, authenticated;", sql_011)
+        self.assertIn("rotate_encryption_master_key(TEXT, TEXT) TO service_role, postgres;", sql_011)
+        self.assertIn("REVOKE ALL ON FUNCTION public.rotate_blind_index_salt(TEXT, TEXT) FROM PUBLIC, anon, authenticated;", sql_011)
+        self.assertIn("rotate_blind_index_salt(TEXT, TEXT) TO service_role, postgres;", sql_011)
 
 
 if __name__ == "__main__":

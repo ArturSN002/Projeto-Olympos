@@ -2,6 +2,7 @@
 <html lang="pt-BR" data-theme="light">
   <head>
     <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://unpkg.com https://*.googleusercontent.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://script.google.com https://script.googleusercontent.com https://api.pwnedpasswords.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; object-src 'none';" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Olympos — Inteligência Documental SMEB Ceará-Mirim</title>
     <!-- Favicon Oficial Olympos (SVG em Data URI para zero 404s + Fallback Físico) -->
@@ -13,6 +14,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Olympos" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
     <link rel="apple-touch-icon" href="assets/favicon.svg" />
     <script>
       (function() {
@@ -63,10 +65,7 @@
         <div class="modal-body" style="padding: 34px 32px 28px;">
           <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 10px; margin-bottom: 22px;">
             <span class="eyebrow-pill" style="margin-bottom: 2px;">ACESSO INSTITUCIONAL • SMEB</span>
-            <h2 style="font-size: 1.65rem; font-weight: 700; letter-spacing: -0.03em;">Entrar no Hub Olympos</h2>
-            <p style="margin: 0; font-size: 13.5px; color: var(--text-secondary);">
-              Identifique seu perfil setorial para carregar os módulos autorizados de governança e automação.
-            </p>
+            <h2 style="font-size: 1.65rem; font-weight: 700; letter-spacing: -0.03em; margin: 0;">Entrar no Hub Olympos</h2>
           </div>
 
           <form id="loginForm">
@@ -85,10 +84,6 @@
           </form>
 
           <div style="margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--border-hairline); text-align: center;">
-            <p class="stat-label" style="font-size: 0.82rem; color: var(--text-muted); margin: 0 0 10px 0; line-height: 1.5;">
-              Autenticação corporativa protegida via <strong>Supabase Auth &amp; RBAC</strong>.<br />
-              Utilize seu e-mail institucional e senha cadastrados no sistema.
-            </p>
             <button type="button" id="openSetupModalFromLoginBtn" class="btn btn-secondary btn-sm" style="font-size: 0.78rem; padding: 6px 14px;">
               ⚙️ Configurar Instância Supabase
             </button>
@@ -302,7 +297,7 @@
               <div class="stat-value" id="kpiProximoOficio">--</div>
               <div class="stat-meta" id="kpiUltimoOficio">
                 <span>Último emitido: --</span>
-                <a href="https://drive.google.com/file/d/1wGlcqqTuWAyy-2VRO_QqyyMcKHb4AmRn/view" target="_blank" rel="noopener" class="folder-chip">Memória de Apolo ↗</a>
+                <a href="https://drive.google.com/file/d/1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_/view" target="_blank" rel="noopener noreferrer" class="folder-chip">Memória de Apolo ↗</a>
               </div>
             </div>
 
@@ -318,7 +313,7 @@
               <div class="stat-value" id="kpiProximaPortaria">--</div>
               <div class="stat-meta" id="kpiUltimaPortaria">
                 <span>Última emitida: --</span>
-                <a href="https://drive.google.com/file/d/1wGlcqqTuWAyy-2VRO_QqyyMcKHb4AmRn/view" target="_blank" rel="noopener" class="folder-chip">Memória de Apolo ↗</a>
+                <a href="https://drive.google.com/file/d/1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_/view" target="_blank" rel="noopener noreferrer" class="folder-chip">Memória de Apolo ↗</a>
               </div>
             </div>
 
@@ -437,7 +432,7 @@
             <div class="controls-grid">
               <div class="field-group">
                 <label for="oficioNumeroInput">Nº do Ofício (Sugerido por Apolo)</label>
-                <input type="text" id="oficioNumeroInput" class="input-clean" placeholder="Ex: 155" />
+                <input type="text" id="oficioNumeroInput" class="input-clean" placeholder="--" />
               </div>
               <div class="field-group">
                 <label for="oficioDestinatarioInput">Destinatário / Cargo e Órgão</label>
@@ -880,8 +875,8 @@
                 <p class="section-desc" style="margin: 0;">Mapeamento georreferenciado interativo das unidades escolares da SMEB de Ceará-Mirim e polos metropolitanos parceiros (Natal ZN/ZS, Extremoz, São Gonçalo do Amarante e Macaíba) com motor de compatibilidade automática da persona Hera.</p>
               </div>
               <div class="button-group">
-                <button type="button" id="btnAlternarFormPermuta" class="btn btn-secondary btn-sm" aria-expanded="true">
-                  <span>+ Nova Intenção</span>
+                <button type="button" id="btnAlternarFormPermuta" class="btn btn-secondary btn-sm" aria-expanded="false">
+                  <span>📝 Intenção de Permuta</span>
                 </button>
                 <button type="button" id="btnCarregarCsvTransparencia" class="btn btn-secondary btn-sm" title="Carregar planilha CSV de servidores da transparência">
                   <span>📂 Carregar Planilha CSV</span>
@@ -925,8 +920,51 @@
               <div id="mapaPermutasCadmo" style="height: 420px; width: 100%; border-radius: var(--radius-lg); position: relative; z-index: 1;"></div>
             </div>
 
-            <!-- FORMULÁRIO DE INTENÇÃO DE PERMUTA -->
-            <div id="wrapperFormPermuta" style="margin-bottom: 24px;">
+            <!-- SELETOR DE MODO OPERACIONAL: CONSULTA DE SERVIDOR (PADRÃO) OU INTENÇÃO DE PERMUTA -->
+            <div class="permuta-mode-switcher" id="permutaModoSwitcher" role="tablist" aria-label="Modo de operação em Permutas">
+              <button type="button" id="btnModoConsultaServidor" class="permuta-mode-tab active" role="tab" aria-selected="true" aria-controls="painelConsultaServidorCadmo">
+                🔍 Consultar Servidor (Nome ou Matrícula)
+              </button>
+              <button type="button" id="btnModoIntencaoPermuta" class="permuta-mode-tab" role="tab" aria-selected="false" aria-controls="wrapperFormPermuta">
+                📝 Registrar Intenção de Permuta
+              </button>
+            </div>
+
+            <!-- SEÇÃO DE CONSULTA DE SERVIDOR POR NOME OU MATRÍCULA (SUBSTITUI INTENÇÃO DE PERMUTA POR PADRÃO) -->
+            <div id="painelConsultaServidorCadmo" class="servidor-lookup-panel" role="tabpanel" aria-labelledby="btnModoConsultaServidor">
+              <div class="servidor-lookup-header">
+                <div>
+                  <span class="section-eyebrow">DOSSIÊ FUNCIONAL MULTIRREDE • CADMO &amp; HERA</span>
+                  <h4 class="servidor-lookup-title">Buscar Informações de Servidor por Nome ou Matrícula</h4>
+                  <p class="servidor-lookup-desc">Consulte vínculos ativos na SMEB Ceará-Mirim, Governo do Estado (SEEC/RN), acúmulos constitucionais (CF/88 Art. 37, XVI) e intenções de permuta registradas.</p>
+                </div>
+                <span id="badgeStatusConsultaServidor" class="pill-badge pill-gold">Pronto para consulta</span>
+              </div>
+
+              <form id="formConsultaServidorCadmo" class="servidor-lookup-searchbar" autocomplete="off">
+                <div class="servidor-lookup-input-wrap">
+                  <label for="consultaServidorInput" class="sr-only">Nome completo ou matrícula funcional do servidor</label>
+                  <input type="text" id="consultaServidorInput" list="listaServidoresCearaMirim" class="input-clean" placeholder="Digite o nome do(a) servidor(a) ou matrícula (ex: 0070671, Jose Farias, 198432-1)..." autocomplete="off" />
+                </div>
+                <div class="button-group">
+                  <button type="submit" id="btnExecutarConsultaServidor" class="btn btn-primary btn-sm">
+                    <span>🔍 Buscar Servidor</span>
+                  </button>
+                  <button type="button" id="btnLimparConsultaServidor" class="btn btn-secondary btn-sm hidden">
+                    <span>Limpar</span>
+                  </button>
+                </div>
+              </form>
+
+              <div id="resultadoConsultaServidorCadmo" class="servidor-lookup-results">
+                <div class="servidor-lookup-empty">
+                  <span>💡 Informe o <strong>nome</strong> (completo ou parcial) ou a <strong>matrícula funcional</strong> acima para exibir a ficha consolidada de vínculos, carga horária acumulada, lotação escolar e compatibilidade de permuta.</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- FORMULÁRIO DE INTENÇÃO DE PERMUTA (ALTERNÁVEL SOB DEMANDA) -->
+            <div id="wrapperFormPermuta" class="hidden" style="margin-bottom: 24px;" role="tabpanel" aria-labelledby="btnModoIntencaoPermuta">
               <form id="formPermutaCadmo" class="controls-grid permuta-form-grid" style="grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; padding: 18px; background: var(--bg-surface); border-radius: var(--radius-md, 12px); border: 1px solid var(--border-hairline);">
                 <div class="field-group">
                   <label for="permutaNome">Nome do(a) Servidor(a)</label>
@@ -1921,17 +1959,17 @@
           </div>
         </div>
         <div class="modal-footer">
-          <a href="https://drive.google.com/file/d/1wGlcqqTuWAyy-2VRO_QqyyMcKHb4AmRn/view" target="_blank" rel="noopener" class="folder-chip">Abrir Memória no Drive ↗</a>
+          <a href="https://drive.google.com/file/d/1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_/view" target="_blank" rel="noopener noreferrer" class="folder-chip">Abrir Memória no Drive ↗</a>
           <button id="saveContadoresMdBtn" class="btn btn-primary btn-sm">Gravar Numeração</button>
         </div>
       </div>
     </div>
 
     <!-- =========================================================================
-         MODAL DE CONFIGURAÇÃO GUIADA DO SUPABASE (SETUP MODAL)
+         MODAL DE CONFIGURAÇÃO GUIADA DO SUPABASE (SETUP MODAL — CHAVE ÚNICA)
          ========================================================================= -->
     <div id="supabaseSetupModal" class="modal-backdrop" style="display: none;" role="dialog" aria-labelledby="setupModalTitle" aria-modal="true">
-      <div class="modal-card" style="max-width: 580px; width: 92%;">
+      <div class="modal-card" style="max-width: 540px; width: 92%;">
         <div class="modal-header">
           <div class="modal-title-wrap">
             <span class="badge badge-purple" style="font-size: 0.72rem; margin-bottom: 4px;">Ambiente Seguro Olympos</span>
@@ -1941,30 +1979,24 @@
         </div>
         <div class="modal-body" style="padding: 20px;">
           <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin-top: 0;">
-            O Projeto Olympos opera com arquitetura <strong>Zero Trust</strong> e <strong>Zero Senhas no Repositório</strong>.
-            Configure os parâmetros de conexão do seu projeto Supabase. Os valores são salvos apenas no
-            <code>localStorage</code> deste navegador, mantendo o repositório público 100% seguro.
+            Informe apenas a <strong>Chave Pública (Anon Key)</strong> do projeto Supabase.
+            A URL da instância e o Gateway Google Apps Script são resolvidos e vinculados automaticamente.
           </p>
 
           <form id="supabaseSetupForm">
-            <!-- Campo de identificador acessível oculto exigido por navegadores Chromium e WCAG para formulários com senha -->
+            <!-- Campos ocultos para acessibilidade Chromium/WCAG e derivação automática de URL -->
             <input type="text" name="username" autocomplete="username" class="sr-only" tabindex="-1" aria-hidden="true" value="admin-smeb" />
+            <label for="setupSupabaseUrl" class="sr-only">URL do Projeto Supabase (Derivada Automaticamente)</label>
+            <input type="url" id="setupSupabaseUrl" class="sr-only" tabindex="-1" aria-hidden="true" value="https://rbwizevjvbvjwtbwwyif.supabase.co" autocomplete="url" />
 
-            <div class="field-group" style="margin-bottom: 14px;">
-              <label for="setupSupabaseUrl">URL do Projeto Supabase (Endpoint REST)</label>
-              <input type="url" id="setupSupabaseUrl" class="input-clean" value="https://rbwizevjvbvjwtbwwyif.supabase.co" placeholder="https://seu-projeto.supabase.co" required autocomplete="url" />
-              <small style="color: var(--text-muted); font-size: 0.75rem;">Disponível em Project Settings &gt; API &gt; Project URL</small>
-            </div>
-
-            <div class="field-group" style="margin-bottom: 14px;">
-              <label for="setupSupabaseAnonKey">Chave Pública Anônima (Anon / Public Key)</label>
+            <div class="field-group" style="margin-bottom: 12px;">
+              <label for="setupSupabaseAnonKey">Chave Pública do Supabase (Anon / Public Key)</label>
               <input type="password" id="setupSupabaseAnonKey" class="input-clean" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." required autocomplete="new-password" />
               <small style="color: var(--text-muted); font-size: 0.75rem;">Disponível em Project Settings &gt; API &gt; Project API keys (anon public)</small>
             </div>
 
-            <div class="field-group" style="margin-bottom: 18px;">
-              <label for="setupGasWebhookUrl">URL do WebApp Google Apps Script (Opcional - Espelho)</label>
-              <input type="url" id="setupGasWebhookUrl" class="input-clean" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="url" />
+            <div id="setupModalDetectedInfo" style="padding: 9px 12px; border-radius: 8px; margin-bottom: 14px; font-size: 0.79rem; background: var(--bg-tonal); border: 1px solid var(--border-hairline); color: var(--text-secondary);">
+              🔒 Endpoint Supabase e Gateway GAS serão detectados automaticamente a partir da chave pública.
             </div>
 
             <div id="setupModalFeedback" style="display: none; padding: 10px; border-radius: 8px; margin-bottom: 14px; font-size: 0.85rem;"></div>
@@ -2033,10 +2065,10 @@
                 <button type="button" id="btnGerarSenhaNovoUsuario" class="btn-mini" style="font-size: 0.74rem;">🎲 Gerar Senha Segura</button>
               </div>
               <div style="display: flex; gap: 8px;">
-                <input type="password" id="novoUsuarioSenha" class="input-clean" style="font-family: var(--font-mono); font-size: 13px;" placeholder="Mínimo 8 caracteres" required autocomplete="new-password" />
+                <input type="password" id="novoUsuarioSenha" class="input-clean" style="font-family: var(--font-mono); font-size: 13px;" placeholder="Mínimo 12 caracteres (forte)" required autocomplete="new-password" />
                 <button type="button" id="btnToggleVisibilidadeSenha" class="btn btn-secondary btn-sm" style="white-space: nowrap; padding: 0 12px;" title="Alternar visibilidade da senha">👁️</button>
               </div>
-              <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 4px; display: block;">Mínimo de 8 caracteres. O usuário poderá alterar em seu próximo acesso.</small>
+              <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 4px; display: block;">Mínimo de 12 caracteres com complexidade e verificação anti-vazamento (HIBP k-Anonymity).</small>
             </div>
 
             <!-- Área de feedback / Mensagem -->
@@ -2203,8 +2235,83 @@
       </div>
     </div>
 
-    <!-- Supabase JS v2 CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- =========================================================================
+         MODAL DE DESAFIO TOTP MFA (#modalMfaDesafio)
+         ========================================================================= -->
+    <div id="modalMfaDesafio" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalMfaDesafioTitulo">
+      <div class="modal-card" style="max-width: 440px; width: 92%;">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <span class="badge badge-amber" style="font-size: 0.72rem; margin-bottom: 4px;">Segurança Reforçada GoTrue</span>
+            <h3 id="modalMfaDesafioTitulo" style="margin: 0; font-size: 1.18rem; font-weight: 700;">Autenticação em Duas Etapas (TOTP)</h3>
+          </div>
+          <button id="closeModalMfaDesafioBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal">&times;</button>
+        </div>
+        <form id="formMfaDesafio">
+          <div class="modal-body" style="padding: 20px 24px;">
+            <p class="section-desc" style="margin-top: 0; margin-bottom: 14px; font-size: 0.88rem; color: var(--text-muted);">
+              Informe o código de 6 dígitos gerado pelo seu aplicativo autenticador para confirmar sua identidade (nível <code>aal2</code>).
+            </p>
+            <div class="field-group" style="margin-bottom: 14px; text-align: center;">
+              <label for="mfaChallengeCode" style="display: block; margin-bottom: 8px; font-weight: 600;">Código de Verificação *</label>
+              <input type="text" id="mfaChallengeCode" name="mfaChallengeCode" class="input-clean" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="000000" style="font-size: 1.6rem; letter-spacing: 6px; text-align: center; font-family: monospace; width: 200px; margin: 0 auto;" autofocus autocomplete="one-time-code" required />
+            </div>
+            <div id="mfaDesafioFeedback" class="pill-badge pill-amber hidden" style="font-size: 12px; display: block; margin-bottom: 10px; text-align: center;"></div>
+          </div>
+          <div class="modal-footer" style="padding: 14px 24px; border-top: 1px solid var(--border-hairline); display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" id="btnCancelarMfaDesafio" class="btn btn-secondary btn-sm">Cancelar e Voltar</button>
+            <button type="submit" id="btnConfirmarMfaDesafio" class="btn btn-primary btn-sm">Validar e Acessar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- =========================================================================
+         MODAL DE ATIVAÇÃO / REGISTRO TOTP MFA (#modalMfaEnroll)
+         ========================================================================= -->
+    <div id="modalMfaEnroll" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalMfaEnrollTitulo">
+      <div class="modal-card" style="max-width: 500px; width: 92%;">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <span class="badge badge-purple" style="font-size: 0.72rem; margin-bottom: 4px;">Proteção de Gabinete & Jurídico</span>
+            <h3 id="modalMfaEnrollTitulo" style="margin: 0; font-size: 1.18rem; font-weight: 700;">Configurar Autenticação em Duas Etapas (TOTP)</h3>
+          </div>
+          <button id="closeModalMfaEnrollBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal">&times;</button>
+        </div>
+        <form id="formMfaEnroll">
+          <div class="modal-body" style="padding: 20px 24px; max-height: 75vh; overflow-y: auto;">
+            <p class="section-desc" style="margin-top: 0; margin-bottom: 14px; font-size: 0.88rem; color: var(--text-muted);">
+              Seu perfil de governança exige a ativação mandatória de segundo fator (MFA/TOTP). Siga os 3 passos abaixo:
+            </p>
+            <div style="background: var(--bg-tonal); padding: 12px 16px; border-radius: 8px; margin-bottom: 14px; border: 1px solid var(--border-hairline);">
+              <strong>Passo 1: Escaneie o QR Code</strong>
+              <div id="mfaQrCodeContainer" style="display: flex; justify-content: center; align-items: center; min-height: 180px; margin: 12px 0;">
+                <span style="font-size: 12px; color: var(--text-muted);">Gerando QR Code...</span>
+              </div>
+            </div>
+            <div style="background: var(--bg-tonal); padding: 12px 16px; border-radius: 8px; margin-bottom: 14px; border: 1px solid var(--border-hairline);">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <strong>Passo 2: Ou digite a chave secreta</strong>
+                <button type="button" id="btnCopiarMfaSecret" class="btn btn-secondary btn-xs" style="font-size: 11px; padding: 2px 8px;">Copiar Chave</button>
+              </div>
+              <code id="mfaSecretKeyText" style="display: block; margin-top: 8px; font-size: 13px; font-family: monospace; word-break: break-all; color: var(--accent);"></code>
+            </div>
+            <div style="margin-bottom: 10px;">
+              <label for="mfaEnrollCode" style="display: block; margin-bottom: 6px; font-weight: 600;">Passo 3: Digite o código de 6 dígitos gerado no app *</label>
+              <input type="text" id="mfaEnrollCode" name="mfaEnrollCode" class="input-clean" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="000000" style="font-size: 1.4rem; letter-spacing: 5px; text-align: center; font-family: monospace;" required />
+            </div>
+            <div id="mfaEnrollFeedback" class="pill-badge pill-amber hidden" style="font-size: 12px; display: block; margin-bottom: 10px; text-align: center;"></div>
+          </div>
+          <div class="modal-footer" style="padding: 14px 24px; border-top: 1px solid var(--border-hairline); display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" id="btnCancelarMfaEnroll" class="btn btn-secondary btn-sm">Cancelar</button>
+            <button type="submit" id="btnConfirmarMfaEnroll" class="btn btn-primary btn-sm">Confirmar e Ativar 2FA</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Supabase JS v2 CDN — Fixado em v2.119.0 com Proteção Subresource Integrity (SRI) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.js" integrity="sha384-uteMfOloLDGt042uDz+xHGF3ym63/WQ6rFq7murQRG8Ih7QrXGEGNtWd8688sb4O" crossorigin="anonymous"></script>
 
     <?!= include('ui_scripts'); ?>
 
