@@ -331,32 +331,84 @@ window.OlymposSupabase = (function() {
   // PERSISTÊNCIA: ESCOLAS MULTI-REDE E MULTI-SEGMENTOS
   // =========================================================================
 
+  function normalizarCategoriaInstitucional(cat, nome) {
+    var c = String(cat || '').trim();
+    var cLow = c.toLowerCase();
+    var nLow = String(nome || '').trim().toLowerCase();
+
+    if (c === 'Instituição' || cLow.includes('institui') || cLow.includes('sede') || nLow.includes('smeb sede') || nLow.includes('secretaria') || nLow.includes('ifrn')) {
+      return 'Instituição';
+    }
+    if (
+      c === 'Centro de Educação Infantil' ||
+      c === 'Educação Infantil' ||
+      c === 'Educação Infantil (CEI)' ||
+      cLow === 'cei' ||
+      cLow === 'cmei' ||
+      cLow === 'creche' ||
+      /^c\.?e\.?i\.?\b/i.test(nLow) ||
+      /^cmei\b/i.test(nLow) ||
+      nLow.includes('centro de educação infantil')
+    ) {
+      return 'Centro de Educação Infantil';
+    }
+    return 'Escola';
+  }
+
   function normalizarEscola(e) {
     if (!e) return e;
     var redeValida = ['Municipal', 'Estadual', 'Federal', 'Privada'].includes(e.rede) ? e.rede : 'Municipal';
+    var categoriaInstitucional = normalizarCategoriaInstitucional(e.categoria, e.nome);
     var segmentos = Array.isArray(e.segmentos) && e.segmentos.length > 0 ? e.segmentos : null;
     if (!segmentos) {
-      var cat = String(e.categoria || '').toLowerCase();
-      if (cat.includes('infantil') || cat.includes('cei') || cat.includes('cmei') || cat.includes('creche')) {
+      if (categoriaInstitucional === 'Centro de Educação Infantil') {
         segmentos = ['Ed. Infantil'];
-      } else if (cat.includes('sede')) {
+      } else if (categoriaInstitucional === 'Instituição') {
         segmentos = ['Sede Administrativa'];
-      } else if (cat.includes('especial')) {
-        segmentos = ['Educação Especial'];
-      } else if (cat.includes('medio') || cat.includes('médio')) {
-        segmentos = ['Ensino Médio'];
       } else {
         segmentos = ['Ens. Fundamental I', 'Ens. Fundamental II'];
       }
     }
+
+    var zonaValida = e.zona || 'Urbana';
+    var corPadrao = '#38BDF8';
+    var iconePadrao = 'U';
+    if (redeValida === 'Estadual') {
+      corPadrao = '#2563EB';
+      iconePadrao = '🏛';
+    } else if (redeValida === 'Federal') {
+      corPadrao = '#16A34A';
+      iconePadrao = '🎓';
+    } else if (redeValida === 'Privada') {
+      corPadrao = '#9333EA';
+      iconePadrao = '⭐';
+    } else if (categoriaInstitucional === 'Instituição') {
+      corPadrao = '#D4AF37';
+      iconePadrao = '★';
+    } else if (categoriaInstitucional === 'Centro de Educação Infantil') {
+      corPadrao = '#F59E0B';
+      iconePadrao = 'C';
+    } else if (String(zonaValida).toLowerCase() === 'rural') {
+      corPadrao = '#10B981';
+      iconePadrao = 'R';
+    }
+
+    var iconeFinal = e.icone || iconePadrao;
+    var corFinal = e.cor || corPadrao;
+    // Corrige caso legado onde uma Escola recebeu indevidamente símbolo 'C' de CEI por ofertar Ed. Infantil
+    if (categoriaInstitucional === 'Escola' && iconeFinal === 'C') {
+      iconeFinal = iconePadrao;
+      corFinal = corPadrao;
+    }
+
     return {
       id: e.id,
       nome: e.nome,
       inep: e.inep || '',
       rede: redeValida,
       segmentos: segmentos,
-      categoria: e.categoria || segmentos.join(', '),
-      zona: e.zona || 'Urbana',
+      categoria: categoriaInstitucional,
+      zona: zonaValida,
       bairroDistrito: e.bairroDistrito || e.bairro_distrito || '',
       endereco: e.endereco || '',
       lat: typeof e.lat === 'number' ? e.lat : parseFloat(e.latitude || 0),
@@ -364,8 +416,8 @@ window.OlymposSupabase = (function() {
       turnos: Array.isArray(e.turnos) ? e.turnos : ['Matutino', 'Vespertino'],
       telefone: e.telefone || '',
       diretor: e.diretor || '',
-      cor: e.cor || '#38BDF8',
-      icone: e.icone || '🏫',
+      cor: corFinal,
+      icone: iconeFinal,
       status: e.status || 'ATIVA'
     };
   }
@@ -377,13 +429,27 @@ window.OlymposSupabase = (function() {
         const { data, error } = await client
           .from('escolas')
           .select('*')
-          .order('nome');
+          .order('id');
         if (!error && Array.isArray(data) && data.length > 0) {
           const adaptadas = data.map(normalizarEscola);
           try {
             localStorage.setItem('olympos_escolas_municipais', JSON.stringify(adaptadas));
           } catch (eStorage) {}
           return adaptadas;
+        }
+
+        // Fallback secundário: carrega arquivo JSON estruturado em public.catalogos_json
+        const { data: catDoc, error: catErr } = await client
+          .from('catalogos_json')
+          .select('conteudo')
+          .eq('chave', 'escolas_ceara_mirim')
+          .maybeSingle();
+        if (!catErr && catDoc && Array.isArray(catDoc.conteudo) && catDoc.conteudo.length > 0) {
+          const adaptadasJson = catDoc.conteudo.map(normalizarEscola);
+          try {
+            localStorage.setItem('olympos_escolas_municipais', JSON.stringify(adaptadasJson));
+          } catch (eStoreJson) {}
+          return adaptadasJson;
         }
       } catch (err) {
         console.warn('[OlymposSupabase] Falha ao carregar escolas do Supabase. Utilizando cache local:', err);
@@ -402,10 +468,41 @@ window.OlymposSupabase = (function() {
     return (window.BANCO_SEMENTE_ESCOLAS || []).map(normalizarEscola);
   }
 
+  async function sincronizarCatalogoEscolasJson(listaEscolas) {
+    if (!Array.isArray(listaEscolas)) return false;
+    const client = getClient();
+    if (!client) return false;
+    const sess = await getSession();
+    if (!sess) return false;
+
+    const normalizadas = listaEscolas.map(normalizarEscola);
+    try {
+      const { error } = await client.from('catalogos_json').upsert({
+        chave: 'escolas_ceara_mirim',
+        descricao: 'Catálogo JSON georreferenciado oficial das Escolas, CEIs e Instituições de Ceará-Mirim/RN',
+        versao: 2,
+        conteudo: normalizadas
+      });
+      if (error) {
+        console.warn('[OlymposSupabase] Aviso ao atualizar catalogos_json no Supabase:', error);
+        return false;
+      }
+      return true;
+    } catch (e) {
+      console.warn('[OlymposSupabase] Exceção ao sincronizar catalogos_json:', e);
+      return false;
+    }
+  }
+
   async function sincronizarEscola(escola) {
     if (!escola || !escola.id) return false;
     const client = getClient();
     if (client) {
+      const sess = await getSession();
+      if (!sess) {
+        console.info('[OlymposSupabase] Escola salva localmente (autentique-se no Supabase para sincronizar na nuvem).');
+        return false;
+      }
       const normalizada = normalizarEscola(escola);
       const payload = {
         id: normalizada.id,
@@ -423,7 +520,7 @@ window.OlymposSupabase = (function() {
         telefone: normalizada.telefone || '',
         diretor: normalizada.diretor || '',
         cor: normalizada.cor || '#38BDF8',
-        icone: normalizada.icone || '🏫',
+        icone: normalizada.icone || 'U',
         status: normalizada.status || 'ATIVA'
       };
       try {
@@ -445,6 +542,8 @@ window.OlymposSupabase = (function() {
     if (!escolaId) return false;
     const client = getClient();
     if (client) {
+      const sess = await getSession();
+      if (!sess) return false;
       try {
         const { error } = await client.from('escolas').delete().eq('id', escolaId);
         if (error) {
@@ -585,6 +684,11 @@ window.OlymposSupabase = (function() {
     if (!evento || !evento.id) return false;
     const client = getClient();
     if (client) {
+      const sess = await getSession();
+      if (!sess) {
+        console.info('[OlymposSupabase] Evento de agenda salvo localmente (autentique-se no Supabase para sincronizar na nuvem).');
+        return false;
+      }
       const payload = {
         id: evento.id,
         ano: parseInt(evento.ano, 10) || 2026,
@@ -620,6 +724,8 @@ window.OlymposSupabase = (function() {
     if (!eventoId) return false;
     const client = getClient();
     if (client) {
+      const sess = await getSession();
+      if (!sess) return false;
       try {
         const { error } = await client.from('calendario_agenda').delete().eq('id', eventoId);
         if (error) {
@@ -646,8 +752,10 @@ window.OlymposSupabase = (function() {
     getJwtToken: getJwtToken,
     getCachedProfile: getCachedProfile,
     buscarPublicacoesSemanticas: buscarPublicacoesSemanticas,
+    normalizarCategoriaInstitucional: normalizarCategoriaInstitucional,
     carregarEscolas: carregarEscolas,
     sincronizarEscola: sincronizarEscola,
+    sincronizarCatalogoEscolasJson: sincronizarCatalogoEscolasJson,
     excluirEscola: excluirEscola,
     carregarSecretariasParceiras: carregarSecretariasParceiras,
     sincronizarSecretariaParceira: sincronizarSecretariaParceira,

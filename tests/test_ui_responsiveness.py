@@ -568,6 +568,26 @@ class TestUiResponsivenessAndDesignSystem(unittest.TestCase):
         self.assertIn('#diarioArchBanner', css_text)
         self.assertIn('#cadmoEsquemaCanonicoCol', css_text)
 
+    def test_23_dark_mode_leaflet_popup_contrast_and_escolas_responsive_toolbar(self):
+        """Assegura alto contraste dos popups Leaflet no modo escuro e responsividade da toolbar/modal de Escolas."""
+        html_text = HTML_INDEX.read_text(encoding="utf-8")
+        css_text = CSS_FILE.read_text(encoding="utf-8")
+
+        # 1. Regras explícitas de alto contraste para popups claros no modo escuro
+        self.assertIn('[data-theme="dark"] .leaflet-popup-content-wrapper .pill-segmento-mini', css_text)
+        self.assertIn('[data-theme="dark"] .leaflet-popup-content-wrapper .btn-map-action', css_text)
+        self.assertIn('.escola-map-popup', css_text)
+        self.assertIn('.escola-popup-title', css_text)
+        self.assertIn('.escola-popup-coords', css_text)
+
+        # 2. Toolbar responsiva do Mapa das Escolas e grids de modal colapsáveis no mobile
+        self.assertIn('escolas-filter-toolbar', html_text)
+        self.assertIn('.escolas-filter-toolbar', css_text)
+        self.assertIn('modal-grid-3col', html_text)
+        self.assertIn('modal-grid-2col', html_text)
+        self.assertIn('.modal-grid-3col', css_text)
+        self.assertIn('.modal-grid-2col', css_text)
+
 
 if __name__ == "__main__":
     unittest.main()

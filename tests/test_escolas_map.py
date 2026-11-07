@@ -101,10 +101,14 @@ class TestEscolasMapFeature(unittest.TestCase):
             self.assertIsInstance(esc["lat"], (int, float), f"Latitude de {esc['nome']} não é numérica")
             self.assertIsInstance(esc["lng"], (int, float), f"Longitude de {esc['nome']} não é numérica")
 
-        # Representatividade: deve conter Sede, Ensino Fundamental, Polo Rural e Educação Infantil (CEIs)
-        self.assertTrue(any("sede" in c.lower() for c in categorias), "Ausência de Sede Administrativa no catálogo")
+        # Padronização estrita das 3 Categorias Institucionais oficiais
+        categorias_oficiais = {"Escola", "Centro de Educação Infantil", "Instituição"}
+        self.assertEqual(
+            categorias,
+            categorias_oficiais,
+            f"Categorias fora do padrão oficial detectadas: {categorias ^ categorias_oficiais}"
+        )
         self.assertTrue(any("rural" in z.lower() for z in zonas), "Ausência de escolas rurais no catálogo")
-        self.assertTrue(any("infantil" in c.lower() or "cei" in c.lower() or "cmei" in c.lower() for c in categorias), "Ausência de CEIs/Educação Infantil no catálogo")
         self.assertTrue(any(esc["nome"].startswith("CEI ") for esc in escolas), "Ausência de unidades com nomenclatura oficial 'CEI ' no catálogo")
         self.assertFalse(any("CMEI" in esc["nome"] for esc in escolas), "Presença indevida da sigla obsoleta 'CMEI' nos nomes das escolas")
 
@@ -245,6 +249,7 @@ class TestEscolasMapFeature(unittest.TestCase):
 
         // Mock leve do ambiente de browser
         global.window = global;
+        global.window.addEventListener = () => {{}};
         global.document = {{
           getElementById: () => null,
           querySelectorAll: () => []
@@ -370,6 +375,7 @@ class TestEscolasMapFeature(unittest.TestCase):
         const dataCode = fs.readFileSync({json.dumps(str(ESCOLAS_DATA_JS))}, 'utf8');
 
         global.window = global;
+        global.window.addEventListener = () => {{}};
         global.document = {{
           getElementById: () => null,
           querySelectorAll: () => []
@@ -465,6 +471,115 @@ class TestEscolasMapFeature(unittest.TestCase):
             'id="selectFiltroRedeEscolas"' in html or 'data-filtro-rede' in html,
             "Controle de filtragem por Rede ausente na barra de filtros do mapa"
         )
+
+    def test_11_categoria_institucional_and_cei_symbol_isolation(self):
+        """Garante que Escolas com Ed. Infantil + Fundamental I jamais recebam símbolo 'C' de CEI e que init() sincronize do Supabase."""
+        html = INDEX_HTML.read_text(encoding="utf-8")
+
+        # Verifica opções padronizadas no select #escolaCategoria
+        sel_match = re.search(r'<select[^>]*id="escolaCategoria"[^>]*>([\s\S]*?)</select>', html)
+        self.assertIsNotNone(sel_match, "Select #escolaCategoria não encontrado em index.html")
+        sel_body = sel_match.group(1)
+        self.assertIn('value="Escola"', sel_body)
+        self.assertIn('value="Centro de Educação Infantil"', sel_body)
+        self.assertIn('value="Instituição"', sel_body)
+
+        node_script = f"""
+        const fs = require('fs');
+        const dataCode = fs.readFileSync({json.dumps(str(ESCOLAS_DATA_JS))}, 'utf8');
+        const escolasCode = fs.readFileSync({json.dumps(str(ESCOLAS_VIEW_JS))}, 'utf8');
+
+        global.window = global;
+        global.window.addEventListener = () => {{}};
+        global.document = {{
+          getElementById: () => null,
+          querySelectorAll: () => []
+        }};
+        global.navigator = {{ clipboard: null }};
+
+        let store = {{}};
+        global.localStorage = {{
+          getItem: (k) => store[k] || null,
+          setItem: (k, v) => {{ store[k] = String(v); }},
+          removeItem: (k) => {{ delete store[k]; }}
+        }};
+
+        let supabaseCarregou = false;
+        global.OlymposSupabase = {{
+          carregarEscolas: async () => {{
+            supabaseCarregou = true;
+            return window.BANCO_SEMENTE_ESCOLAS;
+          }},
+          sincronizarCatalogoEscolasJson: async () => ({{ ok: true }})
+        }};
+
+        eval(dataCode);
+        eval(escolasCode);
+
+        const v = window.OlymposViews.escolas;
+
+        // 1. Verifica no catálogo semente que nenhuma 'Escola' possui icone 'C' ou cor '#F59E0B'
+        const escolasMulti = window.BANCO_SEMENTE_ESCOLAS.filter(
+          e => e.categoria === 'Escola' && Array.isArray(e.segmentos) && e.segmentos.includes('Ed. Infantil')
+        );
+        if (escolasMulti.length === 0) throw new Error('Catálogo deve ter Escolas com Ed. Infantil + Fundamental');
+        for (const esc of escolasMulti) {{
+          if (esc.icone === 'C' || esc.cor === '#F59E0B') {{
+            throw new Error('Escola multi-segmento recebeu indevidamente símbolo/cor de CEI: ' + esc.nome);
+          }}
+        }}
+
+        // 2. Simula registro corrompido legado no localStorage (Escola com categoria concatenada e icone 'C')
+        store['olympos_escolas_municipais'] = JSON.stringify([
+          {{
+            id: 'esc_bug_cei',
+            nome: 'E.M. Teste Infantil e Fundamental',
+            rede: 'Municipal',
+            categoria: 'Ed. Infantil, Ens. Fundamental I',
+            segmentos: ['Ed. Infantil', 'Ens. Fundamental I'],
+            zona: 'Urbana',
+            bairroDistrito: 'Centro',
+            lat: -5.634,
+            lng: -35.428,
+            icone: 'C',
+            cor: '#F59E0B'
+          }},
+          {{
+            id: 'esc_cei_real',
+            nome: 'CEI Pequeno Príncipe',
+            rede: 'Municipal',
+            categoria: 'Centro de Educação Infantil',
+            segmentos: ['Ed. Infantil'],
+            zona: 'Urbana',
+            bairroDistrito: 'Centro',
+            lat: -5.635,
+            lng: -35.429
+          }}
+        ]);
+
+        const sanitizadas = v.obterEscolas();
+        const escCorrigida = sanitizadas.find(e => e.id === 'esc_bug_cei');
+        const ceiReal = sanitizadas.find(e => e.id === 'esc_cei_real');
+
+        if (escCorrigida.categoria !== 'Escola') throw new Error('Categoria não sanitizada para Escola: ' + escCorrigida.categoria);
+        if (escCorrigida.icone === 'C' || escCorrigida.cor === '#F59E0B') throw new Error('Ícone/cor C residual não foi corrigido na Escola');
+        if (ceiReal.categoria !== 'Centro de Educação Infantil' || ceiReal.icone !== 'C') throw new Error('CEI legítimo deve manter símbolo C');
+
+        // 3. Verifica que init() dispara sincronização automática imediata com Supabase
+        v.init();
+        if (!supabaseCarregou) throw new Error('init() deve invocar OlymposSupabase.carregarEscolas() ao entrar na interface');
+
+        console.log('CEI_ISOLATION_AND_SUPABASE_INIT_OK');
+        """
+        proc = subprocess.run(
+            ["node", "-e", node_script],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=10
+        )
+        self.assertEqual(proc.returncode, 0, f"Falha no isolamento de símbolo CEI / Supabase init: {proc.stderr}")
+        self.assertIn("CEI_ISOLATION_AND_SUPABASE_INIT_OK", proc.stdout)
 
 
 if __name__ == "__main__":

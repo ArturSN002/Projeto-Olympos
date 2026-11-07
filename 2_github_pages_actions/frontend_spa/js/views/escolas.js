@@ -1,8 +1,9 @@
 /**
- * Hub Olympos V2.2 — Módulo de Visualização e Gestão: Escolas Municipais de Ceará-Mirim
+ * Hub Olympos V2.3 — Módulo de Visualização e Gestão: Escolas, CEIs e Instituições de Ceará-Mirim
  * Georreferenciamento de precisão com Leaflet.js 1.9.4, marcadores circulares temáticos,
- * popups ricos, CRUD completo na própria interface com captura de coordenadas por clique,
- * persistência offline-first em localStorage e importação/exportação JSON.
+ * sincronização automática imediata com Supabase (`public.escolas` + `public.catalogos_json`),
+ * Categorias Institucionais padronizadas ('Escola', 'Centro de Educação Infantil', 'Instituição'),
+ * popups ricos legíveis nos modos claro/escuro e CRUD completo na interface.
  */
 window.OlymposViews = window.OlymposViews || {};
 
@@ -15,11 +16,19 @@ window.OlymposViews.escolas = (function() {
   var tempClickMarker = null;
   var markerMap = {}; // id -> L.marker
   var observerEscolas = null;
+  var supabaseInicialCarregado = false;
 
   var activeCategoryFilter = 'todas';
+  var activeZonaFilter = 'todas';
   var activeRedeFilter = 'todas';
   var activeSegmentFilter = 'todos';
   var currentSearchTerm = '';
+
+  var CATEGORIAS_INSTITUCIONAIS = [
+    'Escola',
+    'Centro de Educação Infantil',
+    'Instituição'
+  ];
 
   // Bounding box territorial aproximada de Ceará-Mirim/RN
   var BOUNDS_CEARA_MIRIM = {
@@ -30,30 +39,72 @@ window.OlymposViews.escolas = (function() {
   };
 
   /**
-   * Converte uma categoria legada em segmentos educacionais canônicos
+   * Normaliza qualquer categoria legada ou informada nos 3 tipos institucionais oficiais:
+   * 'Escola', 'Centro de Educação Infantil' ou 'Instituição'.
+   * Garante que uma Escola ofertando Ed. Infantil + Ens. Fundamental I jamais vire CEI.
    */
-  function normalizarSegmentosDeCategoria(cat) {
-    var c = String(cat || '').toLowerCase();
-    if (c.includes('infantil') || c.includes('cei') || c.includes('cmei') || c.includes('creche')) {
-      return ['Ed. Infantil'];
+  function normalizarCategoriaInstitucional(cat, nome) {
+    var c = String(cat || '').trim();
+    var cLow = c.toLowerCase();
+    var nLow = String(nome || '').trim().toLowerCase();
+
+    if (
+      c === 'Instituição' ||
+      cLow === 'instituicao' ||
+      cLow.includes('institui') ||
+      cLow.includes('sede') ||
+      nLow.includes('smeb sede') ||
+      nLow.includes('secretaria') ||
+      nLow.includes('ifrn')
+    ) {
+      return 'Instituição';
     }
-    if (c.includes('sede')) {
-      return ['Sede Administrativa'];
+
+    if (
+      c === 'Centro de Educação Infantil' ||
+      c === 'Educação Infantil' ||
+      c === 'Educação Infantil (CEI)' ||
+      cLow === 'cei' ||
+      cLow === 'cmei' ||
+      cLow === 'creche' ||
+      /^c\.?e\.?i\.?\b/i.test(nLow) ||
+      /^cmei\b/i.test(nLow) ||
+      nLow.includes('centro de educação infantil')
+    ) {
+      return 'Centro de Educação Infantil';
     }
-    if (c.includes('especial')) {
-      return ['Educação Especial'];
-    }
-    if (c.includes('medio') || c.includes('médio')) {
-      return ['Ensino Médio'];
-    }
-    if (c.includes('fundamental') || c.includes('rural')) {
-      return ['Ens. Fundamental I', 'Ens. Fundamental II'];
-    }
-    return [cat || 'Ensino Fundamental'];
+
+    return 'Escola';
   }
 
   /**
-   * Ponto de entrada chamado pelo roteador modular
+   * Converte uma categoria em segmentos educacionais canônicos caso segmentos não tenha sido informado
+   */
+  function normalizarSegmentosDeCategoria(cat, nome) {
+    var catInst = normalizarCategoriaInstitucional(cat, nome);
+    var cLow = String(cat || '').toLowerCase();
+
+    if (catInst === 'Centro de Educação Infantil') {
+      return ['Ed. Infantil'];
+    }
+    if (catInst === 'Instituição') {
+      if (String(nome || '').toLowerCase().includes('ifrn')) {
+        return ['Ensino Médio', 'Ensino Técnico'];
+      }
+      return ['Sede Administrativa'];
+    }
+    if (cLow.includes('especial')) {
+      return ['Educação Especial'];
+    }
+    if (cLow.includes('medio') || cLow.includes('médio')) {
+      return ['Ensino Médio'];
+    }
+    return ['Ens. Fundamental I', 'Ens. Fundamental II'];
+  }
+
+  /**
+   * Ponto de entrada chamado pelo roteador modular.
+   * Renderiza de imediato e dispara sincronização automática com o Supabase (`escolas` / `catalogos_json`).
    */
   function init() {
     garantirBancoInicial();
@@ -61,53 +112,94 @@ window.OlymposViews.escolas = (function() {
     inicializarMapa();
     renderizarInterface();
     observarVisibilidadePagina();
+    sincronizarInicialComSupabase();
   }
 
   /**
-   * Garante inicialização no localStorage a partir do catálogo semente
+   * Carrega imediatamente as coordenadas e registros oficiais armazenados no Supabase
+   * assim que o usuário entra na interface, atualizando localStorage, KPIs, mapa e tabela.
+   */
+  function sincronizarInicialComSupabase() {
+    if (supabaseInicialCarregado) return;
+    if (!window.OlymposSupabase || typeof window.OlymposSupabase.carregarEscolas !== 'function') return;
+
+    supabaseInicialCarregado = true;
+    try {
+      var promessa = window.OlymposSupabase.carregarEscolas();
+      if (promessa && typeof promessa.then === 'function') {
+        promessa.then(function(listaRemota) {
+          if (Array.isArray(listaRemota) && listaRemota.length > 0) {
+            var saneadas = listaRemota.map(sanitizarRegistroEscola);
+            salvarEscolas(saneadas);
+            renderizarInterface();
+          }
+        }).catch(function(err) {
+          console.warn('[EscolasView] Falha ao sincronizar catálogo inicial do Supabase:', err);
+        });
+      }
+    } catch (eSync) {
+      console.warn('[EscolasView] Exceção ao disparar carga inicial do Supabase:', eSync);
+    }
+  }
+
+  /**
+   * Garante integridade de categoria institucional, cor e símbolo de cada unidade
+   */
+  function sanitizarRegistroEscola(esc) {
+    if (!esc) return esc;
+    var copia = Object.assign({}, esc);
+
+    if (typeof copia.nome === 'string' && copia.nome.includes('CMEI')) {
+      copia.nome = copia.nome.replace(/\bCMEI\b/g, 'CEI');
+    }
+
+    if (!copia.rede || !['Municipal', 'Estadual', 'Federal', 'Privada'].includes(copia.rede)) {
+      copia.rede = 'Municipal';
+    }
+
+    var catAntiga = copia.categoria;
+    copia.categoria = normalizarCategoriaInstitucional(catAntiga, copia.nome);
+
+    if (!Array.isArray(copia.segmentos) || copia.segmentos.length === 0) {
+      copia.segmentos = normalizarSegmentosDeCategoria(catAntiga, copia.nome);
+    }
+
+    var corEsperada = obterCorPorRedeECategoria(copia.rede, copia.categoria, copia.zona);
+    var iconeEsperado = obterIconePorRedeECategoria(copia.rede, copia.categoria, copia.zona);
+
+    // Repara unidades Escola que haviam recebido indevidamente ícone 'C' ou cor âmbar de CEI
+    if (!copia.icone || (copia.categoria === 'Escola' && copia.icone === 'C')) {
+      copia.icone = iconeEsperado;
+    }
+    if (!copia.cor || (copia.categoria === 'Escola' && copia.cor === '#F59E0B')) {
+      copia.cor = corEsperada;
+    }
+
+    return copia;
+  }
+
+  /**
+   * Garante inicialização no localStorage a partir do catálogo semente e auto-repara categorias/símbolos
    */
   function garantirBancoInicial() {
     try {
       var gravado = localStorage.getItem(STORAGE_KEY);
       if (!gravado || gravado === '[]') {
         var semente = (typeof window.BANCO_SEMENTE_ESCOLAS !== 'undefined' && Array.isArray(window.BANCO_SEMENTE_ESCOLAS))
-          ? window.BANCO_SEMENTE_ESCOLAS
+          ? window.BANCO_SEMENTE_ESCOLAS.map(sanitizarRegistroEscola)
           : [];
         if (semente.length > 0) {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(semente));
         }
       } else {
-        // Auto-migração retrocompatível: CMEI -> CEI e enriquecimento com rede e segmentos
         try {
           var arr = JSON.parse(gravado);
           if (Array.isArray(arr)) {
-            var migrado = false;
-            arr.forEach(function(esc) {
-              if (!esc) return;
-              if (typeof esc.nome === 'string' && esc.nome.includes('CMEI')) {
-                esc.nome = esc.nome.replace(/\bCMEI\b/g, 'CEI');
-                migrado = true;
-              }
-              if (typeof esc.categoria === 'string' && esc.categoria.includes('CMEI')) {
-                esc.categoria = esc.categoria.replace(/\bCMEI\b/g, 'CEI');
-                migrado = true;
-              }
-              if (!esc.rede || !['Municipal', 'Estadual', 'Federal', 'Privada'].includes(esc.rede)) {
-                esc.rede = 'Municipal';
-                migrado = true;
-              }
-              if (!Array.isArray(esc.segmentos) || esc.segmentos.length === 0) {
-                esc.segmentos = normalizarSegmentosDeCategoria(esc.categoria);
-                migrado = true;
-              }
-              if (!esc.categoria) {
-                esc.categoria = esc.segmentos.join(', ');
-                migrado = true;
-              }
-            });
-            if (migrado) {
-              localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
-              console.log('[EscolasView] Auto-migração retrocompatível (rede e segmentos) executada no localStorage.');
+            var antesStr = JSON.stringify(arr);
+            var saneadoArr = arr.filter(Boolean).map(sanitizarRegistroEscola);
+            var depoisStr = JSON.stringify(saneadoArr);
+            if (antesStr !== depoisStr) {
+              localStorage.setItem(STORAGE_KEY, depoisStr);
             }
           }
         } catch (eMig) {
@@ -128,7 +220,7 @@ window.OlymposViews.escolas = (function() {
       if (raw) {
         var arr = JSON.parse(raw);
         if (Array.isArray(arr) && arr.length > 0) {
-          return arr;
+          return arr.filter(Boolean).map(sanitizarRegistroEscola);
         }
       }
     } catch (e) {
@@ -178,7 +270,6 @@ window.OlymposViews.escolas = (function() {
 
       markersLayer = window.L.layerGroup().addTo(leafletMap);
 
-      // Evento de clique no mapa para captura direta de coordenadas
       leafletMap.on('click', function(e) {
         tratarCliqueMapa(e);
       });
@@ -198,13 +289,11 @@ window.OlymposViews.escolas = (function() {
     var lat = e.latlng.lat;
     var lng = e.latlng.lng;
 
-    // Atualiza visor de coordenadas em tempo real
     var liveDisplay = document.getElementById('escolasCoordLiveDisplay');
     if (liveDisplay) {
       liveDisplay.textContent = 'Lat: ' + lat.toFixed(6) + ' | Lng: ' + lng.toFixed(6);
     }
 
-    // Se o modal de cadastro/edição estiver aberto, preenche automaticamente os campos de coordenadas
     var modal = document.getElementById('modalCadastroEscola') || document.getElementById('modalEscola');
     var isModalAberto = modal && !modal.classList.contains('hidden') && modal.style.display !== 'none';
 
@@ -222,7 +311,6 @@ window.OlymposViews.escolas = (function() {
       }
     }
 
-    // Marcador temporário de clique visual
     if (leafletMap) {
       if (tempClickMarker) {
         leafletMap.removeLayer(tempClickMarker);
@@ -234,8 +322,7 @@ window.OlymposViews.escolas = (function() {
         iconAnchor: [7, 7]
       });
       tempClickMarker = window.L.marker([lat, lng], { icon: clickIcon, zIndexOffset: 1000 }).addTo(leafletMap);
-      
-      // Remove marcador temporário após 4 segundos se o modal não estiver aberto
+
       if (!isModalAberto) {
         setTimeout(function() {
           if (tempClickMarker && leafletMap) {
@@ -288,51 +375,53 @@ window.OlymposViews.escolas = (function() {
   }
 
   /**
-   * Determina a cor visual do marcador a partir da categoria (retrocompatível)
+   * Determina a cor visual do marcador estritamente pela Categoria Institucional e Zona.
+   * Somente 'Centro de Educação Infantil' recebe o âmbar (#F59E0B).
    */
-  function obterCorPorCategoria(categoria, zona) {
-    var cat = String(categoria || '').toLowerCase();
+  function obterCorPorCategoria(categoria, zona, nome) {
+    var catInst = normalizarCategoriaInstitucional(categoria, nome);
     var zon = String(zona || '').toLowerCase();
 
-    if (cat.includes('sede')) return '#D4AF37'; // Dourado SMEB Sede
-    if (cat.includes('infantil') || cat.includes('cei') || cat.includes('cmei') || cat.includes('creche')) return '#F59E0B'; // Âmbar CEI / Creche
-    if (cat.includes('rural') || zon.includes('rural')) return '#10B981'; // Verde Polo Rural
-    return '#38BDF8'; // Azul Urbana / Ensino Fundamental
+    if (catInst === 'Instituição') return '#D4AF37'; // Dourado Instituição / Sede
+    if (catInst === 'Centro de Educação Infantil') return '#F59E0B'; // Âmbar exclusivo CEI
+    if (zon.includes('rural')) return '#10B981'; // Verde Escola Rural
+    return '#38BDF8'; // Azul Escola Urbana
   }
 
   /**
-   * Determina o ícone ou letra no centro do marcador circular (retrocompatível)
+   * Determina o ícone ou letra no centro do marcador circular estritamente pela Categoria Institucional.
+   * Escolas ('Escola') jamais recebem 'C' mesmo que ofertem Ed. Infantil + Ens. Fundamental I.
    */
-  function obterIconePorCategoria(categoria, zona) {
-    var cat = String(categoria || '').toLowerCase();
+  function obterIconePorCategoria(categoria, zona, nome) {
+    var catInst = normalizarCategoriaInstitucional(categoria, nome);
     var zon = String(zona || '').toLowerCase();
 
-    if (cat.includes('sede')) return '★';
-    if (cat.includes('infantil') || cat.includes('cei') || cat.includes('cmei')) return 'C';
-    if (cat.includes('rural') || zon.includes('rural')) return 'R';
+    if (catInst === 'Instituição') return '★';
+    if (catInst === 'Centro de Educação Infantil') return 'C';
+    if (zon.includes('rural')) return 'R';
     return 'U';
   }
 
   /**
-   * Determina a cor visual do marcador considerando rede e categoria
+   * Determina a cor visual do marcador considerando rede e categoria institucional
    */
-  function obterCorPorRedeECategoria(rede, categoria, zona) {
+  function obterCorPorRedeECategoria(rede, categoria, zona, nome) {
     var r = String(rede || 'Municipal').toLowerCase();
     if (r === 'estadual') return '#2563EB';
     if (r === 'federal') return '#16A34A';
     if (r === 'privada') return '#9333EA';
-    return obterCorPorCategoria(categoria, zona);
+    return obterCorPorCategoria(categoria, zona, nome);
   }
 
   /**
-   * Determina o ícone ou símbolo do marcador considerando rede e categoria
+   * Determina o ícone ou símbolo do marcador considerando rede e categoria institucional
    */
-  function obterIconePorRedeECategoria(rede, categoria, zona) {
+  function obterIconePorRedeECategoria(rede, categoria, zona, nome) {
     var r = String(rede || 'Municipal').toLowerCase();
     if (r === 'estadual') return '🏛';
     if (r === 'federal') return '🎓';
     if (r === 'privada') return '⭐';
-    return obterIconePorCategoria(categoria, zona);
+    return obterIconePorCategoria(categoria, zona, nome);
   }
 
   /**
@@ -351,8 +440,13 @@ window.OlymposViews.escolas = (function() {
       if (isNaN(lat) || isNaN(lng)) return;
 
       var rede = escola.rede || 'Municipal';
-      var cor = escola.cor || obterCorPorRedeECategoria(rede, escola.categoria, escola.zona);
-      var icone = escola.icone || obterIconePorRedeECategoria(rede, escola.categoria, escola.zona);
+      var catInst = normalizarCategoriaInstitucional(escola.categoria, escola.nome);
+      var corCalculada = obterCorPorRedeECategoria(rede, catInst, escola.zona, escola.nome);
+      var iconeCalculado = obterIconePorRedeECategoria(rede, catInst, escola.zona, escola.nome);
+
+      // Protege contra ícone 'C' residual em unidades do tipo 'Escola'
+      var cor = (catInst === 'Escola' && escola.cor === '#F59E0B') ? corCalculada : (escola.cor || corCalculada);
+      var icone = (catInst === 'Escola' && escola.icone === 'C') ? iconeCalculado : (escola.icone || iconeCalculado);
 
       var markerHtml =
         '<div style="background:' + cor + '; width: 24px; height: 24px; border-radius: 50%; border: 2.5px solid #FFFFFF; box-shadow: 0 2px 6px rgba(0,0,0,0.38); display: flex; align-items: center; justify-content: center; font-size: 11px; color: #FFFFFF; font-weight: 700; cursor: pointer; transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);">' +
@@ -373,7 +467,7 @@ window.OlymposViews.escolas = (function() {
 
       var segmentos = Array.isArray(escola.segmentos) && escola.segmentos.length > 0
         ? escola.segmentos
-        : normalizarSegmentosDeCategoria(escola.categoria);
+        : normalizarSegmentosDeCategoria(catInst, escola.nome);
 
       var segmentosHtml = segmentos.map(function(seg) {
         return '<span class="pill-segmento-mini">' + escapeHtml(seg) + '</span>';
@@ -382,24 +476,24 @@ window.OlymposViews.escolas = (function() {
       var redeClass = 'pill-rede-' + (rede.toLowerCase());
 
       var popupHtml =
-        '<div class="cadmo-map-popup escola-map-popup" style="font-family: var(--font-sans, system-ui); font-size: 12px; line-height: 1.45; min-width: 240px; max-width: 300px;">' +
-          '<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; gap: 4px; flex-wrap: wrap;">' +
+        '<div class="cadmo-map-popup escola-map-popup">' +
+          '<div class="escola-popup-header">' +
             '<span class="pill-badge pill-rede ' + redeClass + '">' + escapeHtml(rede) + '</span>' +
-            '<span style="font-size: 10.5px; color: #64748B; font-weight: 600;">' + (escola.zona || 'Urbana') + '</span>' +
+            '<span class="escola-popup-meta-tag">' + escapeHtml(catInst) + ' • ' + escapeHtml(escola.zona || 'Urbana') + '</span>' +
           '</div>' +
-          '<strong style="font-size: 13.5px; color: #0F172A; display: block; margin-bottom: 4px;">' + escapeHtml(escola.nome) + '</strong>' +
-          '<div style="margin-bottom: 6px;">' + segmentosHtml + '</div>' +
-          (escola.bairroDistrito ? '<div style="color: #475569; margin-bottom: 2px;">📍 <strong>Bairro/Distrito:</strong> ' + escapeHtml(escola.bairroDistrito) + '</div>' : '') +
-          (escola.endereco ? '<div style="color: #64748B; font-size: 11px; margin-bottom: 4px;">' + escapeHtml(escola.endereco) + '</div>' : '') +
-          (escola.inep ? '<div style="color: #475569; font-size: 11px;">INEP: <code>' + escapeHtml(escola.inep) + '</code></div>' : '') +
-          (escola.telefone ? '<div style="color: #475569; font-size: 11px;">📞 ' + escapeHtml(escola.telefone) + '</div>' : '') +
-          '<div style="background: #F1F5F9; padding: 4px 6px; border-radius: 4px; margin: 6px 0; font-family: monospace; font-size: 10.5px; color: #334155;">' +
+          '<strong class="escola-popup-title">' + escapeHtml(escola.nome) + '</strong>' +
+          '<div class="escola-popup-segmentos">' + segmentosHtml + '</div>' +
+          (escola.bairroDistrito ? '<div class="escola-popup-detail">📍 <strong>Bairro/Distrito:</strong> ' + escapeHtml(escola.bairroDistrito) + '</div>' : '') +
+          (escola.endereco ? '<div class="escola-popup-address">' + escapeHtml(escola.endereco) + '</div>' : '') +
+          (escola.inep ? '<div class="escola-popup-detail">INEP: <code>' + escapeHtml(escola.inep) + '</code></div>' : '') +
+          (escola.telefone ? '<div class="escola-popup-detail">📞 ' + escapeHtml(escola.telefone) + '</div>' : '') +
+          '<div class="escola-popup-coords">' +
             lat.toFixed(6) + ', ' + lng.toFixed(6) +
           '</div>' +
-          '<div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; border-top: 1px solid #E2E8F0; padding-top: 6px;">' +
+          '<div class="escola-popup-actions">' +
             '<button type="button" class="btn-map-action" onclick="window.OlymposViews.escolas.abrirModalEdicao(\'' + escola.id + '\')">✏️ Editar</button>' +
             '<button type="button" class="btn-map-action" onclick="window.OlymposViews.escolas.excluirEscola(\'' + escola.id + '\')">🗑️ Excluir</button>' +
-            '<a href="' + rotaUrl + '" target="_blank" rel="noopener" class="btn-map-action" style="text-decoration: none;">🗺️ Rota</a>' +
+            '<a href="' + rotaUrl + '" target="_blank" rel="noopener" class="btn-map-action">🗺️ Rota</a>' +
             '<button type="button" class="btn-map-action" onclick="window.OlymposViews.escolas.copiarCoordenadas(' + lat + ', ' + lng + ')">📋 Copiar</button>' +
           '</div>' +
         '</div>';
@@ -411,16 +505,16 @@ window.OlymposViews.escolas = (function() {
   }
 
   /**
-   * Filtra lista conforme busca textual e pílula de categoria selecionada
+   * Filtra lista conforme busca textual, rede, segmento, categoria institucional e zona
    */
   function obterEscolasFiltradas() {
     var todas = obterEscolas();
     var termo = (currentSearchTerm || '').trim().toLowerCase();
-    var filtroCat = activeCategoryFilter;
+    var filtroCat = String(activeCategoryFilter || 'todas').toLowerCase();
+    var filtroZona = String(activeZonaFilter || 'todas').toLowerCase();
     var filtroRede = activeRedeFilter;
     var filtroSeg = activeSegmentFilter;
 
-    // Resiliência na busca textual com aliasing bidirecional CMEI <-> CEI
     var termoNormalizado = termo;
     var termoAlternativo = null;
     if (termo === 'cmei') {
@@ -430,12 +524,13 @@ window.OlymposViews.escolas = (function() {
     }
 
     return todas.filter(function(item) {
-      var cat = String(item.categoria || '').toLowerCase();
-      var zon = String(item.zona || '').toLowerCase();
+      var catInst = normalizarCategoriaInstitucional(item.categoria, item.nome);
+      var catLow = catInst.toLowerCase();
+      var zon = String(item.zona || 'Urbana').toLowerCase();
       var rede = String(item.rede || 'Municipal');
       var segmentos = Array.isArray(item.segmentos) && item.segmentos.length > 0
         ? item.segmentos
-        : normalizarSegmentosDeCategoria(item.categoria);
+        : normalizarSegmentosDeCategoria(catInst, item.nome);
 
       // 1. Filtro por Rede
       if (filtroRede && filtroRede !== 'todas') {
@@ -444,7 +539,7 @@ window.OlymposViews.escolas = (function() {
         }
       }
 
-      // 2. Filtro por Segmento (Inclusivo: segmento selecionado contido no array de segmentos)
+      // 2. Filtro por Segmento (Inclusivo)
       if (filtroSeg && filtroSeg !== 'todos') {
         var matchSeg = segmentos.some(function(s) {
           return s.toLowerCase() === filtroSeg.toLowerCase();
@@ -454,16 +549,27 @@ window.OlymposViews.escolas = (function() {
         }
       }
 
-      // 3. Filtro de Categoria Legada (aceita 'cei' ou 'cmei' como alias)
-      if (filtroCat === 'sede' && !cat.includes('sede')) return false;
-      if (filtroCat === 'urbana' && zon !== 'urbana') return false;
-      if (filtroCat === 'rural' && zon !== 'rural') return false;
-      if ((filtroCat === 'cei' || filtroCat === 'cmei')) {
-        var eInfantil = cat.includes('infantil') || cat.includes('cei') || cat.includes('cmei') || segmentos.some(function(s) { return s.toLowerCase().includes('infantil'); });
-        if (!eInfantil) return false;
+      // 3. Filtro de Categoria Institucional (e aliases legados)
+      if (filtroCat && filtroCat !== 'todas') {
+        if (filtroCat === 'escola' || filtroCat === 'escolas') {
+          if (catInst !== 'Escola') return false;
+        } else if (filtroCat === 'cei' || filtroCat === 'cmei' || filtroCat === 'centro de educação infantil') {
+          if (catInst !== 'Centro de Educação Infantil') return false;
+        } else if (filtroCat === 'instituicao' || filtroCat === 'instituição' || filtroCat === 'sede') {
+          if (catInst !== 'Instituição') return false;
+        } else if (filtroCat === 'urbana') {
+          if (zon !== 'urbana') return false;
+        } else if (filtroCat === 'rural') {
+          if (zon !== 'rural') return false;
+        }
       }
 
-      // 4. Filtro de Busca Textual
+      // 4. Filtro de Zona dedicado
+      if (filtroZona && filtroZona !== 'todas') {
+        if (zon !== filtroZona) return false;
+      }
+
+      // 5. Filtro de Busca Textual
       if (termoNormalizado) {
         var strNome = String(item.nome || '').toLowerCase();
         var strBairro = String(item.bairroDistrito || '').toLowerCase();
@@ -478,9 +584,9 @@ window.OlymposViews.escolas = (function() {
                           strInep.includes(termoNormalizado) ||
                           strRede.includes(termoNormalizado) ||
                           strSegs.includes(termoNormalizado) ||
-                          cat.includes(termoNormalizado);
+                          catLow.includes(termoNormalizado);
 
-        var matchAlt = termoAlternativo ? (strNome.includes(termoAlternativo) || cat.includes(termoAlternativo)) : false;
+        var matchAlt = termoAlternativo ? (strNome.includes(termoAlternativo) || catLow.includes(termoAlternativo)) : false;
 
         if (!matchPadrao && !matchAlt) {
           return false;
@@ -501,7 +607,7 @@ window.OlymposViews.escolas = (function() {
   }
 
   /**
-   * Atualiza cartões numéricos KPI
+   * Atualiza cartões numéricos KPI usando estritamente a Categoria Institucional normalizada
    */
   function renderizarKpis() {
     var todas = obterEscolas();
@@ -511,11 +617,11 @@ window.OlymposViews.escolas = (function() {
     var ceis = 0;
 
     todas.forEach(function(item) {
-      var cat = String(item.categoria || '').toLowerCase();
+      var catInst = normalizarCategoriaInstitucional(item.categoria, item.nome);
       var zon = String(item.zona || '').toLowerCase();
-      if (cat.includes('infantil') || cat.includes('cei') || cat.includes('cmei')) {
+      if (catInst === 'Centro de Educação Infantil') {
         ceis++;
-      } else if (zon === 'rural' || cat.includes('rural')) {
+      } else if (zon === 'rural') {
         rurais++;
       } else {
         urbanas++;
@@ -556,11 +662,13 @@ window.OlymposViews.escolas = (function() {
       var lat = parseFloat(escola.lat);
       var lng = parseFloat(escola.lng);
       var rede = escola.rede || 'Municipal';
-      var cor = escola.cor || obterCorPorRedeECategoria(rede, escola.categoria, escola.zona);
+      var catInst = normalizarCategoriaInstitucional(escola.categoria, escola.nome);
+      var corCalc = obterCorPorRedeECategoria(rede, catInst, escola.zona, escola.nome);
+      var cor = (catInst === 'Escola' && escola.cor === '#F59E0B') ? corCalc : (escola.cor || corCalc);
       var redeClass = 'pill-rede-' + (rede.toLowerCase());
       var segmentos = Array.isArray(escola.segmentos) && escola.segmentos.length > 0
         ? escola.segmentos
-        : normalizarSegmentosDeCategoria(escola.categoria);
+        : normalizarSegmentosDeCategoria(catInst, escola.nome);
       var segsHtml = segmentos.map(function(s) {
         return '<span class="pill-segmento">' + escapeHtml(s) + '</span>';
       }).join('');
@@ -571,9 +679,7 @@ window.OlymposViews.escolas = (function() {
       html +=     '<span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; background: ' + cor + ';"></span>';
       html +=     '<div>';
       html +=       '<strong style="color: var(--text-main); font-size: 13px;">' + escapeHtml(escola.nome) + '</strong>';
-      if (escola.inep) {
-        html +=     '<div style="font-size: 11px; color: var(--text-muted);">INEP: <code>' + escapeHtml(escola.inep) + '</code></div>';
-      }
+      html +=       '<div style="font-size: 11px; color: var(--text-muted);">' + escapeHtml(catInst) + (escola.inep ? ' • INEP: <code>' + escapeHtml(escola.inep) + '</code>' : '') + '</div>';
       html +=     '</div>';
       html +=   '</div>';
       html += '</td>';
@@ -587,7 +693,7 @@ window.OlymposViews.escolas = (function() {
                 '</span>';
       html += '</td>';
       html += '<td data-label="Ações" class="text-right" style="white-space: nowrap;">';
-      html +=   '<div style="display: inline-flex; gap: 6px; flex-wrap: wrap;">';
+      html +=   '<div class="escola-row-actions" style="display: inline-flex; gap: 6px; flex-wrap: wrap;">';
       html +=     '<button type="button" class="btn btn-secondary btn-mini" title="Visualizar e centralizar no mapa" onclick="window.OlymposViews.escolas.centralizarEscola(' + lat + ', ' + lng + ', \'' + escola.id + '\')">📍 Mapa</button>';
       html +=     '<button type="button" class="btn btn-secondary btn-mini" title="Editar informações cadastrais" onclick="window.OlymposViews.escolas.abrirModalEdicao(\'' + escola.id + '\')">✏️ Editar</button>';
       html +=     '<button type="button" class="btn btn-ghost btn-mini" style="color: #EF4444;" title="Excluir escola" onclick="window.OlymposViews.escolas.excluirEscola(\'' + escola.id + '\')">🗑️</button>';
@@ -603,7 +709,6 @@ window.OlymposViews.escolas = (function() {
    * Vincula ouvintes de eventos da página
    */
   function bindEvents() {
-    // Busca instantânea
     var inBusca = document.getElementById('escolaBuscaInput');
     if (inBusca && !inBusca._bound) {
       inBusca._bound = true;
@@ -613,7 +718,6 @@ window.OlymposViews.escolas = (function() {
       });
     }
 
-    // Pílulas de filtro de rede
     document.querySelectorAll('[data-filtro-rede]').forEach(function(btn) {
       if (!btn._bound) {
         btn._bound = true;
@@ -628,7 +732,6 @@ window.OlymposViews.escolas = (function() {
       }
     });
 
-    // Pílulas de filtro de segmento
     document.querySelectorAll('[data-filtro-segmento]').forEach(function(btn) {
       if (!btn._bound) {
         btn._bound = true;
@@ -643,7 +746,6 @@ window.OlymposViews.escolas = (function() {
       }
     });
 
-    // Pílulas de filtro de categoria
     document.querySelectorAll('[data-filtro-categoria]').forEach(function(btn) {
       if (!btn._bound) {
         btn._bound = true;
@@ -658,7 +760,20 @@ window.OlymposViews.escolas = (function() {
       }
     });
 
-    // Botão Nova Escola
+    document.querySelectorAll('[data-filtro-zona]').forEach(function(btn) {
+      if (!btn._bound) {
+        btn._bound = true;
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('[data-filtro-zona]').forEach(function(b) {
+            b.classList.remove('active');
+          });
+          btn.classList.add('active');
+          activeZonaFilter = btn.getAttribute('data-filtro-zona') || 'todas';
+          renderizarInterface();
+        });
+      }
+    });
+
     var btnNovo = document.getElementById('btnNovaEscola');
     if (btnNovo && !btnNovo._bound) {
       btnNovo._bound = true;
@@ -667,7 +782,6 @@ window.OlymposViews.escolas = (function() {
       });
     }
 
-    // Botão Recentralizar Mapa
     var btnRecentralizar = document.getElementById('btnRecentralizarMapaEscolas');
     if (btnRecentralizar && !btnRecentralizar._bound) {
       btnRecentralizar._bound = true;
@@ -676,7 +790,6 @@ window.OlymposViews.escolas = (function() {
       });
     }
 
-    // Botão Exportar JSON
     var btnExportar = document.getElementById('btnExportarEscolasJson');
     if (btnExportar && !btnExportar._bound) {
       btnExportar._bound = true;
@@ -685,7 +798,6 @@ window.OlymposViews.escolas = (function() {
       });
     }
 
-    // Botão Importar JSON
     var btnImportar = document.getElementById('btnImportarEscolasJson');
     var inputArquivo = document.getElementById('escolasImportFileInput');
     if (btnImportar && inputArquivo && !btnImportar._bound) {
@@ -702,7 +814,6 @@ window.OlymposViews.escolas = (function() {
       });
     }
 
-    // Botão Restaurar Padrões
     var btnRestaurar = document.getElementById('btnRestaurarEscolasPadrao');
     if (btnRestaurar && !btnRestaurar._bound) {
       btnRestaurar._bound = true;
@@ -711,14 +822,12 @@ window.OlymposViews.escolas = (function() {
       });
     }
 
-    // Formulário de Cadastro / Edição
     var form = document.getElementById('formCadastroEscola') || document.getElementById('formEscola');
     if (form && !form._bound) {
       form._bound = true;
       form.addEventListener('submit', salvarEscolaSubmit);
     }
 
-    // Fechar Modal
     var btnFecharModal = document.getElementById('closeModalCadastroEscolaBtn') || document.getElementById('closeModalEscolaBtn');
     if (btnFecharModal && !btnFecharModal._bound) {
       btnFecharModal._bound = true;
@@ -730,7 +839,6 @@ window.OlymposViews.escolas = (function() {
       btnCancelarModal.addEventListener('click', fecharModal);
     }
 
-    // Atualização em tempo real da validação de coordenadas ao digitar
     var inLat = document.getElementById('escolaLatitude');
     var inLng = document.getElementById('escolaLongitude');
     if (inLat && !inLat._bound) {
@@ -742,7 +850,6 @@ window.OlymposViews.escolas = (function() {
       inLng.addEventListener('input', validarCoordenadasForm);
     }
 
-    // Redimensionamento de janela
     window.addEventListener('resize', function() {
       if (leafletMap) leafletMap.invalidateSize();
     });
@@ -764,7 +871,9 @@ window.OlymposViews.escolas = (function() {
     var inRede = document.getElementById('escolaRede');
     if (inRede) inRede.value = 'Municipal';
 
-    // Desmarca checkboxes de segmento e deixa Fundamental I selecionado por padrão
+    var inCat = document.getElementById('escolaCategoria');
+    if (inCat) inCat.value = 'Escola';
+
     document.querySelectorAll('input[name="escolaSegmentos"]').forEach(function(ck) {
       ck.checked = (ck.value === 'Ens. Fundamental I');
     });
@@ -778,7 +887,6 @@ window.OlymposViews.escolas = (function() {
         inLat.value = lat.toFixed(6);
         inLng.value = lng.toFixed(6);
       } else {
-        // Centro padrão de Ceará-Mirim para conveniência
         inLat.value = '-5.634000';
         inLng.value = '-35.428000';
       }
@@ -825,11 +933,13 @@ window.OlymposViews.escolas = (function() {
     var inLat = document.getElementById('escolaLatitude');
     var inLng = document.getElementById('escolaLongitude');
 
+    var catInst = normalizarCategoriaInstitucional(escola.categoria, escola.nome);
+
     if (inId) inId.value = escola.id;
     if (inNome) inNome.value = escola.nome || '';
     if (inInep) inInep.value = escola.inep || '';
     if (inRede) inRede.value = escola.rede || 'Municipal';
-    if (inCat) inCat.value = escola.categoria || 'Ensino Fundamental';
+    if (inCat) inCat.value = CATEGORIAS_INSTITUCIONAIS.includes(catInst) ? catInst : 'Escola';
     if (inZona) inZona.value = escola.zona || 'Urbana';
     if (inBairro) inBairro.value = escola.bairroDistrito || '';
     if (inEnd) inEnd.value = escola.endereco || '';
@@ -840,7 +950,7 @@ window.OlymposViews.escolas = (function() {
 
     var segs = Array.isArray(escola.segmentos) && escola.segmentos.length > 0
       ? escola.segmentos
-      : normalizarSegmentosDeCategoria(escola.categoria);
+      : normalizarSegmentosDeCategoria(catInst, escola.nome);
 
     document.querySelectorAll('input[name="escolaSegmentos"]').forEach(function(ck) {
       ck.checked = segs.includes(ck.value);
@@ -866,7 +976,8 @@ window.OlymposViews.escolas = (function() {
   }
 
   /**
-   * Salva dados submetidos pelo formulário (Create ou Update)
+   * Salva dados submetidos pelo formulário (Create ou Update) sem jamais sobrescrever
+   * a Categoria Institucional com a lista de segmentos.
    */
   function salvarEscolaSubmit(e) {
     if (e && e.preventDefault) e.preventDefault();
@@ -887,7 +998,7 @@ window.OlymposViews.escolas = (function() {
     var nome = (inNome ? inNome.value : '').trim();
     var inep = (inInep ? inInep.value : '').trim();
     var rede = (inRede ? inRede.value : 'Municipal').trim() || 'Municipal';
-    var categoria = (inCat ? inCat.value : 'Ensino Fundamental').trim();
+    var categoria = normalizarCategoriaInstitucional(inCat ? inCat.value : 'Escola', nome);
     var zona = (inZona ? inZona.value : 'Urbana').trim();
     var bairro = (inBairro ? inBairro.value : '').trim();
     var endereco = (inEnd ? inEnd.value : '').trim();
@@ -905,27 +1016,22 @@ window.OlymposViews.escolas = (function() {
       return;
     }
 
-    // Coleta segmentos marcados
     var segmentos = [];
     document.querySelectorAll('input[name="escolaSegmentos"]:checked').forEach(function(ck) {
       if (ck.value) segmentos.push(ck.value);
     });
     if (segmentos.length === 0) {
-      segmentos = normalizarSegmentosDeCategoria(categoria);
-    }
-    if (!categoria || categoria === 'Ensino Fundamental') {
-      categoria = segmentos.join(', ');
+      segmentos = normalizarSegmentosDeCategoria(categoria, nome);
     }
 
     var id = (inId ? inId.value : '').trim();
     var escolas = obterEscolas();
-    var cor = obterCorPorRedeECategoria(rede, categoria, zona);
-    var icone = obterIconePorRedeECategoria(rede, categoria, zona);
+    var cor = obterCorPorRedeECategoria(rede, categoria, zona, nome);
+    var icone = obterIconePorRedeECategoria(rede, categoria, zona, nome);
 
     var escolaObjeto = null;
 
     if (id) {
-      // Edição de registro existente
       var idx = escolas.findIndex(function(item) { return item.id === id; });
       if (idx !== -1) {
         escolas[idx].nome = nome;
@@ -945,7 +1051,6 @@ window.OlymposViews.escolas = (function() {
         escolaObjeto = escolas[idx];
       }
     } else {
-      // Criação de novo registro
       var novoId = 'esc_' + Date.now();
       escolaObjeto = {
         id: novoId,
@@ -973,21 +1078,25 @@ window.OlymposViews.escolas = (function() {
     fecharModal();
     renderizarInterface();
 
-    // Sincronização assíncrona com Supabase se disponível
-    if (escolaObjeto && window.OlymposSupabase && typeof window.OlymposSupabase.sincronizarEscola === 'function') {
-      window.OlymposSupabase.sincronizarEscola(escolaObjeto);
+    // Sincroniza registro individual e o arquivo JSON completo no Supabase
+    if (escolaObjeto && window.OlymposSupabase) {
+      if (typeof window.OlymposSupabase.sincronizarEscola === 'function') {
+        window.OlymposSupabase.sincronizarEscola(escolaObjeto);
+      }
+      if (typeof window.OlymposSupabase.sincronizarCatalogoEscolasJson === 'function') {
+        window.OlymposSupabase.sincronizarCatalogoEscolasJson(escolas);
+      }
     }
 
     if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
       window.OlymposApp.showToast('Unidade escolar salva com sucesso!');
     }
 
-    // Centraliza o mapa na escola recém-salva
     centralizarEscola(lat, lng, id);
   }
 
   /**
-   * Exclui uma unidade escolar com confirmação amigável
+   * Exclui uma unidade escolar com confirmação amigável e sincroniza com Supabase
    */
   function excluirEscola(id) {
     var escolas = obterEscolas();
@@ -1001,6 +1110,15 @@ window.OlymposViews.escolas = (function() {
     var filtradas = escolas.filter(function(e) { return e.id !== id; });
     salvarEscolas(filtradas);
     renderizarInterface();
+
+    if (window.OlymposSupabase) {
+      if (typeof window.OlymposSupabase.excluirEscola === 'function') {
+        window.OlymposSupabase.excluirEscola(id);
+      }
+      if (typeof window.OlymposSupabase.sincronizarCatalogoEscolasJson === 'function') {
+        window.OlymposSupabase.sincronizarCatalogoEscolasJson(filtradas);
+      }
+    }
 
     if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
       window.OlymposApp.showToast('Unidade escolar removida do mapa.');
@@ -1027,7 +1145,6 @@ window.OlymposViews.escolas = (function() {
       }
     }, 600);
 
-    // Rola a tela suavemente para o contêiner do mapa se necessário
     var outer = document.querySelector('.escola-map-outer') || document.getElementById('mapaEscolasCearaMirim');
     if (outer && typeof outer.scrollIntoView === 'function') {
       outer.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1081,7 +1198,7 @@ window.OlymposViews.escolas = (function() {
   }
 
   /**
-   * Importa arquivo JSON com validação de formato
+   * Importa arquivo JSON com validação de formato e sincronização com Supabase
    */
   function importarJson(file) {
     if (!file) return;
@@ -1097,7 +1214,7 @@ window.OlymposViews.escolas = (function() {
 
         var validas = dados.filter(function(item) {
           return item && item.nome && !isNaN(parseFloat(item.lat)) && !isNaN(parseFloat(item.lng));
-        });
+        }).map(sanitizarRegistroEscola);
 
         if (validas.length === 0) {
           alert('Nenhuma unidade escolar válida localizada no arquivo JSON.');
@@ -1107,8 +1224,20 @@ window.OlymposViews.escolas = (function() {
         if (confirm('Foram identificadas ' + validas.length + ' escolas válidas. Deseja substituir a base atual?')) {
           salvarEscolas(validas);
           renderizarInterface();
+
+          if (window.OlymposSupabase) {
+            if (typeof window.OlymposSupabase.sincronizarCatalogoEscolasJson === 'function') {
+              window.OlymposSupabase.sincronizarCatalogoEscolasJson(validas);
+            }
+            if (typeof window.OlymposSupabase.sincronizarEscola === 'function') {
+              validas.forEach(function(item) {
+                window.OlymposSupabase.sincronizarEscola(item);
+              });
+            }
+          }
+
           if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
-            window.OlymposApp.showToast('Importação concluída: ' + validas.length + ' escolas carregadas!');
+            window.OlymposApp.showToast('Importação concluída: ' + validas.length + ' unidades carregadas!');
           }
         }
       } catch (err) {
@@ -1120,14 +1249,20 @@ window.OlymposViews.escolas = (function() {
   }
 
   /**
-   * Restaura o catálogo semente oficial de 20 escolas
+   * Restaura o catálogo semente oficial de 25 unidades
    */
   function restaurarPadroes() {
-    if (confirm('Deseja restaurar as 20 escolas oficiais da semente de Ceará-Mirim? Modificações manuais serão redefinidas.')) {
+    if (confirm('Deseja restaurar o catálogo oficial de unidades de Ceará-Mirim? Modificações manuais serão redefinidas.')) {
       if (typeof window.BANCO_SEMENTE_ESCOLAS !== 'undefined' && Array.isArray(window.BANCO_SEMENTE_ESCOLAS)) {
-        salvarEscolas(window.BANCO_SEMENTE_ESCOLAS.slice());
+        var padrao = window.BANCO_SEMENTE_ESCOLAS.map(sanitizarRegistroEscola);
+        salvarEscolas(padrao);
         renderizarInterface();
         recentralizarMapa();
+
+        if (window.OlymposSupabase && typeof window.OlymposSupabase.sincronizarCatalogoEscolasJson === 'function') {
+          window.OlymposSupabase.sincronizarCatalogoEscolasJson(padrao);
+        }
+
         if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
           window.OlymposApp.showToast('Catálogo oficial de escolas restaurado com sucesso!');
         }
@@ -1143,10 +1278,13 @@ window.OlymposViews.escolas = (function() {
     if (!pageEscolas || observerEscolas) return;
 
     observerEscolas = new MutationObserver(function() {
-      if (!pageEscolas.classList.contains('hidden') && leafletMap) {
-        setTimeout(function() {
-          leafletMap.invalidateSize();
-        }, 120);
+      if (!pageEscolas.classList.contains('hidden')) {
+        if (leafletMap) {
+          setTimeout(function() {
+            leafletMap.invalidateSize();
+          }, 120);
+        }
+        sincronizarInicialComSupabase();
       }
     });
 
@@ -1169,27 +1307,23 @@ window.OlymposViews.escolas = (function() {
       .replace(/'/g, '&#039;');
   }
 
-  /**
-   * Define programmaticamente o filtro ativo por Rede
-   */
   function setFiltroRede(rede) {
     activeRedeFilter = rede || 'todas';
     renderizarInterface();
   }
 
-  /**
-   * Define programmaticamente o filtro ativo por Segmento
-   */
   function setFiltroSegmento(seg) {
     activeSegmentFilter = seg || 'todos';
     renderizarInterface();
   }
 
-  /**
-   * Define programmaticamente o filtro ativo por Categoria
-   */
   function setFiltroCategoria(cat) {
     activeCategoryFilter = cat || 'todas';
+    renderizarInterface();
+  }
+
+  function setFiltroZona(zona) {
+    activeZonaFilter = zona || 'todas';
     renderizarInterface();
   }
 
@@ -1210,8 +1344,14 @@ window.OlymposViews.escolas = (function() {
     obterEscolas: obterEscolas,
     obterEscolasFiltradas: obterEscolasFiltradas,
     estaEmCearaMirim: estaEmCearaMirim,
+    normalizarCategoriaInstitucional: normalizarCategoriaInstitucional,
+    obterCorPorCategoria: obterCorPorCategoria,
+    obterIconePorCategoria: obterIconePorCategoria,
+    obterCorPorRedeECategoria: obterCorPorRedeECategoria,
+    obterIconePorRedeECategoria: obterIconePorRedeECategoria,
     setFiltroRede: setFiltroRede,
     setFiltroSegmento: setFiltroSegmento,
-    setFiltroCategoria: setFiltroCategoria
+    setFiltroCategoria: setFiltroCategoria,
+    setFiltroZona: setFiltroZona
   };
 })();

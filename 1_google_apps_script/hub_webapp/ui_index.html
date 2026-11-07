@@ -1387,7 +1387,7 @@
                       <input type="text" id="agendaTitulo" name="agendaTitulo" class="input-clean" placeholder="Ex: Reunião do CAE - Prestação de Contas PNAE" required />
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                    <div class="modal-grid-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
                       <div class="field-group">
                         <label for="agendaDataInicio">Data Início *</label>
                         <input type="date" id="agendaDataInicio" name="agendaDataInicio" class="input-clean" required />
@@ -1398,7 +1398,7 @@
                       </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                    <div class="modal-grid-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
                       <div class="field-group">
                         <label for="agendaHorario">Horário / Turno</label>
                         <input type="text" id="agendaHorario" name="agendaHorario" class="input-clean" placeholder="Ex: 09:00 - 11:30" />
@@ -1420,7 +1420,7 @@
                       </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                    <div class="modal-grid-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
                       <div class="field-group">
                         <label for="agendaCategoria">Tipo de Evento</label>
                         <select id="agendaCategoria" name="agendaCategoria" class="input-clean">
@@ -1545,15 +1545,24 @@
               <div id="mapaEscolasCearaMirim" style="height: 480px; width: 100%; border-radius: var(--radius-lg); position: relative; z-index: 1;"></div>
             </div>
 
-            <!-- BARRA DE FILTROS E BUSCA INTEGRADA (REDE & SEGMENTOS) -->
-            <div class="escolas-filter-toolbar" style="margin: 20px 0 14px 0; display: flex; flex-direction: column; gap: 10px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                  <input type="search" id="escolaBuscaInput" class="input-clean" style="width: 280px; padding: 7px 12px; font-size: 13px;" placeholder="Buscar por escola, bairro ou INEP..." />
-                  
+            <!-- BARRA DE FILTROS E BUSCA INTEGRADA (CATEGORIA INSTITUCIONAL, REDE, SEGMENTOS & ZONA) -->
+            <div class="escolas-filter-toolbar">
+              <div class="escolas-filter-top-row">
+                <div class="escolas-search-and-rede">
+                  <input type="search" id="escolaBuscaInput" class="input-clean escolas-search-input" placeholder="Buscar por escola, bairro ou INEP..." />
+
+                  <!-- Filtro por Categoria Institucional -->
+                  <div class="filter-pills-group" role="group" aria-label="Filtrar por Categoria Institucional">
+                    <span class="filter-group-label">Categoria:</span>
+                    <button type="button" class="btn-mini active" data-filtro-categoria="todas">Todas</button>
+                    <button type="button" class="btn-mini" data-filtro-categoria="escola">Escolas</button>
+                    <button type="button" class="btn-mini" data-filtro-categoria="cei">Centro de Educação Infantil</button>
+                    <button type="button" class="btn-mini" data-filtro-categoria="instituicao">Instituição</button>
+                  </div>
+
                   <!-- Filtro por Rede -->
-                  <div class="filter-pills-group" style="display: flex; gap: 4px; align-items: center; background: var(--bg-surface); padding: 3px; border-radius: var(--radius-pill, 20px); border: 1px solid var(--border-hairline);">
-                    <span style="font-size: 11px; font-weight: 600; color: var(--text-muted); padding: 0 6px;">Rede:</span>
+                  <div class="filter-pills-group" role="group" aria-label="Filtrar por Rede">
+                    <span class="filter-group-label">Rede:</span>
                     <button type="button" class="btn-mini active" data-filtro-rede="todas">Todas</button>
                     <button type="button" class="btn-mini" data-filtro-rede="Municipal">Municipal</button>
                     <button type="button" class="btn-mini" data-filtro-rede="Estadual">Estadual</button>
@@ -1561,24 +1570,29 @@
                     <button type="button" class="btn-mini" data-filtro-rede="Privada">Privada</button>
                   </div>
                 </div>
-                
-                <span id="escolasContagemExibida" style="font-size: 12.5px; color: var(--text-muted);">Carregando unidades...</span>
+
+                <span id="escolasContagemExibida" class="escolas-count-label">Carregando unidades...</span>
               </div>
 
-              <!-- Filtro por Segmento (Inclusivo) + Filtros de Zona -->
-              <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
-                <span style="font-size: 11.5px; font-weight: 600; color: var(--text-secondary); margin-right: 4px;">Segmento:</span>
-                <button type="button" class="btn-mini active" data-filtro-segmento="todos" data-filtro-categoria="todas">Todos</button>
-                <button type="button" class="btn-mini" data-filtro-segmento="Ed. Infantil" data-filtro-categoria="cei">Ed. Infantil</button>
-                <button type="button" class="btn-mini" data-filtro-segmento="Ens. Fundamental I">Ens. Fundamental I</button>
-                <button type="button" class="btn-mini" data-filtro-segmento="Ens. Fundamental II">Ens. Fundamental II</button>
-                <button type="button" class="btn-mini" data-filtro-segmento="Ensino Médio">Ensino Médio</button>
+              <!-- Filtro por Segmento (Inclusivo) + Filtro de Zona -->
+              <div class="escolas-filter-bottom-row">
+                <div class="filter-pills-inline" role="group" aria-label="Filtrar por Segmento">
+                  <span class="filter-group-label">Segmento:</span>
+                  <button type="button" class="btn-mini active" data-filtro-segmento="todos">Todos</button>
+                  <button type="button" class="btn-mini" data-filtro-segmento="Ed. Infantil">Ed. Infantil</button>
+                  <button type="button" class="btn-mini" data-filtro-segmento="Ens. Fundamental I">Ens. Fundamental I</button>
+                  <button type="button" class="btn-mini" data-filtro-segmento="Ens. Fundamental II">Ens. Fundamental II</button>
+                  <button type="button" class="btn-mini" data-filtro-segmento="Ensino Médio">Ensino Médio</button>
+                </div>
 
-                <div style="height: 14px; width: 1px; background: var(--border-hairline); margin: 0 4px;"></div>
-                <span style="font-size: 11.5px; font-weight: 600; color: var(--text-muted); margin-right: 4px;">Zona:</span>
-                <button type="button" class="btn-mini" data-filtro-categoria="urbana">Urbanas</button>
-                <button type="button" class="btn-mini" data-filtro-categoria="rural">Rurais</button>
-                <button type="button" class="btn-mini" data-filtro-categoria="sede">Sede</button>
+                <div class="escolas-filter-divider"></div>
+
+                <div class="filter-pills-inline" role="group" aria-label="Filtrar por Zona">
+                  <span class="filter-group-label">Zona:</span>
+                  <button type="button" class="btn-mini active" data-filtro-zona="todas">Todas</button>
+                  <button type="button" class="btn-mini" data-filtro-zona="Urbana">Urbanas</button>
+                  <button type="button" class="btn-mini" data-filtro-zona="Rural">Rurais</button>
+                </div>
               </div>
             </div>
 
@@ -2014,7 +2028,7 @@
             </div>
 
             <!-- Linha: INEP, Rede e Categoria Institucional -->
-            <div class="controls-grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div class="controls-grid modal-grid-3col" style="grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px;">
               <div class="field-group">
                 <label for="escolaInep">Código INEP (8 dígitos)</label>
                 <input type="text" id="escolaInep" name="escolaInep" class="input-clean" placeholder="Ex: 24021001" maxlength="8" />
@@ -2031,12 +2045,9 @@
               <div class="field-group">
                 <label for="escolaCategoria">Categoria Institucional *</label>
                 <select id="escolaCategoria" name="escolaCategoria" class="input-clean" required>
-                  <option value="Ensino Fundamental">Ensino Fundamental</option>
-                  <option value="Polo Rural">Polo Rural</option>
-                  <option value="Educação Infantil">Educação Infantil (CEI)</option>
-                  <option value="Sede Administrativa">Sede Administrativa</option>
-                  <option value="Ensino Médio / Técnico">Ensino Médio / Técnico</option>
-                  <option value="Educação Especial">Educação Especial</option>
+                  <option value="Escola" selected>Escolas</option>
+                  <option value="Centro de Educação Infantil">Centro de Educação Infantil</option>
+                  <option value="Instituição">Instituição</option>
                 </select>
               </div>
             </div>
@@ -2075,7 +2086,7 @@
             </div>
 
             <!-- Linha: Zona e Bairro/Distrito -->
-            <div class="controls-grid" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div class="controls-grid modal-grid-2col" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
               <div class="field-group">
                 <label for="escolaZona">Zona *</label>
                 <select id="escolaZona" name="escolaZona" class="input-clean" required>
@@ -2096,7 +2107,7 @@
             </div>
 
             <!-- Linha: Telefone e Diretor -->
-            <div class="controls-grid" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+            <div class="controls-grid modal-grid-2col" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
               <div class="field-group">
                 <label for="escolaTelefone">Telefone / Contato</label>
                 <input type="text" id="escolaTelefone" name="escolaTelefone" class="input-clean" placeholder="(84) 3274-5900" />
@@ -2109,13 +2120,13 @@
 
             <!-- Bloco de Coordenadas Geográficas (Latitude e Longitude) -->
             <div style="background: var(--bg-tonal); padding: 14px; border-radius: var(--radius-md, 12px); border: 1px solid var(--border-hairline); margin-bottom: 14px;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
                 <strong style="font-size: 13px; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
                   <span>📍</span> Coordenadas Geográficas (Graus Decimais)
                 </strong>
                 <span style="font-size: 11px; color: var(--text-muted);">Precisão 6 casas decimais</span>
               </div>
-              <div class="controls-grid" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px;">
+              <div class="controls-grid modal-grid-2col" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px;">
                 <div class="field-group">
                   <label for="escolaLatitude">Latitude (Decimal) *</label>
                   <input type="number" id="escolaLatitude" name="escolaLatitude" class="input-clean" step="0.000001" placeholder="-5.634000" required />

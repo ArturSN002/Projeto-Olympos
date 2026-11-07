@@ -1,22 +1,23 @@
 /**
- * Catálogo Semente Oficial — Escolas e CEIs de Ceará-Mirim/RN
+ * Catálogo Semente Oficial — Escolas, CEIs e Instituições de Ceará-Mirim/RN
  * Secretaria Municipal de Educação Básica (SMEB)
  * Georreferenciamento de precisão (Latitude / Longitude) para visualização cartográfica no Leaflet.js
- * Suporte a Multi-Redes (Municipal, Estadual, Federal, Privada) e Multi-Segmentos Simultâneos
+ * Suporte a Multi-Redes (Municipal, Estadual, Federal, Privada), Multi-Segmentos Simultâneos
+ * e Categorias Institucionais padronizadas ('Escola', 'Centro de Educação Infantil', 'Instituição').
  */
 (function(root) {
   'use strict';
 
   var BANCO_SEMENTE_ESCOLAS = [
     // -------------------------------------------------------------------------
-    // SEDE ADMINISTRATIVA MUNICIPAL
+    // INSTITUIÇÃO — SEDE ADMINISTRATIVA MUNICIPAL
     // -------------------------------------------------------------------------
     {
       id: 'esc_001',
       nome: 'SMEB Sede — Secretaria Municipal de Educação Básica',
       inep: '24021000',
       rede: 'Municipal',
-      categoria: 'Sede Administrativa',
+      categoria: 'Instituição',
       segmentos: ['Sede Administrativa'],
       zona: 'Urbana',
       bairroDistrito: 'Centro',
@@ -31,14 +32,14 @@
     },
 
     // -------------------------------------------------------------------------
-    // ZONA URBANA — ESCOLAS MUNICIPAIS DE ENSINO FUNDAMENTAL & INFANTIL
+    // ZONA URBANA — ESCOLAS MUNICIPAIS (ENSINO FUNDAMENTAL & MULTI-SEGMENTOS)
     // -------------------------------------------------------------------------
     {
       id: 'esc_002',
       nome: 'E. M. Alice Garcia Freire',
       inep: '24021001',
       rede: 'Municipal',
-      categoria: 'Ensino Fundamental',
+      categoria: 'Escola',
       segmentos: ['Ed. Infantil', 'Ens. Fundamental I'],
       zona: 'Urbana',
       bairroDistrito: 'Centro',
@@ -56,7 +57,7 @@
       nome: 'E. M. Prefeito Roberto Varela',
       inep: '24021002',
       rede: 'Municipal',
-      categoria: 'Ensino Fundamental',
+      categoria: 'Escola',
       segmentos: ['Ens. Fundamental I', 'Ens. Fundamental II'],
       zona: 'Urbana',
       bairroDistrito: 'Santa Águeda',
@@ -74,7 +75,7 @@
       nome: 'E. M. Augusto Severo',
       inep: '24021003',
       rede: 'Municipal',
-      categoria: 'Ensino Fundamental',
+      categoria: 'Escola',
       segmentos: ['Ens. Fundamental I', 'Ens. Fundamental II'],
       zona: 'Urbana',
       bairroDistrito: 'Centro',
@@ -92,7 +93,7 @@
       nome: 'E. M. Monsenhor Celso Cicco',
       inep: '24021004',
       rede: 'Municipal',
-      categoria: 'Ensino Fundamental',
+      categoria: 'Escola',
       segmentos: ['Ens. Fundamental I', 'Ens. Fundamental II'],
       zona: 'Urbana',
       bairroDistrito: 'Planalto',
@@ -110,7 +111,7 @@
       nome: 'E. M. Presidente Tancredo Neves',
       inep: '24021005',
       rede: 'Municipal',
-      categoria: 'Ensino Fundamental',
+      categoria: 'Escola',
       segmentos: ['Ens. Fundamental I', 'Ens. Fundamental II'],
       zona: 'Urbana',
       bairroDistrito: 'São Geraldo',
@@ -128,7 +129,7 @@
       nome: 'E. M. Adele de Oliveira',
       inep: '24021006',
       rede: 'Municipal',
-      categoria: 'Ensino Fundamental',
+      categoria: 'Escola',
       segmentos: ['Ens. Fundamental I', 'Ens. Fundamental II'],
       zona: 'Urbana',
       bairroDistrito: 'Passa e Fica / Centro',
@@ -146,7 +147,7 @@
       nome: 'E. M. Herônides Ferreira da Silva',
       inep: '24021007',
       rede: 'Municipal',
-      categoria: 'Ensino Fundamental',
+      categoria: 'Escola',
       segmentos: ['Ens. Fundamental I', 'Ens. Fundamental II'],
       zona: 'Urbana',
       bairroDistrito: 'Cohab',
@@ -164,7 +165,7 @@
       nome: 'E. M. Barão de Ceará-Mirim',
       inep: '24021008',
       rede: 'Municipal',
-      categoria: 'Ensino Fundamental',
+      categoria: 'Escola',
       segmentos: ['Ens. Fundamental I', 'Ens. Fundamental II'],
       zona: 'Urbana',
       bairroDistrito: 'Barão',
@@ -182,7 +183,7 @@
       nome: 'E. M. Professor Onofre Soares',
       inep: '24021009',
       rede: 'Municipal',
-      categoria: 'Ensino Fundamental',
+      categoria: 'Escola',
       segmentos: ['Ens. Fundamental I', 'Ens. Fundamental II'],
       zona: 'Urbana',
       bairroDistrito: 'Nova Descoberta',
@@ -200,7 +201,7 @@
       nome: 'E. M. São Geraldo',
       inep: '24021010',
       rede: 'Municipal',
-      categoria: 'Ensino Fundamental',
+      categoria: 'Escola',
       segmentos: ['Ens. Fundamental I', 'Ens. Fundamental II'],
       zona: 'Urbana',
       bairroDistrito: 'São Geraldo',
@@ -215,14 +216,14 @@
     },
 
     // -------------------------------------------------------------------------
-    // ZONA RURAL / DISTRITOS E COMUNIDADES QUILOMBOLAS E AGRÍCOLAS
+    // ZONA RURAL — ESCOLAS MUNICIPAIS DOS DISTRITOS E COMUNIDADES
     // -------------------------------------------------------------------------
     {
       id: 'esc_012',
       nome: 'E. M. Dr. Júlio Senna',
       inep: '24021011',
       rede: 'Municipal',
-      categoria: 'Polo Rural',
+      categoria: 'Escola',
       segmentos: ['Ed. Infantil', 'Ens. Fundamental I', 'Ens. Fundamental II'],
       zona: 'Rural',
       bairroDistrito: 'Distrito de Gravatá',
@@ -240,7 +241,7 @@
       nome: 'E. M. Madalena Antunes',
       inep: '24021012',
       rede: 'Municipal',
-      categoria: 'Polo Rural',
+      categoria: 'Escola',
       segmentos: ['Ed. Infantil', 'Ens. Fundamental I'],
       zona: 'Rural',
       bairroDistrito: 'Distrito de Massangana',
@@ -258,7 +259,7 @@
       nome: 'E. M. Felipe Camarão',
       inep: '24021013',
       rede: 'Municipal',
-      categoria: 'Polo Rural',
+      categoria: 'Escola',
       segmentos: ['Ens. Fundamental I', 'Ens. Fundamental II'],
       zona: 'Rural',
       bairroDistrito: 'Comunidade Primeirinho',
@@ -276,7 +277,7 @@
       nome: 'E. M. Maria do Carmo de Brito',
       inep: '24021014',
       rede: 'Municipal',
-      categoria: 'Polo Rural',
+      categoria: 'Escola',
       segmentos: ['Ens. Fundamental I', 'Ens. Fundamental II'],
       zona: 'Rural',
       bairroDistrito: 'Comunidade de Pium',
@@ -294,7 +295,7 @@
       nome: 'E. M. Rui Barbosa',
       inep: '24021015',
       rede: 'Municipal',
-      categoria: 'Polo Rural',
+      categoria: 'Escola',
       segmentos: ['Ens. Fundamental I', 'Ens. Fundamental II'],
       zona: 'Rural',
       bairroDistrito: 'Comunidade de Coqueiros',
@@ -312,7 +313,7 @@
       nome: 'E. M. Professora Maria Alice',
       inep: '24021016',
       rede: 'Municipal',
-      categoria: 'Polo Rural',
+      categoria: 'Escola',
       segmentos: ['Ens. Fundamental I', 'Ens. Fundamental II'],
       zona: 'Rural',
       bairroDistrito: 'Capela',
@@ -334,7 +335,7 @@
       nome: 'CEI Professora Maria de Lourdes',
       inep: '24021017',
       rede: 'Municipal',
-      categoria: 'Educação Infantil',
+      categoria: 'Centro de Educação Infantil',
       segmentos: ['Ed. Infantil'],
       zona: 'Urbana',
       bairroDistrito: 'Centro',
@@ -352,7 +353,7 @@
       nome: 'CEI Menino Jesus',
       inep: '24021018',
       rede: 'Municipal',
-      categoria: 'Educação Infantil',
+      categoria: 'Centro de Educação Infantil',
       segmentos: ['Ed. Infantil'],
       zona: 'Urbana',
       bairroDistrito: 'Planalto',
@@ -370,7 +371,7 @@
       nome: 'CEI Tia Zezé',
       inep: '24021019',
       rede: 'Municipal',
-      categoria: 'Educação Infantil',
+      categoria: 'Centro de Educação Infantil',
       segmentos: ['Ed. Infantil'],
       zona: 'Urbana',
       bairroDistrito: 'Santa Águeda',
@@ -392,7 +393,7 @@
       nome: 'E. E. Interventor Ubaldo Bezerra de Melo',
       inep: '24021020',
       rede: 'Estadual',
-      categoria: 'Ensino Fundamental e Médio',
+      categoria: 'Escola',
       segmentos: ['Ens. Fundamental II', 'Ensino Médio'],
       zona: 'Urbana',
       bairroDistrito: 'Centro',
@@ -410,7 +411,7 @@
       nome: 'E. E. Desembargador Silvino Bezerra',
       inep: '24021021',
       rede: 'Estadual',
-      categoria: 'Ensino Fundamental e Médio',
+      categoria: 'Escola',
       segmentos: ['Ens. Fundamental I', 'Ens. Fundamental II'],
       zona: 'Urbana',
       bairroDistrito: 'São Geraldo',
@@ -425,14 +426,14 @@
     },
 
     // -------------------------------------------------------------------------
-    // REDE FEDERAL (IFRN — MINISTÉRIO DA EDUCAÇÃO)
+    // REDE FEDERAL — INSTITUIÇÃO (IFRN — MINISTÉRIO DA EDUCAÇÃO)
     // -------------------------------------------------------------------------
     {
       id: 'esc_023',
       nome: 'IFRN — Campus Ceará-Mirim',
       inep: '24021022',
       rede: 'Federal',
-      categoria: 'Ensino Técnico e Médio',
+      categoria: 'Instituição',
       segmentos: ['Ensino Médio', 'Ensino Técnico'],
       zona: 'Urbana',
       bairroDistrito: 'Planalto / BR-406',
@@ -454,7 +455,7 @@
       nome: 'Colégio Santa Águeda (Rede Privada)',
       inep: '24021023',
       rede: 'Privada',
-      categoria: 'Ensino Regular Privado',
+      categoria: 'Escola',
       segmentos: ['Ed. Infantil', 'Ens. Fundamental I', 'Ens. Fundamental II'],
       zona: 'Urbana',
       bairroDistrito: 'Santa Águeda',
@@ -472,7 +473,7 @@
       nome: 'Educandário Sagrada Família (Rede Privada)',
       inep: '24021024',
       rede: 'Privada',
-      categoria: 'Ensino Regular Privado',
+      categoria: 'Escola',
       segmentos: ['Ed. Infantil', 'Ens. Fundamental I'],
       zona: 'Urbana',
       bairroDistrito: 'Centro',

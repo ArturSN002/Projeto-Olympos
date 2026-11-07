@@ -107,7 +107,8 @@ window.OlymposViews.papiroCadmo = (function() {
       if (esc.nome && esc.nome.includes('SMEB Sede')) return;
       if (typeof esc.lat !== 'number' || typeof esc.lng !== 'number') return;
 
-      const corPadrao = esc.zona === 'Rural' ? '#10B981' : (esc.categoria && (esc.categoria.includes('Infantil') || esc.categoria.includes('CEI')) ? '#F59E0B' : '#38BDF8');
+      const ehCei = esc.categoria === 'Centro de Educação Infantil' || /^c\.?e\.?i\.?\b/i.test(esc.nome || '');
+      const corPadrao = esc.zona === 'Rural' ? '#10B981' : (ehCei ? '#F59E0B' : '#38BDF8');
       pontos.push({
         id: esc.id || ('esc_' + Math.random().toString(36).substr(2, 6)),
         nome: esc.nome + ' (Ceará-Mirim)',
@@ -117,7 +118,7 @@ window.OlymposViews.papiroCadmo = (function() {
         tipo: esc.categoria || 'Escola Municipal',
         coords: [esc.lat, esc.lng],
         cor: esc.cor || corPadrao,
-        icone: esc.icone || (esc.zona === 'Rural' ? 'R' : (esc.categoria && (esc.categoria.includes('Infantil') || esc.categoria.includes('CEI')) ? 'C' : 'E')),
+        icone: (esc.icone === 'C' && !ehCei) ? (esc.zona === 'Rural' ? 'R' : 'U') : (esc.icone || (esc.zona === 'Rural' ? 'R' : (ehCei ? 'C' : 'U'))),
         endereco: esc.endereco || '',
         inep: esc.inep || '',
         isEscolaDinamica: true

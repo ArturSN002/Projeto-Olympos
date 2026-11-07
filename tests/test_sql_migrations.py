@@ -54,6 +54,7 @@ class TestSqlMigrationsAndSecuritySchema(unittest.TestCase):
         self.migration_004 = MIGRATIONS_DIR / "20261101_004_security_advisor_remediation.sql"
         self.migration_007 = MIGRATIONS_DIR / "20261106_007_escolas_secretarias_agenda.sql"
         self.migration_008 = MIGRATIONS_DIR / "20261106_008_escolas_multi_rede_segmentos.sql"
+        self.migration_009 = MIGRATIONS_DIR / "20261107_009_escolas_categoria_institucional_catalogo_json.sql"
         self.seed_file = SEEDS_DIR / "seed_roles_mock.sql"
 
     def test_01_migrations_and_seed_files_exist(self):
@@ -64,11 +65,16 @@ class TestSqlMigrationsAndSecuritySchema(unittest.TestCase):
         self.assertTrue(self.migration_004.exists(), f"Migração 004 não encontrada: {self.migration_004}")
         self.assertTrue(self.migration_007.exists(), f"Migração 007 não encontrada: {self.migration_007}")
         self.assertTrue(self.migration_008.exists(), f"Migração 008 não encontrada: {self.migration_008}")
+        self.assertTrue(self.migration_009.exists(), f"Migração 009 não encontrada: {self.migration_009}")
         self.assertTrue(self.seed_file.exists(), f"Seed não encontrado: {self.seed_file}")
 
     def test_02_sqlglot_syntax_validation(self):
         """Valida que todos os arquivos de migração possuem sintaxe SQL PostgreSQL válida via sqlglot."""
-        for m_file in [self.migration_001, self.migration_002, self.migration_003, self.migration_004, self.migration_007, self.migration_008]:
+        for m_file in [
+            self.migration_001, self.migration_002, self.migration_003,
+            self.migration_004, self.migration_007, self.migration_008,
+            self.migration_009
+        ]:
             content = m_file.read_text(encoding="utf-8")
             try:
                 expressions = sqlglot.parse(content, read="postgres")
@@ -357,6 +363,22 @@ class TestSqlMigrationsAndSecuritySchema(unittest.TestCase):
 
         # 5. Segurança: RLS e ausência de FORCE RLS
         self.assertNotIn("FORCE ROW LEVEL SECURITY", sql_008.upper())
+
+    def test_14_migration_009_categoria_institucional_and_catalogos_json(self):
+        """Valida a migração 009: padronização de categoria institucional (Escola/CEI/Instituição) e tabela catalogos_json."""
+        sql_009 = self.migration_009.read_text(encoding="utf-8")
+
+        self.assertIn("chk_escolas_categoria_institucional", sql_009)
+        self.assertIn("'Escola'", sql_009)
+        self.assertIn("'Centro de Educação Infantil'", sql_009)
+        self.assertIn("'Instituição'", sql_009)
+        self.assertIn("SECURITY INVOKER", sql_009)
+        self.assertIn("REVOKE EXECUTE ON FUNCTION public.handle_escolas_sync_segmentos_categoria() FROM PUBLIC, anon;", sql_009)
+        self.assertIn("CREATE TABLE IF NOT EXISTS public.catalogos_json", sql_009)
+        self.assertIn("ALTER TABLE public.catalogos_json ENABLE ROW LEVEL SECURITY;", sql_009)
+        self.assertIn('CREATE POLICY "catalogos_json_select_public"', sql_009)
+        self.assertIn('CREATE POLICY "catalogos_json_modify_auth"', sql_009)
+        self.assertNotIn("FORCE ROW LEVEL SECURITY", sql_009.upper())
 
 
 if __name__ == "__main__":

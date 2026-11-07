@@ -56,10 +56,12 @@ try:
     from extractors.base import BaseExtractor
     from extractors.topsolutions import TopSolutionsExtractor
     from extractors.natal import NatalExtractor
+    from extractors import run_all as cadmo_run_all
 except ImportError:
     BaseExtractor = None
     TopSolutionsExtractor = None
     NatalExtractor = None
+    cadmo_run_all = None
 
 
 class TestFogoDePrometheusEngine(unittest.TestCase):
@@ -533,6 +535,76 @@ class TestPapiroDeCadmoEngine(unittest.TestCase):
         df_concat = pd.concat([df1, df2], ignore_index=True)
         self.assertEqual(len(df_concat), 2)
         self.assertEqual(list(df_concat.index), [0, 1])
+
+    def test_17_natal_html_portal_fallback_cakephp_jqgrid(self):
+        """Valida que NatalExtractor não dispara 'Expecting value: line 1 column 1' ao receber HTML e extrai via CakePHP XHR/jqGrid."""
+        import httpx
+        self.assertIsNotNone(NatalExtractor)
+        dummy_cfg = {
+            "id": "natal",
+            "ente": "Natal",
+            "url": "https://www2.natal.rn.gov.br/transparenciaapi/folha_pagamentos"
+        }
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            extractor = NatalExtractor(dummy_cfg, Path(tmp_dir))
+
+            def fake_get(url, **kwargs):
+                if "getMeses" in url:
+                    return httpx.Response(200, content=b'{"8": "Agosto"}')
+                if "getLotacoes" in url:
+                    return httpx.Response(200, content=b'{"SME": "SME - SECRETARIA MUNICIPAL DE EDUCACAO"}')
+                # Endpoint legado retorna HTML (antiga causa de Expecting value: line 1 column 1)
+                return httpx.Response(200, content=b"<!DOCTYPE html><html><body>Portal da Transparencia</body></html>")
+
+            def fake_post(url, **kwargs):
+                payload = (
+                    '{"page":"1","total":1,"records":1,"rows":['
+                    '{"id":"0","cell":["12345-6","MARIA EDUCADORA SILVA","PROFESSOR N-2","SME","08/2026","5.400,00"]}'
+                    ']}'
+                )
+                return httpx.Response(200, content=payload.encode("utf-8"))
+
+            with patch("httpx.Client.get", side_effect=fake_get), patch("httpx.Client.post", side_effect=fake_post):
+                arquivo = extractor._tentar_extrair_mes("2026-08")
+                self.assertIsNotNone(arquivo, "NatalExtractor deve extrair CSV via CakePHP XHR quando a URL primária retornar HTML")
+                self.assertTrue(arquivo.exists())
+                conteudo = arquivo.read_text(encoding="utf-8-sig")
+                self.assertIn("MARIA EDUCADORA SILVA", conteudo)
+                self.assertIn("12345-6", conteudo)
+
+    def test_18_run_all_continua_demais_secretarias_em_falha_filtro(self):
+        """Valida que run_all.executar_ciclo avança automaticamente para as demais secretarias caso o ente filtrado falhe."""
+        self.assertIsNotNone(cadmo_run_all, "Módulo extractors.run_all deve estar disponível")
+
+        portais_mock = {
+            "portais": [
+                {"id": "natal", "ente": "Natal", "motor": "api_natal", "ativo": True, "url": "https://exemplo.gov.br/natal"},
+                {"id": "parnamirim", "ente": "Parnamirim", "motor": "topsolutions", "ativo": True, "url": "https://pmparnamirimrn.transparencia.topsolutionsrn.com.br"},
+                {"id": "macaiba", "ente": "Macaíba", "motor": "topsolutions", "ativo": True, "url": "https://pmmacaibarn.transparencia.topsolutionsrn.com.br"}
+            ]
+        }
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_path = Path(tmp_dir)
+            csv_ok = tmp_path / "ok.csv"
+            csv_ok.write_text("matricula;nome;cargo\n001;SERVIDOR PARCEIRO;PROFESSOR\n", encoding="utf-8")
+
+            def fake_extrair(p_cfg, dest, comp):
+                if p_cfg["id"] == "natal":
+                    return {"status": "falha", "ente": "Natal", "motivo": "Portal indisponível", "duracao_s": 0.1}
+                return {"status": "sucesso", "ente": p_cfg["ente"], "arquivo": str(csv_ok), "duracao_s": 0.1}
+
+            with patch.object(cadmo_run_all, "extrair_portal", side_effect=fake_extrair):
+                resumo = cadmo_run_all.executar_ciclo(
+                    filtro_ente="Natal",
+                    competencia="08/2026",
+                    cfg_override=portais_mock,
+                    raw_dir_override=tmp_path,
+                    max_workers=2
+                )
+                self.assertTrue(resumo["fallback_demais_secretarias"], "Deve acionar fallback para as demais secretarias parceiras")
+                self.assertEqual(len(resumo["sucesso"]), 2)
+                self.assertEqual(len(resumo["falha"]), 1)
 
 
 if __name__ == "__main__":
