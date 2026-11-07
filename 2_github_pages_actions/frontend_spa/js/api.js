@@ -1,7 +1,7 @@
 /**
  * Hub Olympos V2 — Camada Modular de API (Dual-Front: GitHub Pages HTTP + GAS Nativo)
  * Integrado ao Supabase JWT e validação de sessão segura.
- * Versão 2.0.0 — Projeto Olympos
+ * Versão 2.0.3 — Projeto Olympos (Release V2.03)
  */
 window.OlymposApi = (function() {
   const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbw-zKUdYJO6Zw1_XHo12a49p2wpgNtfii-2CJOq1838f6S1-L0SYM6iI9A2PS2ZPjYdmQ/exec';
@@ -158,7 +158,7 @@ window.OlymposApi = (function() {
             onResult({
               ok: true,
               latency: Math.round(performance.now() - start),
-              data: data || { sistema: 'Hub Olympos GAS Nativo', versao: '2.1.0' }
+              data: data || { sistema: 'Hub Olympos GAS Nativo', versao: '2.0.3' }
             });
           }
         })

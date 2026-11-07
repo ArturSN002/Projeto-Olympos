@@ -1,6 +1,7 @@
 {
   "name": "Olympos — Inteligência Documental SMEB",
   "short_name": "Olympos SMEB",
+  "version": "2.0.3",
   "description": "Plataforma de inteligência documental, governança administrativa e acervo da Secretaria Municipal de Educação Básica (SMEB de Ceará-Mirim/RN)",
   "start_url": "./index.html",
   "scope": "./",

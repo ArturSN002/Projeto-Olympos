@@ -33,7 +33,8 @@ window.OlymposViews.papiroCadmo = (function() {
     { id: 'sme_poco_branco', nome: 'SME Poço Branco', municipio: 'Poço Branco', regiao: 'Região Mato Grande', tipo: 'Secretaria Municipal Parceira', coords: [-5.6239, -35.6606], cor: '#0284C7', icone: '🏛️', endereco: 'Rua Francisco de Assis, Centro', contato: '(84) 3264-0130' },
     { id: 'sme_taipu', nome: 'SME Taipú', municipio: 'Taipú', regiao: 'Região Mato Grande', tipo: 'Secretaria Municipal Parceira', coords: [-5.6217, -35.5358], cor: '#0D9488', icone: '🏛️', endereco: 'Praça 10 de Março, Centro', contato: '(84) 3265-0105' },
     { id: 'sme_touros', nome: 'SME Touros', municipio: 'Touros', regiao: 'Litoral Norte', tipo: 'Secretaria Municipal Parceira', coords: [-5.1989, -35.4608], cor: '#2563EB', icone: '🏛️', endereco: 'Av. 27 de Março, Centro', contato: '(84) 3263-2210' },
-    { id: 'sme_rio_do_fogo', nome: 'SME Rio do Fogo', municipio: 'Rio do Fogo', regiao: 'Litoral Norte', tipo: 'Secretaria Municipal Parceira', coords: [-5.2750, -35.3814], cor: '#059669', icone: '🏛️', endereco: 'Rua José Severiano, Centro', contato: '(84) 3694-0112' }
+    { id: 'sme_rio_do_fogo', nome: 'SME Rio do Fogo', municipio: 'Rio do Fogo', regiao: 'Litoral Norte', tipo: 'Secretaria Municipal Parceira', coords: [-5.2750, -35.3814], cor: '#059669', icone: '🏛️', endereco: 'Rua José Severiano, Centro', contato: '(84) 3694-0112' },
+    { id: 'seec_rn', nome: 'SEEC / Governo do Estado do RN', municipio: 'Governo do Estado do RN (SEEC)', regiao: 'Estadual', tipo: 'Secretaria de Estado da Educação (SEEC/RN)', coords: [-5.8278, -35.2156], cor: '#3B82F6', icone: '🌐', endereco: 'Centro Administrativo do Estado, Bloco I, BR-101, Natal/RN', contato: '(84) 3232-1300 / seec@rn.gov.br' }
   ];
 
   const STORAGE_KEY_SECRETARIAS = 'olympos_secretarias_parceiras';
@@ -236,6 +237,32 @@ window.OlymposViews.papiroCadmo = (function() {
     "destino": "Ceará-Mirim",
     "turno": "Integral",
     "dataCadastro": "2026-11-03"
+  },
+  {
+    "id": "perm_real_009",
+    "nome": "ODJAIME CAMARA DE ARAUJO",
+    "matricula": "0010016",
+    "cargo": "Professor dos Anos Finais",
+    "disciplina": "História",
+    "cargaHoraria": "30h",
+    "origem": "E. M. Alice Garcia Freire (Ceará-Mirim)",
+    "municipioOrigem": "Ceará-Mirim",
+    "destino": "Governo do Estado do RN (SEEC)",
+    "turno": "Matutino",
+    "dataCadastro": "2026-11-04"
+  },
+  {
+    "id": "perm_real_010",
+    "nome": "FRANCISCO DE ASSIS MEDEIROS",
+    "matricula": "192341-2",
+    "cargo": "Professor dos Anos Finais",
+    "disciplina": "Matemática",
+    "cargaHoraria": "30h",
+    "origem": "Colégio Estadual Monsenhor Urbano (SEEC)",
+    "municipioOrigem": "Governo do Estado do RN (SEEC)",
+    "destino": "Ceará-Mirim",
+    "turno": "Matutino",
+    "dataCadastro": "2026-11-04"
   }
 ];
 
@@ -429,23 +456,37 @@ window.OlymposViews.papiroCadmo = (function() {
   }
 ];
 
+  // Base Referencial Canônica de Servidores Efetivos da Rede Estadual (SEEC/RN)
+  const SERVIDORES_ESTADO_RN = [
+    { n: 'ODJAIME CAMARA DE ARAUJO', m: '184920-1', g: 'PROFESSOR EFETIVO (HISTÓRIA)', h: '30h', l: 'E. E. Augusto Severo (Natal)', ente: 'Governo do Estado (SEEC)', orgao: 'SEEC / Governo do Estado do RN' },
+    { n: 'FRANCISCO DE ASSIS MEDEIROS', m: '192341-2', g: 'PROFESSOR EFETIVO (MATEMÁTICA)', h: '30h', l: 'Colégio Estadual Monsenhor Urbano (Ceará-Mirim)', ente: 'Governo do Estado (SEEC)', orgao: 'SEEC / Governo do Estado do RN' },
+    { n: 'MARIA APARECIDA DA SILVA COSTA', m: '178923-4', g: 'PROFESSOR EFETIVO (LÍNGUA PORTUGUESA)', h: '30h', l: 'E. E. Desembargador Silvino Bezerra (Ceará-Mirim)', ente: 'Governo do Estado (SEEC)', orgao: 'SEEC / Governo do Estado do RN' },
+    { n: 'JOSE CARLOS DO NASCIMENTO', m: '204891-0', g: 'PROFESSOR EFETIVO (GEOGRAFIA)', h: '30h', l: 'E. E. Professor Edgar Barbosa (Natal)', ente: 'Governo do Estado (SEEC)', orgao: 'SEEC / Governo do Estado do RN' },
+    { n: 'ANA CLAUDIA BEZERRA LIMA', m: '211904-8', g: 'PROFESSOR EFETIVO (CIÊNCIAS BIOLÓGICAS)', h: '30h', l: 'E. E. Walter Duarte Pereira (Natal)', ente: 'Governo do Estado (SEEC)', orgao: 'SEEC / Governo do Estado do RN' },
+    { n: 'MARCOS ANTONIO ALVES PEREIRA', m: '198762-3', g: 'PROFESSOR EFETIVO (EDUCAÇÃO FÍSICA)', h: '30h', l: 'Colégio Estadual Monsenhor Urbano (Ceará-Mirim)', ente: 'Governo do Estado (SEEC)', orgao: 'SEEC / Governo do Estado do RN' },
+    { n: 'LUCIA DE FATIMA RODRIGUES', m: '165432-9', g: 'ESPECIALISTA EM EDUCAÇÃO (PEDAGOGIA)', h: '30h', l: 'DIREC Natal / Sede SEEC RN', ente: 'Governo do Estado (SEEC)', orgao: 'SEEC / Governo do Estado do RN' },
+    { n: 'RAIMUNDO NONATO FERREIRA', m: '223401-5', g: 'PROFESSOR EFETIVO (LÍNGUA INGLESA)', h: '30h', l: 'E. E. Desembargador Silvino Bezerra (Ceará-Mirim)', ente: 'Governo do Estado (SEEC)', orgao: 'SEEC / Governo do Estado do RN' },
+    { n: 'SANDRA REGINA DE SOUZA', m: '189045-7', g: 'PROFESSOR EFETIVO (ARTES)', h: '30h', l: 'E. E. Dinarte Mariz (Natal)', ente: 'Governo do Estado (SEEC)', orgao: 'SEEC / Governo do Estado do RN' },
+    { n: 'PAULO ROBERTO TAVARES', m: '201984-6', g: 'PROFESSOR EFETIVO (FÍSICA/QUÍMICA)', h: '30h', l: 'Colégio Estadual Monsenhor Urbano (Ceará-Mirim)', ente: 'Governo do Estado (SEEC)', orgao: 'SEEC / Governo do Estado do RN' }
+  ];
+
   const PORTAIS = [
-    { nome: 'Governo do Estado do RN (SEEC)', regiao: 'Estadual', tecnologia: 'Playwright SPA (SEAD/COPES)', url: 'https://remuneracao.rn.gov.br/table-people' },
-    { nome: 'Ceará-Mirim (Base Local SMEB)', regiao: 'Grande Natal', tecnologia: 'TopSolutions RN • CSV', url: 'https://pmcearamirimrn.transparencia.topsolutionsrn.com.br/servidores' },
-    { nome: 'Natal', regiao: 'Grande Natal', tecnologia: 'Portal Transparência SME • CSV', url: 'https://www.natal.rn.gov.br/transparencia' },
-    { nome: 'Parnamirim', regiao: 'Grande Natal', tecnologia: 'Portal Transparência • CSV', url: 'https://transparencia.parnamirim.rn.gov.br' },
-    { nome: 'São Gonçalo do Amarante', regiao: 'Grande Natal', tecnologia: 'TopSolutions / Exportação CSV', url: 'https://saogoncalo.rn.gov.br' },
-    { nome: 'Macaíba', regiao: 'Grande Natal', tecnologia: 'TopSolutions RN • CSV', url: 'https://macaiba.rn.gov.br' },
-    { nome: 'Extremoz', regiao: 'Grande Natal', tecnologia: 'TopSolutions RN • CSV', url: 'https://extremoz.rn.gov.br' },
-    { nome: 'Nísia Floresta', regiao: 'Agreste / Litoral', tecnologia: 'TopSolutions RN • CSV', url: 'https://nisiafloresta.rn.gov.br' },
-    { nome: 'Monte Alegre', regiao: 'Agreste', tecnologia: 'TopSolutions RN • CSV', url: 'https://montealegre.rn.gov.br' },
-    { nome: 'Ielmo Marinho', regiao: 'Potengi', tecnologia: 'TopSolutions RN • CSV', url: 'https://ielmomarinho.rn.gov.br' },
-    { nome: 'São Paulo do Potengi', regiao: 'Potengi', tecnologia: 'TopSolutions RN • CSV', url: 'https://saopaulodopotengi.rn.gov.br' },
-    { nome: 'João Câmara', regiao: 'Mato Grande', tecnologia: 'TopSolutions RN • CSV', url: 'https://joaocamara.rn.gov.br' },
-    { nome: 'Poço Branco', regiao: 'Mato Grande', tecnologia: 'TopSolutions RN • CSV', url: 'https://pocobranco.rn.gov.br' },
-    { nome: 'Taipú', regiao: 'Mato Grande', tecnologia: 'TopSolutions RN • CSV', url: 'https://taipu.rn.gov.br' },
-    { nome: 'Touros', regiao: 'Litoral Norte', tecnologia: 'TopSolutions RN • CSV', url: 'https://touros.rn.gov.br' },
-    { nome: 'Rio do Fogo', regiao: 'Litoral Norte', tecnologia: 'TopSolutions RN • CSV', url: 'https://riodofogo.rn.gov.br' }
+    { nome: 'Governo do Estado do RN (SEEC)', regiao: 'Estadual', tecnologia: 'Playwright SPA (SEAD/COPES)', url: 'https://remuneracao.rn.gov.br/table-people', dataUltimoCsv: '12/10/2026' },
+    { nome: 'Ceará-Mirim (Base Local SMEB)', regiao: 'Grande Natal', tecnologia: 'TopSolutions RN • CSV', url: 'https://pmcearamirimrn.transparencia.topsolutionsrn.com.br/servidores', dataUltimoCsv: '12/10/2026' },
+    { nome: 'Natal', regiao: 'Grande Natal', tecnologia: 'Portal Transparência SME • CSV', url: 'https://www.natal.rn.gov.br/transparencia', dataUltimoCsv: '12/10/2026' },
+    { nome: 'Parnamirim', regiao: 'Grande Natal', tecnologia: 'Portal Transparência • CSV', url: 'https://transparencia.parnamirim.rn.gov.br', dataUltimoCsv: '12/10/2026' },
+    { nome: 'São Gonçalo do Amarante', regiao: 'Grande Natal', tecnologia: 'TopSolutions / Exportação CSV', url: 'https://saogoncalo.rn.gov.br', dataUltimoCsv: '12/10/2026' },
+    { nome: 'Macaíba', regiao: 'Grande Natal', tecnologia: 'TopSolutions RN • CSV', url: 'https://macaiba.rn.gov.br', dataUltimoCsv: '12/10/2026' },
+    { nome: 'Extremoz', regiao: 'Grande Natal', tecnologia: 'TopSolutions RN • CSV', url: 'https://extremoz.rn.gov.br', dataUltimoCsv: '12/10/2026' },
+    { nome: 'Nísia Floresta', regiao: 'Agreste / Litoral', tecnologia: 'TopSolutions RN • CSV', url: 'https://nisiafloresta.rn.gov.br', dataUltimoCsv: '12/10/2026' },
+    { nome: 'Monte Alegre', regiao: 'Agreste', tecnologia: 'TopSolutions RN • CSV', url: 'https://montealegre.rn.gov.br', dataUltimoCsv: '12/10/2026' },
+    { nome: 'Ielmo Marinho', regiao: 'Potengi', tecnologia: 'TopSolutions RN • CSV', url: 'https://ielmomarinho.rn.gov.br', dataUltimoCsv: '12/10/2026' },
+    { nome: 'São Paulo do Potengi', regiao: 'Potengi', tecnologia: 'TopSolutions RN • CSV', url: 'https://saopaulodopotengi.rn.gov.br', dataUltimoCsv: '12/10/2026' },
+    { nome: 'João Câmara', regiao: 'Mato Grande', tecnologia: 'TopSolutions RN • CSV', url: 'https://joaocamara.rn.gov.br', dataUltimoCsv: '31/12/2024' },
+    { nome: 'Poço Branco', regiao: 'Mato Grande', tecnologia: 'TopSolutions RN • CSV', url: 'https://pocobranco.rn.gov.br', dataUltimoCsv: '31/07/2026' },
+    { nome: 'Taipú', regiao: 'Mato Grande', tecnologia: 'TopSolutions RN • CSV', url: 'https://taipu.rn.gov.br', dataUltimoCsv: '12/10/2026' },
+    { nome: 'Touros', regiao: 'Litoral Norte', tecnologia: 'TopSolutions RN • CSV', url: 'https://touros.rn.gov.br', dataUltimoCsv: '12/10/2026' },
+    { nome: 'Rio do Fogo', regiao: 'Litoral Norte', tecnologia: 'TopSolutions RN • CSV', url: 'https://riodofogo.rn.gov.br', dataUltimoCsv: '31/07/2026' }
   ];
 
   function normalizarTexto(txt) {
@@ -1099,6 +1140,7 @@ window.OlymposViews.papiroCadmo = (function() {
 
   function extrairMunicipioOrigem(nomeOrigem) {
     const str = String(nomeOrigem || '').toLowerCase();
+    if (str.includes('governo do estado') || str.includes('seec') || str.includes('estadual')) return 'Governo do Estado (SEEC)';
     if (str.includes('ceará-mirim') || str.includes('ceara-mirim') || str.includes('smeb')) return 'Ceará-Mirim';
     if (str.includes('natal')) return 'Natal';
     if (str.includes('extremoz')) return 'Extremoz';
@@ -1224,6 +1266,10 @@ window.OlymposViews.papiroCadmo = (function() {
       });
       htmlOrig += '</optgroup>';
 
+      htmlOrig += '<optgroup label="Governo do Estado do RN">';
+      htmlOrig += '<option value="Governo do Estado do RN (SEEC)">Governo do Estado do RN (SEEC)</option>';
+      htmlOrig += '</optgroup>';
+
       htmlOrig += '<optgroup label="Secretarias Municipais Parceiras (Polos Intermunicipais)">';
       secretarias.forEach(function(sec) {
         if (sec.municipio === 'Ceará-Mirim') return;
@@ -1239,9 +1285,14 @@ window.OlymposViews.papiroCadmo = (function() {
       const valorDestAtual = selDest.value;
       let htmlDest = '';
       secretarias.forEach(function(sec) {
-        const desc = sec.municipio === 'Ceará-Mirim'
-          ? 'Ceará-Mirim (Rede Municipal SMEB)'
-          : (sec.municipio + ' (' + sec.nome.split('(')[0].trim() + ')');
+        let desc = '';
+        if (sec.id === 'seec_rn' || sec.municipio.includes('Governo')) {
+          desc = 'Governo do Estado do RN (SEEC)';
+        } else if (sec.municipio === 'Ceará-Mirim') {
+          desc = 'Ceará-Mirim (Rede Municipal SMEB)';
+        } else {
+          desc = sec.municipio + ' (' + sec.nome.split('(')[0].trim() + ')';
+        }
         htmlDest += '<option value="' + window.OlymposApp.escapeHtml(sec.municipio) + '">' + window.OlymposApp.escapeHtml(desc) + '</option>';
       });
       selDest.innerHTML = htmlDest;
@@ -1589,7 +1640,7 @@ window.OlymposViews.papiroCadmo = (function() {
     if (!termo) return docentes;
     const q = normalizarBusca(termo);
     return docentes.filter(function(d) {
-      const corpus = [d.n, d.m, d.g, d.l, d.h].map(normalizarBusca).join(' ');
+      const corpus = [d.n, d.m, d.g, d.l, d.h, d.ente || '', d.orgao || '', d.municipio || ''].map(normalizarBusca).join(' ');
       return corpus.includes(q);
     });
   }
@@ -1991,31 +2042,34 @@ window.OlymposViews.papiroCadmo = (function() {
     const badgeTotal = document.getElementById('badgeTotalMatches');
     if (!container) return;
 
-    const docentes = DOCENTES_CEARA_MIRIM || [];
-    const docentesFiltrados = filtrarDocentesPorTermo(docentes, termoBuscaServidor);
+    const docentesSMEB = (DOCENTES_CEARA_MIRIM || []).map(function(d) {
+      return Object.assign({}, d, { ente: d.ente || 'SMEB Ceará-Mirim' });
+    });
+    const todosDocentes = docentesSMEB.concat(SERVIDORES_ESTADO_RN);
+    const docentesFiltrados = filtrarDocentesPorTermo(todosDocentes, termoBuscaServidor);
 
     if (badgeTotal) {
       if (termoBuscaServidor) {
-        badgeTotal.textContent = docentesFiltrados.length + ' de ' + docentes.length + ' docentes';
+        badgeTotal.textContent = docentesFiltrados.length + ' de ' + todosDocentes.length + ' servidores';
       } else {
-        badgeTotal.textContent = docentes.length + ' docentes na base';
+        badgeTotal.textContent = todosDocentes.length + ' servidores na base';
       }
     }
 
     const previewPill = document.getElementById('heraMatchPreviewPill');
     if (previewPill) {
-      previewPill.textContent = 'Docentes: ' + docentesFiltrados.length;
+      previewPill.textContent = 'Servidores: ' + docentesFiltrados.length;
       previewPill.classList.remove('hidden');
     }
 
-    atualizarResumoBusca(docentesFiltrados.length, docentes.length, 'docentes');
+    atualizarResumoBusca(docentesFiltrados.length, todosDocentes.length, 'docentes');
 
     if (docentesFiltrados.length === 0) {
       container.innerHTML =
         '<div class="output-panel text-center" style="padding: 32px 20px;">' +
           '<div style="font-size: 1.8rem; margin-bottom: 8px;">🔍</div>' +
-          '<strong style="display:block; font-size:15px; margin-bottom:6px; color:var(--text-main);">Nenhum docente localizado na base oficial</strong>' +
-          '<p style="font-size:13px; color:var(--text-muted); max-width:480px; margin:0 auto 14px;">Não foram identificados professores para o termo "<strong>' + window.OlymposApp.escapeHtml(termoBuscaServidor) + '</strong>". Busque por matrícula funcional de 7 dígitos, nome, escola de lotação ou cargo.</p>' +
+          '<strong style="display:block; font-size:15px; margin-bottom:6px; color:var(--text-main);">Nenhum servidor localizado na base oficial</strong>' +
+          '<p style="font-size:13px; color:var(--text-muted); max-width:480px; margin:0 auto 14px;">Não foram identificados servidores para o termo "<strong>' + window.OlymposApp.escapeHtml(termoBuscaServidor) + '</strong>". Busque por matrícula funcional, nome, lotação, cargo ou ente (SMEB / Governo do Estado).</p>' +
           '<button type="button" class="btn btn-secondary btn-sm" onclick="window.OlymposViews.papiroCadmo.limparBuscaServidor()">Limpar Busca</button>' +
         '</div>';
       return;
@@ -2025,7 +2079,7 @@ window.OlymposViews.papiroCadmo = (function() {
     const exibidos = docentesFiltrados.slice(0, limiteExibicao);
 
     let html = '<div style="margin-bottom: 8px; font-size: 12px; color: var(--text-muted); display:flex; justify-content:space-between; align-items:center;">' +
-      '<span>Exibindo <strong>' + exibidos.length + '</strong> de <strong>' + docentesFiltrados.length + '</strong> docentes ativos da SMEB Ceará-Mirim</span>' +
+      '<span>Exibindo <strong>' + exibidos.length + '</strong> de <strong>' + docentesFiltrados.length + '</strong> servidores ativos (SMEB &amp; Governo do Estado/SEEC)</span>' +
       (docentesFiltrados.length > limiteExibicao ? '<span class="pill-badge pill-gold" style="font-size:11px;">Refine a busca para ver resultados específicos</span>' : '') +
       '</div>';
 
@@ -2035,6 +2089,7 @@ window.OlymposViews.papiroCadmo = (function() {
           '<tr>' +
             '<th style="width:90px;">Matrícula</th>' +
             '<th>Nome do Servidor</th>' +
+            '<th style="width:180px;">Ente / Vínculo</th>' +
             '<th>Cargo / Função</th>' +
             '<th style="width:70px; text-align:center;">C.H.</th>' +
             '<th>Escola / Lotação</th>' +
@@ -2044,13 +2099,19 @@ window.OlymposViews.papiroCadmo = (function() {
         '<tbody>';
 
     exibidos.forEach(function(d) {
+      const isEstado = String(d.ente || '').includes('Governo') || String(d.ente || '').includes('SEEC');
+      const enteBadge = isEstado
+        ? '<span class="pill-badge pill-blue" style="font-size:10.5px;">🌐 Governo do Estado (SEEC)</span>'
+        : '<span class="pill-badge pill-gold" style="font-size:10.5px;">🏛️ SMEB Ceará-Mirim</span>';
+
       html +=
         '<tr>' +
           '<td style="font-family:var(--font-mono); font-weight:600; color:var(--text-main);">' + window.OlymposApp.escapeHtml(d.m) + '</td>' +
           '<td><strong>' + window.OlymposApp.escapeHtml(d.n) + '</strong></td>' +
+          '<td>' + enteBadge + '</td>' +
           '<td style="font-size:11.5px; color:var(--text-secondary);">' + window.OlymposApp.escapeHtml(d.g) + '</td>' +
           '<td style="text-align:center;"><span class="pill-badge pill-green" style="font-size:11px;">' + window.OlymposApp.escapeHtml(d.h) + '</span></td>' +
-          '<td style="font-size:11.5px; color:var(--text-muted);">' + window.OlymposApp.escapeHtml(d.l || 'SMEB / Rede Municipal') + '</td>' +
+          '<td style="font-size:11.5px; color:var(--text-muted);">' + window.OlymposApp.escapeHtml(d.l || (isEstado ? 'Rede Estadual SEEC/RN' : 'SMEB / Rede Municipal')) + '</td>' +
           '<td style="text-align:right;">' +
             '<button type="button" class="btn btn-secondary btn-sm" style="font-size:11px; padding:3px 8px;" ' +
               'onclick="window.OlymposViews.papiroCadmo.preencherFormComDocente(\'' + window.OlymposApp.escapeHtml(d.n) + '\', \'' + window.OlymposApp.escapeHtml(d.m) + '\', \'' + window.OlymposApp.escapeHtml(d.g) + '\', \'' + window.OlymposApp.escapeHtml(d.h) + '\', \'' + window.OlymposApp.escapeHtml(d.l || '') + '\')">' +
@@ -2227,6 +2288,7 @@ window.OlymposViews.papiroCadmo = (function() {
       card.style.justifyContent = 'space-between';
       card.style.gap = '10px';
 
+      const dataCsv = p.dataUltimoCsv || '12/10/2026';
       card.innerHTML =
         '<div>' +
           '<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:6px;">' +
@@ -2234,8 +2296,11 @@ window.OlymposViews.papiroCadmo = (function() {
             '<span class="pill-badge pill-green">Dia 12</span>' +
           '</div>' +
           '<div style="font-size:12px; color:var(--text-muted);">' + window.OlymposApp.escapeHtml(p.regiao) + ' • ' + window.OlymposApp.escapeHtml(p.tecnologia) + '</div>' +
+          '<div class="portal-csv-date-box" style="display:flex; align-items:center; gap:5px; font-size:11.5px; color:var(--text-secondary); margin-top:6px; background:var(--bg-tonal); padding:3px 8px; border-radius:var(--radius-sm,6px); border:1px solid var(--border-hairline);">' +
+            '<span aria-hidden="true">📥</span> <span>Último CSV:</span> <strong class="portal-csv-date" style="color:var(--brand-gold); font-family:var(--font-mono); font-size:11px;">' + window.OlymposApp.escapeHtml(dataCsv) + '</strong>' +
+          '</div>' +
         '</div>' +
-        '<div style="display:flex; justify-content:space-between; align-items:center;">' +
+        '<div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">' +
           '<span style="font-family:var(--font-mono); font-size:10.5px; color:var(--text-muted);">Fallback SIAI/TCE-RN</span>' +
           '<a href="' + window.OlymposApp.escapeHtml(p.url) + '" target="_blank" rel="noopener" class="folder-chip" style="padding:3px 10px; font-size:11px;">Portal ↗</a>' +
         '</div>';

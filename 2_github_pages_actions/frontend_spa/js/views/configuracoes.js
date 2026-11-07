@@ -1,5 +1,5 @@
 /**
- * Hub Olympos V2.1 — Página Modular 10: Configurações, Gateway Dual-Front & Preferências
+ * Hub Olympos V2.03 — Página Modular 10: Configurações, Gateway Dual-Front & Preferências
  */
 window.OlymposViews = window.OlymposViews || {};
 
@@ -80,7 +80,7 @@ window.OlymposViews.configuracoes = (function() {
           '<div style="color:var(--success); font-weight:700;">Gateway Conectado com Sucesso</div>' +
           '<div style="margin-top:4px; font-family:var(--font-mono); font-size:11.5px;">' +
             'Latência: ' + res.latency + ' ms • Sistema: ' + window.OlymposApp.escapeHtml((res.data && res.data.sistema) || 'Hub Olympos') +
-            ' • Versão: ' + window.OlymposApp.escapeHtml((res.data && res.data.versao) || '2.1.0') +
+            ' • Versão: ' + window.OlymposApp.escapeHtml((res.data && res.data.versao) || '2.0.3') +
           '</div>';
         window.OlymposApp.atualizarStatusConexao(true);
       } else {

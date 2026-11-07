@@ -189,6 +189,9 @@ class TestEscolasMapFeature(unittest.TestCase):
         self.assertIn('id="kpiEscolasUrbanas"', html, "KPI #kpiEscolasUrbanas ausente")
         self.assertIn('id="kpiEscolasRurais"', html, "KPI #kpiEscolasRurais ausente")
         self.assertIn('id="kpiEscolasCeis"', html, "KPI #kpiEscolasCeis ausente")
+        self.assertIn('id="kpiEscolasEstaduais"', html, "KPI #kpiEscolasEstaduais ausente")
+        self.assertIn('id="kpiEscolasFederais"', html, "KPI #kpiEscolasFederais ausente")
+        self.assertIn('id="kpiEscolasPrivadas"', html, "KPI #kpiEscolasPrivadas ausente")
 
         # Filtros e Tabela
         self.assertIn('id="escolaBuscaInput"', html, "Input de busca #escolaBuscaInput ausente")
@@ -579,6 +582,94 @@ class TestEscolasMapFeature(unittest.TestCase):
         )
         self.assertEqual(proc.returncode, 0, f"Falha no isolamento de símbolo CEI / Supabase init: {proc.stderr}")
         self.assertIn("CEI_ISOLATION_AND_SUPABASE_INIT_OK", proc.stdout)
+
+    def test_12_v203_redes_ensino_kpis_and_multirede_quantitativos(self):
+        """Valida o particionamento analítico por rede de ensino (Municipal, Estadual, Federal e Privada)
+        e a atualização reativa de todos os 7 indicadores de KPI no mapa de escolas."""
+        html = INDEX_HTML.read_text(encoding="utf-8")
+        view_code = ESCOLAS_VIEW_JS.read_text(encoding="utf-8")
+
+        # Verifica presença de todos os 4 cards e 7 indicadores de KPI no index.html
+        kpis = [
+            'id="kpiEscolasTotal"',
+            'id="kpiEscolasUrbanas"',
+            'id="kpiEscolasRurais"',
+            'id="kpiEscolasCeis"',
+            'id="kpiEscolasEstaduais"',
+            'id="kpiEscolasFederais"',
+            'id="kpiEscolasPrivadas"'
+        ]
+        for k in kpis:
+            self.assertIn(k, html, f"Indicador {k} ausente no layout de escolas")
+
+        # Valida no código de escolas.js o cálculo analítico multi-rede
+        self.assertIn('totalMunicipal', view_code)
+        self.assertIn('urbanasMun', view_code)
+        self.assertIn('ruraisMun', view_code)
+        self.assertIn('ceisMun', view_code)
+        self.assertIn('estaduais', view_code)
+        self.assertIn('federais', view_code)
+        self.assertIn('privadas', view_code)
+
+        # Simulação com Node.js para validar a lógica de agregação por rede
+        node_script = f"""
+        const fs = require('fs');
+        const viewCode = fs.readFileSync({json.dumps(str(ESCOLAS_VIEW_JS))}, 'utf8');
+
+        const domMock = {{}};
+        global.document = {{
+          getElementById: (id) => ({{
+            set textContent(val) {{ domMock[id] = String(val); }},
+            get textContent() {{ return domMock[id] || ''; }}
+          }}),
+          querySelectorAll: () => []
+        }};
+
+        const store = {{
+          'olympos_escolas_municipais': JSON.stringify([
+            {{ id: '1', nome: 'EM 1', rede: 'Municipal', zona: 'Urbana', categoria: 'Escola' }},
+            {{ id: '2', nome: 'EM 2', rede: 'Municipal', zona: 'Rural', categoria: 'Escola' }},
+            {{ id: '3', nome: 'CEI 1', rede: 'Municipal', zona: 'Urbana', categoria: 'Centro de Educação Infantil' }},
+            {{ id: '4', nome: 'EE 1', rede: 'Estadual', zona: 'Urbana', categoria: 'Escola' }},
+            {{ id: '5', nome: 'IFRN', rede: 'Federal', zona: 'Urbana', categoria: 'Escola' }},
+            {{ id: '6', nome: 'Colégio Privado', rede: 'Privada', zona: 'Urbana', categoria: 'Escola' }}
+          ])
+        }};
+
+        global.localStorage = {{
+          getItem: (k) => store[k] || null,
+          setItem: (k, v) => {{ store[k] = String(v); }}
+        }};
+
+        global.window = global;
+        global.OlymposViews = {{}};
+        global.OlymposApp = {{ escapeHtml: (s) => s, showToast: () => {{}} }};
+        global.OlymposSupabase = null;
+        global.addEventListener = () => {{}};
+
+        eval(viewCode);
+        const v = global.OlymposViews.escolas;
+        v.renderizarKpis();
+
+        if (domMock['kpiEscolasTotal'] !== '3') throw new Error('kpiEscolasTotal esperado 3, obteve ' + domMock['kpiEscolasTotal']);
+        if (domMock['kpiEscolasUrbanas'] !== '1') throw new Error('kpiEscolasUrbanas esperado 1, obteve ' + domMock['kpiEscolasUrbanas']);
+        if (domMock['kpiEscolasRurais'] !== '1') throw new Error('kpiEscolasRurais esperado 1, obteve ' + domMock['kpiEscolasRurais']);
+        if (domMock['kpiEscolasCeis'] !== '1') throw new Error('kpiEscolasCeis esperado 1, obteve ' + domMock['kpiEscolasCeis']);
+        if (domMock['kpiEscolasEstaduais'] !== '1') throw new Error('kpiEscolasEstaduais esperado 1, obteve ' + domMock['kpiEscolasEstaduais']);
+        if (domMock['kpiEscolasFederais'] !== '1') throw new Error('kpiEscolasFederais esperado 1, obteve ' + domMock['kpiEscolasFederais']);
+        if (domMock['kpiEscolasPrivadas'] !== '1') throw new Error('kpiEscolasPrivadas esperado 1, obteve ' + domMock['kpiEscolasPrivadas']);
+
+        console.log('KPIS_MULTI_REDE_OK');
+        """
+        proc = subprocess.run(
+            ["node", "-e", node_script],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=10
+        )
+        self.assertEqual(proc.returncode, 0, f"Falha na simulação de cálculo dos KPIs por rede: {proc.stderr}")
+        self.assertIn("KPIS_MULTI_REDE_OK", proc.stdout)
 
 
 if __name__ == "__main__":

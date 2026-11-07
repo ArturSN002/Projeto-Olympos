@@ -588,6 +588,62 @@ class TestUiResponsivenessAndDesignSystem(unittest.TestCase):
         self.assertIn('.modal-grid-3col', css_text)
         self.assertIn('.modal-grid-2col', css_text)
 
+    def test_24_v203_release_mobile_ux_transparencia_agenda_and_reset(self):
+        """Valida as melhorias da Release V2.03: ocultação de atalhos Drive mobile, reset de cache PWA,
+        título estrito de Portais, data de coleta CSV, eventos da agenda no calendário e servidores estaduais."""
+        html_text = HTML_INDEX.read_text(encoding="utf-8")
+        css_text = CSS_FILE.read_text(encoding="utf-8")
+        app_text = APP_JS.read_text(encoding="utf-8")
+
+        sw_file = SPA_DIR / "sw.js"
+        sw_text = sw_file.read_text(encoding="utf-8")
+
+        cal_file = SPA_DIR / "js" / "views" / "calendario.js"
+        cal_text = cal_file.read_text(encoding="utf-8")
+
+        papiro_file = SPA_DIR / "js" / "views" / "papiroCadmo.js"
+        papiro_text = papiro_file.read_text(encoding="utf-8")
+
+        # 1. Atalhos Drive ocultos em telas móveis e preservados no drawer lateral
+        self.assertIn('hero-shortcuts-bar hide-mobile', html_text)
+        self.assertIn('.hide-mobile', css_text)
+        self.assertIn('mobile-drawer-drive-section', html_text)
+
+        # Assegura que media queries mobile não forçam display: grid na barra hero
+        self.assertNotIn('.hero-shortcuts-bar {\n    display: grid !important;', css_text)
+        self.assertNotIn('.hero-shortcuts-bar {\r\n    display: grid !important;', css_text)
+
+        # 2. Botão de reset de cache PWA no drawer mobile
+        self.assertIn('id="mobileResetSiteBtn"', html_text)
+        self.assertIn('drawer-reset-btn', html_text)
+        self.assertIn('.drawer-reset-btn', css_text)
+        self.assertIn('.mobile-drawer-reset-section', css_text)
+        self.assertIn('resetMobileApp', app_text)
+        self.assertIn('window.caches.delete', app_text)
+        self.assertIn('.unregister()', app_text)
+
+        # 3. Título estrito de Portais da Transparência Monitorados e badges de data CSV
+        self.assertIn('Portais da Transparência Monitorados', html_text)
+        self.assertNotIn('Portais da Transparência Monitorados (15 Municípios + Estado do RN)', html_text)
+        self.assertIn('portal-csv-date', papiro_text)
+        self.assertIn('dataUltimoCsv', papiro_text)
+
+        # 4. Calendário: busca de eventos externos (Agenda Intersetorial) e scroll móvel
+        self.assertIn('obterTodosEventos(dados)', cal_text)
+        self.assertIn('.cal-event-chip.agenda_intersetorial', css_text)
+        self.assertIn('.cal-day-cell.tem-agenda', css_text)
+        self.assertIn('.getMonth()', cal_text)
+
+        # 5. Permutas: servidores do Estado do RN e ponto georreferenciado SEEC
+        self.assertIn('SERVIDORES_ESTADO_RN', papiro_text)
+        self.assertIn('seec_rn', papiro_text)
+        self.assertIn('Governo do Estado (SEEC)', papiro_text)
+
+        # 6. Metadados de versão V2.03
+        self.assertIn('SMEB 2026 • V2.03', html_text)
+        self.assertIn('olympos-shell-v2.0.3', sw_text)
+        self.assertIn('olympos-shell-v2.0.3', html_text)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -611,20 +611,34 @@ window.OlymposViews.escolas = (function() {
    */
   function renderizarKpis() {
     var todas = obterEscolas();
-    var total = todas.length;
-    var urbanas = 0;
-    var rurais = 0;
-    var ceis = 0;
+    var totalMunicipal = 0;
+    var urbanasMun = 0;
+    var ruraisMun = 0;
+    var ceisMun = 0;
+    var estaduais = 0;
+    var federais = 0;
+    var privadas = 0;
 
     todas.forEach(function(item) {
+      var rede = String(item.rede || 'Municipal').toLowerCase();
       var catInst = normalizarCategoriaInstitucional(item.categoria, item.nome);
       var zon = String(item.zona || '').toLowerCase();
-      if (catInst === 'Centro de Educação Infantil') {
-        ceis++;
-      } else if (zon === 'rural') {
-        rurais++;
+
+      if (rede === 'estadual') {
+        estaduais++;
+      } else if (rede === 'federal') {
+        federais++;
+      } else if (rede === 'privada') {
+        privadas++;
       } else {
-        urbanas++;
+        totalMunicipal++;
+        if (catInst === 'Centro de Educação Infantil') {
+          ceisMun++;
+        } else if (zon === 'rural') {
+          ruraisMun++;
+        } else {
+          urbanasMun++;
+        }
       }
     });
 
@@ -632,11 +646,17 @@ window.OlymposViews.escolas = (function() {
     var elUrbanas = document.getElementById('kpiEscolasUrbanas');
     var elRurais = document.getElementById('kpiEscolasRurais');
     var elCeis = document.getElementById('kpiEscolasCeis') || document.getElementById('kpiEscolasCmeis');
+    var elEstaduais = document.getElementById('kpiEscolasEstaduais');
+    var elFederais = document.getElementById('kpiEscolasFederais');
+    var elPrivadas = document.getElementById('kpiEscolasPrivadas');
 
-    if (elTotal) elTotal.textContent = total;
-    if (elUrbanas) elUrbanas.textContent = urbanas;
-    if (elRurais) elRurais.textContent = rurais;
-    if (elCeis) elCeis.textContent = ceis;
+    if (elTotal) elTotal.textContent = totalMunicipal;
+    if (elUrbanas) elUrbanas.textContent = urbanasMun;
+    if (elRurais) elRurais.textContent = ruraisMun;
+    if (elCeis) elCeis.textContent = ceisMun;
+    if (elEstaduais) elEstaduais.textContent = estaduais;
+    if (elFederais) elFederais.textContent = federais;
+    if (elPrivadas) elPrivadas.textContent = privadas;
   }
 
   /**
@@ -1341,6 +1361,7 @@ window.OlymposViews.escolas = (function() {
     exportarJson: exportarJson,
     importarJson: importarJson,
     restaurarPadroes: restaurarPadroes,
+    renderizarKpis: renderizarKpis,
     obterEscolas: obterEscolas,
     obterEscolasFiltradas: obterEscolasFiltradas,
     estaEmCearaMirim: estaEmCearaMirim,

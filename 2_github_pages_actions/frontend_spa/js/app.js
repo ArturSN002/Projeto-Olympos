@@ -1,5 +1,5 @@
 /**
- * Hub Olympos V2.1 — Controlador Central da Aplicação Modular
+ * Hub Olympos V2.03 — Controlador Central da Aplicação Modular
  * Estética Editorial (Google DeepMind + The Keyword), RBAC, Tema 60-30-10 e Modais.
  */
 window.OlymposApp = (function() {
@@ -377,6 +377,53 @@ window.OlymposApp = (function() {
   }
 
   // =========================================================================
+  // RESET PWA & PURGA DE CACHE OFFLINE PARA DISPOSITIVOS MÓVEIS
+  // =========================================================================
+  async function resetMobileApp() {
+    showToast('Resetando cache e atualizando aplicação...', false);
+    try {
+      // 1. Limpa todas as instâncias do CacheStorage
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(function(k) {
+          return caches.delete(k);
+        }));
+      }
+
+      // 2. Desregistra todos os Service Workers instalados
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map(function(r) {
+          return r.unregister();
+        }));
+      }
+
+      // 3. Limpa sessionStorage
+      try {
+        sessionStorage.clear();
+      } catch (eSession) {}
+
+      // 4. Limpa caches transitórios do localStorage sem apagar URLs de infraestrutura
+      try {
+        localStorage.removeItem('olympos_sw_purged_v260');
+        localStorage.removeItem('olympos_sw_purged_v203');
+        localStorage.removeItem('olympos_session_rbac');
+        localStorage.removeItem('olympos_rbac_profile_cache');
+      } catch (eStorage) {}
+
+      // 5. Recarregamento forçado com parâmetro anti-cache
+      showToast('Cache limpo com sucesso! Recarregando sistema...', false);
+      setTimeout(function() {
+        const bustUrl = window.location.origin + window.location.pathname + '?v=2.0.3&t=' + Date.now() + window.location.hash;
+        window.location.replace(bustUrl);
+      }, 300);
+    } catch (err) {
+      console.error('[PWA-Reset] Erro durante o reset:', err);
+      window.location.reload(true);
+    }
+  }
+
+  // =========================================================================
   // SKELETON LOADERS EDITORIAL (TABELAS ANIMADAS)
   // =========================================================================
   function renderSkeletonTable(tbodyElement, rows = 4, cols = 4, colWidths = ['15%', '25%', '45%', '15%']) {
@@ -520,6 +567,25 @@ window.OlymposApp = (function() {
     if (btnMenu) {
       btnMenu.addEventListener('click', function() {
         document.body.classList.toggle('nav-drawer-open');
+      });
+    }
+
+    const btnMobileReset = document.getElementById('mobileResetSiteBtn');
+    if (btnMobileReset) {
+      btnMobileReset.addEventListener('click', function(e) {
+        e.preventDefault();
+        const conf = confirm(
+          'Deseja resetar o aplicativo móvel?\n\n' +
+          'Esta ação irá:\n' +
+          '1. Limpar todo o cache PWA offline;\n' +
+          '2. Desregistrar versões anteriores do Service Worker;\n' +
+          '3. Forçar o download da versão mais recente (V2.03);\n' +
+          '4. Recarregar o sistema limpo.\n\n' +
+          'Deseja continuar?'
+        );
+        if (conf) {
+          resetMobileApp();
+        }
       });
     }
 
@@ -1054,6 +1120,37 @@ window.OlymposApp = (function() {
     }
   }
 
+  // =========================================================================
+  // RESET DE CACHE PWA E RECARREGAMENTO FORÇADO MOBILE (RELEASE V2.03)
+  // =========================================================================
+  async function resetMobileApp() {
+    try {
+      showToast('Iniciando limpeza profunda de cache PWA...');
+      if ('caches' in window) {
+        const cacheKeys = await window.caches.keys();
+        await Promise.all(cacheKeys.map(function(k) { return window.caches.delete(k); }));
+      }
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (let i = 0; i < registrations.length; i++) {
+          await registrations[i].unregister();
+        }
+      }
+      try {
+        sessionStorage.clear();
+        localStorage.removeItem('olympos_sw_purged_v203');
+      } catch (e) {}
+      showToast('Cache limpo com sucesso! Recarregando...');
+      setTimeout(function() {
+        const cleanUrl = window.location.origin + window.location.pathname + '?v=' + Date.now();
+        window.location.replace(cleanUrl);
+      }, 500);
+    } catch (err) {
+      console.error('[resetMobileApp] Erro ao resetar:', err);
+      showToast('Falha ao resetar cache: ' + err.message, true);
+    }
+  }
+
   return {
     showToast: showToast,
     copiarTexto: copiarTexto,
@@ -1077,6 +1174,7 @@ window.OlymposApp = (function() {
     salvarBoletimEmails: salvarBoletimEmails,
     testarEnvioBoletim: testarEnvioBoletim,
     fecharDropdowns: fecharDropdowns,
+    resetMobileApp: resetMobileApp,
     escapeHtml: escapeHtml
   };
 })();

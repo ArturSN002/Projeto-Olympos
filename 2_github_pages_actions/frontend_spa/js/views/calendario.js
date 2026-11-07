@@ -24,8 +24,12 @@ window.OlymposViews.calendario = (function() {
   // Chaves de armazenamento e estado
   var STORAGE_AGENDA_KEY = 'olympos_calendario_agenda_custom';
   var STORAGE_CUSTOM_KEY = 'olympos_calendario_eventos_custom';
-  var selectedYear = 2026;
-  var selectedMonth = 1; // 0 = Jan, 1 = Fev (início das aulas)
+  var _hojeData = new Date();
+  var selectedYear = (_hojeData.getFullYear() === 2027) ? 2027 : 2026;
+  var selectedMonth = (function() {
+    var m = _hojeData.getMonth();
+    return (m >= 0 && m <= 11) ? m : 1;
+  })();
   var activeTab = 'mes'; // 'mes' ou 'bimestre'
   var activeCategory = 'todos';
   var activeSector = 'todos';
@@ -1230,6 +1234,8 @@ window.OlymposViews.calendario = (function() {
    * Ponto de entrada chamado pelo router modular
    */
   function init() {
+    var selMes = document.getElementById('selectMesCalendario');
+    if (selMes) selMes.value = String(selectedMonth);
     bindEvents();
     renderizar();
 
@@ -1784,6 +1790,7 @@ window.OlymposViews.calendario = (function() {
       if (ehMatricula) classes.push('matricula');
       if (ehExame) classes.push('exame');
       if (ehLetivo && !ehSabadoLetivo) classes.push('letivo');
+      if (ehAgenda) classes.push('tem-agenda');
       if (ehFimDeSemana && !ehSabadoLetivo && !ehFeriado && !ehRecesso) classes.push('fim-de-semana');
 
       html += '<div class="' + classes.join(' ') + '" data-date="' + dataStr + '" tabindex="0" role="button" aria-label="Dia ' + dia + ' de ' + MESES_NOMES[mes] + '">';
@@ -1803,12 +1810,19 @@ window.OlymposViews.calendario = (function() {
         html += '    <span class="cal-day-tag matricula" title="Matrículas">Matrícula</span>';
       } else if (ehExame) {
         html += '    <span class="cal-day-tag exame" title="Exames Finais">Exame</span>';
+      } else if (ehAgenda) {
+        html += '    <span class="cal-day-tag agenda" title="Possui compromisso da Agenda Intersetorial">🗓️ Agenda</span>';
       } else if (ehLetivo) {
         html += '    <span class="cal-day-tag letivo" title="Dia Letivo Regular">Letivo</span>';
-      } else if (ehAgenda) {
-        html += '    <span class="cal-day-tag" style="background: rgba(139,92,246,0.15); color: #8B5CF6;" title="Agenda Intersetorial">Agenda</span>';
       }
       html += '  </div>';
+
+      // Ordenar eventos para priorizar visualização de chips da agenda intersetorial
+      eventosDoDia.sort(function(a, b) {
+        var aPri = (a.custom || a.categoria === 'agenda_intersetorial' || a.categoria === 'reuniao' || a.categoria === 'capacitacao') ? 1 : 0;
+        var bPri = (b.custom || b.categoria === 'agenda_intersetorial' || b.categoria === 'reuniao' || b.categoria === 'capacitacao') ? 1 : 0;
+        return bPri - aPri;
+      });
 
       // Eventos e chips do dia
       html += '  <div class="cal-day-events">';
@@ -2225,7 +2239,8 @@ window.OlymposViews.calendario = (function() {
   // =========================================================================
 
   function obterEventosNaData(dados, dataStr) {
-    return dados.eventos.filter(function(ev) {
+    var todos = obterTodosEventos(dados);
+    return todos.filter(function(ev) {
       return (ev.dataInicio <= dataStr && ev.dataFim >= dataStr);
     });
   }
@@ -2248,19 +2263,19 @@ window.OlymposViews.calendario = (function() {
 
     // 2. Se for feriado ou ponto facultativo, NÃO é dia letivo
     var ehFeriado = eventosDoDia.some(function(ev) {
-      return ev.categoria === 'feriado';
+      return !ev.custom && ev.categoria === 'feriado';
     });
     if (ehFeriado) return false;
 
     // 3. Se for jornada pedagógica (sem alunos), NÃO é dia letivo de alunos
     var ehJornada = eventosDoDia.some(function(ev) {
-      return ev.categoria === 'jornada';
+      return !ev.custom && ev.categoria === 'jornada';
     });
     if (ehJornada) return false;
 
     // 4. Se for sábado letivo temático homologado, É dia letivo
     var ehSabadoLetivo = eventosDoDia.some(function(ev) {
-      return ev.categoria === 'sabado_letivo';
+      return !ev.custom && ev.categoria === 'sabado_letivo';
     });
     if (ehSabadoLetivo) return true;
 

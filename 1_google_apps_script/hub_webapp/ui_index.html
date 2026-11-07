@@ -28,11 +28,11 @@
           }
           if ('caches' in window) {
             caches.keys().then(function(keys) {
-              var stale = keys.filter(function(k) { return k !== 'olympos-shell-v2.6.0'; });
+              var stale = keys.filter(function(k) { return k !== 'olympos-shell-v2.0.3'; });
               if (stale.length > 0) {
                 Promise.all(stale.map(function(k) { return caches.delete(k); })).then(function() {
-                  if (!sessionStorage.getItem('olympos_sw_purged_v260')) {
-                    sessionStorage.setItem('olympos_sw_purged_v260', '1');
+                  if (!sessionStorage.getItem('olympos_sw_purged_v203')) {
+                    sessionStorage.setItem('olympos_sw_purged_v203', '1');
                     if ('serviceWorker' in navigator) {
                       navigator.serviceWorker.getRegistrations().then(function(regs) {
                         regs.forEach(function(r) { r.update(); });
@@ -107,7 +107,7 @@
           <div class="brand-lockup" id="brandHomeLink">
             <span class="brand-mark" id="brandMarkSvg" aria-hidden="true"></span>
             <span class="brand-wordmark">Olympos</span>
-            <span class="brand-edition-pill">SMEB 2026</span>
+            <span class="brand-edition-pill">SMEB 2026 • V2.03</span>
           </div>
         </div>
 
@@ -181,7 +181,10 @@
 
     <aside id="mobileSidebar" class="sidebar mobile-drawer" aria-label="Navegação móvel Olympos">
       <div class="drawer-header">
-        <span class="drawer-title">Navegação Olympos</span>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="drawer-title">Navegação Olympos</span>
+          <span class="version-badge-mini">V2.03</span>
+        </div>
         <button class="drawer-close-btn" onclick="document.body.classList.remove('nav-drawer-open')" aria-label="Fechar menu">✕</button>
       </div>
       <div class="nav-rail-inner mobile-nav-inner">
@@ -242,6 +245,17 @@
           <span class="drive-arrow">↗</span>
         </a>
       </div>
+
+      <!-- AÇÕES DE MANUTENÇÃO MOBILE (RESET PWA) -->
+      <div class="mobile-drawer-reset-section show-mobile-only">
+        <button type="button" id="mobileResetSiteBtn" class="drawer-reset-btn" onclick="window.OlymposApp &amp;&amp; window.OlymposApp.resetMobileApp()" title="Limpar cache do navegador e recarregar versão mais recente">
+          <span class="reset-icon">🔄</span>
+          <span class="reset-text">
+            <strong>Resetar Aplicativo</strong>
+            <small>Limpar Cache PWA &amp; Atualizar V2.03</small>
+          </span>
+        </button>
+      </div>
     </aside>
 
     <!-- =========================================================================
@@ -249,13 +263,13 @@
          ========================================================================= -->
     <div class="editorial-shell">
       <section class="editorial-hero">
-        <div id="pageHeaderEyebrow" class="eyebrow-pill">GOVERNANÇA EXECUTIVA • SMEB 2026</div>
+        <div id="pageHeaderEyebrow" class="eyebrow-pill">GOVERNANÇA EXECUTIVA • SMEB 2026 • V2.03</div>
         <h1 id="pageHeaderTitle" class="hero-display-title">Inteligência documental e governança pública.</h1>
         <p id="pageHeaderSubtitle" class="hero-lead-subtitle">
           Painel central da Secretaria Municipal de Educação Básica de Ceará-Mirim: numeração sequencial oficial, atalhos operacionais e calendário escolar.
         </p>
 
-        <div class="hero-shortcuts-bar">
+        <div class="hero-shortcuts-bar hide-mobile">
           <a href="https://drive.google.com/drive/folders/1W9mGmQCrX8BRPsGcK_vqUwfXw1dRmSya" target="_blank" rel="noopener" class="folder-chip">Pasta Central Olympo ↗</a>
           <a href="https://drive.google.com/drive/folders/1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu" target="_blank" rel="noopener" class="folder-chip">Memórias Operacionais (.md) ↗</a>
           <a href="https://drive.google.com/drive/folders/1qGq5uqxOtN_V63itUheYatLIcj5R86O3" target="_blank" rel="noopener" class="folder-chip">Portarias 2026 ↗</a>
@@ -832,7 +846,7 @@
             </div>
 
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;">
-              <strong style="font-family: var(--font-display); font-size: 15px;">Portais da Transparência Monitorados (15 Municípios + Estado do RN)</strong>
+              <strong style="font-family: var(--font-display); font-size: 15px;">Portais da Transparência Monitorados</strong>
               <input type="search" id="cadmoPortalFilterInput" class="input-clean" style="width: 240px; padding: 7px 12px; font-size: 13px;" placeholder="Filtrar município ou tecnologia..." />
             </div>
 
@@ -1292,7 +1306,7 @@
                   <div class="cal-month-nav-right">
                     <select id="selectMesCalendario" class="input-clean cal-select-mes" aria-label="Selecionar mês">
                       <option value="0">Janeiro</option>
-                      <option value="1" selected>Fevereiro</option>
+                      <option value="1">Fevereiro</option>
                       <option value="2">Março</option>
                       <option value="3">Abril</option>
                       <option value="4">Maio</option>
@@ -1490,38 +1504,47 @@
             </div>
 
             <!-- CARDS DE CONTADORES / KPIS -->
-            <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin: 16px 0 20px 0;">
+            <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; margin: 16px 0 20px 0;">
+              <!-- Card 1: Rede Municipal com sub-quantitativos -->
               <div class="stat-card">
                 <div class="stat-top">
-                  <span class="stat-label">Total de Unidades</span>
-                  <span class="pill-badge pill-gold">Rede SMEB</span>
+                  <span class="stat-label">Rede Municipal</span>
+                  <span class="pill-badge pill-gold">SMEB</span>
                 </div>
-                <div class="stat-value" id="kpiEscolasTotal">20</div>
-                <div class="stat-meta">Unidades ativas cadastradas</div>
+                <div class="stat-value" id="kpiEscolasTotal">52</div>
+                <div class="stat-meta" style="font-size: 11.5px; line-height: 1.45;">
+                  <span id="kpiEscolasUrbanas">10</span> urbanas • <span id="kpiEscolasRurais">35</span> rurais • <span id="kpiEscolasCeis">7</span> CEIs
+                </div>
               </div>
+
+              <!-- Card 2: Rede Estadual -->
               <div class="stat-card">
                 <div class="stat-top">
-                  <span class="stat-label">Escolas Urbanas</span>
-                  <span class="pill-badge pill-blue">Zona Urbana</span>
+                  <span class="stat-label">Rede Estadual</span>
+                  <span class="pill-badge pill-blue">SEEC / RN</span>
                 </div>
-                <div class="stat-value" id="kpiEscolasUrbanas">10</div>
-                <div class="stat-meta">Ensino Fundamental e Sede</div>
+                <div class="stat-value" id="kpiEscolasEstaduais">2</div>
+                <div class="stat-meta">Ensino Fundamental e Médio</div>
               </div>
+
+              <!-- Card 3: Rede Federal -->
               <div class="stat-card">
                 <div class="stat-top">
-                  <span class="stat-label">Escolas Rurais</span>
-                  <span class="pill-badge pill-green">Zona Rural</span>
+                  <span class="stat-label">Rede Federal</span>
+                  <span class="pill-badge pill-green">MEC / IFRN</span>
                 </div>
-                <div class="stat-value" id="kpiEscolasRurais">6</div>
-                <div class="stat-meta">Polos e distritos agrícolas</div>
+                <div class="stat-value" id="kpiEscolasFederais">1</div>
+                <div class="stat-meta">Ensino Técnico e Superior</div>
               </div>
+
+              <!-- Card 4: Instituições Privadas -->
               <div class="stat-card">
                 <div class="stat-top">
-                  <span class="stat-label">Educação Infantil</span>
-                  <span class="pill-badge" style="background: rgba(245,158,11,0.15); color: #F59E0B; border: 1px solid rgba(245,158,11,0.3);">CEIs</span>
+                  <span class="stat-label">Instituições Privadas</span>
+                  <span class="pill-badge" style="background: rgba(168,85,247,0.15); color: #A855F7; border: 1px solid rgba(168,85,247,0.3);">Rede Privada</span>
                 </div>
-                <div class="stat-value" id="kpiEscolasCeis">4</div>
-                <div class="stat-meta">Centros de Ed. Infantil</div>
+                <div class="stat-value" id="kpiEscolasPrivadas">2</div>
+                <div class="stat-meta">Educação Básica Particular</div>
               </div>
             </div>
 

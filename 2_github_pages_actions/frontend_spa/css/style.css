@@ -1,5 +1,5 @@
 /* ==========================================================================
-   HUB OLYMPOS V2.1 — EDITORIAL RESEARCH INTELLIGENCE DESIGN SYSTEM
+   HUB OLYMPOS V2.03 — EDITORIAL RESEARCH INTELLIGENCE DESIGN SYSTEM
    Referências Visuais: https://deepmind.google/ & https://blog.google/
    Regra Cromática Estrita: Proporção 60-30-10 (Claro & Escuro)
    ========================================================================== */
@@ -2039,6 +2039,84 @@ body.nav-drawer-open .sidebar-backdrop,
 }
 
 /* Telas Tablet e Mobile (<= 768px) — Gaveta Lateral Deslizante & Grid Vertical */
+/* ==========================================================================
+   UTILITÁRIOS RESPONSIVOS & COMPONENTES MOBILE V2.03
+   ========================================================================== */
+.hide-mobile {
+  /* Visível em desktop por padrão */
+}
+.show-mobile-only {
+  display: none !important;
+}
+
+/* Seção de Reset do PWA Mobile no Drawer Lateral */
+.mobile-drawer-reset-section {
+  margin-top: 14px;
+  padding: 14px 14px 18px;
+  border-top: 1px solid var(--border-hairline);
+}
+
+.drawer-reset-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: var(--radius-sm, 10px);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-family: inherit;
+  min-height: 48px;
+  box-sizing: border-box;
+  transition: all 0.18s ease;
+  text-align: left;
+}
+
+.drawer-reset-btn:hover,
+.drawer-reset-btn:active {
+  background: var(--bg-tonal);
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+}
+
+.drawer-reset-btn .reset-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.drawer-reset-btn .reset-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.drawer-reset-btn .reset-text strong {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.drawer-reset-btn .reset-text small {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.version-badge-mini {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent-gold);
+  background: var(--accent-gold-soft);
+  border: 1px solid var(--border-hairline);
+  letter-spacing: 0.04em;
+}
+
 @media (max-width: 768px) {
   .top-masthead,
   .topbar {
@@ -2199,8 +2277,12 @@ body.nav-drawer-open .sidebar-backdrop,
     line-height: 1.5 !important;
     margin-bottom: 14px !important;
   }
-  .hero-shortcuts-bar {
+  .hero-shortcuts-bar,
+  .hide-mobile {
     display: none !important;
+  }
+  .show-mobile-only {
+    display: block !important;
   }
   .folder-chip {
     padding: 5px 11px !important;
@@ -2457,23 +2539,6 @@ body.nav-drawer-open .sidebar-backdrop,
 
 /* Responsividade dos Atalhos do Google Drive & Sub-abas (<= 600px) */
 @media (max-width: 600px) {
-  .hero-shortcuts-bar {
-    display: grid !important;
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 8px !important;
-    width: 100% !important;
-  }
-  .hero-shortcuts-bar .folder-chip {
-    width: 100% !important;
-    justify-content: center !important;
-    text-align: center !important;
-    padding: 8px 10px !important;
-    font-size: 11.5px !important;
-    min-height: 44px !important;
-    white-space: normal !important;
-    word-break: break-word;
-    box-sizing: border-box !important;
-  }
   .subnav-tabs-bar {
     width: 100% !important;
     display: grid !important;
@@ -2493,15 +2558,53 @@ body.nav-drawer-open .sidebar-backdrop,
 
 /* Breakpoint Ultra Compacto (<= 360px) */
 @media (max-width: 360px) {
-  .hero-shortcuts-bar {
-    grid-template-columns: 1fr !important;
-  }
   .subnav-tabs-bar {
     grid-template-columns: 1fr !important;
   }
 }
 
 /* Telas Médias e Tablets (<= 560px) */
+@media (max-width: 768px) {
+  /* Rolagem horizontal fluida e estilizada na grade do calendário para dispositivos móveis */
+  .cal-grid-wrapper {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    border-radius: 14px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-gold, #D97706) var(--bg-tonal, #F1F5F9);
+  }
+
+  .cal-grid-wrapper::-webkit-scrollbar {
+    height: 6px;
+  }
+  .cal-grid-wrapper::-webkit-scrollbar-thumb {
+    background: var(--accent-gold, #D97706);
+    border-radius: 4px;
+  }
+
+  .cal-grid-weekdays,
+  .cal-grid-days {
+    min-width: 480px;
+  }
+
+  .cal-day-cell {
+    min-height: 72px;
+    padding: 6px 4px;
+  }
+
+  .cal-event-chip {
+    font-size: 9px;
+    padding: 2px 4px;
+    max-width: 100%;
+  }
+
+  .cal-day-tag {
+    font-size: 8px;
+    padding: 1px 3px;
+  }
+
+}
+
 @media (max-width: 560px) {
   .quick-search-pill {
     display: none;
@@ -2594,14 +2697,7 @@ body.nav-drawer-open .sidebar-backdrop,
   .hero-display-title {
     font-size: 1.4rem !important;
   }
-  .hero-shortcuts-bar {
-    gap: 6px !important;
-  }
-  .hero-shortcuts-bar .folder-chip {
-    padding: 6px 8px !important;
-    font-size: 11px !important;
-    min-height: 44px !important;
-  }
+
 
   .stat-card {
     padding: 14px 12px !important;
@@ -3662,6 +3758,28 @@ body.nav-drawer-open .sidebar-backdrop,
   overflow: hidden;
 }
 
+/* Chips da Agenda Intersetorial no Grid */
+.cal-event-chip.agenda_intersetorial,
+.cal-event-chip.agenda,
+.cal-event-chip.reuniao,
+.cal-event-chip.capacitacao {
+  background: rgba(139, 92, 246, 0.14) !important;
+  color: #7C3AED !important;
+  border: 1px solid rgba(139, 92, 246, 0.32) !important;
+  border-left: 3px solid #8B5CF6 !important;
+  font-weight: 600;
+}
+
+.cal-day-tag.agenda {
+  background: rgba(139, 92, 246, 0.18) !important;
+  color: #7C3AED !important;
+  border: 1px solid rgba(139, 92, 246, 0.35) !important;
+}
+
+.cal-day-cell.tem-agenda {
+  box-shadow: inset 0 0 0 1.5px rgba(139, 92, 246, 0.35);
+}
+
 .cal-event-chip {
   display: flex;
   align-items: center;
@@ -3770,6 +3888,14 @@ body.nav-drawer-open .sidebar-backdrop,
 .cal-pill-badge.sabado_letivo { background: rgba(245, 158, 11, 0.15); color: #D97706; }
 .cal-pill-badge.exame { background: rgba(225, 29, 72, 0.15); color: #E11D48; }
 .cal-pill-badge.bimestre { background: var(--bg-tonal); color: var(--text-secondary); border: 1px solid var(--border-hairline); }
+.cal-pill-badge.agenda_intersetorial,
+.cal-pill-badge.agenda,
+.cal-pill-badge.reuniao,
+.cal-pill-badge.capacitacao {
+  background: rgba(139, 92, 246, 0.16) !important;
+  color: #7C3AED !important;
+  border: 1px solid rgba(139, 92, 246, 0.35) !important;
+}
 
 .cal-timeline-title {
   font-size: 14px;
@@ -4228,7 +4354,9 @@ body.nav-drawer-open .sidebar-backdrop,
   }
 
   .cal-day-tag {
-    display: none;
+    font-size: 7.5px;
+    padding: 1px 2px;
+    border-radius: 3px;
   }
 
   .cal-event-chip {
