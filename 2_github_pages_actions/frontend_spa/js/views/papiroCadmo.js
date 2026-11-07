@@ -498,6 +498,10 @@ window.OlymposViews.papiroCadmo = (function() {
       .trim();
   }
 
+  function normalizarMatriculaComparacao(matRaw) {
+    return String(matRaw || '').replace(/[^a-zA-Z0-9]/g, '').replace(/^0+/, '').toUpperCase();
+  }
+
   function extrairMioloCpf(cpf) {
     if (!cpf) return '';
     const digits = String(cpf).replace(/\D/g, '');
@@ -559,20 +563,106 @@ window.OlymposViews.papiroCadmo = (function() {
     };
   }
 
+  /**
+   * Retorna a coleção consolidada e sincronizada de servidores para o Papiro de Cadmo.
+   * Unifica os 5 Entes Monitorados (Ceará-Mirim, SEEC-RN, Natal, Parnamirim e SGA)
+   * e todos os quadros (Docente, Administrativo, Apoio, Técnico, Operacional).
+   * @returns {Array<Object>} Lista de servidores deduplicada
+   */
+  function obterColecaoServidoresCadmo() {
+    const servidoresMap = new Map();
+
+    function registrar(s, entePadrao) {
+      if (!s) return;
+      const nome = s.nome || s.n;
+      if (!nome) return;
+      const mat = s.matricula || s.m || '';
+      const cargo = s.cargo || s.g || 'Servidor Público';
+      const ente = s.ente || s.orgao || entePadrao || 'Ceará-Mirim';
+      const ch = s.h || (s.cargaHoraria ? s.cargaHoraria + 'h' : '30h');
+      const lot = s.lotacao || s.l || '';
+      const quadro = s.quadro || 'Docente';
+      const key = normalizarTexto(nome) + '|' + normalizarMatriculaComparacao(mat);
+
+      if (!servidoresMap.has(key)) {
+        servidoresMap.set(key, {
+          n: String(nome).trim(),
+          nome: String(nome).trim(),
+          m: String(mat).trim(),
+          matricula: String(mat).trim(),
+          g: String(cargo).trim(),
+          cargo: String(cargo).trim(),
+          h: String(ch).trim(),
+          cargaHorariaTexto: String(ch).trim(),
+          l: String(lot).trim(),
+          lotacao: String(lot).trim(),
+          ente: String(ente).trim(),
+          quadro: quadro
+        });
+      }
+    }
+
+    // 1. Base Ceará-Mirim (preserva retrocompatibilidade)
+    (DOCENTES_CEARA_MIRIM || []).forEach(function(d) {
+      registrar(d, 'SMEB Ceará-Mirim');
+    });
+
+    // 2. Servidores do Governo do Estado (SEEC/RN)
+    (SERVIDORES_ESTADO_RN || []).forEach(function(d) {
+      registrar(d, 'Governo do Estado (SEEC)');
+    });
+
+    // 3. Catálogo Unificado Olympos (5 Entes: Ceará-Mirim, RN, Natal, Parnamirim, SGA)
+    const unificados = (typeof window !== 'undefined' && window.OlymposServidores && typeof window.OlymposServidores.obterTodos === 'function')
+      ? window.OlymposServidores.obterTodos()
+      : (typeof global !== 'undefined' && global.OlymposServidores && typeof global.OlymposServidores.obterTodos === 'function' ? global.OlymposServidores.obterTodos() : []);
+
+    (unificados || []).forEach(function(s) {
+      registrar(s, s.ente || 'Público');
+    });
+
+    return Array.from(servidoresMap.values());
+  }
+
+  /**
+   * Sincroniza a coleção de servidores unificada atualizando o datalist do formulário,
+   * badges estatísticos e os cruzamentos de vínculos.
+   * @param {boolean} [notificarUsuario=false] Se true, emite toast de confirmação
+   */
+  function sincronizarServidoresUnificados(notificarUsuario) {
+    popularDatalistServidores();
+    const servidores = obterColecaoServidoresCadmo();
+
+    // Atualiza badge de contagem se existir
+    const badgeRef = document.getElementById('cadmoBadgeBaseRef');
+    if (badgeRef) {
+      badgeRef.innerHTML = '<span class="status-dot"></span> ' + servidores.length + ' Servidores Sincronizados (5 Entes Monitorados)';
+    }
+
+    if (notificarUsuario && typeof window !== 'undefined' && window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+      window.OlymposApp.showToast('Papiro de Cadmo: ' + servidores.length + ' servidores sincronizados com sucesso!', false);
+    }
+
+    return servidores;
+  }
+
   function popularDatalistServidores() {
     const datalist = document.getElementById('listaServidoresCearaMirim');
     if (!datalist) return;
     datalist.innerHTML = '';
 
     const fragment = document.createDocumentFragment();
-    DOCENTES_CEARA_MIRIM.forEach(function(d) {
+    const servidores = obterColecaoServidoresCadmo();
+    servidores.forEach(function(d) {
       const opt = document.createElement('option');
       opt.value = d.n;
-      opt.label = d.m + ' • ' + d.g + ' (' + d.h + ')';
+      opt.label = d.m + ' • ' + d.g + ' (' + (d.ente ? d.ente + ' - ' : '') + d.h + ')';
       opt.dataset.matricula = d.m;
       opt.dataset.cargo = d.g;
       opt.dataset.ch = d.h;
       opt.dataset.lotacao = d.l || '';
+      opt.dataset.ente = d.ente || '';
+      opt.dataset.quadro = d.quadro || '';
       fragment.appendChild(opt);
     });
     datalist.appendChild(fragment);
@@ -587,21 +677,25 @@ window.OlymposViews.papiroCadmo = (function() {
       if (!valRaw) return;
       const termo = normalizarTexto(valRaw);
       const valTrim = String(valRaw).trim();
+      const colecao = obterColecaoServidoresCadmo();
 
-      const achado = DOCENTES_CEARA_MIRIM.find(function(d) {
-        return normalizarTexto(d.n) === termo ||
-               d.m === valTrim ||
-               valTrim.includes(d.m) ||
-               (valTrim.length > 5 && normalizarTexto(d.n).includes(termo));
+      const achado = colecao.find(function(d) {
+        const dNomeNorm = normalizarTexto(d.n || d.nome);
+        const dMat = String(d.m || d.matricula || '').trim();
+        return dNomeNorm === termo ||
+               dMat === valTrim ||
+               (valTrim.length >= 3 && dMat.includes(valTrim)) ||
+               (valTrim.length > 5 && dNomeNorm.includes(termo));
       });
 
       if (achado) {
         const inMat = document.getElementById('permutaMatricula');
-        if (inMat) inMat.value = achado.m;
+        if (inMat) inMat.value = achado.m || achado.matricula;
 
         const selCH = document.getElementById('permutaCargaHoraria');
         if (selCH) {
-          const chFormat = achado.h.includes('h') ? achado.h : (achado.h + 'h');
+          const chRaw = achado.h || (achado.cargaHoraria ? achado.cargaHoraria + 'h' : '30h');
+          const chFormat = chRaw.includes('h') ? chRaw : (chRaw + 'h');
           for (let i = 0; i < selCH.options.length; i++) {
             if (selCH.options[i].value === chFormat) {
               selCH.selectedIndex = i;
@@ -612,13 +706,15 @@ window.OlymposViews.papiroCadmo = (function() {
 
         const selCargo = document.getElementById('permutaCargo');
         if (selCargo) {
-          const gNorm = normalizarTexto(achado.g);
+          const gNorm = normalizarTexto(achado.g || achado.cargo);
           if (gNorm.includes('INFANTIL')) {
             selCargo.value = 'Professor de Educação Infantil';
           } else if (gNorm.includes('INICIAIS') || gNorm.includes('MAGISTERIO') || gNorm.includes('POLIVALENTE')) {
             selCargo.value = 'Professor dos Anos Iniciais';
           } else if (gNorm.includes('PEDAGOGO') || gNorm.includes('ESPECIALISTA')) {
             selCargo.value = 'Especialista em Educação';
+          } else if (gNorm.includes('APOIO') || gNorm.includes('ASSISTENTE')) {
+            selCargo.value = 'Assistente de Apoio Pedagógico';
           } else {
             selCargo.value = 'Professor dos Anos Finais';
           }
@@ -626,7 +722,7 @@ window.OlymposViews.papiroCadmo = (function() {
 
         const selDisc = document.getElementById('permutaDisciplina');
         if (selDisc) {
-          const gNorm = normalizarTexto(achado.g);
+          const gNorm = normalizarTexto(achado.g || achado.cargo);
           if (gNorm.includes('MATEMATICA')) selDisc.value = 'Matemática';
           else if (gNorm.includes('PORTUGUES')) selDisc.value = 'Língua Portuguesa';
           else if (gNorm.includes('HISTORIA')) selDisc.value = 'História';
@@ -639,8 +735,9 @@ window.OlymposViews.papiroCadmo = (function() {
         }
 
         const selOrig = document.getElementById('permutaEscolaOrigem');
-        if (selOrig && achado.l) {
-          const lotNorm = normalizarTexto(achado.l);
+        if (selOrig && (achado.l || achado.lotacao)) {
+          const lotRaw = achado.l || achado.lotacao;
+          const lotNorm = normalizarTexto(lotRaw);
           for (let i = 0; i < selOrig.options.length; i++) {
             const optNorm = normalizarTexto(selOrig.options[i].value);
             if (lotNorm.includes(optNorm) || optNorm.includes(lotNorm)) {
@@ -860,7 +957,9 @@ window.OlymposViews.papiroCadmo = (function() {
     executarMatchingHera();
     observarVisibilidadePagina();
     alternarColapsoHera(false);
-    console.log('[Olympos Permutas] Bases carregadas: ' + ((DOCENTES_CEARA_MIRIM || []).length + SERVIDORES_ESTADO_RN.length) + ' servidores (SMEB + SEEC/RN), ' + (VINCULOS_TRANSPARENCIA || []).length + ' cruzamentos de vínculos.');
+    sincronizarServidoresUnificados(false);
+    const totalServidoresSincronizados = obterColecaoServidoresCadmo().length;
+    console.log('[Olympos Permutas] Bases carregadas: ' + totalServidoresSincronizados + ' servidores sincronizados (5 Entes), ' + (VINCULOS_TRANSPARENCIA || []).length + ' cruzamentos de vínculos.');
   }
 
   function bindEvents() {
@@ -2570,10 +2669,7 @@ window.OlymposViews.papiroCadmo = (function() {
     const badgeTotal = document.getElementById('badgeTotalMatches');
     if (!container) return;
 
-    const docentesSMEB = (DOCENTES_CEARA_MIRIM || []).map(function(d) {
-      return Object.assign({}, d, { ente: d.ente || 'SMEB Ceará-Mirim' });
-    });
-    const todosDocentes = docentesSMEB.concat(SERVIDORES_ESTADO_RN);
+    const todosDocentes = obterColecaoServidoresCadmo();
     const docentesFiltrados = filtrarDocentesPorTermo(todosDocentes, termoBuscaServidor);
 
     if (badgeTotal) {
@@ -2597,7 +2693,7 @@ window.OlymposViews.papiroCadmo = (function() {
         '<div class="output-panel text-center" style="padding: 32px 20px;">' +
           '<div style="font-size: 1.8rem; margin-bottom: 8px;">🔍</div>' +
           '<strong style="display:block; font-size:15px; margin-bottom:6px; color:var(--text-main);">Nenhum servidor localizado na base oficial</strong>' +
-          '<p style="font-size:13px; color:var(--text-muted); max-width:480px; margin:0 auto 14px;">Não foram identificados servidores para o termo "<strong>' + window.OlymposApp.escapeHtml(termoBuscaServidor) + '</strong>". Busque por matrícula funcional, nome, lotação, cargo ou ente (SMEB / Governo do Estado).</p>' +
+          '<p style="font-size:13px; color:var(--text-muted); max-width:480px; margin:0 auto 14px;">Não foram identificados servidores para o termo "<strong>' + window.OlymposApp.escapeHtml(termoBuscaServidor) + '</strong>". Busque por matrícula funcional, nome, lotação, cargo ou ente (SMEB, Governo do Estado, Natal, Parnamirim, SGA).</p>' +
           '<button type="button" class="btn btn-secondary btn-sm" onclick="window.OlymposViews.papiroCadmo.limparBuscaServidor()">Limpar Busca</button>' +
         '</div>';
       return;
@@ -2607,7 +2703,7 @@ window.OlymposViews.papiroCadmo = (function() {
     const exibidos = docentesFiltrados.slice(0, limiteExibicao);
 
     let html = '<div style="margin-bottom: 8px; font-size: 12px; color: var(--text-muted); display:flex; justify-content:space-between; align-items:center;">' +
-      '<span>Exibindo <strong>' + exibidos.length + '</strong> de <strong>' + docentesFiltrados.length + '</strong> servidores ativos (SMEB &amp; Governo do Estado/SEEC)</span>' +
+      '<span>Exibindo <strong>' + exibidos.length + '</strong> de <strong>' + docentesFiltrados.length + '</strong> servidores ativos (5 Entes Monitorados)</span>' +
       (docentesFiltrados.length > limiteExibicao ? '<span class="pill-badge pill-gold" style="font-size:11px;">Refine a busca para ver resultados específicos</span>' : '') +
       '</div>';
 
@@ -2627,22 +2723,38 @@ window.OlymposViews.papiroCadmo = (function() {
         '<tbody>';
 
     exibidos.forEach(function(d) {
+      const nomeSrv = d.n || d.nome;
+      const matSrv = d.m || d.matricula;
+      const cargoSrv = d.g || d.cargo;
+      const chSrv = d.h || d.cargaHorariaTexto || '30h';
+      const lotSrv = d.l || d.lotacao || '';
+
       const isEstado = String(d.ente || '').includes('Governo') || String(d.ente || '').includes('SEEC');
-      const enteBadge = isEstado
-        ? '<span class="pill-badge pill-blue" style="font-size:10.5px;">🌐 Governo do Estado (SEEC)</span>'
-        : '<span class="pill-badge pill-gold" style="font-size:10.5px;">🏛️ SMEB Ceará-Mirim</span>';
+      const isNatal = String(d.ente || '').includes('Natal');
+      const isParnamirim = String(d.ente || '').includes('Parnamirim');
+      const isSGA = String(d.ente || '').includes('São Gonçalo') || String(d.ente || '').includes('SGA');
+      let enteBadge = '<span class="pill-badge pill-gold" style="font-size:10.5px;">🏛️ SMEB Ceará-Mirim</span>';
+      if (isEstado) {
+        enteBadge = '<span class="pill-badge pill-blue" style="font-size:10.5px;">🌐 Governo do Estado (SEEC)</span>';
+      } else if (isNatal) {
+        enteBadge = '<span class="pill-badge pill-purple" style="font-size:10.5px;">🏛️ SME Natal</span>';
+      } else if (isParnamirim) {
+        enteBadge = '<span class="pill-badge pill-teal" style="font-size:10.5px;">🏛️ SME Parnamirim</span>';
+      } else if (isSGA) {
+        enteBadge = '<span class="pill-badge pill-green" style="font-size:10.5px;">🏛️ SME São Gonçalo</span>';
+      }
 
       html +=
         '<tr>' +
-          '<td style="font-family:var(--font-mono); font-weight:600; color:var(--text-main);">' + window.OlymposApp.escapeHtml(d.m) + '</td>' +
-          '<td><strong>' + window.OlymposApp.escapeHtml(d.n) + '</strong></td>' +
+          '<td style="font-family:var(--font-mono); font-weight:600; color:var(--text-main);">' + window.OlymposApp.escapeHtml(matSrv) + '</td>' +
+          '<td><strong>' + window.OlymposApp.escapeHtml(nomeSrv) + '</strong></td>' +
           '<td>' + enteBadge + '</td>' +
-          '<td style="font-size:11.5px; color:var(--text-secondary);">' + window.OlymposApp.escapeHtml(d.g) + '</td>' +
-          '<td style="text-align:center;"><span class="pill-badge pill-green" style="font-size:11px;">' + window.OlymposApp.escapeHtml(d.h) + '</span></td>' +
-          '<td style="font-size:11.5px; color:var(--text-muted);">' + window.OlymposApp.escapeHtml(d.l || (isEstado ? 'Rede Estadual SEEC/RN' : 'SMEB / Rede Municipal')) + '</td>' +
+          '<td style="font-size:11.5px; color:var(--text-secondary);">' + window.OlymposApp.escapeHtml(cargoSrv) + '</td>' +
+          '<td style="text-align:center;"><span class="pill-badge pill-green" style="font-size:11px;">' + window.OlymposApp.escapeHtml(chSrv) + '</span></td>' +
+          '<td style="font-size:11.5px; color:var(--text-muted);">' + window.OlymposApp.escapeHtml(lotSrv || (isEstado ? 'Rede Estadual SEEC/RN' : 'SMEB / Rede Municipal')) + '</td>' +
           '<td style="text-align:right;">' +
             '<button type="button" class="btn btn-secondary btn-sm" style="font-size:11px; padding:3px 8px;" ' +
-              'onclick="window.OlymposViews.papiroCadmo.preencherFormComDocente(\'' + window.OlymposApp.escapeHtml(d.n) + '\', \'' + window.OlymposApp.escapeHtml(d.m) + '\', \'' + window.OlymposApp.escapeHtml(d.g) + '\', \'' + window.OlymposApp.escapeHtml(d.h) + '\', \'' + window.OlymposApp.escapeHtml(d.l || '') + '\')">' +
+              'onclick="window.OlymposViews.papiroCadmo.preencherFormComDocente(\'' + window.OlymposApp.escapeHtml(nomeSrv) + '\', \'' + window.OlymposApp.escapeHtml(matSrv) + '\', \'' + window.OlymposApp.escapeHtml(cargoSrv) + '\', \'' + window.OlymposApp.escapeHtml(chSrv) + '\', \'' + window.OlymposApp.escapeHtml(lotSrv) + '\')">' +
               '⚡ Permuta' +
             '</button>' +
           '</td>' +
@@ -2872,6 +2984,8 @@ window.OlymposViews.papiroCadmo = (function() {
     salvarEdicaoSecretaria: salvarEdicaoSecretaria,
     restaurarPadraoSecretarias: restaurarPadraoSecretarias,
     PONTOS_GEORREFERENCIADOS: PONTOS_GEORREFERENCIADOS,
+    sincronizarServidores: sincronizarServidoresUnificados,
+    obterTodosServidores: obterColecaoServidoresCadmo,
     obterDocentesCearaMirim: function() { return DOCENTES_CEARA_MIRIM; },
     obterVinculosTransparencia: function() { return VINCULOS_TRANSPARENCIA; },
     preencherFormComDocente: preencherFormComDocente,

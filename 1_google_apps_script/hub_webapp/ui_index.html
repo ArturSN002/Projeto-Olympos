@@ -907,9 +907,12 @@
                 <strong style="color: var(--text-main);">Base de Referência Transparência:</strong>
                 <span id="cadmoBadgeBaseRef" style="color: var(--text-secondary);">Ceará-Mirim (4.182 servidores • 890 docentes ativos com matrícula de 7 dígitos)</span>
               </div>
-              <div style="display: flex; align-items: center; gap: 12px; font-size: 11.5px; color: var(--text-muted);">
+              <div style="display: flex; align-items: center; gap: 12px; font-size: 11.5px; color: var(--text-muted); flex-wrap: wrap;">
                 <span>🏛️ Cruzamento CF/88 Art. 37, XVI Ativo</span>
                 <span>⚖️ Teto Máx: 60h</span>
+                <button type="button" id="btnSincronizarCadmoServidores" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 3px 10px; margin-left: 8px;" title="Sincronizar base de servidores com o catálogo unificado Olympos" onclick="window.OlymposViews.papiroCadmo.sincronizarServidores(true)">
+                  <span>🔄 Sincronizar Servidores</span>
+                </button>
               </div>
             </div>
 

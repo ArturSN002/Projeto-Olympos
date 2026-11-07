@@ -162,8 +162,18 @@ class TestMarco3SecurityAndFeatures(unittest.TestCase):
         const porNomeEstadual = api.buscarInformacoesServidor('FRANCISCO DE ASSIS MEDEIROS');
         const acumuloOdjaime = api.buscarInformacoesServidor('ODJAIME CAMARA DE ARAUJO');
 
+        // Testes de Sincronização Unificada com o Papiro de Cadmo
+        const todosServidores = typeof api.obterTodosServidores === 'function' ? api.obterTodosServidores() : [];
+        const temSincronizador = typeof api.sincronizarServidores === 'function';
+
         console.log(JSON.stringify({
           totalDocentes: todosDocentes.length,
+          totalServidoresSincronizados: todosServidores.length,
+          temSincronizador: temSincronizador,
+          possuiServidoresEstaduais: todosServidores.some(s => (s.ente || '').includes('Estado') || (s.ente || '').includes('SEEC')),
+          possuiServidoresNatal: todosServidores.some(s => (s.ente || '').includes('Natal')),
+          possuiServidoresParnamirim: todosServidores.some(s => (s.ente || '').includes('Parnamirim')),
+          possuiServidoresSGA: todosServidores.some(s => (s.ente || '').includes('São Gonçalo') || (s.ente || '').includes('SGA')),
           amostraMat: amostra.m,
           amostraNome: amostra.n,
           achouPorMat: porMatricula.length > 0 && porMatricula[0].matriculas.includes(amostra.m),
@@ -189,6 +199,12 @@ class TestMarco3SecurityAndFeatures(unittest.TestCase):
         )
         out = json.loads(proc.stdout.strip().splitlines()[-1])
         self.assertGreater(out["totalDocentes"], 100)
+        self.assertTrue(out["temSincronizador"])
+        self.assertGreater(out["totalServidoresSincronizados"], 100)
+        self.assertTrue(out["possuiServidoresEstaduais"])
+        self.assertTrue(out["possuiServidoresNatal"])
+        self.assertTrue(out["possuiServidoresParnamirim"])
+        self.assertTrue(out["possuiServidoresSGA"])
         self.assertTrue(out["achouPorMat"])
         self.assertTrue(out["achouSemZero"])
         self.assertTrue(out["achouPorNome"])
