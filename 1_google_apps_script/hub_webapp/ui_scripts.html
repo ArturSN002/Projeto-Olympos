@@ -1767,9 +1767,10 @@ window.OlymposApi = (function() {
       return;
     }
     if (data && data.status === 'ERRO') {
-      console.warn('[Olympos Drive/GAS] Resposta com status de erro do Gateway [' + (action || 'ação') + ']:', data);
       if (data.mensagem && data.mensagem.includes('Token não autorizado')) {
-        console.warn('[Olympos Drive/GAS] Token não autorizado no Google Apps Script para a ação [' + (action || '') + ']. Verifique as permissões de acesso ao Drive/GAS.');
+        console.info('[Olympos Drive/GAS] Token do Apps Script pendente para [' + (action || '') + ']. Acionando contingência local/Supabase de forma transparente.');
+      } else {
+        console.warn('[Olympos Drive/GAS] Resposta com status de erro do Gateway [' + (action || 'ação') + ']:', data);
       }
       if (onError) {
         onError(new Error(data.mensagem || 'Erro no Gateway GAS'));

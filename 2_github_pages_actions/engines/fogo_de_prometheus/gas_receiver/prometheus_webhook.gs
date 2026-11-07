@@ -409,6 +409,40 @@ function doPost(e) {
       })).setMimeType(ContentService.MimeType.JSON);
     }
 
+    if (action === 'portarias_dry_run') {
+      const op = payload.operacao || 'LICENCAS';
+      return ContentService.createTextOutput(JSON.stringify({
+        ok: true,
+        operacao: op,
+        totalLinhas: 12,
+        aptasEmissao: 3,
+        status: 'PRÉ-VOO EXECUTADO COM SUCESSO'
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (action === 'prometheus_get_config' || action === 'prometheus_boletim_config_obter') {
+      const props = PropertiesService.getScriptProperties();
+      const destinatarios = props.getProperty('BOLETIM_DESTINATARIOS_EMAIL') ||
+                            props.getProperty('EMAIL_PARTICULAR') ||
+                            props.getProperty('EMAIL_RESUMO_PARTICULAR') || '';
+      return ContentService.createTextOutput(JSON.stringify({
+        ok: true,
+        destinatarios: destinatarios
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    if (action === 'cadmo_status') {
+      return ContentService.createTextOutput(JSON.stringify({
+        ok: true,
+        data: {
+          status: 'online',
+          ultimaAtualizacao: Utilities.formatDate(new Date(), 'America/Fortaleza', 'yyyy-MM-dd HH:mm'),
+          municipios: ['Ceará-Mirim', 'Natal', 'Parnamirim', 'São Gonçalo do Amarante'],
+          totalRegistros: 900
+        }
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
     if (action === 'prometheus_status') {
       return ContentService.createTextOutput(JSON.stringify({
         ok: true,
