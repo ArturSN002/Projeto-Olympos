@@ -280,10 +280,59 @@ window.OlymposApp = (function() {
       }
 
       if (qrContainer) {
-        if (totp.qr_code && totp.qr_code.startsWith('data:image')) {
-          qrContainer.innerHTML = '<img src="' + totp.qr_code + '" alt="QR Code TOTP" style="max-width: 170px; border-radius: 8px; border: 1px solid var(--border-hairline);" />';
-        } else if (totp.uri) {
-          qrContainer.innerHTML = '<div style="font-size: 11.5px; word-break: break-all; padding: 8px; background: var(--bg-surface); border-radius: 6px;"><code>' + totp.uri + '</code></div>';
+        let qrRaw = String((totp && totp.qr_code) || '').trim();
+        if (qrRaw.includes('%3Csvg') || qrRaw.includes('%3C%73%76%67') || qrRaw.includes('%3csvg')) {
+          try { qrRaw = decodeURIComponent(qrRaw); } catch (e) {}
+        }
+
+        const svgMatch = qrRaw.match(/<svg[\s\S]*?<\/svg>/i);
+        if (svgMatch) {
+          qrContainer.innerHTML = svgMatch[0];
+          const svgEl = qrContainer.querySelector('svg');
+          if (svgEl) {
+            svgEl.removeAttribute('width');
+            svgEl.removeAttribute('height');
+            svgEl.setAttribute('role', 'img');
+            svgEl.setAttribute('aria-label', 'QR Code de Autenticação TOTP');
+            svgEl.style.width = '170px';
+            svgEl.style.height = '170px';
+            svgEl.style.maxWidth = '100%';
+            svgEl.style.display = 'block';
+            svgEl.style.margin = '0 auto';
+            svgEl.style.borderRadius = '8px';
+            svgEl.style.border = '1px solid var(--border-hairline, rgba(255,255,255,0.12))';
+            svgEl.style.background = '#ffffff';
+            svgEl.style.padding = '8px';
+            svgEl.style.boxSizing = 'border-box';
+          }
+        } else if (qrRaw.startsWith('data:image/')) {
+          const img = document.createElement('img');
+          img.src = qrRaw;
+          img.alt = 'QR Code TOTP';
+          img.style.width = '170px';
+          img.style.height = '170px';
+          img.style.maxWidth = '100%';
+          img.style.display = 'block';
+          img.style.margin = '0 auto';
+          img.style.borderRadius = '8px';
+          img.style.border = '1px solid var(--border-hairline, rgba(255,255,255,0.12))';
+          img.style.background = '#ffffff';
+          img.style.padding = '8px';
+          img.style.boxSizing = 'border-box';
+          qrContainer.innerHTML = '';
+          qrContainer.appendChild(img);
+        } else if (totp && totp.uri) {
+          const uriWrapper = document.createElement('div');
+          uriWrapper.style.fontSize = '11.5px';
+          uriWrapper.style.wordBreak = 'break-all';
+          uriWrapper.style.padding = '8px';
+          uriWrapper.style.background = 'var(--bg-surface)';
+          uriWrapper.style.borderRadius = '6px';
+          const codeEl = document.createElement('code');
+          codeEl.textContent = totp.uri;
+          uriWrapper.appendChild(codeEl);
+          qrContainer.innerHTML = '';
+          qrContainer.appendChild(uriWrapper);
         } else {
           qrContainer.innerHTML = '<span style="font-size:12px;color:var(--text-muted);">QR Code indisponível. Utilize a chave manual abaixo.</span>';
         }
