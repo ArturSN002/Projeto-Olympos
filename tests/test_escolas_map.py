@@ -31,12 +31,12 @@ INDEX_HTML = SPA_DIR / "index.html"
 ROUTER_JS = SPA_DIR / "js" / "router.js"
 APP_JS = SPA_DIR / "js" / "app.js"
 
-# Bounding box oficial territorial de Ceará-Mirim/RN
+# Bounding box oficial territorial de Ceará-Mirim/RN (do litoral de Muriú/Jacumã ao extremo norte em São Miguel/Riachão)
 BOUNDS_CEARA_MIRIM = {
     "min_lat": -5.750000,
-    "max_lat": -5.500000,
+    "max_lat": -5.460000,
     "min_lng": -35.600000,
-    "max_lng": -35.250000
+    "max_lng": -35.210000
 }
 
 
@@ -112,15 +112,14 @@ class TestEscolasMapFeature(unittest.TestCase):
         self.assertTrue(any(esc["nome"].startswith("CEI ") for esc in escolas), "Ausência de unidades com nomenclatura oficial 'CEI ' no catálogo")
         self.assertFalse(any("CMEI" in esc["nome"] for esc in escolas), "Presença indevida da sigla obsoleta 'CMEI' nos nomes das escolas")
 
-        # Conferir presença de marcos célebres de Ceará-Mirim
+        # Conferir presença de marcos célebres oficiais de Ceará-Mirim
         nomes_str = " ".join(nomes_vistos)
         self.assertIn("SMEB Sede", nomes_str, "SMEB Sede ausente no catálogo")
-        self.assertIn("Alice Garcia Freire", nomes_str, "E.M. Alice Garcia Freire ausente")
-        self.assertIn("Roberto Varela", nomes_str, "E.M. Roberto Varela ausente")
-        self.assertIn("Augusto Severo", nomes_str, "E.M. Augusto Severo ausente")
-        self.assertIn("Celso Cicco", nomes_str, "E.M. Celso Cicco ausente")
-        self.assertIn("Júlio Senna", nomes_str, "E.M. Dr. Júlio Senna (Gravatá) ausente")
-        self.assertIn("Madalena Antunes", nomes_str, "E.M. Madalena Antunes (Massangana) ausente")
+        self.assertIn("ADELE DE OLIVEIRA", nomes_str, "E.M. Adele de Oliveira ausente")
+        self.assertIn("AUGUSTO MEIRA", nomes_str, "E.M. Augusto Meira ausente")
+        self.assertIn("JULIO GOMES DE SENNA", nomes_str, "E.M. Dr. Julio Gomes de Senna ausente")
+        self.assertIn("MADALENA ANTUNES", nomes_str, "E.M. Madalena Antunes Pereira ausente")
+        self.assertIn("CEMAI", nomes_str, "CEMAI (Atendimento Especial) ausente")
 
     def test_02_geographic_bounding_box_ceara_mirim(self):
         """Assegura que 100% das coordenadas estejam dentro dos limites territoriais de Ceará-Mirim/RN."""

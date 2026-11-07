@@ -30,12 +30,12 @@ window.OlymposViews.escolas = (function() {
     'Instituição'
   ];
 
-  // Bounding box territorial aproximada de Ceará-Mirim/RN
+  // Bounding box territorial aproximada de Ceará-Mirim/RN (do litoral de Muriú/Jacumã ao extremo norte em São Miguel/Riachão)
   var BOUNDS_CEARA_MIRIM = {
     minLat: -5.750000,
-    maxLat: -5.500000,
+    maxLat: -5.460000,
     minLng: -35.600000,
-    maxLng: -35.250000
+    maxLng: -35.210000
   };
 
   /**
