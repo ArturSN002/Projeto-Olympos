@@ -763,11 +763,11 @@ window.OlymposViews.papiroCadmo = (function() {
       const isCearaMirim = normalizarTexto(nomeArquivo).includes('CEARA') || normalizarTexto(linhas[0]).includes('CEARA MIRIM');
 
       if (isCearaMirim) {
-        const apenasDocentes = novosServidores.filter(function(s) {
-          return normalizarTexto(s.g).includes('PROFESSOR') && !normalizarTexto(s.status).includes('INATIVO');
+        const servidoresValidos = novosServidores.filter(function(s) {
+          return !normalizarTexto(s.status).includes('INATIVO') && !normalizarTexto(s.status).includes('EXONERADO');
         });
-        if (apenasDocentes.length > 0) {
-          DOCENTES_CEARA_MIRIM = apenasDocentes;
+        if (servidoresValidos.length > 0) {
+          DOCENTES_CEARA_MIRIM = servidoresValidos;
           popularDatalistServidores();
         }
         const badgeRef = document.getElementById('cadmoBadgeBaseRef');
@@ -2196,6 +2196,18 @@ window.OlymposViews.papiroCadmo = (function() {
       }
     });
 
+    const servidoresUnificados = (typeof window !== 'undefined' && window.OlymposServidores && typeof window.OlymposServidores.obterTodos === 'function')
+      ? window.OlymposServidores.obterTodos()
+      : (typeof global !== 'undefined' && global.OlymposServidores && typeof global.OlymposServidores.obterTodos === 'function' ? global.OlymposServidores.obterTodos() : []);
+
+    (servidoresUnificados || []).forEach(function(s) {
+      const nomeS = s.nome || s.n;
+      const matS = s.matricula || s.m;
+      if (correspondeAoTermo(nomeS, matS)) {
+        chavesEncontradas[normalizarBusca(nomeS)] = true;
+      }
+    });
+
     (VINCULOS_TRANSPARENCIA || []).forEach(function(v) {
       const sr = v.servidor_referencia || {};
       const ve = v.vinculo_externo_detectado || {};
@@ -2242,6 +2254,25 @@ window.OlymposViews.papiroCadmo = (function() {
         cargaHorariaTexto: String(d.h || '30h'),
         lotacao: d.l || 'Rede Estadual SEEC/RN',
         situacao: 'Efetivo / Ativo'
+      });
+    });
+
+    (servidoresUnificados || []).forEach(function(s) {
+      const nomeS = s.nome || s.n;
+      const k = normalizarBusca(nomeS);
+      if (!chavesEncontradas[k]) return;
+      const dossie = obterOuCriarDossie(nomeS);
+      if (s.cpfMascarado && !dossie.cpfMascarado) {
+        dossie.cpfMascarado = s.cpfMascarado;
+      }
+      adicionarVinculo(dossie, {
+        ente: s.ente || s.orgao || 'Ente Federativo',
+        matricula: s.matricula || s.m,
+        cargo: s.cargo || s.g,
+        cargaHoraria: parseCargaHoraria(s.cargaHoraria || s.h),
+        cargaHorariaTexto: String(s.cargaHorariaTexto || s.h || '30h'),
+        lotacao: s.lotacao || s.l || 'Lotação não informada',
+        situacao: s.situacao || s.status || 'Efetivo / Ativo'
       });
     });
 

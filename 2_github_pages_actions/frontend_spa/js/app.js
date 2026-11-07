@@ -121,18 +121,18 @@ window.OlymposApp = (function() {
   const RBAC_TAB_PERMISSIONS = {
     ADMIN_GABINETE: [
       'visao-geral', 'oficios', 'portarias', 'licencas', 'certificados',
-      'diario-oficial', 'papiro-cadmo', 'personas', 'busca', 'configuracoes'
+      'diario-oficial', 'papiro-cadmo', 'servidores', 'personas', 'busca', 'configuracoes'
     ],
     RH_COMISSAO: [
       'visao-geral', 'oficios', 'portarias', 'licencas',
-      'diario-oficial', 'papiro-cadmo', 'personas', 'busca', 'configuracoes'
+      'diario-oficial', 'papiro-cadmo', 'servidores', 'personas', 'busca', 'configuracoes'
     ],
     PEDAGOGICO_EVENTOS: [
-      'visao-geral', 'oficios', 'certificados', 'personas', 'busca', 'configuracoes'
+      'visao-geral', 'oficios', 'certificados', 'servidores', 'personas', 'busca', 'configuracoes'
     ],
     JURIDICO: [
       'visao-geral', 'oficios', 'portarias', 'diario-oficial',
-      'papiro-cadmo', 'personas', 'busca', 'configuracoes'
+      'papiro-cadmo', 'servidores', 'personas', 'busca', 'configuracoes'
     ]
   };
 
@@ -525,7 +525,7 @@ window.OlymposApp = (function() {
   }
 
   function normalizarPermissoesRbac(listaBruta) {
-    const set = new Set(['visao-geral', 'configuracoes', 'personas', 'busca', 'escolas', 'calendario', 'papiro-cadmo']);
+    const set = new Set(['visao-geral', 'configuracoes', 'personas', 'busca', 'escolas', 'calendario', 'papiro-cadmo', 'servidores']);
     (listaBruta || []).forEach(function(item) {
       if (LEGACY_TAB_MAP[item]) {
         LEGACY_TAB_MAP[item].forEach(function(p) { set.add(p); });

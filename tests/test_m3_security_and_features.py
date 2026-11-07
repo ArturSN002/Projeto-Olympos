@@ -143,6 +143,8 @@ class TestMarco3SecurityAndFeatures(unittest.TestCase):
         const docentesPath = process.argv[1];
         const vinculosPath = process.argv[2];
         const cadmoPath = process.argv[3];
+        const servidoresPath = process.argv[4];
+        if (servidoresPath && fs.existsSync(servidoresPath)) vm.runInContext(dataDocentes(servidoresPath), ctx);
         if (fs.existsSync(docentesPath)) vm.runInContext(dataDocentes(docentesPath), ctx);
         if (fs.existsSync(vinculosPath)) vm.runInContext(dataDocentes(vinculosPath), ctx);
         vm.runInContext(dataDocentes(cadmoPath), ctx);
@@ -155,6 +157,11 @@ class TestMarco3SecurityAndFeatures(unittest.TestCase):
         const porNome = api.buscarInformacoesServidor(amostra.n.split(' ').slice(0, 2).join(' '));
         const inexistente = api.buscarInformacoesServidor('MATRICULA_INEXISTENTE_9999999');
 
+        // Testes de Servidores da Rede Estadual (Governo do Estado / SEEC-RN) e acúmulo de cargos
+        const porMatEstadual = api.buscarInformacoesServidor('192341-2');
+        const porNomeEstadual = api.buscarInformacoesServidor('FRANCISCO DE ASSIS MEDEIROS');
+        const acumuloOdjaime = api.buscarInformacoesServidor('ODJAIME CAMARA DE ARAUJO');
+
         console.log(JSON.stringify({
           totalDocentes: todosDocentes.length,
           amostraMat: amostra.m,
@@ -163,7 +170,11 @@ class TestMarco3SecurityAndFeatures(unittest.TestCase):
           achouSemZero: porMatriculaSemZero.length > 0,
           achouPorNome: porNome.some(s => s.nome === amostra.n),
           possuiAuditoria: Boolean(porMatricula[0] && porMatricula[0].auditoriaConstitucional),
-          inexistenteVazio: inexistente.length === 0
+          inexistenteVazio: inexistente.length === 0,
+          achouEstadualMat: porMatEstadual.length > 0 && porMatEstadual[0].matriculas.includes('192341-2'),
+          achouEstadualNome: porNomeEstadual.length > 0 && porNomeEstadual[0].nome === 'FRANCISCO DE ASSIS MEDEIROS',
+          estadualTemEnte: porMatEstadual.length > 0 && porMatEstadual[0].vinculos.some(v => v.ente.includes('Governo do Estado') || v.ente.includes('SEEC')),
+          acumuloDuploDetectado: acumuloOdjaime.length > 0 && acumuloOdjaime[0].vinculos.length >= 2
         }));
         """
         proc = subprocess.run(
@@ -172,6 +183,7 @@ class TestMarco3SecurityAndFeatures(unittest.TestCase):
                 str(SPA_DIR / "js" / "data" / "docentes_ceara_mirim.js"),
                 str(SPA_DIR / "js" / "data" / "vinculos_transparencia.js"),
                 str(SPA_DIR / "js" / "views" / "papiroCadmo.js"),
+                str(SPA_DIR / "js" / "data" / "servidoresData.js"),
             ],
             capture_output=True, text=True, encoding="utf-8", check=True
         )
@@ -182,6 +194,10 @@ class TestMarco3SecurityAndFeatures(unittest.TestCase):
         self.assertTrue(out["achouPorNome"])
         self.assertTrue(out["possuiAuditoria"])
         self.assertTrue(out["inexistenteVazio"])
+        self.assertTrue(out["achouEstadualMat"])
+        self.assertTrue(out["achouEstadualNome"])
+        self.assertTrue(out["estadualTemEnte"])
+        self.assertTrue(out["acumuloDuploDetectado"])
 
     def test_03_setup_modal_requests_only_public_key_and_derives_url(self):
         """Verifica que a configuração solicita apenas a Chave Pública do Supabase, derivando a URL via JWT."""

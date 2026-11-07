@@ -15,6 +15,7 @@ Validação de integridade e conformidade das entregas do Marco 2 (M2):
 import unittest
 from pathlib import Path
 import subprocess
+import json
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MIGRATION_FILE = REPO_ROOT / "2_github_pages_actions" / "supabase" / "migrations" / "20261106_007_escolas_secretarias_agenda.sql"
@@ -151,6 +152,65 @@ class TestMarco2Integrity(unittest.TestCase):
         self.assertIn('id="agendaSetor"', html)
         self.assertIn('id="btnSalvarEventoAgenda"', html)
         self.assertIn('id="btnExcluirEventoAgenda"', html)
+
+    def test_06_state_servers_search_and_fixtures_integrity(self):
+        """Garante a presença e busca funcional de servidores do Governo do Estado (SEEC/RN)."""
+        self.assertTrue(PAPIRO_CADMO.exists(), "papiroCadmo.js não encontrado")
+        code = PAPIRO_CADMO.read_text(encoding="utf-8")
+        self.assertIn("SERVIDORES_ESTADO_RN", code)
+        self.assertIn("Governo do Estado (SEEC)", code)
+
+        node_script = r"""
+        const fs = require('fs');
+        const vm = require('vm');
+        const ctx = {
+          console,
+          setTimeout,
+          clearTimeout,
+          localStorage: { getItem: () => null, setItem: () => {} },
+          MutationObserver: function() { this.observe = () => {}; },
+          document: {
+            readyState: 'complete',
+            getElementById: () => null,
+            createDocumentFragment: () => ({ appendChild: () => {} }),
+            createElement: () => ({ dataset: {}, style: {}, appendChild: () => {} }),
+            addEventListener: () => {}
+          }
+        };
+        ctx.window = ctx;
+        ctx.OlymposApp = { escapeHtml: (s) => String(s || ''), showToast: () => {} };
+        ctx.OlymposApi = { chamar: () => {} };
+        vm.createContext(ctx);
+        vm.runInContext(fs.readFileSync(process.argv[1], 'utf8'), ctx);
+
+        const api = ctx.OlymposViews.papiroCadmo;
+        // Busca por matrícula estadual com dígito e sem dígito
+        const porMatEstadual = api.buscarInformacoesServidor('192341-2');
+        const porMatSemDigito = api.buscarInformacoesServidor('1923412');
+        // Busca por nome completo estadual e termo parcial
+        const porNomeEstadual = api.buscarInformacoesServidor('FRANCISCO DE ASSIS MEDEIROS');
+        const porNomeParcial = api.buscarInformacoesServidor('ASSIS MEDEIROS');
+
+        console.log(JSON.stringify({
+          encontrouMatEstadual: porMatEstadual.length > 0 && porMatEstadual[0].matriculas.includes('192341-2'),
+          encontrouSemDigito: porMatSemDigito.length > 0 && porMatSemDigito[0].matriculas.includes('192341-2'),
+          encontrouNomeEstadual: porNomeEstadual.length > 0 && porNomeEstadual[0].nome === 'FRANCISCO DE ASSIS MEDEIROS',
+          encontrouParcial: porNomeParcial.length > 0,
+          enteCorreto: porMatEstadual[0] && porMatEstadual[0].vinculos.some(v => v.ente.includes('Governo do Estado') || v.ente.includes('SEEC')),
+          lotacaoValida: porMatEstadual[0] && porMatEstadual[0].vinculos.some(v => v.lotacao && v.lotacao.length > 0)
+        }));
+        """
+        proc = subprocess.run(
+            ["node", "-e", node_script, str(PAPIRO_CADMO)],
+            capture_output=True, text=True, encoding="utf-8", check=True
+        )
+        out = json.loads(proc.stdout.strip().splitlines()[-1])
+        self.assertTrue(out["encontrouMatEstadual"], "Falha na busca de servidor estadual por matrícula")
+        self.assertTrue(out["encontrouSemDigito"], "Falha na busca por matrícula estadual normalizada")
+        self.assertTrue(out["encontrouNomeEstadual"], "Falha na busca de servidor estadual por nome")
+        self.assertTrue(out["encontrouParcial"], "Falha na busca de servidor estadual por nome parcial")
+        self.assertTrue(out["enteCorreto"], "Vínculo estadual não identificado como Governo do Estado / SEEC")
+        self.assertTrue(out["lotacaoValida"], "Lotação estadual ausente no dossiê")
 
 
 if __name__ == "__main__":

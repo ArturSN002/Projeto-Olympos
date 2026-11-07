@@ -159,6 +159,7 @@
           <span class="nav-divider-dot" aria-hidden="true"></span>
           <a href="#diario-oficial" class="nav-link" data-page="diario-oficial">Diário Oficial</a>
           <a href="#papiro-cadmo" class="nav-link" data-page="papiro-cadmo">Permutas</a>
+          <a href="#servidores" class="nav-link" data-page="servidores">Servidores</a>
           <a href="#calendario" class="nav-link" data-page="calendario">Calendário</a>
           <a href="#escolas" class="nav-link" data-page="escolas">Escolas</a>
           <a href="#personas" class="nav-link" data-page="personas">Personas</a>
@@ -199,6 +200,7 @@
         </div>
         <a href="#diario-oficial" class="nav-link" data-page="diario-oficial">Diário Oficial</a>
         <a href="#papiro-cadmo" class="nav-link" data-page="papiro-cadmo">Permutas</a>
+        <a href="#servidores" class="nav-link" data-page="servidores">Servidores</a>
         <a href="#calendario" class="nav-link" data-page="calendario">Calendário</a>
         <a href="#escolas" class="nav-link" data-page="escolas">Escolas</a>
         <a href="#personas" class="nav-link" data-page="personas">Personas</a>
@@ -386,6 +388,16 @@
                   <div class="qm-category">ETL Intermunicipal RN</div>
                   <div class="qm-title">O Papiro de Cadmo</div>
                   <div class="qm-desc">Consolidação mensal de servidores de 15 municípios potiguares e SEEC/RN para permutas.</div>
+                </div>
+                <span class="qm-action">Abrir página dedicada →</span>
+              </div>
+
+              <div class="quick-module-card" data-nav-target="servidores">
+                <div class="qm-icon-badge" data-persona-icon="cadmo"></div>
+                <div>
+                  <div class="qm-category">Quadro Funcional Unificado</div>
+                  <div class="qm-title">Consulta de Servidores</div>
+                  <div class="qm-desc">Dossiê funcional, pesquisa multirrede por nome/matrícula e filtros dinâmicos de Ceará-Mirim, Natal, Parnamirim, SGA e Governo do RN.</div>
                 </div>
                 <span class="qm-action">Abrir página dedicada →</span>
               </div>
@@ -1193,6 +1205,171 @@
                   </div>
                 </form>
               </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- =========================================================================
+             PÁGINA DEDICADA: CONSULTA INTEGRADA DE SERVIDORES PÚBLICOS
+             ========================================================================= -->
+        <section class="page-view hidden" id="page-servidores">
+          <div class="surface-card">
+            <!-- CABEÇALHO DO CARD -->
+            <div class="card-header-row">
+              <div>
+                <span class="section-eyebrow">DOSSIÊ FUNCIONAL MULTIRREDE • BASE CONSOLIDADA</span>
+                <h2 class="section-title">Consulta Integrada de Servidores Públicos</h2>
+                <p class="section-desc">Consulte vínculos funcionais ativos, carga horária semanal acumulada, lotação e auditoria constitucional (CF/88 Art. 37, XVI) dos 5 entes monitorados.</p>
+              </div>
+              <div class="button-group">
+                <button type="button" id="btnExportarServidoresCsv" class="btn btn-secondary btn-sm" title="Exportar resultado filtrado em CSV">
+                  <span>📥 Exportar CSV</span>
+                </button>
+                <button type="button" id="btnExportarServidoresJson" class="btn btn-secondary btn-sm" title="Exportar catálogo em JSON">
+                  <span>📥 Exportar JSON</span>
+                </button>
+                <button type="button" id="btnImprimirServidores" class="btn btn-ghost btn-sm" title="Imprimir listagem filtrada">
+                  <span>🖨️ Imprimir</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- CARDS DE KPIS / CONTADORES -->
+            <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin: 16px 0 20px 0;">
+              <div class="stat-card">
+                <div class="stat-top">
+                  <span class="stat-label">Total no Acervo</span>
+                  <span class="pill-badge pill-gold" id="kpiServidoresTotalBadge">5 Entes</span>
+                </div>
+                <div class="stat-value" id="kpiServidoresTotal">--</div>
+                <div class="stat-meta">Servidores públicos cadastrados</div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-top">
+                  <span class="stat-label">Redes Municipais</span>
+                  <span class="pill-badge pill-green">SME / SEMEC</span>
+                </div>
+                <div class="stat-value" id="kpiServidoresMunicipais">--</div>
+                <div class="stat-meta">Ceará-Mirim, Natal, Parnamirim e SGA</div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-top">
+                  <span class="stat-label">Rede Estadual</span>
+                  <span class="pill-badge pill-blue">SEEC / RN</span>
+                </div>
+                <div class="stat-value" id="kpiServidoresEstaduais">--</div>
+                <div class="stat-meta">Governo do Estado do RN</div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-top">
+                  <span class="stat-label">Auditoria Constitucional</span>
+                  <span class="pill-badge pill-amber">CF/88 Art. 37</span>
+                </div>
+                <div class="stat-value" id="kpiServidoresMultiplos">--</div>
+                <div class="stat-meta">Servidores com múltiplos vínculos</div>
+              </div>
+            </div>
+
+            <!-- TOOLBAR DE BUSCA E FILTROS DINÂMICOS -->
+            <div class="servidor-filter-toolbar" style="background: var(--bg-tonal); padding: 16px; border-radius: var(--radius-md, 12px); border: 1px solid var(--border-hairline); margin-bottom: 20px;">
+              <!-- LINHA 1: BARRA DE BUSCA RÁPIDA -->
+              <div style="display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap;">
+                <div style="flex: 1 1 300px; position: relative;">
+                  <input type="search" id="servidorBuscaInput" class="input-clean" placeholder="Digite nome, matrícula, cargo ou escola (ex: Jose Farias, 0070671, Professor, Adele)..." style="width: 100%; padding-left: 36px;" />
+                  <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 15px; color: var(--text-muted); pointer-events: none;">🔍</span>
+                </div>
+                <div class="button-group" style="align-items: center;">
+                  <button type="button" id="btnLimparBuscaServidores" class="btn btn-secondary btn-sm hidden">✕ Limpar</button>
+                  <!-- Alternador de Visualização (Cards vs Tabela) -->
+                  <div class="filter-pills-inline" role="group" aria-label="Modo de Visualização">
+                    <button type="button" id="btnModoViewCards" class="btn-mini active" title="Visualização em Cards Dossiê">🗂️ Cards</button>
+                    <button type="button" id="btnModoViewTabela" class="btn-mini" title="Visualização em Tabela Sintética">📋 Tabela</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- LINHA 2: GRUPOS DE FILTROS PILLS (ENTE, CARGO, REGIME, ACUMULAÇÃO) -->
+              <div style="display: flex; flex-direction: column; gap: 10px;">
+                <!-- Filtro por Ente -->
+                <div class="filter-pills-group" role="group" aria-label="Filtrar por Ente Público">
+                  <span class="filter-group-label" style="font-size: 11.5px; font-weight: 700; color: var(--text-secondary); min-width: 60px;">Ente:</span>
+                  <button type="button" class="btn-mini active" data-filtro-ente="todos">Todos</button>
+                  <button type="button" class="btn-mini" data-filtro-ente="ceara-mirim">Ceará-Mirim</button>
+                  <button type="button" class="btn-mini" data-filtro-ente="governo-rn">Governo do RN (SEEC)</button>
+                  <button type="button" class="btn-mini" data-filtro-ente="natal">Natal</button>
+                  <button type="button" class="btn-mini" data-filtro-ente="parnamirim">Parnamirim</button>
+                  <button type="button" class="btn-mini" data-filtro-ente="sga">São Gonçalo do Amarante</button>
+                </div>
+
+                <!-- Filtro por Cargo / Carreira -->
+                <div class="filter-pills-group" role="group" aria-label="Filtrar por Quadro Funcional">
+                  <span class="filter-group-label" style="font-size: 11.5px; font-weight: 700; color: var(--text-secondary); min-width: 60px;">Quadro:</span>
+                  <button type="button" class="btn-mini active" data-filtro-cargo="todos">Todos os Quadros</button>
+                  <button type="button" class="btn-mini" data-filtro-cargo="docente">Docente / Professor</button>
+                  <button type="button" class="btn-mini" data-filtro-cargo="gestao">Gestão Escolar</button>
+                  <button type="button" class="btn-mini" data-filtro-cargo="tecnico">Técnico / Especialista</button>
+                  <button type="button" class="btn-mini" data-filtro-cargo="administrativo">Administrativo</button>
+                  <button type="button" class="btn-mini" data-filtro-cargo="apoio">Apoio / Operacional</button>
+                </div>
+
+                <!-- Filtro por Regime / Situação & Acumulação -->
+                <div style="display: flex; gap: 14px; flex-wrap: wrap; align-items: center;">
+                  <div class="filter-pills-inline" role="group" aria-label="Filtrar por Regime Jurídico">
+                    <span class="filter-group-label" style="font-size: 11.5px; font-weight: 700; color: var(--text-secondary);">Regime:</span>
+                    <button type="button" class="btn-mini active" data-filtro-regime="todos">Todos</button>
+                    <button type="button" class="btn-mini" data-filtro-regime="efetivo">Efetivo</button>
+                    <button type="button" class="btn-mini" data-filtro-regime="comissionado">Comissionado</button>
+                    <button type="button" class="btn-mini" data-filtro-regime="temporario">Temporário</button>
+                  </div>
+
+                  <div class="filter-pills-inline" role="group" aria-label="Filtrar por Auditoria CF/88">
+                    <span class="filter-group-label" style="font-size: 11.5px; font-weight: 700; color: var(--text-secondary);">Vínculos:</span>
+                    <button type="button" class="btn-mini active" data-filtro-vinculos="todos">Todos</button>
+                    <button type="button" class="btn-mini" data-filtro-vinculos="unico">Vínculo Único</button>
+                    <button type="button" class="btn-mini" data-filtro-vinculos="duplo">Acúmulo Lícito (≤ 60h)</button>
+                    <button type="button" class="btn-mini" data-filtro-vinculos="alerta">Alerta CF/88 (> 60h)</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- CONTAGEM DE RESULTADOS E STATUS -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+              <span id="servidoresContagemStatus" style="font-size: 13px; font-weight: 600; color: var(--text-secondary);">Carregando quadro de servidores...</span>
+              <div id="servidoresPaginacaoTopo" class="pagination-controls" style="display: flex; gap: 6px; align-items: center;"></div>
+            </div>
+
+            <!-- ÁREA 1: VISUALIZAÇÃO EM CARDS DOSSIÊ -->
+            <div id="servidoresContainerCards" class="servidor-dossie-list"></div>
+
+            <!-- ÁREA 2: VISUALIZAÇÃO EM TABELA SINTÉTICA -->
+            <div id="servidoresContainerTabela" class="table-wrapper hidden">
+              <table class="clean-table table-responsive-cards" id="tabelaServidoresGeral">
+                <thead>
+                  <tr>
+                    <th>Servidor(a)</th>
+                    <th style="width: 140px;">Matrícula(s)</th>
+                    <th style="width: 160px;">Ente(s)</th>
+                    <th>Cargo Principal</th>
+                    <th style="width: 120px;">Carga Horária</th>
+                    <th>Lotação Principal</th>
+                    <th style="width: 130px;">Auditoria CF/88</th>
+                    <th class="text-right" style="width: 110px;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="tabelaServidoresGeralBody">
+                  <tr><td colspan="8" class="text-muted text-center" style="padding: 24px;">Carregando servidores...</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- CONTROLES DE PAGINAÇÃO INFERIOR -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border-hairline); flex-wrap: wrap; gap: 10px;">
+              <span id="servidoresInfoPaginacao" style="font-size: 12px; color: var(--text-muted);">Página 1 de 1</span>
+              <div id="servidoresPaginacaoRodape" class="pagination-controls" style="display: flex; gap: 6px; align-items: center;"></div>
             </div>
           </div>
         </section>
@@ -2307,6 +2484,27 @@
             <button type="submit" id="btnConfirmarMfaEnroll" class="btn btn-primary btn-sm">Confirmar e Ativar 2FA</button>
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- MODAL DE DOSSIÊ FUNCIONAL COMPLETO (#modalDossieServidor) -->
+    <div id="modalDossieServidor" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalDossieServidorNome">
+      <div class="modal-card" style="max-width: 720px; width: 94%;">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <span class="badge badge-amber" style="font-size: 0.72rem; margin-bottom: 4px;">Dossiê Funcional Consolidado</span>
+            <h3 id="modalDossieServidorNome" style="margin: 0; font-size: 1.25rem; font-weight: 700;">Nome do Servidor</h3>
+          </div>
+          <button id="closeModalDossieServidorBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal">&times;</button>
+        </div>
+        <div class="modal-body" id="modalDossieServidorConteudo" style="padding: 20px 24px; max-height: 75vh; overflow-y: auto;">
+          <!-- Preenchido dinamicamente via JS -->
+        </div>
+        <div class="modal-footer" style="padding: 14px 24px; border-top: 1px solid var(--border-hairline); display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" id="btnCopiarFichaDossie" class="btn btn-secondary btn-sm">📋 Copiar Ficha</button>
+          <button type="button" id="btnImprimirFichaDossie" class="btn btn-secondary btn-sm">🖨️ Imprimir Dossiê</button>
+          <button type="button" id="btnFecharModalDossie" class="btn btn-primary btn-sm">Fechar</button>
+        </div>
       </div>
     </div>
 

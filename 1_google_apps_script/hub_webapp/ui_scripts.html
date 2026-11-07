@@ -2101,6 +2101,12 @@ window.OlymposRouter = (function() {
       subtitle: 'Extração automatizada de 15 municípios potiguares e SEEC/RN com consolidação em esquema canônico de 8 colunas para Cadmo e Hera.',
       category: 'inteligencia'
     },
+    'servidores': {
+      eyebrow: 'QUADRO FUNCIONAL UNIFICADO • RN & MUNICÍPIOS',
+      title: 'Consulta Integrada de Servidores Públicos.',
+      subtitle: 'Pesquisa cadastral, dossiê funcional detalhado, lotação e auditoria de vínculos de Ceará-Mirim, Natal, Parnamirim, São Gonçalo do Amarante e Governo do RN (SEEC).',
+      category: 'gestao'
+    },
     'escolas': {
       eyebrow: 'GEORREFERENCIAMENTO MUNICIPAL • REDE ESCOLAR SMEB',
       title: 'Mapa e Gestão das Escolas Municipais.',
@@ -2154,6 +2160,9 @@ window.OlymposRouter = (function() {
     let targetSubtab = null;
     if (pageId === 'permutas') {
       pageId = 'papiro-cadmo';
+    }
+    if (pageId === 'consulta-servidores') {
+      pageId = 'servidores';
     }
     if (pageId === 'licencas') {
       pageId = 'portarias';
@@ -2232,6 +2241,7 @@ window.OlymposRouter = (function() {
       'certificados': 'certificados',
       'diario-oficial': 'diarioOficial',
       'papiro-cadmo': 'papiroCadmo',
+      'servidores': 'servidores',
       'escolas': 'escolas',
       'calendario': 'calendario',
       'personas': 'personas',
@@ -4222,6 +4232,1375 @@ window.OlymposViews.diarioOficial = (function() {
 })();
 
 
+// --- MODULE: js/data/servidoresData.js ---
+/**
+ * Base de Dados Unificada de Servidores Públicos — Projeto Olympos
+ * Cobre os 5 Entes Monitorados: Ceará-Mirim, Governo do RN (SEEC), Natal, Parnamirim e São Gonçalo do Amarante.
+ * Abrange os 5 Quadros Funcionais: Docente, Administrativo, Apoio, Técnico e Operacional.
+ * Conformidade estrita com a LGPD: CPFs mascarados no padrão ###.XXX.XXX-## sem dígitos verificadores reais.
+ */
+(function(root) {
+  'use strict';
+
+  function normalizarTexto(txt) {
+    return String(txt || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+  }
+
+  function normalizarMatricula(mat) {
+    return String(mat || '').replace(/[^0-9a-zA-Z]/g, '').toLowerCase().replace(/^0+/, '');
+  }
+
+  function parseCargaHoraria(ch) {
+    if (typeof ch === 'number') return ch;
+    var m = String(ch || '').match(/\d+/);
+    return m ? parseInt(m[0], 10) : 30;
+  }
+
+  // --- 1. BASE CEARÁ-MIRIM (SMEB) ---
+  var SERVIDORES_CEARA_MIRIM = [
+    {
+      id: "cm_doc_001",
+      matricula: "0010016",
+      m: "0010016",
+      nome: "ODJAIME CAMARA DE ARAUJO",
+      n: "ODJAIME CAMARA DE ARAUJO",
+      cpfMascarado: "###.487.734-##",
+      c: "###.487.734-##",
+      ente: "SMEB Ceará-Mirim",
+      enteId: "ceara_mirim",
+      orgao: "Secretaria Municipal de Educação Básica",
+      quadro: "Docente",
+      cargo: "PROFESSOR NIVEL SUPERIOR",
+      g: "PROFESSOR NIVEL SUPERIOR",
+      funcao: "Docência Anos Finais (História)",
+      cargaHoraria: 30,
+      cargaHorariaTexto: "30h",
+      h: "30h",
+      lotacao: "SECRETARIA MUNICIPAL DE EDUCAÇÃO BÁSICA",
+      l: "SECRETARIA MUNICIPAL DE EDUCAÇÃO BÁSICA",
+      lotacaoId: "smeb_sede",
+      turno: "Matutino",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2010-02-15"
+    },
+    {
+      id: "cm_doc_002",
+      matricula: "0010024",
+      m: "0010024",
+      nome: "MARIA MARGARETH DA SILVA PEREIRA",
+      n: "MARIA MARGARETH DA SILVA PEREIRA",
+      cpfMascarado: "###.218.904-##",
+      c: "###.218.904-##",
+      ente: "SMEB Ceará-Mirim",
+      enteId: "ceara_mirim",
+      orgao: "Secretaria Municipal de Educação Básica",
+      quadro: "Docente",
+      cargo: "PROFESSOR NIVEL SUPERIOR",
+      g: "PROFESSOR NIVEL SUPERIOR",
+      funcao: "Gestão Escolar e Docência",
+      cargaHoraria: 30,
+      cargaHorariaTexto: "30h",
+      h: "30h",
+      lotacao: "E.M. ADELE DE OLIVEIRA",
+      l: "E.M. ADELE DE OLIVEIRA",
+      lotacaoId: "esc_001",
+      turno: "Vespertino",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2012-03-01"
+    },
+    {
+      id: "cm_doc_003",
+      matricula: "0010032",
+      m: "0010032",
+      nome: "ANA PAULA RIBEIRO DE SOUZA",
+      n: "ANA PAULA RIBEIRO DE SOUZA",
+      cpfMascarado: "###.334.814-##",
+      c: "###.334.814-##",
+      ente: "SMEB Ceará-Mirim",
+      enteId: "ceara_mirim",
+      orgao: "Secretaria Municipal de Educação Básica",
+      quadro: "Docente",
+      cargo: "PROFESSOR DE EDUCACAO INFANTIL",
+      g: "PROFESSOR DE EDUCACAO INFANTIL",
+      funcao: "Docência Infantil",
+      cargaHoraria: 30,
+      cargaHorariaTexto: "30h",
+      h: "30h",
+      lotacao: "CEI PROFESSORA MARIA DE FATIMA",
+      l: "CEI PROFESSORA MARIA DE FATIMA",
+      lotacaoId: "esc_cei_01",
+      turno: "Matutino",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2015-08-10"
+    },
+    {
+      id: "cm_adm_001",
+      matricula: "0042105",
+      m: "0042105",
+      nome: "LUCAS MENDES COSTA",
+      n: "LUCAS MENDES COSTA",
+      cpfMascarado: "###.552.194-##",
+      c: "###.552.194-##",
+      ente: "SMEB Ceará-Mirim",
+      enteId: "ceara_mirim",
+      orgao: "Secretaria Municipal de Educação Básica",
+      quadro: "Administrativo",
+      cargo: "AGENTE ADMINISTRATIVO",
+      g: "AGENTE ADMINISTRATIVO",
+      funcao: "Protocolo e Gestão de Documentos",
+      cargaHoraria: 40,
+      cargaHorariaTexto: "40h",
+      h: "40h",
+      lotacao: "SECRETARIA MUNICIPAL DE EDUCAÇÃO BÁSICA",
+      l: "SECRETARIA MUNICIPAL DE EDUCAÇÃO BÁSICA",
+      lotacaoId: "smeb_sede",
+      turno: "Integral",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2018-05-14"
+    },
+    {
+      id: "cm_adm_002",
+      matricula: "0042189",
+      m: "0042189",
+      nome: "JULIANA FREIRE BARRETO",
+      n: "JULIANA FREIRE BARRETO",
+      cpfMascarado: "###.771.604-##",
+      c: "###.771.604-##",
+      ente: "SMEB Ceará-Mirim",
+      enteId: "ceara_mirim",
+      orgao: "Secretaria Municipal de Educação Básica",
+      quadro: "Administrativo",
+      cargo: "SECRETARIO ESCOLAR",
+      g: "SECRETARIO ESCOLAR",
+      funcao: "Secretaria e Registro Acadêmico",
+      cargaHoraria: 40,
+      cargaHorariaTexto: "40h",
+      h: "40h",
+      lotacao: "E.M. AUGUSTO XAVIER",
+      l: "E.M. AUGUSTO XAVIER",
+      lotacaoId: "esc_002",
+      turno: "Matutino/Vespertino",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2019-02-01"
+    },
+    {
+      id: "cm_apo_001",
+      matricula: "0038912",
+      m: "0038912",
+      nome: "TEREZA CRISTINA FARIAS",
+      n: "TEREZA CRISTINA FARIAS",
+      cpfMascarado: "###.892.344-##",
+      c: "###.892.344-##",
+      ente: "SMEB Ceará-Mirim",
+      enteId: "ceara_mirim",
+      orgao: "Secretaria Municipal de Educação Básica",
+      quadro: "Apoio",
+      cargo: "MERENDEIRA ESCOLAR",
+      g: "MERENDEIRA ESCOLAR",
+      funcao: "Preparação e Distribuição da Alimentação Escolar",
+      cargaHoraria: 40,
+      cargaHorariaTexto: "40h",
+      h: "40h",
+      lotacao: "E.M. ADELE DE OLIVEIRA",
+      l: "E.M. ADELE DE OLIVEIRA",
+      lotacaoId: "esc_001",
+      turno: "Matutino",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2014-06-20"
+    },
+    {
+      id: "cm_apo_002",
+      matricula: "0038988",
+      m: "0038988",
+      nome: "JOAO PAULO BEZERRA CAVALCANTE",
+      n: "JOAO PAULO BEZERRA CAVALCANTE",
+      cpfMascarado: "###.621.434-##",
+      c: "###.621.434-##",
+      ente: "SMEB Ceará-Mirim",
+      enteId: "ceara_mirim",
+      orgao: "Secretaria Municipal de Educação Básica",
+      quadro: "Apoio",
+      cargo: "MOTORISTA DE TRANSPORTE ESCOLAR",
+      g: "MOTORISTA DE TRANSPORTE ESCOLAR",
+      funcao: "Condução de Ônibus Escolar (Rota Rural)",
+      cargaHoraria: 40,
+      cargaHorariaTexto: "40h",
+      h: "40h",
+      lotacao: "SMEB - SETOR DE TRANSPORTES",
+      l: "SMEB - SETOR DE TRANSPORTES",
+      lotacaoId: "smeb_transp",
+      turno: "Matutino/Vespertino",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2016-04-11"
+    },
+    {
+      id: "cm_tec_001",
+      matricula: "0051204",
+      m: "0051204",
+      nome: "FELIPE AGUIAR NOBREGA",
+      n: "FELIPE AGUIAR NOBREGA",
+      cpfMascarado: "###.430.884-##",
+      c: "###.430.884-##",
+      ente: "SMEB Ceará-Mirim",
+      enteId: "ceara_mirim",
+      orgao: "Secretaria Municipal de Educação Básica",
+      quadro: "Técnico",
+      cargo: "PSICOLOGO EDUCACIONAL",
+      g: "PSICOLOGO EDUCACIONAL",
+      funcao: "Apoio Psicossocial à Comunidade Escolar",
+      cargaHoraria: 30,
+      cargaHorariaTexto: "30h",
+      h: "30h",
+      lotacao: "SMEB - NUCLEO DE APOIO PSICOSSOCIAL",
+      l: "SMEB - NUCLEO DE APOIO PSICOSSOCIAL",
+      lotacaoId: "smeb_psico",
+      turno: "Matutino",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2021-03-15"
+    },
+    {
+      id: "cm_tec_002",
+      matricula: "0051280",
+      m: "0051280",
+      nome: "BEATRIZ CARVALHO DE MACEDO",
+      n: "BEATRIZ CARVALHO DE MACEDO",
+      cpfMascarado: "###.918.274-##",
+      c: "###.918.274-##",
+      ente: "SMEB Ceará-Mirim",
+      enteId: "ceara_mirim",
+      orgao: "Secretaria Municipal de Educação Básica",
+      quadro: "Técnico",
+      cargo: "ASSISTENTE SOCIAL EDUCACIONAL",
+      g: "ASSISTENTE SOCIAL EDUCACIONAL",
+      funcao: "Acompanhamento de Frequência e Vulnerabilidade",
+      cargaHoraria: 30,
+      cargaHorariaTexto: "30h",
+      h: "30h",
+      lotacao: "SMEB - NUCLEO DE APOIO PSICOSSOCIAL",
+      l: "SMEB - NUCLEO DE APOIO PSICOSSOCIAL",
+      lotacaoId: "smeb_psico",
+      turno: "Vespertino",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2021-04-01"
+    },
+    {
+      id: "cm_ope_001",
+      matricula: "0024501",
+      m: "0024501",
+      nome: "MANOEL VICENTE DOS SANTOS",
+      n: "MANOEL VICENTE DOS SANTOS",
+      cpfMascarado: "###.112.594-##",
+      c: "###.112.594-##",
+      ente: "SMEB Ceará-Mirim",
+      enteId: "ceara_mirim",
+      orgao: "Secretaria Municipal de Educação Básica",
+      quadro: "Operacional",
+      cargo: "AUXILIAR DE SERVICOS GERAIS (ASG)",
+      g: "AUXILIAR DE SERVICOS GERAIS (ASG)",
+      funcao: "Manutenção, Limpeza e Conservação Predial",
+      cargaHoraria: 40,
+      cargaHorariaTexto: "40h",
+      h: "40h",
+      lotacao: "E.M. AUGUSTO XAVIER",
+      l: "E.M. AUGUSTO XAVIER",
+      lotacaoId: "esc_002",
+      turno: "Matutino",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2011-09-01"
+    },
+    {
+      id: "cm_ope_002",
+      matricula: "0024599",
+      m: "0024599",
+      nome: "FRANCISCA HELENA ALVES",
+      n: "FRANCISCA HELENA ALVES",
+      cpfMascarado: "###.834.724-##",
+      c: "###.834.724-##",
+      ente: "SMEB Ceará-Mirim",
+      enteId: "ceara_mirim",
+      orgao: "Secretaria Municipal de Educação Básica",
+      quadro: "Operacional",
+      cargo: "CUIDADOR DE ALUNOS COM DEFICIENCIA",
+      g: "CUIDADOR DE ALUNOS COM DEFICIENCIA",
+      funcao: "Apoio e Acessibilidade em Sala de Aula",
+      cargaHoraria: 40,
+      cargaHorariaTexto: "40h",
+      h: "40h",
+      lotacao: "E.M. ADELE DE OLIVEIRA",
+      l: "E.M. ADELE DE OLIVEIRA",
+      lotacaoId: "esc_001",
+      turno: "Vespertino",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2020-01-20"
+    }
+  ];
+
+  // --- 2. BASE GOVERNO DO ESTADO DO RN (SEEC) ---
+  var SERVIDORES_ESTADO_RN = [
+    {
+      id: "rn_doc_001",
+      matricula: "184920-1",
+      m: "184920-1",
+      nome: "ODJAIME CAMARA DE ARAUJO",
+      n: "ODJAIME CAMARA DE ARAUJO",
+      cpfMascarado: "###.487.734-##",
+      c: "###.487.734-##",
+      ente: "Governo do Estado (SEEC)",
+      enteId: "governo_rn",
+      orgao: "SEEC / Governo do Estado do RN",
+      quadro: "Docente",
+      cargo: "PROFESSOR EFETIVO (HISTÓRIA)",
+      g: "PROFESSOR EFETIVO (HISTÓRIA)",
+      funcao: "Docência Anos Finais e Ensino Médio",
+      cargaHoraria: 30,
+      cargaHorariaTexto: "30h",
+      h: "30h",
+      lotacao: "E. E. Augusto Severo (Natal)",
+      l: "E. E. Augusto Severo (Natal)",
+      lotacaoId: "ee_augusto_severo",
+      turno: "Vespertino",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2008-03-10"
+    },
+    {
+      id: "rn_doc_002",
+      matricula: "192341-2",
+      m: "192341-2",
+      nome: "FRANCISCO DE ASSIS MEDEIROS",
+      n: "FRANCISCO DE ASSIS MEDEIROS",
+      cpfMascarado: "###.781.904-##",
+      c: "###.781.904-##",
+      ente: "Governo do Estado (SEEC)",
+      enteId: "governo_rn",
+      orgao: "SEEC / Governo do Estado do RN",
+      quadro: "Docente",
+      cargo: "PROFESSOR EFETIVO (MATEMÁTICA)",
+      g: "PROFESSOR EFETIVO (MATEMÁTICA)",
+      funcao: "Docência Ensino Fundamental e Médio",
+      cargaHoraria: 30,
+      cargaHorariaTexto: "30h",
+      h: "30h",
+      lotacao: "Colégio Estadual Monsenhor Urbano (Ceará-Mirim)",
+      l: "Colégio Estadual Monsenhor Urbano (Ceará-Mirim)",
+      lotacaoId: "ce_monsenhor_urbano",
+      turno: "Matutino",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2011-04-15"
+    },
+    {
+      id: "rn_doc_003",
+      matricula: "178923-4",
+      m: "178923-4",
+      nome: "MARIA APARECIDA DA SILVA COSTA",
+      n: "MARIA APARECIDA DA SILVA COSTA",
+      cpfMascarado: "###.654.124-##",
+      c: "###.654.124-##",
+      ente: "Governo do Estado (SEEC)",
+      enteId: "governo_rn",
+      orgao: "SEEC / Governo do Estado do RN",
+      quadro: "Docente",
+      cargo: "PROFESSOR EFETIVO (LÍNGUA PORTUGUESA)",
+      g: "PROFESSOR EFETIVO (LÍNGUA PORTUGUESA)",
+      funcao: "Docência Anos Finais",
+      cargaHoraria: 30,
+      cargaHorariaTexto: "30h",
+      h: "30h",
+      lotacao: "E. E. Desembargador Silvino Bezerra (Ceará-Mirim)",
+      l: "E. E. Desembargador Silvino Bezerra (Ceará-Mirim)",
+      lotacaoId: "ee_silvino_bezerra",
+      turno: "Matutino",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2006-02-01"
+    },
+    {
+      id: "rn_doc_004",
+      matricula: "204891-0",
+      m: "204891-0",
+      nome: "JOSE CARLOS DO NASCIMENTO",
+      n: "JOSE CARLOS DO NASCIMENTO",
+      cpfMascarado: "###.321.984-##",
+      c: "###.321.984-##",
+      ente: "Governo do Estado (SEEC)",
+      enteId: "governo_rn",
+      orgao: "SEEC / Governo do Estado do RN",
+      quadro: "Docente",
+      cargo: "PROFESSOR EFETIVO (GEOGRAFIA)",
+      g: "PROFESSOR EFETIVO (GEOGRAFIA)",
+      funcao: "Docência Ensino Médio",
+      cargaHoraria: 30,
+      cargaHorariaTexto: "30h",
+      h: "30h",
+      lotacao: "E. E. Professor Edgar Barbosa (Natal)",
+      l: "E. E. Professor Edgar Barbosa (Natal)",
+      lotacaoId: "ee_edgar_barbosa",
+      turno: "Vespertino",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2013-08-20"
+    },
+    {
+      id: "rn_doc_005",
+      matricula: "211904-8",
+      m: "211904-8",
+      nome: "ANA CLAUDIA BEZERRA LIMA",
+      n: "ANA CLAUDIA BEZERRA LIMA",
+      cpfMascarado: "###.908.434-##",
+      c: "###.908.434-##",
+      ente: "Governo do Estado (SEEC)",
+      enteId: "governo_rn",
+      orgao: "SEEC / Governo do Estado do RN",
+      quadro: "Docente",
+      cargo: "PROFESSOR EFETIVO (CIÊNCIAS BIOLÓGICAS)",
+      g: "PROFESSOR EFETIVO (CIÊNCIAS BIOLÓGICAS)",
+      funcao: "Docência Ensino Fundamental e Médio",
+      cargaHoraria: 30,
+      cargaHorariaTexto: "30h",
+      h: "30h",
+      lotacao: "E. E. Walter Duarte Pereira (Natal)",
+      l: "E. E. Walter Duarte Pereira (Natal)",
+      lotacaoId: "ee_walter_duarte",
+      turno: "Matutino",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2015-02-15"
+    },
+    {
+      id: "rn_doc_006",
+      matricula: "198762-3",
+      m: "198762-3",
+      nome: "MARCOS ANTONIO ALVES PEREIRA",
+      n: "MARCOS ANTONIO ALVES PEREIRA",
+      cpfMascarado: "###.145.894-##",
+      c: "###.145.894-##",
+      ente: "Governo do Estado (SEEC)",
+      enteId: "governo_rn",
+      orgao: "SEEC / Governo do Estado do RN",
+      quadro: "Docente",
+      cargo: "PROFESSOR EFETIVO (EDUCAÇÃO FÍSICA)",
+      g: "PROFESSOR EFETIVO (EDUCAÇÃO FÍSICA)",
+      funcao: "Docência e Práticas Esportivas",
+      cargaHoraria: 30,
+      cargaHorariaTexto: "30h",
+      h: "30h",
+      lotacao: "Colégio Estadual Monsenhor Urbano (Ceará-Mirim)",
+      l: "Colégio Estadual Monsenhor Urbano (Ceará-Mirim)",
+      lotacaoId: "ce_monsenhor_urbano",
+      turno: "Vespertino",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2012-10-01"
+    },
+    {
+      id: "rn_tec_001",
+      matricula: "165432-9",
+      m: "165432-9",
+      nome: "LUCIA DE FATIMA RODRIGUES",
+      n: "LUCIA DE FATIMA RODRIGUES",
+      cpfMascarado: "###.678.914-##",
+      c: "###.678.914-##",
+      ente: "Governo do Estado (SEEC)",
+      enteId: "governo_rn",
+      orgao: "SEEC / Governo do Estado do RN",
+      quadro: "Técnico",
+      cargo: "ESPECIALISTA EM EDUCAÇÃO (PEDAGOGIA)",
+      g: "ESPECIALISTA EM EDUCAÇÃO (PEDAGOGIA)",
+      funcao: "Coordenação Pedagógica Regional",
+      cargaHoraria: 30,
+      cargaHorariaTexto: "30h",
+      h: "30h",
+      lotacao: "DIREC Natal / Sede SEEC RN",
+      l: "DIREC Natal / Sede SEEC RN",
+      lotacaoId: "direc_natal",
+      turno: "Matutino",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2004-03-20"
+    },
+    {
+      id: "rn_doc_007",
+      matricula: "223401-5",
+      m: "223401-5",
+      nome: "RAIMUNDO NONATO FERREIRA",
+      n: "RAIMUNDO NONATO FERREIRA",
+      cpfMascarado: "###.890.124-##",
+      c: "###.890.124-##",
+      ente: "Governo do Estado (SEEC)",
+      enteId: "governo_rn",
+      orgao: "SEEC / Governo do Estado do RN",
+      quadro: "Docente",
+      cargo: "PROFESSOR EFETIVO (LÍNGUA INGLESA)",
+      g: "PROFESSOR EFETIVO (LÍNGUA INGLESA)",
+      funcao: "Docência Anos Finais",
+      cargaHoraria: 30,
+      cargaHorariaTexto: "30h",
+      h: "30h",
+      lotacao: "E. E. Desembargador Silvino Bezerra (Ceará-Mirim)",
+      l: "E. E. Desembargador Silvino Bezerra (Ceará-Mirim)",
+      lotacaoId: "ee_silvino_bezerra",
+      turno: "Vespertino",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2016-09-12"
+    },
+    {
+      id: "rn_doc_008",
+      matricula: "189045-7",
+      m: "189045-7",
+      nome: "SANDRA REGINA DE SOUZA",
+      n: "SANDRA REGINA DE SOUZA",
+      cpfMascarado: "###.234.564-##",
+      c: "###.234.564-##",
+      ente: "Governo do Estado (SEEC)",
+      enteId: "governo_rn",
+      orgao: "SEEC / Governo do Estado do RN",
+      quadro: "Docente",
+      cargo: "PROFESSOR EFETIVO (ARTES)",
+      g: "PROFESSOR EFETIVO (ARTES)",
+      funcao: "Docência e Projetos Culturais",
+      cargaHoraria: 30,
+      cargaHorariaTexto: "30h",
+      h: "30h",
+      lotacao: "E. E. Dinarte Mariz (Natal)",
+      l: "E. E. Dinarte Mariz (Natal)",
+      lotacaoId: "ee_dinarte_mariz",
+      turno: "Matutino",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2009-05-18"
+    },
+    {
+      id: "rn_doc_009",
+      matricula: "201984-6",
+      m: "201984-6",
+      nome: "PAULO ROBERTO TAVARES",
+      n: "PAULO ROBERTO TAVARES",
+      cpfMascarado: "###.567.894-##",
+      c: "###.567.894-##",
+      ente: "Governo do Estado (SEEC)",
+      enteId: "governo_rn",
+      orgao: "SEEC / Governo do Estado do RN",
+      quadro: "Docente",
+      cargo: "PROFESSOR EFETIVO (FÍSICA/QUÍMICA)",
+      g: "PROFESSOR EFETIVO (FÍSICA/QUÍMICA)",
+      funcao: "Docência Ensino Médio",
+      cargaHoraria: 30,
+      cargaHorariaTexto: "30h",
+      h: "30h",
+      lotacao: "Colégio Estadual Monsenhor Urbano (Ceará-Mirim)",
+      l: "Colégio Estadual Monsenhor Urbano (Ceará-Mirim)",
+      lotacaoId: "ce_monsenhor_urbano",
+      turno: "Noturno",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2013-01-28"
+    },
+    {
+      id: "rn_adm_001",
+      matricula: "154321-7",
+      m: "154321-7",
+      nome: "CLARA BEATRIZ VASCONCELOS",
+      n: "CLARA BEATRIZ VASCONCELOS",
+      cpfMascarado: "###.412.984-##",
+      c: "###.412.984-##",
+      ente: "Governo do Estado (SEEC)",
+      enteId: "governo_rn",
+      orgao: "SEEC / Governo do Estado do RN",
+      quadro: "Administrativo",
+      cargo: "ASSISTENTE ADMINISTRATIVO ESTADUAL",
+      g: "ASSISTENTE ADMINISTRATIVO ESTADUAL",
+      funcao: "Gestão de Recursos Humanos e Lotação",
+      cargaHoraria: 40,
+      cargaHorariaTexto: "40h",
+      h: "40h",
+      lotacao: "DIREC 01 - Natal / SEEC Sede",
+      l: "DIREC 01 - Natal / SEEC Sede",
+      lotacaoId: "direc_natal",
+      turno: "Integral",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2005-07-15"
+    },
+    {
+      id: "rn_apo_001",
+      matricula: "142109-8",
+      m: "142109-8",
+      nome: "SEBASTIAO GOMES DA SILVA",
+      n: "SEBASTIAO GOMES DA SILVA",
+      cpfMascarado: "###.301.774-##",
+      c: "###.301.774-##",
+      ente: "Governo do Estado (SEEC)",
+      enteId: "governo_rn",
+      orgao: "SEEC / Governo do Estado do RN",
+      quadro: "Apoio",
+      cargo: "MOTORISTA GOVERNAMENTAL",
+      g: "MOTORISTA GOVERNAMENTAL",
+      funcao: "Transporte Oficial e Logística Educacional",
+      cargaHoraria: 40,
+      cargaHorariaTexto: "40h",
+      h: "40h",
+      lotacao: "SEEC / Sede Gabinete",
+      l: "SEEC / Sede Gabinete",
+      lotacaoId: "seec_sede",
+      turno: "Integral",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2003-11-03"
+    },
+    {
+      id: "rn_ope_001",
+      matricula: "131908-4",
+      m: "131908-4",
+      nome: "ANTONIO CLAUDIO DE SOUZA",
+      n: "ANTONIO CLAUDIO DE SOUZA",
+      cpfMascarado: "###.894.214-##",
+      c: "###.894.214-##",
+      ente: "Governo do Estado (SEEC)",
+      enteId: "governo_rn",
+      orgao: "SEEC / Governo do Estado do RN",
+      quadro: "Operacional",
+      cargo: "AUXILIAR DE SERVICOS GERAIS (ASG ESTADUAL)",
+      g: "AUXILIAR DE SERVICOS GERAIS (ASG ESTADUAL)",
+      funcao: "Zeladoria e Limpeza Predial Escolar",
+      cargaHoraria: 40,
+      cargaHorariaTexto: "40h",
+      h: "40h",
+      lotacao: "Colégio Estadual Monsenhor Urbano (Ceará-Mirim)",
+      l: "Colégio Estadual Monsenhor Urbano (Ceará-Mirim)",
+      lotacaoId: "ce_monsenhor_urbano",
+      turno: "Matutino",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2001-08-14"
+    }
+  ];
+
+  // --- 3. BASE NATAL (SME NATAL) ---
+  var SERVIDORES_NATAL = [
+    {
+      id: "nat_doc_001",
+      matricula: "082341-9",
+      m: "082341-9",
+      nome: "FABIO HENRIQUE BEZERRA",
+      n: "FABIO HENRIQUE BEZERRA",
+      cpfMascarado: "###.512.804-##",
+      c: "###.512.804-##",
+      ente: "SME Natal",
+      enteId: "natal",
+      orgao: "Secretaria Municipal de Educação de Natal",
+      quadro: "Docente",
+      cargo: "PROFESSOR DE ANOS FINAIS - HISTORIA",
+      g: "PROFESSOR DE ANOS FINAIS - HISTORIA",
+      funcao: "Docência Anos Finais",
+      cargaHoraria: 30,
+      cargaHorariaTexto: "30h",
+      h: "30h",
+      lotacao: "E.M. PROFESSOR DJALMA MARANHAO",
+      l: "E.M. PROFESSOR DJALMA MARANHAO",
+      lotacaoId: "em_djalma_maranhao",
+      turno: "Vespertino",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2014-03-10"
+    },
+    {
+      id: "nat_adm_001",
+      matricula: "071982-3",
+      m: "071982-3",
+      nome: "CAMILA DANTAS DE ALBUQUERQUE",
+      n: "CAMILA DANTAS DE ALBUQUERQUE",
+      cpfMascarado: "###.639.114-##",
+      c: "###.639.114-##",
+      ente: "SME Natal",
+      enteId: "natal",
+      orgao: "Secretaria Municipal de Educação de Natal",
+      quadro: "Administrativo",
+      cargo: "ASSISTENTE DE SECRETARIA ESCOLAR",
+      g: "ASSISTENTE DE SECRETARIA ESCOLAR",
+      funcao: "Documentação Escolar e Matrículas",
+      cargaHoraria: 40,
+      cargaHorariaTexto: "40h",
+      h: "40h",
+      lotacao: "SME NATAL - SEDE",
+      l: "SME NATAL - SEDE",
+      lotacaoId: "sme_natal_sede",
+      turno: "Integral",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2017-09-01"
+    },
+    {
+      id: "nat_apo_001",
+      matricula: "065412-1",
+      m: "065412-1",
+      nome: "IVANILDO CANDIDO PEREIRA",
+      n: "IVANILDO CANDIDO PEREIRA",
+      cpfMascarado: "###.784.304-##",
+      c: "###.784.304-##",
+      ente: "SME Natal",
+      enteId: "natal",
+      orgao: "Secretaria Municipal de Educação de Natal",
+      quadro: "Apoio",
+      cargo: "MOTORISTA DE TRANSPORTE ESCOLAR",
+      g: "MOTORISTA DE TRANSPORTE ESCOLAR",
+      funcao: "Transporte de Alunos Polo Zona Norte",
+      cargaHoraria: 40,
+      cargaHorariaTexto: "40h",
+      h: "40h",
+      lotacao: "SME NATAL - FROTAS",
+      l: "SME NATAL - FROTAS",
+      lotacaoId: "sme_natal_frotas",
+      turno: "Matutino/Vespertino",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2013-05-19"
+    },
+    {
+      id: "nat_tec_001",
+      matricula: "059871-4",
+      m: "059871-4",
+      nome: "JULIANA ROCHA TAVARES",
+      n: "JULIANA ROCHA TAVARES",
+      cpfMascarado: "###.920.444-##",
+      c: "###.920.444-##",
+      ente: "SME Natal",
+      enteId: "natal",
+      orgao: "Secretaria Municipal de Educação de Natal",
+      quadro: "Técnico",
+      cargo: "NUTRICIONISTA ESCOLAR",
+      g: "NUTRICIONISTA ESCOLAR",
+      funcao: "Fiscalização e Elaboração de Cardápios PNAE",
+      cargaHoraria: 30,
+      cargaHorariaTexto: "30h",
+      h: "30h",
+      lotacao: "SME NATAL - ALIMENTACAO ESCOLAR",
+      l: "SME NATAL - ALIMENTACAO ESCOLAR",
+      lotacaoId: "sme_natal_pnae",
+      turno: "Matutino",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2019-11-04"
+    },
+    {
+      id: "nat_ope_001",
+      matricula: "041239-8",
+      m: "041239-8",
+      nome: "MARIA DO CARMO SILVA",
+      n: "MARIA DO CARMO SILVA",
+      cpfMascarado: "###.159.224-##",
+      c: "###.159.224-##",
+      ente: "SME Natal",
+      enteId: "natal",
+      orgao: "Secretaria Municipal de Educação de Natal",
+      quadro: "Operacional",
+      cargo: "AUXILIAR DE SERVICOS GERAIS",
+      g: "AUXILIAR DE SERVICOS GERAIS",
+      funcao: "Limpeza e Conservação Polo Natal",
+      cargaHoraria: 40,
+      cargaHorariaTexto: "40h",
+      h: "40h",
+      lotacao: "E.M. PROFESSOR DJALMA MARANHAO",
+      l: "E.M. PROFESSOR DJALMA MARANHAO",
+      lotacaoId: "em_djalma_maranhao",
+      turno: "Matutino",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2010-06-25"
+    }
+  ];
+
+  // --- 4. BASE PARNAMIRIM (SEMEC PARNAMIRIM) ---
+  var SERVIDORES_PARNAMIRIM = [
+    {
+      id: "par_doc_001",
+      matricula: "091245-6",
+      m: "091245-6",
+      nome: "ROBERTA KELLY NOGUEIRA",
+      n: "ROBERTA KELLY NOGUEIRA",
+      cpfMascarado: "###.841.674-##",
+      c: "###.841.674-##",
+      ente: "SEMEC Parnamirim",
+      enteId: "parnamirim",
+      orgao: "Secretaria Municipal de Educação e Cultura de Parnamirim",
+      quadro: "Docente",
+      cargo: "PROFESSOR DE ENSINO FUNDAMENTAL",
+      g: "PROFESSOR DE ENSINO FUNDAMENTAL",
+      funcao: "Docência Anos Iniciais",
+      cargaHoraria: 30,
+      cargaHorariaTexto: "30h",
+      h: "30h",
+      lotacao: "E.M. PRESIDENTE ROOSEVELT",
+      l: "E.M. PRESIDENTE ROOSEVELT",
+      lotacaoId: "em_pres_roosevelt",
+      turno: "Matutino",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2016-02-18"
+    },
+    {
+      id: "par_adm_001",
+      matricula: "084512-3",
+      m: "084512-3",
+      nome: "GABRIEL MONTEIRO SOUZA",
+      n: "GABRIEL MONTEIRO SOUZA",
+      cpfMascarado: "###.329.814-##",
+      c: "###.329.814-##",
+      ente: "SEMEC Parnamirim",
+      enteId: "parnamirim",
+      orgao: "Secretaria Municipal de Educação e Cultura de Parnamirim",
+      quadro: "Administrativo",
+      cargo: "AGENTE DE ADMINISTRACAO ESCOLAR",
+      g: "AGENTE DE ADMINISTRACAO ESCOLAR",
+      funcao: "Atendimento ao Cidadão e Protocolo",
+      cargaHoraria: 40,
+      cargaHorariaTexto: "40h",
+      h: "40h",
+      lotacao: "SEMEC PARNAMIRIM - SEDE",
+      l: "SEMEC PARNAMIRIM - SEDE",
+      lotacaoId: "semec_sede",
+      turno: "Integral",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2018-08-01"
+    },
+    {
+      id: "par_apo_001",
+      matricula: "078921-0",
+      m: "078921-0",
+      nome: "ELIZABETH SOARES LIMA",
+      n: "ELIZABETH SOARES LIMA",
+      cpfMascarado: "###.471.954-##",
+      c: "###.471.954-##",
+      ente: "SEMEC Parnamirim",
+      enteId: "parnamirim",
+      orgao: "Secretaria Municipal de Educação e Cultura de Parnamirim",
+      quadro: "Apoio",
+      cargo: "MERENDEIRA SEMEC",
+      g: "MERENDEIRA SEMEC",
+      funcao: "Preparação de Alimentos e Higiene",
+      cargaHoraria: 40,
+      cargaHorariaTexto: "40h",
+      h: "40h",
+      lotacao: "E.M. SENADOR DUARTE FILHO",
+      l: "E.M. SENADOR DUARTE FILHO",
+      lotacaoId: "em_duarte_filho",
+      turno: "Vespertino",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2015-05-12"
+    },
+    {
+      id: "par_tec_001",
+      matricula: "063214-5",
+      m: "063214-5",
+      nome: "TIAGO ALEXANDRE MOREIRA",
+      n: "TIAGO ALEXANDRE MOREIRA",
+      cpfMascarado: "###.602.134-##",
+      c: "###.602.134-##",
+      ente: "SEMEC Parnamirim",
+      enteId: "parnamirim",
+      orgao: "Secretaria Municipal de Educação e Cultura de Parnamirim",
+      quadro: "Técnico",
+      cargo: "TECNICO DE SUPORTE TI EDUCACIONAL",
+      g: "TECNICO DE SUPORTE TI EDUCACIONAL",
+      funcao: "Infraestrutura de Redes e Laboratórios de Informática",
+      cargaHoraria: 40,
+      cargaHorariaTexto: "40h",
+      h: "40h",
+      lotacao: "SEMEC PARNAMIRIM - NTI",
+      l: "SEMEC PARNAMIRIM - NTI",
+      lotacaoId: "semec_nti",
+      turno: "Integral",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2020-09-15"
+    },
+    {
+      id: "par_ope_001",
+      matricula: "051874-2",
+      m: "051874-2",
+      nome: "FRANCISCO CANINDE RAMOS",
+      n: "FRANCISCO CANINDE RAMOS",
+      cpfMascarado: "###.748.204-##",
+      c: "###.748.204-##",
+      ente: "SEMEC Parnamirim",
+      enteId: "parnamirim",
+      orgao: "Secretaria Municipal de Educação e Cultura de Parnamirim",
+      quadro: "Operacional",
+      cargo: "AGENTE OPERACIONAL DE LIMPEZA E APOIO",
+      g: "AGENTE OPERACIONAL DE LIMPEZA E APOIO",
+      funcao: "Serviços Gerais e Apoio Logístico",
+      cargaHoraria: 40,
+      cargaHorariaTexto: "40h",
+      h: "40h",
+      lotacao: "E.M. PRESIDENTE ROOSEVELT",
+      l: "E.M. PRESIDENTE ROOSEVELT",
+      lotacaoId: "em_pres_roosevelt",
+      turno: "Matutino",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2012-11-20"
+    }
+  ];
+
+  // --- 5. BASE SÃO GONÇALO DO AMARANTE (SME SGA) ---
+  var SERVIDORES_SGA = [
+    {
+      id: "sga_doc_001",
+      matricula: "076541-2",
+      m: "076541-2",
+      nome: "ALDENOR FRANCISCO DE LIMA",
+      n: "ALDENOR FRANCISCO DE LIMA",
+      cpfMascarado: "###.992.314-##",
+      c: "###.992.314-##",
+      ente: "SME São Gonçalo do Amarante",
+      enteId: "sga",
+      orgao: "Secretaria Municipal de Educação de São Gonçalo do Amarante",
+      quadro: "Docente",
+      cargo: "PROFESSOR DE EDUCACAO BASICA",
+      g: "PROFESSOR DE EDUCACAO BASICA",
+      funcao: "Docência Anos Finais (Geografia)",
+      cargaHoraria: 30,
+      cargaHorariaTexto: "30h",
+      h: "30h",
+      lotacao: "E.M. VICENTE DE PAULA",
+      l: "E.M. VICENTE DE PAULA",
+      lotacaoId: "em_vicente_paula",
+      turno: "Matutino",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2015-03-23"
+    },
+    {
+      id: "sga_adm_001",
+      matricula: "083219-4",
+      m: "083219-4",
+      nome: "PATRICIA GOMES DA SILVEIRA",
+      n: "PATRICIA GOMES DA SILVEIRA",
+      cpfMascarado: "###.118.744-##",
+      c: "###.118.744-##",
+      ente: "SME São Gonçalo do Amarante",
+      enteId: "sga",
+      orgao: "Secretaria Municipal de Educação de São Gonçalo do Amarante",
+      quadro: "Administrativo",
+      cargo: "ASSISTENTE ADMINISTRATIVO MUNICIPAL",
+      g: "ASSISTENTE ADMINISTRATIVO MUNICIPAL",
+      funcao: "Controle de Atos e Folha",
+      cargaHoraria: 40,
+      cargaHorariaTexto: "40h",
+      h: "40h",
+      lotacao: "SME SGA - PROTOCOLO",
+      l: "SME SGA - PROTOCOLO",
+      lotacaoId: "sme_sga_protocolo",
+      turno: "Integral",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2017-06-12"
+    },
+    {
+      id: "sga_apo_001",
+      matricula: "064128-9",
+      m: "064128-9",
+      nome: "JOSE NILTON BARBOSA",
+      n: "JOSE NILTON BARBOSA",
+      cpfMascarado: "###.554.214-##",
+      c: "###.554.214-##",
+      ente: "SME São Gonçalo do Amarante",
+      enteId: "sga",
+      orgao: "Secretaria Municipal de Educação de São Gonçalo do Amarante",
+      quadro: "Apoio",
+      cargo: "VIGIA ESCOLAR",
+      g: "VIGIA ESCOLAR",
+      funcao: "Segurança Patrimonial e Controle de Acesso",
+      cargaHoraria: 40,
+      cargaHorariaTexto: "40h",
+      h: "40h",
+      lotacao: "E.M. SANTA TEREZINHA",
+      l: "E.M. SANTA TEREZINHA",
+      lotacaoId: "em_santa_terezinha",
+      turno: "Noturno",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2013-09-02"
+    },
+    {
+      id: "sga_tec_001",
+      matricula: "079812-3",
+      m: "079812-3",
+      nome: "MARCELA GUIMARAES PINTO",
+      n: "MARCELA GUIMARAES PINTO",
+      cpfMascarado: "###.891.334-##",
+      c: "###.891.334-##",
+      ente: "SME São Gonçalo do Amarante",
+      enteId: "sga",
+      orgao: "Secretaria Municipal de Educação de São Gonçalo do Amarante",
+      quadro: "Técnico",
+      cargo: "ASSISTENTE SOCIAL EDUCACIONAL",
+      g: "ASSISTENTE SOCIAL EDUCACIONAL",
+      funcao: "Atendimento Social Integrado",
+      cargaHoraria: 30,
+      cargaHorariaTexto: "30h",
+      h: "30h",
+      lotacao: "SME SGA - SETOR SOCIAL",
+      l: "SME SGA - SETOR SOCIAL",
+      lotacaoId: "sme_sga_social",
+      turno: "Vespertino",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2019-04-16"
+    },
+    {
+      id: "sga_ope_001",
+      matricula: "049871-5",
+      m: "049871-5",
+      nome: "SEVERINO RAMOS DOS SANTOS",
+      n: "SEVERINO RAMOS DOS SANTOS",
+      cpfMascarado: "###.723.104-##",
+      c: "###.723.104-##",
+      ente: "SME São Gonçalo do Amarante",
+      enteId: "sga",
+      orgao: "Secretaria Municipal de Educação de São Gonçalo do Amarante",
+      quadro: "Operacional",
+      cargo: "AUXILIAR DE MANUTENCAO E SERVICOS GERAIS",
+      g: "AUXILIAR DE MANUTENCAO E SERVICOS GERAIS",
+      funcao: "Manutenção Predial e Pequenos Reparos",
+      cargaHoraria: 40,
+      cargaHorariaTexto: "40h",
+      h: "40h",
+      lotacao: "E.M. VICENTE DE PAULA",
+      l: "E.M. VICENTE DE PAULA",
+      lotacaoId: "em_vicente_paula",
+      turno: "Matutino",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2011-01-10"
+    }
+  ];
+
+  // Coleção consolidada unificada de todos os servidores
+  var OLYMPOS_SERVIDORES_UNIFICADOS = [].concat(
+    SERVIDORES_CEARA_MIRIM,
+    SERVIDORES_ESTADO_RN,
+    SERVIDORES_NATAL,
+    SERVIDORES_PARNAMIRIM,
+    SERVIDORES_SGA
+  );
+
+  // --- API CANÔNICA window.OlymposServidores ---
+  var OlymposServidores = {
+    /**
+     * Retorna array consolidado de todos os servidores cadastrados nos 5 entes
+     */
+    obterTodos: function() {
+      return OLYMPOS_SERVIDORES_UNIFICADOS.slice();
+    },
+
+    /**
+     * Filtra servidores por ente federativo
+     * @param {string} enteId ('ceara_mirim', 'governo_rn', 'natal', 'parnamirim', 'sga')
+     */
+    obterPorEnte: function(enteId) {
+      var norm = normalizarTexto(enteId).replace(/[^a-z0-9]/g, '');
+      return OLYMPOS_SERVIDORES_UNIFICADOS.filter(function(s) {
+        var sEnteId = normalizarTexto(s.enteId || '').replace(/[^a-z0-9]/g, '');
+        var sEnteNome = normalizarTexto(s.ente || '').replace(/[^a-z0-9]/g, '');
+        return sEnteId.indexOf(norm) !== -1 || sEnteNome.indexOf(norm) !== -1;
+      });
+    },
+
+    /**
+     * Filtra servidores por quadro funcional
+     * @param {string} quadro ('Docente', 'Administrativo', 'Apoio', 'Técnico', 'Operacional')
+     */
+    obterPorQuadro: function(quadro) {
+      var norm = normalizarTexto(quadro);
+      return OLYMPOS_SERVIDORES_UNIFICADOS.filter(function(s) {
+        return normalizarTexto(s.quadro) === norm;
+      });
+    },
+
+    /**
+     * Busca abrangente por termo com filtros opcionais
+     * @param {string} termo - Nome, matrícula, cargo ou lotação
+     * @param {Object} [filtros] - { ente, quadro, regime, situacao, vinculos }
+     */
+    buscar: function(termo, filtros) {
+      filtros = filtros || {};
+      var termoNorm = normalizarTexto(termo);
+      var termoMat = normalizarMatricula(termo);
+
+      var lista = OLYMPOS_SERVIDORES_UNIFICADOS.filter(function(s) {
+        // Filtro por termo
+        if (termoNorm) {
+          var nomeNorm = normalizarTexto(s.nome);
+          var matNorm = normalizarMatricula(s.matricula);
+          var cargoNorm = normalizarTexto(s.cargo);
+          var lotNorm = normalizarTexto(s.lotacao);
+          var orgaoNorm = normalizarTexto(s.orgao);
+          var enteNorm = normalizarTexto(s.ente);
+
+          var matchNome = nomeNorm.indexOf(termoNorm) !== -1;
+          var matchMat = matNorm && (matNorm.indexOf(termoMat) !== -1 || termoMat.indexOf(matNorm) !== -1);
+          var matchCargo = cargoNorm.indexOf(termoNorm) !== -1;
+          var matchLot = lotNorm.indexOf(termoNorm) !== -1;
+          var matchOrgao = orgaoNorm.indexOf(termoNorm) !== -1;
+          var matchEnte = enteNorm.indexOf(termoNorm) !== -1;
+
+          if (!matchNome && !matchMat && !matchCargo && !matchLot && !matchOrgao && !matchEnte) {
+            return false;
+          }
+        }
+
+        // Filtro Ente
+        if (filtros.ente && filtros.ente !== 'todos') {
+          var eFiltro = normalizarTexto(filtros.ente).replace(/[^a-z0-9]/g, '');
+          var sEnteId = normalizarTexto(s.enteId || '').replace(/[^a-z0-9]/g, '');
+          var sEnte = normalizarTexto(s.ente || '').replace(/[^a-z0-9]/g, '');
+          if (sEnteId.indexOf(eFiltro) === -1 && sEnte.indexOf(eFiltro) === -1) {
+            return false;
+          }
+        }
+
+        // Filtro Quadro
+        if (filtros.quadro && filtros.quadro !== 'todos') {
+          var qFiltro = normalizarTexto(filtros.quadro);
+          var sQuadro = normalizarTexto(s.quadro);
+          if (sQuadro.indexOf(qFiltro) === -1) {
+            return false;
+          }
+        }
+
+        // Filtro Regime
+        if (filtros.regime && filtros.regime !== 'todos') {
+          var rFiltro = normalizarTexto(filtros.regime);
+          var sRegime = normalizarTexto(s.regime);
+          if (sRegime.indexOf(rFiltro) === -1) {
+            return false;
+          }
+        }
+
+        // Filtro Situação
+        if (filtros.situacao && filtros.situacao !== 'todos') {
+          var sitFiltro = normalizarTexto(filtros.situacao);
+          var sSituacao = normalizarTexto(s.situacao);
+          if (sSituacao.indexOf(sitFiltro) === -1) {
+            return false;
+          }
+        }
+
+        return true;
+      });
+
+      return lista;
+    },
+
+    /**
+     * Retorna o dossiê consolidado de um servidor com análise constitucional de acumulação (CF/88 Art. 37, XVI)
+     * @param {string} matriculaOuNome - Matrícula ou nome do servidor
+     */
+    obterDossie: function(matriculaOuNome) {
+      if (!matriculaOuNome) return null;
+      var termoNorm = normalizarTexto(matriculaOuNome);
+      var termoMat = normalizarMatricula(matriculaOuNome);
+
+      // Localiza o servidor semente
+      var servidorEncontrado = null;
+      for (var i = 0; i < OLYMPOS_SERVIDORES_UNIFICADOS.length; i++) {
+        var s = OLYMPOS_SERVIDORES_UNIFICADOS[i];
+        if (normalizarMatricula(s.matricula) === termoMat || normalizarTexto(s.nome) === termoNorm || normalizarTexto(s.nome).indexOf(termoNorm) !== -1) {
+          servidorEncontrado = s;
+          break;
+        }
+      }
+
+      if (!servidorEncontrado) return null;
+
+      // Consolida todos os vínculos de mesmo nome/CPF
+      var nomeNormAlvo = normalizarTexto(servidorEncontrado.nome);
+      var vinculos = [];
+      var matriculas = [];
+      var cargaHorariaTotal = 0;
+
+      OLYMPOS_SERVIDORES_UNIFICADOS.forEach(function(s) {
+        if (normalizarTexto(s.nome) === nomeNormAlvo) {
+          if (matriculas.indexOf(s.matricula) === -1) {
+            matriculas.push(s.matricula);
+          }
+          var ch = parseCargaHoraria(s.cargaHoraria || s.cargaHorariaTexto);
+          cargaHorariaTotal += ch;
+
+          vinculos.push({
+            id: s.id,
+            ente: s.ente,
+            enteId: s.enteId,
+            orgao: s.orgao,
+            quadro: s.quadro,
+            cargo: s.cargo,
+            funcao: s.funcao,
+            cargaHoraria: ch,
+            cargaHorariaTexto: s.cargaHorariaTexto || (ch + 'h'),
+            lotacao: s.lotacao,
+            turno: s.turno,
+            regime: s.regime,
+            situacao: s.situacao,
+            dataAdmissao: s.dataAdmissao
+          });
+        }
+      });
+
+      // Auditoria Constitucional CF/88 Art. 37, XVI
+      var auditoria = {
+        totalVinculos: vinculos.length,
+        cargaHorariaTotal: cargaHorariaTotal,
+        acumulacaoLicita: true,
+        enquadramentoLegal: '',
+        parecerTexto: '',
+        alertaStatus: 'REGULAR'
+      };
+
+      if (vinculos.length === 1) {
+        auditoria.acumulacaoLicita = true;
+        auditoria.enquadramentoLegal = 'Vínculo Único';
+        auditoria.parecerTexto = 'Servidor possui vínculo funcional único de ' + cargaHorariaTotal + 'h semanais. Situação plenamente regular perante a CF/88.';
+        auditoria.alertaStatus = 'REGULAR';
+      } else if (vinculos.length === 2) {
+        var v1 = vinculos[0];
+        var v2 = vinculos[1];
+        var isV1Doc = normalizarTexto(v1.quadro) === 'docente' || normalizarTexto(v1.cargo).indexOf('professor') !== -1;
+        var isV2Doc = normalizarTexto(v2.quadro) === 'docente' || normalizarTexto(v2.cargo).indexOf('professor') !== -1;
+        var isV1Tec = normalizarTexto(v1.quadro) === 'tecnico' || normalizarTexto(v1.cargo).indexOf('psicologo') !== -1 || normalizarTexto(v1.cargo).indexOf('assistente social') !== -1 || normalizarTexto(v1.cargo).indexOf('especialista') !== -1;
+        var isV2Tec = normalizarTexto(v2.quadro) === 'tecnico' || normalizarTexto(v2.cargo).indexOf('psicologo') !== -1 || normalizarTexto(v2.cargo).indexOf('assistente social') !== -1 || normalizarTexto(v2.cargo).indexOf('especialista') !== -1;
+
+        if (isV1Doc && isV2Doc) {
+          auditoria.enquadramentoLegal = 'CF/88 Art. 37, XVI, a (Dois cargos de professor)';
+          if (cargaHorariaTotal <= 60) {
+            auditoria.acumulacaoLicita = true;
+            auditoria.alertaStatus = 'REGULAR';
+            auditoria.parecerTexto = 'Acúmulo lícito de 2 cargos de professor com jornada compatível de ' + cargaHorariaTotal + 'h semanais (teto de 60h respeitado).';
+          } else {
+            auditoria.acumulacaoLicita = false;
+            auditoria.alertaStatus = 'ALERTA_CARGA';
+            auditoria.parecerTexto = 'Jornada total acumulada de ' + cargaHorariaTotal + 'h semanais excede o teto jurisprudencial de 60h do TCU/TCE-RN.';
+          }
+        } else if ((isV1Doc && isV2Tec) || (isV2Doc && isV1Tec)) {
+          auditoria.enquadramentoLegal = 'CF/88 Art. 37, XVI, b (Um cargo de professor com outro técnico/científico)';
+          if (cargaHorariaTotal <= 60) {
+            auditoria.acumulacaoLicita = true;
+            auditoria.alertaStatus = 'REGULAR';
+            auditoria.parecerTexto = 'Acúmulo lícito de 1 cargo docente com 1 cargo técnico/científico, totalizando ' + cargaHorariaTotal + 'h semanais.';
+          } else {
+            auditoria.acumulacaoLicita = false;
+            auditoria.alertaStatus = 'ALERTA_CARGA';
+            auditoria.parecerTexto = 'Acúmulo atende aos cargos, mas jornada de ' + cargaHorariaTotal + 'h excede o limite jurisprudencial de 60h semanais.';
+          }
+        } else {
+          auditoria.acumulacaoLicita = false;
+          auditoria.alertaStatus = 'INCOMPATIVEL';
+          auditoria.enquadramentoLegal = 'CF/88 Art. 37, XVI (Vínculos inacumuláveis)';
+          auditoria.parecerTexto = 'Cargos não contemplados nas exceções de acúmulo da Constituição Federal de 1988.';
+        }
+      } else {
+        auditoria.acumulacaoLicita = false;
+        auditoria.alertaStatus = 'INCOMPATIVEL';
+        auditoria.enquadramentoLegal = 'CF/88 Art. 37, XVI (Vedação expressa a mais de 2 vínculos)';
+        auditoria.parecerTexto = 'Servidor com ' + vinculos.length + ' vínculos ativos identificados. Vedada expressamente a tríplice acumulação.';
+      }
+
+      return {
+        id: servidorEncontrado.id,
+        nome: servidorEncontrado.nome,
+        cpfMascarado: servidorEncontrado.cpfMascarado,
+        matriculas: matriculas,
+        entePrincipal: servidorEncontrado.ente,
+        quadroPrincipal: servidorEncontrado.quadro,
+        cargoPrincipal: servidorEncontrado.cargo,
+        lotacaoPrincipal: servidorEncontrado.lotacao,
+        vinculos: vinculos,
+        auditoria: auditoria
+      };
+    }
+  };
+
+  // Exportação compatível com Browser (window) e Node.js
+  if (typeof root !== 'undefined') {
+    root.SERVIDORES_CEARA_MIRIM = SERVIDORES_CEARA_MIRIM;
+    root.SERVIDORES_ESTADO_RN = SERVIDORES_ESTADO_RN;
+    root.SERVIDORES_NATAL = SERVIDORES_NATAL;
+    root.SERVIDORES_PARNAMIRIM = SERVIDORES_PARNAMIRIM;
+    root.SERVIDORES_SGA = SERVIDORES_SGA;
+    root.OLYMPOS_SERVIDORES_UNIFICADOS = OLYMPOS_SERVIDORES_UNIFICADOS;
+    root.OlymposServidores = OlymposServidores;
+  }
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+      SERVIDORES_CEARA_MIRIM: SERVIDORES_CEARA_MIRIM,
+      SERVIDORES_ESTADO_RN: SERVIDORES_ESTADO_RN,
+      SERVIDORES_NATAL: SERVIDORES_NATAL,
+      SERVIDORES_PARNAMIRIM: SERVIDORES_PARNAMIRIM,
+      SERVIDORES_SGA: SERVIDORES_SGA,
+      OLYMPOS_SERVIDORES_UNIFICADOS: OLYMPOS_SERVIDORES_UNIFICADOS,
+      OlymposServidores: OlymposServidores
+    };
+  }
+})(typeof window !== 'undefined' ? window : this);
+
+
 // --- MODULE: js/views/papiroCadmo.js ---
 /**
  * Hub Olympos V2.1 — Página Modular 7: O Papiro de Cadmo (ETL Mensal de Permutas RN)
@@ -4988,11 +6367,11 @@ window.OlymposViews.papiroCadmo = (function() {
       const isCearaMirim = normalizarTexto(nomeArquivo).includes('CEARA') || normalizarTexto(linhas[0]).includes('CEARA MIRIM');
 
       if (isCearaMirim) {
-        const apenasDocentes = novosServidores.filter(function(s) {
-          return normalizarTexto(s.g).includes('PROFESSOR') && !normalizarTexto(s.status).includes('INATIVO');
+        const servidoresValidos = novosServidores.filter(function(s) {
+          return !normalizarTexto(s.status).includes('INATIVO') && !normalizarTexto(s.status).includes('EXONERADO');
         });
-        if (apenasDocentes.length > 0) {
-          DOCENTES_CEARA_MIRIM = apenasDocentes;
+        if (servidoresValidos.length > 0) {
+          DOCENTES_CEARA_MIRIM = servidoresValidos;
           popularDatalistServidores();
         }
         const badgeRef = document.getElementById('cadmoBadgeBaseRef');
@@ -6421,6 +7800,18 @@ window.OlymposViews.papiroCadmo = (function() {
       }
     });
 
+    const servidoresUnificados = (typeof window !== 'undefined' && window.OlymposServidores && typeof window.OlymposServidores.obterTodos === 'function')
+      ? window.OlymposServidores.obterTodos()
+      : (typeof global !== 'undefined' && global.OlymposServidores && typeof global.OlymposServidores.obterTodos === 'function' ? global.OlymposServidores.obterTodos() : []);
+
+    (servidoresUnificados || []).forEach(function(s) {
+      const nomeS = s.nome || s.n;
+      const matS = s.matricula || s.m;
+      if (correspondeAoTermo(nomeS, matS)) {
+        chavesEncontradas[normalizarBusca(nomeS)] = true;
+      }
+    });
+
     (VINCULOS_TRANSPARENCIA || []).forEach(function(v) {
       const sr = v.servidor_referencia || {};
       const ve = v.vinculo_externo_detectado || {};
@@ -6467,6 +7858,25 @@ window.OlymposViews.papiroCadmo = (function() {
         cargaHorariaTexto: String(d.h || '30h'),
         lotacao: d.l || 'Rede Estadual SEEC/RN',
         situacao: 'Efetivo / Ativo'
+      });
+    });
+
+    (servidoresUnificados || []).forEach(function(s) {
+      const nomeS = s.nome || s.n;
+      const k = normalizarBusca(nomeS);
+      if (!chavesEncontradas[k]) return;
+      const dossie = obterOuCriarDossie(nomeS);
+      if (s.cpfMascarado && !dossie.cpfMascarado) {
+        dossie.cpfMascarado = s.cpfMascarado;
+      }
+      adicionarVinculo(dossie, {
+        ente: s.ente || s.orgao || 'Ente Federativo',
+        matricula: s.matricula || s.m,
+        cargo: s.cargo || s.g,
+        cargaHoraria: parseCargaHoraria(s.cargaHoraria || s.h),
+        cargaHorariaTexto: String(s.cargaHorariaTexto || s.h || '30h'),
+        lotacao: s.lotacao || s.l || 'Lotação não informada',
+        situacao: s.situacao || s.status || 'Efetivo / Ativo'
       });
     });
 
@@ -7079,6 +8489,989 @@ window.OlymposViews.papiroCadmo = (function() {
     executarConsultaServidorCard: executarConsultaServidorCard,
     limparConsultaServidorCard: limparConsultaServidorCard,
     focarLotacaoServidorNoMapa: focarLotacaoServidorNoMapa
+  };
+})();
+
+
+// --- MODULE: js/views/servidores.js ---
+/**
+ * Hub Olympos V2.3 — Módulo de Visualização: Consulta Integrada de Servidores Públicos
+ * Rota Dedicada: #servidores (Alias: #consulta-servidores)
+ * Abrange Ceará-Mirim, Natal, Parnamirim, São Gonçalo do Amarante e Governo do RN (SEEC)
+ * Suporte a todos os 5 quadros: Docente, Administrativo, Apoio, Técnico e Operacional
+ * Dossiê Funcional, Auditoria CF/88 Art. 37, XVI, Paginação, Alternância Cards/Tabela e Exportação
+ */
+window.OlymposViews = window.OlymposViews || {};
+
+window.OlymposViews.servidores = (function() {
+  'use strict';
+
+  var termoBusca = '';
+  var filtroEnte = 'todos';
+  var filtroCargo = 'todos';
+  var filtroRegime = 'todos';
+  var filtroVinculos = 'todos';
+  var modoView = 'cards'; // 'cards' ou 'tabela'
+  var paginaAtual = 1;
+  var itensPorPagina = 20;
+  var debounceTimer = null;
+  var listaFiltradaCache = [];
+  var servidorModalAtivo = null;
+
+  function escapeHtml(str) {
+    if (window.OlymposApp && typeof window.OlymposApp.escapeHtml === 'function') {
+      return window.OlymposApp.escapeHtml(str);
+    }
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function normalizarTexto(txt) {
+    return String(txt || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+  }
+
+  function normalizarMatricula(mat) {
+    return String(mat || '').replace(/[^0-9a-zA-Z]/g, '').toLowerCase().replace(/^0+/, '');
+  }
+
+  function parseCargaHoraria(ch) {
+    if (typeof ch === 'number') return ch;
+    var m = String(ch || '').match(/\d+/);
+    return m ? parseInt(m[0], 10) : 30;
+  }
+
+  /**
+   * Obtém os servidores consolidados a partir da API OlymposServidores ou fallbacks
+   */
+  function carregarTodosDossies() {
+    var rawServidores = [];
+    if (window.OlymposServidores && typeof window.OlymposServidores.obterTodos === 'function') {
+      rawServidores = window.OlymposServidores.obterTodos();
+    } else if (window.OLYMPOS_SERVIDORES_UNIFICADOS && Array.isArray(window.OLYMPOS_SERVIDORES_UNIFICADOS)) {
+      rawServidores = window.OLYMPOS_SERVIDORES_UNIFICADOS;
+    } else {
+      // Fallback para bases legadas se carregadas
+      if (window.SERVIDORES_CEARA_MIRIM) rawServidores = rawServidores.concat(window.SERVIDORES_CEARA_MIRIM);
+      if (window.SERVIDORES_ESTADO_RN) rawServidores = rawServidores.concat(window.SERVIDORES_ESTADO_RN);
+    }
+
+    // Agrupa servidores por nome canônico para formar dossiês consolidados
+    var mapaDossies = {};
+    var ordemNomes = [];
+
+    rawServidores.forEach(function(s) {
+      var nomeNorm = normalizarTexto(s.nome || s.n);
+      if (!nomeNorm) return;
+
+      if (!mapaDossies[nomeNorm]) {
+        mapaDossies[nomeNorm] = {
+          id: s.id || ('serv_' + Math.random().toString(36).substr(2, 9)),
+          nome: s.nome || s.n,
+          cpfMascarado: s.cpfMascarado || s.c || '###.***.***-##',
+          matriculas: [],
+          entes: [],
+          cargos: [],
+          quadros: [],
+          lotacoes: [],
+          vinculos: [],
+          cargaHorariaTotal: 0
+        };
+        ordemNomes.push(nomeNorm);
+      }
+
+      var dossie = mapaDossies[nomeNorm];
+      var mat = String(s.matricula || s.m || '').trim();
+      if (mat && dossie.matriculas.indexOf(mat) === -1) {
+        dossie.matriculas.push(mat);
+      }
+
+      var enteNome = s.ente || s.orgao || 'Ente Federativo';
+      if (enteNome && dossie.entes.indexOf(enteNome) === -1) {
+        dossie.entes.push(enteNome);
+      }
+
+      var cargoNome = s.cargo || s.g || 'Cargo não informado';
+      if (cargoNome && dossie.cargos.indexOf(cargoNome) === -1) {
+        dossie.cargos.push(cargoNome);
+      }
+
+      var quadroNome = s.quadro || 'Docente';
+      if (quadroNome && dossie.quadros.indexOf(quadroNome) === -1) {
+        dossie.quadros.push(quadroNome);
+      }
+
+      var lotacaoNome = s.lotacao || s.l || 'Lotação não informada';
+      if (lotacaoNome && dossie.lotacoes.indexOf(lotacaoNome) === -1) {
+        dossie.lotacoes.push(lotacaoNome);
+      }
+
+      var ch = parseCargaHoraria(s.cargaHoraria || s.h);
+
+      // Evita duplicatas idênticas de vínculo
+      var vId = (s.enteId || enteNome) + '|' + mat + '|' + cargoNome;
+      var jaExiste = dossie.vinculos.some(function(v) {
+        return ((v.enteId || v.ente) + '|' + v.matricula + '|' + v.cargo) === vId;
+      });
+
+      if (!jaExiste) {
+        dossie.vinculos.push({
+          id: s.id,
+          ente: enteNome,
+          enteId: s.enteId || '',
+          orgao: s.orgao || enteNome,
+          quadro: quadroNome,
+          cargo: cargoNome,
+          funcao: s.funcao || '',
+          cargaHoraria: ch,
+          cargaHorariaTexto: s.cargaHorariaTexto || (ch + 'h'),
+          lotacao: lotacaoNome,
+          turno: s.turno || 'Não informado',
+          regime: s.regime || 'Efetivo / Estatutário',
+          situacao: s.situacao || s.status || 'Ativo',
+          dataAdmissao: s.dataAdmissao || ''
+        });
+        dossie.cargaHorariaTotal += ch;
+      }
+    });
+
+    // Calcula auditoria CF/88 Art. 37, XVI para cada dossiê
+    var listaDossies = ordemNomes.map(function(k) {
+      var d = mapaDossies[k];
+      d.auditoria = calcularAuditoriaCf88(d.vinculos, d.cargaHorariaTotal);
+      return d;
+    });
+
+    return listaDossies;
+  }
+
+  function calcularAuditoriaCf88(vinculos, cargaTotal) {
+    var count = vinculos.length;
+    var ch = cargaTotal;
+
+    if (count <= 1) {
+      return {
+        tipo: 'unico',
+        badgeClass: 'pill-green',
+        badgeTexto: 'Vínculo Único',
+        licito: true,
+        parecer: 'Vínculo funcional único (' + ch + 'h semanais). Situação plenamente regular perante a CF/88.'
+      };
+    }
+
+    if (count === 2) {
+      var v1 = vinculos[0];
+      var v2 = vinculos[1];
+      var isV1Doc = normalizarTexto(v1.quadro) === 'docente' || normalizarTexto(v1.cargo).indexOf('professor') !== -1;
+      var isV2Doc = normalizarTexto(v2.quadro) === 'docente' || normalizarTexto(v2.cargo).indexOf('professor') !== -1;
+      var isV1Tec = normalizarTexto(v1.quadro) === 'tecnico' || normalizarTexto(v1.cargo).indexOf('psicologo') !== -1 || normalizarTexto(v1.cargo).indexOf('assistente social') !== -1 || normalizarTexto(v1.cargo).indexOf('especialista') !== -1 || normalizarTexto(v1.cargo).indexOf('nutricionista') !== -1;
+      var isV2Tec = normalizarTexto(v2.quadro) === 'tecnico' || normalizarTexto(v2.cargo).indexOf('psicologo') !== -1 || normalizarTexto(v2.cargo).indexOf('assistente social') !== -1 || normalizarTexto(v2.cargo).indexOf('especialista') !== -1 || normalizarTexto(v2.cargo).indexOf('nutricionista') !== -1;
+
+      var enquadrado = false;
+      var regra = '';
+      if (isV1Doc && isV2Doc) {
+        enquadrado = true;
+        regra = 'Dois cargos de professor (CF/88 Art. 37, XVI, a)';
+      } else if ((isV1Doc && isV2Tec) || (isV2Doc && isV1Tec)) {
+        enquadrado = true;
+        regra = 'Um cargo docente com um técnico/científico (CF/88 Art. 37, XVI, b)';
+      }
+
+      if (enquadrado) {
+        if (ch <= 60) {
+          return {
+            tipo: 'duplo',
+            badgeClass: 'pill-gold',
+            badgeTexto: 'Acúmulo Lícito (≤ 60h)',
+            licito: true,
+            parecer: 'Acúmulo lícito constitucional (' + regra + '). Carga horária semanal acumulada: ' + ch + 'h (teto jurisprudencial de 60h respeitado).'
+          };
+        } else {
+          return {
+            tipo: 'alerta',
+            badgeClass: 'pill-amber',
+            badgeTexto: 'Alerta CF/88 (> 60h)',
+            licito: false,
+            parecer: 'Cargos compatíveis (' + regra + '), porém a jornada semanal consolidada (' + ch + 'h) ultrapassa o limite prudencial de 60h do TCU/TCE-RN.'
+          };
+        }
+      } else {
+        return {
+          tipo: 'alerta',
+          badgeClass: 'pill-red',
+          badgeTexto: 'Inacumulável CF/88',
+          licito: false,
+          parecer: 'Acúmulo vedação expressa: Cargos não contemplados nas hipóteses taxativas do Art. 37, XVI da CF/88.'
+        };
+      }
+    }
+
+    return {
+      tipo: 'alerta',
+      badgeClass: 'pill-red',
+      badgeTexto: 'Tríplice Acúmulo (' + count + ' vínculos)',
+      licito: false,
+      parecer: 'Identificados ' + count + ' vínculos funcionais ativos. Vedação absoluta pela Constituição Federal.'
+    };
+  }
+
+  /**
+   * Filtra dossiês com base no termo e filtros selecionados
+   */
+  function filtrarDossies(todosDossies) {
+    var termoNorm = normalizarTexto(termoBusca);
+    var termoMat = normalizarMatricula(termoBusca);
+
+    return todosDossies.filter(function(d) {
+      // 1. Termo de Busca
+      if (termoNorm) {
+        var matchNome = normalizarTexto(d.nome).indexOf(termoNorm) !== -1;
+        var matchMat = d.matriculas.some(function(m) {
+          var mNorm = normalizarMatricula(m);
+          return mNorm && (mNorm.indexOf(termoMat) !== -1 || termoMat.indexOf(mNorm) !== -1);
+        });
+        var matchCargo = d.cargos.some(function(c) {
+          return normalizarTexto(c).indexOf(termoNorm) !== -1;
+        });
+        var matchLotacao = d.lotacoes.some(function(l) {
+          return normalizarTexto(l).indexOf(termoNorm) !== -1;
+        });
+        var matchEnte = d.entes.some(function(e) {
+          return normalizarTexto(e).indexOf(termoNorm) !== -1;
+        });
+
+        if (!matchNome && !matchMat && !matchCargo && !matchLotacao && !matchEnte) {
+          return false;
+        }
+      }
+
+      // 2. Filtro Ente
+      if (filtroEnte !== 'todos') {
+        var eKey = normalizarTexto(filtroEnte).replace(/[^a-z0-9]/g, '');
+        var bateuEnte = d.vinculos.some(function(v) {
+          var vEnteId = normalizarTexto(v.enteId || '').replace(/[^a-z0-9]/g, '');
+          var vEnte = normalizarTexto(v.ente || '').replace(/[^a-z0-9]/g, '');
+          return vEnteId.indexOf(eKey) !== -1 || vEnte.indexOf(eKey) !== -1;
+        });
+        if (!bateuEnte) return false;
+      }
+
+      // 3. Filtro Quadro / Cargo
+      if (filtroCargo !== 'todos') {
+        var cKey = normalizarTexto(filtroCargo);
+        var bateuQuadro = d.vinculos.some(function(v) {
+          var qNorm = normalizarTexto(v.quadro || '');
+          var cNorm = normalizarTexto(v.cargo || '');
+
+          if (cKey === 'docente') {
+            return qNorm === 'docente' || cNorm.indexOf('professor') !== -1;
+          }
+          if (cKey === 'gestao') {
+            return cNorm.indexOf('diretor') !== -1 || cNorm.indexOf('coordenador') !== -1 || cNorm.indexOf('gestao') !== -1;
+          }
+          if (cKey === 'tecnico') {
+            return qNorm === 'tecnico' || cNorm.indexOf('psicologo') !== -1 || cNorm.indexOf('assistente social') !== -1 || cNorm.indexOf('especialista') !== -1 || cNorm.indexOf('nutricionista') !== -1 || cNorm.indexOf('ti') !== -1;
+          }
+          if (cKey === 'administrativo') {
+            return qNorm === 'administrativo' || cNorm.indexOf('administrativo') !== -1 || cNorm.indexOf('secretario') !== -1;
+          }
+          if (cKey === 'apoio') {
+            return qNorm === 'apoio' || qNorm === 'operacional' || cNorm.indexOf('merend') !== -1 || cNorm.indexOf('motorista') !== -1 || cNorm.indexOf('asg') !== -1 || cNorm.indexOf('vigia') !== -1 || cNorm.indexOf('cuidador') !== -1 || cNorm.indexOf('servicos gerais') !== -1;
+          }
+          return qNorm.indexOf(cKey) !== -1 || cNorm.indexOf(cKey) !== -1;
+        });
+        if (!bateuQuadro) return false;
+      }
+
+      // 4. Filtro Regime
+      if (filtroRegime !== 'todos') {
+        var rKey = normalizarTexto(filtroRegime);
+        var bateuRegime = d.vinculos.some(function(v) {
+          return normalizarTexto(v.regime || '').indexOf(rKey) !== -1;
+        });
+        if (!bateuRegime) return false;
+      }
+
+      // 5. Filtro Vínculos / CF/88
+      if (filtroVinculos !== 'todos') {
+        if (filtroVinculos === 'unico' && d.vinculos.length !== 1) return false;
+        if (filtroVinculos === 'duplo' && (d.vinculos.length !== 2 || !d.auditoria.licito)) return false;
+        if (filtroVinculos === 'alerta' && (d.auditoria.licito && d.vinculos.length <= 1)) return false;
+      }
+
+      return true;
+    });
+  }
+
+  /**
+   * Atualiza os KPIs no topo da tela
+   */
+  function atualizarKpis(todosDossies) {
+    var kpiTotalEl = document.getElementById('kpiServidoresTotal');
+    var kpiMunEl = document.getElementById('kpiServidoresMunicipais');
+    var kpiEstEl = document.getElementById('kpiServidoresEstaduais');
+    var kpiMultEl = document.getElementById('kpiServidoresMultiplos');
+
+    if (!kpiTotalEl) return;
+
+    var totalServidores = todosDossies.length;
+    var municipaisCount = 0;
+    var estaduaisCount = 0;
+    var multiplosCount = 0;
+
+    todosDossies.forEach(function(d) {
+      if (d.vinculos.length > 1) {
+        multiplosCount++;
+      }
+      var temMun = d.vinculos.some(function(v) {
+        var e = normalizarTexto(v.enteId || v.ente);
+        return e.indexOf('ceara') !== -1 || e.indexOf('natal') !== -1 || e.indexOf('parnamirim') !== -1 || e.indexOf('sga') !== -1 || e.indexOf('goncalo') !== -1;
+      });
+      var temEst = d.vinculos.some(function(v) {
+        var e = normalizarTexto(v.enteId || v.ente);
+        return e.indexOf('governo') !== -1 || e.indexOf('estado') !== -1 || e.indexOf('seec') !== -1 || e.indexOf('rn') !== -1;
+      });
+
+      if (temMun) municipaisCount++;
+      if (temEst) estaduaisCount++;
+    });
+
+    kpiTotalEl.textContent = totalServidores.toLocaleString('pt-BR');
+    if (kpiMunEl) kpiMunEl.textContent = municipaisCount.toLocaleString('pt-BR');
+    if (kpiEstEl) kpiEstEl.textContent = estaduaisCount.toLocaleString('pt-BR');
+    if (kpiMultEl) kpiMultEl.textContent = multiplosCount.toLocaleString('pt-BR');
+  }
+
+  /**
+   * Renderiza a visualização em Cards Dossiê
+   */
+  function renderizarCards(listaPaginada) {
+    var container = document.getElementById('servidoresContainerCards');
+    if (!container) return;
+
+    if (listaPaginada.length === 0) {
+      container.innerHTML = '<div class="surface-card text-center" style="padding: 32px;"><p class="text-muted" style="margin-bottom: 8px;">Nenhum servidor público encontrado para os critérios selecionados.</p><button type="button" class="btn btn-secondary btn-sm" id="btnResetarFiltrosVazio">Limpar filtros e busca</button></div>';
+      var btnReset = document.getElementById('btnResetarFiltrosVazio');
+      if (btnReset) {
+        btnReset.addEventListener('click', function() {
+          limparTodosFiltros();
+        });
+      }
+      return;
+    }
+
+    var html = '';
+    listaPaginada.forEach(function(d) {
+      var auditoria = d.auditoria;
+      var vinculosHtml = d.vinculos.map(function(v) {
+        var badgeColor = 'pill-blue';
+        var eNorm = normalizarTexto(v.enteId || v.ente);
+        if (eNorm.indexOf('ceara') !== -1) badgeColor = 'pill-gold';
+        else if (eNorm.indexOf('natal') !== -1) badgeColor = 'pill-green';
+        else if (eNorm.indexOf('parnamirim') !== -1) badgeColor = 'pill-purple';
+        else if (eNorm.indexOf('sga') !== -1) badgeColor = 'pill-amber';
+
+        return '<div class="servidor-vinculo-item">' +
+          '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">' +
+            '<span class="pill-badge ' + badgeColor + '" style="font-size: 11px;">' + escapeHtml(v.ente) + '</span>' +
+            '<span style="font-size: 11.5px; font-weight: 700; color: var(--text-muted);">' + escapeHtml(v.matricula ? ('Mat: ' + v.matricula) : 'Sem Mat.') + '</span>' +
+          '</div>' +
+          '<div style="font-weight: 700; font-size: 13px; color: var(--text-main);">' + escapeHtml(v.cargo) + '</div>' +
+          '<div class="servidor-vinculo-meta">' +
+            '<div>🏛️ ' + escapeHtml(v.lotacao) + '</div>' +
+            '<div style="display: flex; gap: 8px; margin-top: 2px;">' +
+              '<span>⏱️ ' + escapeHtml(v.cargaHorariaTexto) + ' (' + escapeHtml(v.turno) + ')</span>' +
+              '<span>•</span>' +
+              '<span>📋 ' + escapeHtml(v.quadro) + '</span>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+
+      var boxClass = auditoria.licito ? 'border-success' : 'border-danger';
+      var boxColor = auditoria.licito ? '#10B981' : '#EF4444';
+
+      html += '<div class="servidor-dossie-card" data-servidor-id="' + escapeHtml(d.id) + '">' +
+        '<div class="servidor-dossie-top">' +
+          '<div>' +
+            '<h4 class="servidor-dossie-nome">' + escapeHtml(d.nome) + '</h4>' +
+            '<div class="servidor-dossie-sub">' +
+              '<span>CPF: <strong>' + escapeHtml(d.cpfMascarado) + '</strong></span>' +
+              '<span>•</span>' +
+              '<span>Matrícula(s): <strong>' + escapeHtml(d.matriculas.join(', ') || 'N/I') + '</strong></span>' +
+              '<span>•</span>' +
+              '<span>Total Vínculos: <strong>' + d.vinculos.length + ' (' + d.cargaHorariaTotal + 'h/sem)</strong></span>' +
+            '</div>' +
+          '</div>' +
+          '<div style="display: flex; gap: 8px; align-items: center;">' +
+            '<span class="pill-badge ' + auditoria.badgeClass + '">' + escapeHtml(auditoria.badgeTexto) + '</span>' +
+            '<button type="button" class="btn btn-secondary btn-sm btn-abrir-dossie" data-nome="' + escapeHtml(d.nome) + '" title="Abrir Dossiê Detalhado">🔍 Dossiê</button>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="servidor-vinculos-grid">' +
+          vinculosHtml +
+        '</div>' +
+
+        '<div class="parecer-hera-box ' + boxClass + '" style="margin-top: 12px; padding: 10px 14px; background: var(--bg-surface); border-left: 4px solid ' + boxColor + '; border-radius: 6px; font-size: 12px;">' +
+          '<strong>Auditoria CF/88 Art. 37:</strong> ' + escapeHtml(auditoria.parecer) +
+        '</div>' +
+      '</div>';
+    });
+
+    container.innerHTML = html;
+
+    // Vincula eventos nos botões de dossiê
+    container.querySelectorAll('.btn-abrir-dossie').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var nome = this.getAttribute('data-nome');
+        abrirDossieModal(nome);
+      });
+    });
+  }
+
+  /**
+   * Renderiza a visualização em Tabela Sintética
+   */
+  function renderizarTabela(listaPaginada) {
+    var tbody = document.getElementById('tabelaServidoresGeralBody');
+    if (!tbody) return;
+
+    if (listaPaginada.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="text-muted text-center" style="padding: 24px;">Nenhum servidor encontrado para os filtros ativos.</td></tr>';
+      return;
+    }
+
+    var html = '';
+    listaPaginada.forEach(function(d) {
+      var auditoria = d.auditoria;
+      var entesStr = d.entes.join('; ');
+      var matStr = d.matriculas.join(', ') || 'N/I';
+      var cargoPrin = d.cargos[0] || 'Docente';
+      var lotacaoPrin = d.lotacoes[0] || 'Lotação não informada';
+
+      html += '<tr>' +
+        '<td>' +
+          '<div style="font-weight: 700; color: var(--text-main);">' + escapeHtml(d.nome) + '</div>' +
+          '<div style="font-size: 11px; color: var(--text-muted);">CPF: ' + escapeHtml(d.cpfMascarado) + '</div>' +
+        '</td>' +
+        '<td><span class="code-badge" style="font-size: 11.5px;">' + escapeHtml(matStr) + '</span></td>' +
+        '<td><span style="font-size: 12px; color: var(--text-secondary);">' + escapeHtml(entesStr) + '</span></td>' +
+        '<td><span style="font-size: 12.5px; font-weight: 600;">' + escapeHtml(cargoPrin) + '</span></td>' +
+        '<td><span class="pill-badge pill-gold" style="font-size: 11px;">' + d.cargaHorariaTotal + 'h sem.</span></td>' +
+        '<td><span style="font-size: 12px; color: var(--text-muted);">' + escapeHtml(lotacaoPrin) + '</span></td>' +
+        '<td><span class="pill-badge ' + auditoria.badgeClass + '" style="font-size: 11px;">' + escapeHtml(auditoria.badgeTexto) + '</span></td>' +
+        '<td class="text-right">' +
+          '<button type="button" class="btn btn-secondary btn-sm btn-abrir-dossie-tab" data-nome="' + escapeHtml(d.nome) + '">Dossiê</button>' +
+        '</td>' +
+      '</tr>';
+    });
+
+    tbody.innerHTML = html;
+
+    tbody.querySelectorAll('.btn-abrir-dossie-tab').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var nome = this.getAttribute('data-nome');
+        abrirDossieModal(nome);
+      });
+    });
+  }
+
+  /**
+   * Renderiza os controles numéricos de paginação
+   */
+  function renderizarPaginacao(totalItens) {
+    var totalPaginas = Math.ceil(totalItens / itensPorPagina) || 1;
+    if (paginaAtual > totalPaginas) paginaAtual = totalPaginas;
+    if (paginaAtual < 1) paginaAtual = 1;
+
+    var statusEl = document.getElementById('servidoresContagemStatus');
+    var infoPagEl = document.getElementById('servidoresInfoPaginacao');
+    var topoEl = document.getElementById('servidoresPaginacaoTopo');
+    var rodapeEl = document.getElementById('servidoresPaginacaoRodape');
+
+    var inicio = (paginaAtual - 1) * itensPorPagina + 1;
+    var fim = Math.min(paginaAtual * itensPorPagina, totalItens);
+
+    if (statusEl) {
+      if (totalItens === 0) {
+        statusEl.textContent = 'Nenhum servidor localizado';
+      } else {
+        statusEl.textContent = 'Exibindo ' + inicio + '–' + fim + ' de ' + totalItens + ' servidores públicos cadastrados';
+      }
+    }
+
+    if (infoPagEl) {
+      infoPagEl.textContent = 'Página ' + paginaAtual + ' de ' + totalPaginas + ' (' + totalItens + ' resultados)';
+    }
+
+    var botoesHtml = '';
+    botoesHtml += '<button type="button" class="btn-mini' + (paginaAtual === 1 ? ' disabled' : '') + '" data-ir-pag="ant" title="Página Anterior">◀ Ant</button>';
+
+    var maxBotoes = 5;
+    var startPage = Math.max(1, paginaAtual - 2);
+    var endPage = Math.min(totalPaginas, startPage + maxBotoes - 1);
+    if (endPage - startPage < maxBotoes - 1) {
+      startPage = Math.max(1, endPage - maxBotoes + 1);
+    }
+
+    for (var p = startPage; p <= endPage; p++) {
+      botoesHtml += '<button type="button" class="btn-mini' + (p === paginaAtual ? ' active' : '') + '" data-ir-pag="' + p + '">' + p + '</button>';
+    }
+
+    botoesHtml += '<button type="button" class="btn-mini' + (paginaAtual === totalPaginas ? ' disabled' : '') + '" data-ir-pag="prox" title="Próxima Página">Próx ▶</button>';
+
+    if (topoEl) topoEl.innerHTML = botoesHtml;
+    if (rodapeEl) rodapeEl.innerHTML = botoesHtml;
+
+    function aplicarEventoPaginacao(container) {
+      if (!container) return;
+      container.querySelectorAll('button[data-ir-pag]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var target = this.getAttribute('data-ir-pag');
+          if (target === 'ant') {
+            if (paginaAtual > 1) {
+              paginaAtual--;
+              atualizarViewComCache();
+            }
+          } else if (target === 'prox') {
+            if (paginaAtual < totalPaginas) {
+              paginaAtual++;
+              atualizarViewComCache();
+            }
+          } else {
+            var num = parseInt(target, 10);
+            if (!isNaN(num) && num !== paginaAtual) {
+              paginaAtual = num;
+              atualizarViewComCache();
+            }
+          }
+        });
+      });
+    }
+
+    aplicarEventoPaginacao(topoEl);
+    aplicarEventoPaginacao(rodapeEl);
+  }
+
+  /**
+   * Recalcula a busca completa, filtros e re-renderiza
+   */
+  function atualizarConsultaCompleta() {
+    var todos = carregarTodosDossies();
+    atualizarKpis(todos);
+
+    listaFiltradaCache = filtrarDossies(todos);
+    paginaAtual = 1;
+    atualizarViewComCache();
+  }
+
+  /**
+   * Re-renderiza usando os resultados cacheados para paginação rápida
+   */
+  function atualizarViewComCache() {
+    var totalItens = listaFiltradaCache.length;
+    var inicio = (paginaAtual - 1) * itensPorPagina;
+    var fim = inicio + itensPorPagina;
+    var pagSlice = listaFiltradaCache.slice(inicio, fim);
+
+    var cardsContainer = document.getElementById('servidoresContainerCards');
+    var tabContainer = document.getElementById('servidoresContainerTabela');
+
+    if (modoView === 'cards') {
+      if (cardsContainer) cardsContainer.classList.remove('hidden');
+      if (tabContainer) tabContainer.classList.add('hidden');
+      renderizarCards(pagSlice);
+    } else {
+      if (cardsContainer) cardsContainer.classList.add('hidden');
+      if (tabContainer) tabContainer.classList.remove('hidden');
+      renderizarTabela(pagSlice);
+    }
+
+    renderizarPaginacao(totalItens);
+
+    // Toggle botão limpar busca
+    var btnLimpar = document.getElementById('btnLimparBuscaServidores');
+    if (btnLimpar) {
+      btnLimpar.classList.toggle('hidden', !termoBusca);
+    }
+  }
+
+  function limparTodosFiltros() {
+    termoBusca = '';
+    filtroEnte = 'todos';
+    filtroCargo = 'todos';
+    filtroRegime = 'todos';
+    filtroVinculos = 'todos';
+
+    var input = document.getElementById('servidorBuscaInput');
+    if (input) input.value = '';
+
+    // Reset pills
+    document.querySelectorAll('[data-filtro-ente]').forEach(function(el) {
+      el.classList.toggle('active', el.getAttribute('data-filtro-ente') === 'todos');
+    });
+    document.querySelectorAll('[data-filtro-cargo]').forEach(function(el) {
+      el.classList.toggle('active', el.getAttribute('data-filtro-cargo') === 'todos');
+    });
+    document.querySelectorAll('[data-filtro-regime]').forEach(function(el) {
+      el.classList.toggle('active', el.getAttribute('data-filtro-regime') === 'todos');
+    });
+    document.querySelectorAll('[data-filtro-vinculos]').forEach(function(el) {
+      el.classList.toggle('active', el.getAttribute('data-filtro-vinculos') === 'todos');
+    });
+
+    atualizarConsultaCompleta();
+  }
+
+  /**
+   * Abre o Modal de Dossiê Funcional Completo
+   */
+  function abrirDossieModal(nomeOuMatricula) {
+    var modal = document.getElementById('modalDossieServidor');
+    var modalNome = document.getElementById('modalDossieServidorNome');
+    var modalConteudo = document.getElementById('modalDossieServidorConteudo');
+
+    if (!modal || !modalConteudo) return;
+
+    var dossie = null;
+    var todos = carregarTodosDossies();
+    var termoNorm = normalizarTexto(nomeOuMatricula);
+
+    for (var i = 0; i < todos.length; i++) {
+      if (normalizarTexto(todos[i].nome) === termoNorm || todos[i].matriculas.some(function(m) { return normalizarMatricula(m) === normalizarMatricula(nomeOuMatricula); })) {
+        dossie = todos[i];
+        break;
+      }
+    }
+
+    if (!dossie) return;
+    servidorModalAtivo = dossie;
+
+    if (modalNome) modalNome.textContent = dossie.nome;
+
+    var auditoria = dossie.auditoria;
+    var vinculosHtml = dossie.vinculos.map(function(v, idx) {
+      return '<div style="background: var(--bg-surface); padding: 14px; border: 1px solid var(--border-hairline); border-radius: 8px; margin-bottom: 10px;">' +
+        '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">' +
+          '<span class="pill-badge pill-gold">Vínculo #' + (idx + 1) + ' • ' + escapeHtml(v.ente) + '</span>' +
+          '<span style="font-size: 12px; font-weight: 700; color: var(--text-muted);">' + escapeHtml(v.matricula ? ('Matrícula: ' + v.matricula) : 'Matrícula não informada') + '</span>' +
+        '</div>' +
+        '<div style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">' + escapeHtml(v.cargo) + (v.funcao ? (' (' + escapeHtml(v.funcao) + ')') : '') + '</div>' +
+        '<div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">' +
+          '<div>🏛️ <strong>Lotação:</strong> ' + escapeHtml(v.lotacao) + '</div>' +
+          '<div>⏱️ <strong>Jornada:</strong> ' + escapeHtml(v.cargaHorariaTexto) + ' • Turno: ' + escapeHtml(v.turno) + '</div>' +
+          '<div>📜 <strong>Regime / Quadro:</strong> ' + escapeHtml(v.regime) + ' (' + escapeHtml(v.quadro) + ') • Situação: ' + escapeHtml(v.situacao) + '</div>' +
+          (v.dataAdmissao ? ('<div>📅 <strong>Admissão:</strong> ' + escapeHtml(v.dataAdmissao) + '</div>') : '') +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    var boxColor = auditoria.licito ? '#10B981' : '#EF4444';
+
+    modalConteudo.innerHTML = '<div style="margin-bottom: 16px;">' +
+      '<div style="display: flex; flex-wrap: wrap; gap: 12px; font-size: 13px; margin-bottom: 14px; padding: 10px 14px; background: var(--bg-tonal); border-radius: 8px; border: 1px solid var(--border-hairline);">' +
+        '<span>CPF Mascarado: <strong>' + escapeHtml(dossie.cpfMascarado) + '</strong></span>' +
+        '<span>•</span>' +
+        '<span>Total de Vínculos: <strong>' + dossie.vinculos.length + '</strong></span>' +
+        '<span>•</span>' +
+        '<span>Jornada Total Acumulada: <strong>' + dossie.cargaHorariaTotal + 'h semanais</strong></span>' +
+      '</div>' +
+
+      '<h5 style="margin: 0 0 10px 0; font-size: 14px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Vínculos Funcionais Identificados</h5>' +
+      vinculosHtml +
+
+      '<div style="margin-top: 14px; padding: 12px 16px; background: var(--bg-surface); border-left: 4px solid ' + boxColor + '; border-radius: 6px; font-size: 13px;">' +
+        '<div style="font-weight: 700; margin-bottom: 4px; color: var(--text-main);">Auditoria Constitucional de Acúmulo (CF/88 Art. 37, XVI)</div>' +
+        '<div style="color: var(--text-secondary); line-height: 1.5;">' + escapeHtml(auditoria.parecer) + '</div>' +
+      '</div>' +
+    '</div>';
+
+    modal.classList.remove('hidden');
+  }
+
+  function fecharDossieModal() {
+    var modal = document.getElementById('modalDossieServidor');
+    if (modal) modal.classList.add('hidden');
+    servidorModalAtivo = null;
+  }
+
+  function copiarFichaDossie() {
+    if (!servidorModalAtivo) return;
+    var d = servidorModalAtivo;
+    var texto = '========================================\n' +
+      'DOSSIÊ FUNCIONAL INTEGRADO — HUB OLYMPOS\n' +
+      '========================================\n' +
+      'Servidor: ' + d.nome + '\n' +
+      'CPF: ' + d.cpfMascarado + '\n' +
+      'Matrícula(s): ' + (d.matriculas.join(', ') || 'N/I') + '\n' +
+      'Carga Horária Semanal Total: ' + d.cargaHorariaTotal + 'h\n' +
+      'Total de Vínculos: ' + d.vinculos.length + '\n\n' +
+      '--- VÍNCULOS REGISTRADOS ---\n';
+
+    d.vinculos.forEach(function(v, idx) {
+      texto += '\n[Vínculo #' + (idx + 1) + ']\n' +
+        'Ente: ' + v.ente + '\n' +
+        'Matrícula: ' + (v.matricula || 'N/I') + '\n' +
+        'Cargo: ' + v.cargo + '\n' +
+        'Quadro: ' + v.quadro + '\n' +
+        'Lotação: ' + v.lotacao + '\n' +
+        'Jornada: ' + v.cargaHorariaTexto + ' (' + v.turno + ')\n' +
+        'Regime: ' + v.regime + ' | Situação: ' + v.situacao + '\n';
+    });
+
+    texto += '\n--- AUDITORIA CF/88 ART. 37, XVI ---\n' +
+      d.auditoria.parecer + '\n' +
+      '========================================\n';
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(texto).then(function() {
+        if (window.OlymposApp && window.OlymposApp.showToast) {
+          window.OlymposApp.showToast('Ficha do servidor copiada para a área de transferência!');
+        } else {
+          alert('Ficha do servidor copiada com sucesso!');
+        }
+      });
+    }
+  }
+
+  /**
+   * Exporta resultado atual para CSV
+   */
+  function exportarCsv() {
+    if (!listaFiltradaCache || listaFiltradaCache.length === 0) {
+      alert('Nenhum registro para exportar.');
+      return;
+    }
+
+    var csvRows = [];
+    csvRows.push(['Nome', 'CPF Mascarado', 'Matrículas', 'Ente(s)', 'Cargo Principal', 'Carga Horária Total', 'Lotação Principal', 'Parecer CF88'].map(function(c) {
+      return '"' + String(c).replace(/"/g, '""') + '"';
+    }).join(';'));
+
+    listaFiltradaCache.forEach(function(d) {
+      var row = [
+        d.nome,
+        d.cpfMascarado,
+        d.matriculas.join(', '),
+        d.entes.join(' | '),
+        d.cargos[0] || '',
+        d.cargaHorariaTotal + 'h',
+        d.lotacoes[0] || '',
+        d.auditoria.badgeTexto + ' - ' + d.auditoria.parecer
+      ];
+      csvRows.push(row.map(function(c) {
+        return '"' + String(c).replace(/"/g, '""') + '"';
+      }).join(';'));
+    });
+
+    var blob = new Blob(['\uFEFF' + csvRows.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'servidores_olympos_' + new Date().toISOString().slice(0, 10) + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  /**
+   * Exporta catálogo atual para JSON
+   */
+  function exportarJson() {
+    if (!listaFiltradaCache || listaFiltradaCache.length === 0) {
+      alert('Nenhum registro para exportar.');
+      return;
+    }
+
+    var blob = new Blob([JSON.stringify(listaFiltradaCache, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'servidores_olympos_' + new Date().toISOString().slice(0, 10) + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  /**
+   * Inicialização do módulo (Idempotente)
+   */
+  function init() {
+    var viewSection = document.getElementById('page-servidores');
+    if (!viewSection) return;
+
+    // Vincula eventos se ainda não vinculados
+    var buscaInput = document.getElementById('servidorBuscaInput');
+    if (buscaInput && !buscaInput._bound) {
+      buscaInput._bound = true;
+      buscaInput.addEventListener('input', function() {
+        var valor = this.value;
+        if (debounceTimer) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(function() {
+          termoBusca = valor;
+          atualizarConsultaCompleta();
+        }, 200);
+      });
+    }
+
+    var btnLimpar = document.getElementById('btnLimparBuscaServidores');
+    if (btnLimpar && !btnLimpar._bound) {
+      btnLimpar._bound = true;
+      btnLimpar.addEventListener('click', function() {
+        termoBusca = '';
+        if (buscaInput) buscaInput.value = '';
+        atualizarConsultaCompleta();
+      });
+    }
+
+    var btnCards = document.getElementById('btnModoViewCards');
+    var btnTabela = document.getElementById('btnModoViewTabela');
+    if (btnCards && !btnCards._bound) {
+      btnCards._bound = true;
+      btnCards.addEventListener('click', function() {
+        modoView = 'cards';
+        btnCards.classList.add('active');
+        if (btnTabela) btnTabela.classList.remove('active');
+        atualizarViewComCache();
+      });
+    }
+    if (btnTabela && !btnTabela._bound) {
+      btnTabela._bound = true;
+      btnTabela.addEventListener('click', function() {
+        modoView = 'tabela';
+        btnTabela.classList.add('active');
+        if (btnCards) btnCards.classList.remove('active');
+        atualizarViewComCache();
+      });
+    }
+
+    // Filtros de Ente
+    document.querySelectorAll('[data-filtro-ente]').forEach(function(btn) {
+      if (!btn._bound) {
+        btn._bound = true;
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('[data-filtro-ente]').forEach(function(b) { b.classList.remove('active'); });
+          this.classList.add('active');
+          filtroEnte = this.getAttribute('data-filtro-ente') || 'todos';
+          atualizarConsultaCompleta();
+        });
+      }
+    });
+
+    // Filtros de Cargo/Quadro
+    document.querySelectorAll('[data-filtro-cargo]').forEach(function(btn) {
+      if (!btn._bound) {
+        btn._bound = true;
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('[data-filtro-cargo]').forEach(function(b) { b.classList.remove('active'); });
+          this.classList.add('active');
+          filtroCargo = this.getAttribute('data-filtro-cargo') || 'todos';
+          atualizarConsultaCompleta();
+        });
+      }
+    });
+
+    // Filtros de Regime
+    document.querySelectorAll('[data-filtro-regime]').forEach(function(btn) {
+      if (!btn._bound) {
+        btn._bound = true;
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('[data-filtro-regime]').forEach(function(b) { b.classList.remove('active'); });
+          this.classList.add('active');
+          filtroRegime = this.getAttribute('data-filtro-regime') || 'todos';
+          atualizarConsultaCompleta();
+        });
+      }
+    });
+
+    // Filtros de Vínculos / CF/88
+    document.querySelectorAll('[data-filtro-vinculos]').forEach(function(btn) {
+      if (!btn._bound) {
+        btn._bound = true;
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('[data-filtro-vinculos]').forEach(function(b) { b.classList.remove('active'); });
+          this.classList.add('active');
+          filtroVinculos = this.getAttribute('data-filtro-vinculos') || 'todos';
+          atualizarConsultaCompleta();
+        });
+      }
+    });
+
+    // Botões de Exportação e Impressão
+    var btnCsv = document.getElementById('btnExportarServidoresCsv');
+    if (btnCsv && !btnCsv._bound) {
+      btnCsv._bound = true;
+      btnCsv.addEventListener('click', exportarCsv);
+    }
+    var btnJson = document.getElementById('btnExportarServidoresJson');
+    if (btnJson && !btnJson._bound) {
+      btnJson._bound = true;
+      btnJson.addEventListener('click', exportarJson);
+    }
+    var btnPrint = document.getElementById('btnImprimirServidores');
+    if (btnPrint && !btnPrint._bound) {
+      btnPrint._bound = true;
+      btnPrint.addEventListener('click', function() { window.print(); });
+    }
+
+    // Modal Events
+    var btnCloseModal = document.getElementById('closeModalDossieServidorBtn');
+    if (btnCloseModal && !btnCloseModal._bound) {
+      btnCloseModal._bound = true;
+      btnCloseModal.addEventListener('click', fecharDossieModal);
+    }
+    var btnFecharModal = document.getElementById('btnFecharModalDossie');
+    if (btnFecharModal && !btnFecharModal._bound) {
+      btnFecharModal._bound = true;
+      btnFecharModal.addEventListener('click', fecharDossieModal);
+    }
+    var btnCopiar = document.getElementById('btnCopiarFichaDossie');
+    if (btnCopiar && !btnCopiar._bound) {
+      btnCopiar._bound = true;
+      btnCopiar.addEventListener('click', copiarFichaDossie);
+    }
+    var btnImprimirDossie = document.getElementById('btnImprimirFichaDossie');
+    if (btnImprimirDossie && !btnImprimirDossie._bound) {
+      btnImprimirDossie._bound = true;
+      btnImprimirDossie.addEventListener('click', function() { window.print(); });
+    }
+
+    // Modal Backdrop Click
+    var modalBackdrop = document.getElementById('modalDossieServidor');
+    if (modalBackdrop && !modalBackdrop._bound) {
+      modalBackdrop._bound = true;
+      modalBackdrop.addEventListener('click', function(e) {
+        if (e.target === modalBackdrop) {
+          fecharDossieModal();
+        }
+      });
+    }
+
+    // Renderiza a consulta inicial
+    atualizarConsultaCompleta();
+  }
+
+  return {
+    init: init,
+    carregarTodosDossies: carregarTodosDossies,
+    filtrarDossies: filtrarDossies,
+    abrirDossieModal: abrirDossieModal,
+    fecharDossieModal: fecharDossieModal,
+    exportarCsv: exportarCsv,
+    exportarJson: exportarJson,
+    limparTodosFiltros: limparTodosFiltros
   };
 })();
 
@@ -13544,18 +15937,18 @@ window.OlymposApp = (function() {
   const RBAC_TAB_PERMISSIONS = {
     ADMIN_GABINETE: [
       'visao-geral', 'oficios', 'portarias', 'licencas', 'certificados',
-      'diario-oficial', 'papiro-cadmo', 'personas', 'busca', 'configuracoes'
+      'diario-oficial', 'papiro-cadmo', 'servidores', 'personas', 'busca', 'configuracoes'
     ],
     RH_COMISSAO: [
       'visao-geral', 'oficios', 'portarias', 'licencas',
-      'diario-oficial', 'papiro-cadmo', 'personas', 'busca', 'configuracoes'
+      'diario-oficial', 'papiro-cadmo', 'servidores', 'personas', 'busca', 'configuracoes'
     ],
     PEDAGOGICO_EVENTOS: [
-      'visao-geral', 'oficios', 'certificados', 'personas', 'busca', 'configuracoes'
+      'visao-geral', 'oficios', 'certificados', 'servidores', 'personas', 'busca', 'configuracoes'
     ],
     JURIDICO: [
       'visao-geral', 'oficios', 'portarias', 'diario-oficial',
-      'papiro-cadmo', 'personas', 'busca', 'configuracoes'
+      'papiro-cadmo', 'servidores', 'personas', 'busca', 'configuracoes'
     ]
   };
 
@@ -13948,7 +16341,7 @@ window.OlymposApp = (function() {
   }
 
   function normalizarPermissoesRbac(listaBruta) {
-    const set = new Set(['visao-geral', 'configuracoes', 'personas', 'busca', 'escolas', 'calendario', 'papiro-cadmo']);
+    const set = new Set(['visao-geral', 'configuracoes', 'personas', 'busca', 'escolas', 'calendario', 'papiro-cadmo', 'servidores']);
     (listaBruta || []).forEach(function(item) {
       if (LEGACY_TAB_MAP[item]) {
         LEGACY_TAB_MAP[item].forEach(function(p) { set.add(p); });

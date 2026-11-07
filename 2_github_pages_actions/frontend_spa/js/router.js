@@ -46,6 +46,12 @@ window.OlymposRouter = (function() {
       subtitle: 'Extração automatizada de 15 municípios potiguares e SEEC/RN com consolidação em esquema canônico de 8 colunas para Cadmo e Hera.',
       category: 'inteligencia'
     },
+    'servidores': {
+      eyebrow: 'QUADRO FUNCIONAL UNIFICADO • RN & MUNICÍPIOS',
+      title: 'Consulta Integrada de Servidores Públicos.',
+      subtitle: 'Pesquisa cadastral, dossiê funcional detalhado, lotação e auditoria de vínculos de Ceará-Mirim, Natal, Parnamirim, São Gonçalo do Amarante e Governo do RN (SEEC).',
+      category: 'gestao'
+    },
     'escolas': {
       eyebrow: 'GEORREFERENCIAMENTO MUNICIPAL • REDE ESCOLAR SMEB',
       title: 'Mapa e Gestão das Escolas Municipais.',
@@ -99,6 +105,9 @@ window.OlymposRouter = (function() {
     let targetSubtab = null;
     if (pageId === 'permutas') {
       pageId = 'papiro-cadmo';
+    }
+    if (pageId === 'consulta-servidores') {
+      pageId = 'servidores';
     }
     if (pageId === 'licencas') {
       pageId = 'portarias';
@@ -177,6 +186,7 @@ window.OlymposRouter = (function() {
       'certificados': 'certificados',
       'diario-oficial': 'diarioOficial',
       'papiro-cadmo': 'papiroCadmo',
+      'servidores': 'servidores',
       'escolas': 'escolas',
       'calendario': 'calendario',
       'personas': 'personas',
