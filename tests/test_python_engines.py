@@ -661,6 +661,174 @@ class TestPapiroDeCadmoEngine(unittest.TestCase):
                 self.assertEqual(len(resumo["sucesso"]), 2)
                 self.assertEqual(len(resumo["falha"]), 1)
 
+    def test_19_natal_jsondecodeerror_and_empty_resilience(self):
+        """Valida resiliência contra JSONDecodeError, respostas vazias, texto simples e UTF-8 BOM em NatalExtractor."""
+        import httpx
+        self.assertIsNotNone(NatalExtractor)
+
+        # 1. Validação direta de _decodificar_json_resiliente sem disparar exceção
+        self.assertIsNone(NatalExtractor._decodificar_json_resiliente(httpx.Response(200, content=b"Internal Server Error")))
+        self.assertIsNone(NatalExtractor._decodificar_json_resiliente(httpx.Response(200, content=b"502 Bad Gateway")))
+        self.assertIsNone(NatalExtractor._decodificar_json_resiliente(httpx.Response(200, content=b"")))
+        self.assertIsNone(NatalExtractor._decodificar_json_resiliente(httpx.Response(200, content=b"<!DOCTYPE html><html><body>Erro 500</body></html>")))
+        self.assertIsNone(NatalExtractor._decodificar_json_resiliente(httpx.Response(200, content=b"{invalido: true}")))
+
+        # Decodificação válida com UTF-8 BOM
+        bom_payload = b"\xef\xbb\xbf" + b'{"status": "ok", "total": 1}'
+        decodificado = NatalExtractor._decodificar_json_resiliente(httpx.Response(200, content=bom_payload))
+        self.assertEqual(decodificado, {"status": "ok", "total": 1})
+
+        # 2. Validação de comutação transparente para jqGrid quando a API primária retorna 'Internal Server Error'
+        dummy_cfg = {
+            "id": "natal",
+            "ente": "Natal",
+            "url": "https://www2.natal.rn.gov.br/transparenciaapi/folha_pagamentos"
+        }
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            extractor = NatalExtractor(dummy_cfg, Path(tmp_dir))
+
+            def fake_get(url, **kwargs):
+                if "getMeses" in url:
+                    return httpx.Response(200, content=b'{"9": "Setembro"}')
+                if "getLotacoes" in url:
+                    return httpx.Response(200, content=b'{"SME": "SME - SECRETARIA MUNICIPAL DE EDUCACAO"}')
+                # Erro comum em texto simples da API de Natal
+                return httpx.Response(200, content=b"Internal Server Error")
+
+            def fake_post(url, **kwargs):
+                payload = (
+                    '{"page":"1","total":1,"records":1,"rows":['
+                    '{"id":"0","cell":["99887-1","JOAO PROFESSOR SILVA","PROFESSOR N-1","SME","09/2026","4.500,00"]}'
+                    ']}'
+                )
+                return httpx.Response(200, content=payload.encode("utf-8"))
+
+            with patch("httpx.Client.get", side_effect=fake_get), patch("httpx.Client.post", side_effect=fake_post):
+                arquivo = extractor._tentar_extrair_mes("2026-09")
+                self.assertIsNotNone(arquivo, "Deve comutar transparentemente para CakePHP jqGrid ao receber 'Internal Server Error'")
+                self.assertTrue(arquivo.exists())
+                conteudo = arquivo.read_text(encoding="utf-8-sig")
+                self.assertIn("JOAO PROFESSOR SILVA", conteudo)
+                self.assertIn("99887-1", conteudo)
+
+            # 3. Validação de saída limpa (retorna None com warning) se ambas as fontes falharem
+            with patch("httpx.Client.get", return_value=httpx.Response(500, content=b"Fatal Error")), \
+                 patch("httpx.Client.post", return_value=httpx.Response(500, content=b"Fatal Error")):
+                arquivo_falha = extractor._tentar_extrair_mes("2026-09")
+                self.assertIsNone(arquivo_falha, "Deve retornar None de forma segura sem propagar exceção")
+
+    def test_20_orquestrador_ordem_captura_sequencial(self):
+        """Valida que o orquestrador impõe estritamente a ordem de captura em 3 fases:
+        1º: Ceará-Mirim (SMEB / base local principal)
+        2º: Top Solutions / SGA
+        3º: Natal e Governo do Estado (SEEC-RN) ao final da fila
+        """
+        self.assertIsNotNone(cadmo_run_all)
+        portais_desordenados = {
+            "portais": [
+                {"id": "estado_rn", "ente": "Governo do Estado do Rio Grande do Norte", "tipo": "estado_rn", "ativo": True},
+                {"id": "natal", "ente": "Natal", "tipo": "natal_api", "ativo": True},
+                {"id": "parnamirim", "ente": "Parnamirim", "tipo": "topsolutions", "ativo": True},
+                {"id": "sga", "ente": "São Gonçalo do Amarante", "tipo": "sga_html", "ativo": True},
+                {"id": "ceara_mirim", "ente": "Ceará-Mirim", "tipo": "topsolutions", "base_controle_local": True, "ativo": True},
+                {"id": "macaiba", "ente": "Macaíba", "tipo": "topsolutions", "ativo": True},
+            ]
+        }
+
+        # 1. Verifica ordenar_portais diretamente
+        ordenados = cadmo_run_all.ordenar_portais(portais_desordenados["portais"])
+        ids_ordenados = [p["id"] for p in ordenados]
+        self.assertEqual(ids_ordenados[0], "ceara_mirim", "Ceará-Mirim deve ser o 1º da fila de prioridade")
+        self.assertEqual(set(ids_ordenados[1:4]), {"parnamirim", "sga", "macaiba"}, "Municípios Top Solutions/SGA devem estar na 2ª fase")
+        self.assertEqual(set(ids_ordenados[4:6]), {"natal", "estado_rn"}, "Natal e Estado do RN devem estar na 3ª fase (ao final da fila)")
+
+        # 2. Verifica a ordem real de execução no ciclo com max_workers=1
+        chamadas_execucao = []
+
+        def fake_extrair(p_cfg, dest, comp):
+            chamadas_execucao.append(p_cfg["id"])
+            return {"status": "sucesso", "ente": p_cfg["ente"], "arquivo": "mock.csv", "duracao_s": 0.01}
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_path = Path(tmp_dir)
+            with patch.object(cadmo_run_all, "extrair_portal", side_effect=fake_extrair):
+                resumo = cadmo_run_all.executar_ciclo(
+                    cfg_override=portais_desordenados,
+                    raw_dir_override=tmp_path,
+                    max_workers=1
+                )
+                self.assertEqual(len(chamadas_execucao), 6)
+                self.assertEqual(chamadas_execucao[0], "ceara_mirim", "Execução: 1º deve ser Ceará-Mirim")
+                self.assertIn(chamadas_execucao[1], ["parnamirim", "sga", "macaiba"])
+                self.assertIn(chamadas_execucao[2], ["parnamirim", "sga", "macaiba"])
+                self.assertIn(chamadas_execucao[3], ["parnamirim", "sga", "macaiba"])
+                self.assertEqual(set(chamadas_execucao[4:6]), {"natal", "estado_rn"}, "Execução: Natal e Estado devem ser os últimos")
+
+    def test_21_orquestrador_resiliencia_falha_sem_abortar(self):
+        """Valida que o orquestrador não encerra o workflow caso a busca de uma secretaria falhe ou retorne vazia,
+        registrando o log de aviso e prosseguindo imediatamente com os dados da próxima secretaria."""
+        self.assertIsNotNone(cadmo_run_all)
+        portais = {
+            "portais": [
+                {"id": "ceara_mirim", "ente": "Ceará-Mirim", "tipo": "topsolutions", "base_controle_local": True, "ativo": True},
+                {"id": "parnamirim", "ente": "Parnamirim", "tipo": "topsolutions", "ativo": True},
+                {"id": "sga", "ente": "São Gonçalo do Amarante", "tipo": "sga_html", "ativo": True},
+                {"id": "natal", "ente": "Natal", "tipo": "natal_api", "ativo": True},
+            ]
+        }
+
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_path = Path(tmp_dir)
+            csv_valido = tmp_path / "valido.csv"
+            csv_valido.write_text("matricula;nome;cargo\n001;MARIA SILVA;PROFESSOR\n", encoding="utf-8")
+
+            def fake_extrair(p_cfg, dest, comp):
+                pid = p_cfg["id"]
+                if pid == "ceara_mirim":
+                    return {"status": "sucesso", "ente": "Ceará-Mirim", "arquivo": str(csv_valido), "duracao_s": 0.02}
+                elif pid == "parnamirim":
+                    # Falha por exceção de rede
+                    raise ConnectionResetError("Conexão interrompida pelo servidor remoto")
+                elif pid == "sga":
+                    # Retorno vazio ou sem dados
+                    return {"status": "falha", "ente": "São Gonçalo do Amarante", "motivo": "Retorno vazio ou arquivo sem dados", "duracao_s": 0.02}
+                elif pid == "natal":
+                    return {"status": "sucesso", "ente": "Natal", "arquivo": str(csv_valido), "duracao_s": 0.02}
+                return {"status": "ignorado", "ente": pid}
+
+            with patch.object(cadmo_run_all, "extrair_portal", side_effect=fake_extrair):
+                with self.assertLogs("papiro.orchestrator", level="WARNING") as log_capture:
+                    resumo = cadmo_run_all.executar_ciclo(
+                        cfg_override=portais,
+                        raw_dir_override=tmp_path,
+                        max_workers=1
+                    )
+                self.assertEqual(len(resumo["sucesso"]), 2)
+                self.assertEqual(len(resumo["falha"]), 2)
+                entes_sucesso = [s["ente"] for s in resumo["sucesso"]]
+                entes_falha = [f["ente"] for f in resumo["falha"]]
+                self.assertIn("Ceará-Mirim", entes_sucesso)
+                self.assertIn("Natal", entes_sucesso)
+                self.assertIn("Parnamirim", entes_falha)
+                self.assertIn("São Gonçalo do Amarante", entes_falha)
+
+                # Verifica que o log de aviso padronizado foi emitido para a falha
+                logs_texto = "\n".join(log_capture.output)
+                self.assertIn("falhou ou retornou vazia", logs_texto)
+                self.assertIn("prosseguindo imediatamente", logs_texto)
+
+        # 2. Teste direto de extrair_portal excluindo arquivo corrompido/vazio
+        with tempfile.TemporaryDirectory() as tmp_dir2:
+            tmp_path2 = Path(tmp_dir2)
+            dummy_p = {"id": "sga", "ente": "São Gonçalo do Amarante", "tipo": "sga_html", "ativo": True}
+            vazio_csv = tmp_path2 / "vazio.csv"
+            vazio_csv.write_text("coluna1;coluna2\n", encoding="utf-8")
+
+            with patch("extractors.sga.SgaExtractor.extrair", return_value=vazio_csv):
+                res_vazio = cadmo_run_all.extrair_portal(dummy_p, tmp_path2)
+                self.assertEqual(res_vazio["status"], "falha")
+                self.assertFalse(vazio_csv.exists(), "Arquivo vazio/corrompido deve ser excluído")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -5,19 +5,12 @@
   "planilha_permutas_id": "1fOZHe871yxu6UdF0vsRzjSzQBc7AVFRZZtx3JSCdwCY",
   "portais": [
     {
-      "id": "estado_rn",
-      "ente": "Governo do Estado do Rio Grande do Norte",
-      "tipo": "estado_rn",
-      "url": "https://remuneracao.rn.gov.br/",
-      "secretaria_alvo": "Secretaria de Estado da Educação, do Esporte e do Lazer - SEEC",
-      "ativo": true
-    },
-    {
-      "id": "natal",
-      "ente": "Natal",
-      "tipo": "natal_api",
-      "url": "https://www2.natal.rn.gov.br/transparenciaapi/folha_pagamentos",
-      "filtro_lotacao_prefixo": "SME",
+      "id": "ceara_mirim",
+      "ente": "Ceará-Mirim",
+      "tipo": "topsolutions",
+      "url": "https://pmcearamirimrn.transparencia.topsolutionsrn.com.br",
+      "competencia_offset_meses": 1,
+      "base_controle_local": true,
       "ativo": true
     },
     {
@@ -49,15 +42,6 @@
       "tipo": "topsolutions",
       "url": "https://pmextremozrn.transparencia.topsolutionsrn.com.br",
       "competencia_offset_meses": 1,
-      "ativo": true
-    },
-    {
-      "id": "ceara_mirim",
-      "ente": "Ceará-Mirim",
-      "tipo": "topsolutions",
-      "url": "https://pmcearamirimrn.transparencia.topsolutionsrn.com.br",
-      "competencia_offset_meses": 1,
-      "base_controle_local": true,
       "ativo": true
     },
     {
@@ -133,6 +117,22 @@
       "url": "https://pmriofogorn.transparencia.topsolutionsrn.com.br",
       "competencia_fixa_fallback": "07/2026",
       "observacao": "Sem dados atualizados desde Julho/2026",
+      "ativo": true
+    },
+    {
+      "id": "natal",
+      "ente": "Natal",
+      "tipo": "natal_api",
+      "url": "https://www2.natal.rn.gov.br/transparenciaapi/folha_pagamentos",
+      "filtro_lotacao_prefixo": "SME",
+      "ativo": true
+    },
+    {
+      "id": "estado_rn",
+      "ente": "Governo do Estado do Rio Grande do Norte",
+      "tipo": "estado_rn",
+      "url": "https://remuneracao.rn.gov.br/",
+      "secretaria_alvo": "Secretaria de Estado da Educação, do Esporte e do Lazer - SEEC",
       "ativo": true
     }
   ]

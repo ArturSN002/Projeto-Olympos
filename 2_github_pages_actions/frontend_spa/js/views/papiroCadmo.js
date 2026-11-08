@@ -471,9 +471,7 @@ window.OlymposViews.papiroCadmo = (function() {
   ];
 
   const PORTAIS = [
-    { nome: 'Governo do Estado do RN (SEEC)', regiao: 'Estadual', tecnologia: 'Playwright SPA (SEAD/COPES)', url: 'https://remuneracao.rn.gov.br/table-people', dataUltimoCsv: '12/10/2026' },
     { nome: 'Ceará-Mirim (Base Local SMEB)', regiao: 'Grande Natal', tecnologia: 'TopSolutions RN • CSV', url: 'https://pmcearamirimrn.transparencia.topsolutionsrn.com.br/servidores', dataUltimoCsv: '12/10/2026' },
-    { nome: 'Natal', regiao: 'Grande Natal', tecnologia: 'Portal Transparência SME • CSV', url: 'https://www.natal.rn.gov.br/transparencia', dataUltimoCsv: '12/10/2026' },
     { nome: 'Parnamirim', regiao: 'Grande Natal', tecnologia: 'Portal Transparência • CSV', url: 'https://transparencia.parnamirim.rn.gov.br', dataUltimoCsv: '12/10/2026' },
     { nome: 'São Gonçalo do Amarante', regiao: 'Grande Natal', tecnologia: 'TopSolutions / Exportação CSV', url: 'https://saogoncalo.rn.gov.br', dataUltimoCsv: '12/10/2026' },
     { nome: 'Macaíba', regiao: 'Grande Natal', tecnologia: 'TopSolutions RN • CSV', url: 'https://macaiba.rn.gov.br', dataUltimoCsv: '12/10/2026' },
@@ -486,7 +484,9 @@ window.OlymposViews.papiroCadmo = (function() {
     { nome: 'Poço Branco', regiao: 'Mato Grande', tecnologia: 'TopSolutions RN • CSV', url: 'https://pocobranco.rn.gov.br', dataUltimoCsv: '31/07/2026' },
     { nome: 'Taipú', regiao: 'Mato Grande', tecnologia: 'TopSolutions RN • CSV', url: 'https://taipu.rn.gov.br', dataUltimoCsv: '12/10/2026' },
     { nome: 'Touros', regiao: 'Litoral Norte', tecnologia: 'TopSolutions RN • CSV', url: 'https://touros.rn.gov.br', dataUltimoCsv: '12/10/2026' },
-    { nome: 'Rio do Fogo', regiao: 'Litoral Norte', tecnologia: 'TopSolutions RN • CSV', url: 'https://riodofogo.rn.gov.br', dataUltimoCsv: '31/07/2026' }
+    { nome: 'Rio do Fogo', regiao: 'Litoral Norte', tecnologia: 'TopSolutions RN • CSV', url: 'https://riodofogo.rn.gov.br', dataUltimoCsv: '31/07/2026' },
+    { nome: 'Natal', regiao: 'Grande Natal', tecnologia: 'Portal Transparência SME • CSV', url: 'https://www.natal.rn.gov.br/transparencia', dataUltimoCsv: '12/10/2026' },
+    { nome: 'Governo do Estado do RN (SEEC)', regiao: 'Estadual', tecnologia: 'Playwright SPA (SEAD/COPES)', url: 'https://remuneracao.rn.gov.br/table-people', dataUltimoCsv: '12/10/2026' }
   ];
 
   function normalizarTexto(txt) {

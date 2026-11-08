@@ -37,22 +37,44 @@ LOTACOES_SME_PADRAO = [
 
 class NatalExtractor(BaseExtractor):
     @staticmethod
-    def _decodificar_json_resiliente(resp: httpx.Response) -> Optional[Any]:
-        """Decodifica JSON com fallback automático para ISO-8859-1 (Latin-1). Retorna None se for HTML."""
+    def _decodificar_json_resiliente(resp: Optional[httpx.Response]) -> Optional[Any]:
+        """Decodifica JSON com tolerância a Latin-1 e UTF-8 BOM. Retorna None com segurança para HTML/erros/vazio."""
+        if resp is None:
+            return None
         raw = resp.content or b""
-        raw_strip = raw.lstrip()
-        if not raw_strip or raw_strip.startswith(b"<"):
+        if raw.startswith(b"\xef\xbb\xbf"):
+            raw = raw[3:]
+        raw_strip = raw.strip()
+        if not raw_strip:
             return None
 
+        # Detecção de HTML/XML pré-parsing
+        if raw_strip.startswith(b"<") or b"<html" in raw_strip[:300].lower() or b"<!doctype" in raw_strip[:300].lower():
+            return None
+
+        content_type = (resp.headers.get("content-type") or "").lower() if hasattr(resp, "headers") else ""
+        if "text/html" in content_type or "text/xml" in content_type:
+            return None
+
+        # 1. Tentativa padrão httpx
         try:
             return resp.json()
         except Exception:
-            try:
-                texto_utf8 = raw.decode("utf-8")
-                return json.loads(texto_utf8)
-            except Exception:
-                texto_latin = raw.decode("latin-1", errors="replace")
-                return json.loads(texto_latin)
+            pass
+
+        # 2. Tentativa UTF-8 explícita
+        try:
+            return json.loads(raw.decode("utf-8"))
+        except Exception:
+            pass
+
+        # 3. Tentativa ISO-8859-1 (Latin-1) para servidores legados CakePHP
+        try:
+            return json.loads(raw.decode("latin-1", errors="replace"))
+        except Exception:
+            pass
+
+        return None
 
     @staticmethod
     def _eh_lotacao_educacao(lotacao: str) -> bool:
@@ -136,7 +158,12 @@ class NatalExtractor(BaseExtractor):
                     "sidx": "Servidor.nome",
                     "sord": "asc",
                 }
-                r_grid = client.post(f"{base}/pesquisar", headers=xhr_headers, data=form_fields)
+                try:
+                    r_grid = client.post(f"{base}/pesquisar", headers=xhr_headers, data=form_fields)
+                except (httpx.HTTPError, httpx.TimeoutException, Exception) as e_post:
+                    self.logger.warning(f"[Natal] Erro na requisição POST jqGrid (página {pagina}): {e_post}")
+                    break
+
                 if r_grid.status_code != 200:
                     break
 
@@ -148,16 +175,19 @@ class NatalExtractor(BaseExtractor):
                     and str(grid_json.get("records", "0")) == "0"
                     and any(ord(ch) > 127 for ch in lot_chave)
                 ):
-                    corpo_latin1 = urllib.parse.urlencode(form_fields, encoding="latin-1", errors="replace").encode("ascii")
-                    headers_latin1 = {
-                        **xhr_headers,
-                        "Content-Type": "application/x-www-form-urlencoded; charset=ISO-8859-1",
-                    }
-                    r_grid_l1 = client.post(f"{base}/pesquisar", headers=headers_latin1, content=corpo_latin1)
-                    if r_grid_l1.status_code == 200:
-                        grid_json_l1 = self._decodificar_json_resiliente(r_grid_l1)
-                        if isinstance(grid_json_l1, dict) and int(str(grid_json_l1.get("records", "0") or 0)) > 0:
-                            grid_json = grid_json_l1
+                    try:
+                        corpo_latin1 = urllib.parse.urlencode(form_fields, encoding="latin-1", errors="replace").encode("ascii")
+                        headers_latin1 = {
+                            **xhr_headers,
+                            "Content-Type": "application/x-www-form-urlencoded; charset=ISO-8859-1",
+                        }
+                        r_grid_l1 = client.post(f"{base}/pesquisar", headers=headers_latin1, content=corpo_latin1)
+                        if r_grid_l1.status_code == 200:
+                            grid_json_l1 = self._decodificar_json_resiliente(r_grid_l1)
+                            if isinstance(grid_json_l1, dict) and int(str(grid_json_l1.get("records", "0") or 0)) > 0:
+                                grid_json = grid_json_l1
+                    except Exception as e_latin1:
+                        self.logger.debug(f"[Natal] Falha ao tentar requisição Latin-1 no jqGrid: {e_latin1}")
 
                 if not isinstance(grid_json, dict):
                     break
@@ -240,20 +270,31 @@ class NatalExtractor(BaseExtractor):
 
                 usar_fluxo_jqgrid = False
                 while True:
-                    resp = client.get(api_url, params=params)
-                    if resp.status_code != 200:
-                        self.logger.warning(f"Resposta status {resp.status_code} da API de Natal para offset {params['offset']}")
+                    try:
+                        resp = client.get(api_url, params=params)
+                    except (httpx.HTTPError, httpx.TimeoutException, Exception) as e_req:
+                        self.logger.warning(f"[Natal] Falha HTTP/rede na API primária ({e_req}). Acionando fluxo jqGrid...")
+                        usar_fluxo_jqgrid = True
                         break
 
-                    # Se o portal responder com HTML CakePHP em vez de JSON puro, comuta sem erro para o fluxo jqGrid XHR
-                    raw_strip = (resp.content or b"").lstrip()
+                    if resp.status_code != 200:
+                        self.logger.warning(f"Resposta status {resp.status_code} da API de Natal para offset {params['offset']}. Acionando fluxo jqGrid...")
+                        usar_fluxo_jqgrid = True
+                        break
+
+                    # Se o portal responder com HTML CakePHP ou resposta vazia em vez de JSON puro, comuta para o fluxo jqGrid XHR
+                    raw_content = resp.content or b""
+                    if raw_content.startswith(b"\xef\xbb\xbf"):
+                        raw_content = raw_content[3:]
+                    raw_strip = raw_content.strip()
                     if raw_strip.startswith(b"<") or not raw_strip:
                         usar_fluxo_jqgrid = True
                         break
 
-                    # Correção resiliente para decodificar caracteres Latin-1 (ex: byte 0xe3 = 'ã')
+                    # Correção resiliente para decodificar caracteres Latin-1 (ex: byte 0xe3 = 'ã') e suprimir JSONDecodeError
                     data = self._decodificar_json_resiliente(resp)
                     if data is None:
+                        self.logger.info(f"[Natal] Resposta da API não é JSON válido (HTML/texto/vazio). Acionando transparentemente fluxo jqGrid...")
                         usar_fluxo_jqgrid = True
                         break
 

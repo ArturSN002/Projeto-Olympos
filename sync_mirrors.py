@@ -23,6 +23,8 @@ PAPIRO_SRC = OLYMPOS_DIR / "2_github_pages_actions" / "engines" / "papiro_de_cad
 PAPIRO_MIRROR = BASE_DIR / "papiro-de-cadmo" / "pipeline"
 PAPIRO_EXT_SRC = OLYMPOS_DIR / "2_github_pages_actions" / "engines" / "papiro_de_cadmo" / "extractors"
 PAPIRO_EXT_MIRROR = BASE_DIR / "papiro-de-cadmo" / "extractors"
+PAPIRO_CFG_SRC = OLYMPOS_DIR / "2_github_pages_actions" / "engines" / "papiro_de_cadmo" / "config"
+PAPIRO_CFG_MIRROR = BASE_DIR / "papiro-de-cadmo" / "config"
 WF_SRC = OLYMPOS_DIR / ".github" / "workflows"
 WF_MIRROR = OLYMPOS_DIR / "2_github_pages_actions" / "workflows_mirror"
 
@@ -132,6 +134,12 @@ def sync_papiro_pipeline():
             dst = PAPIRO_EXT_MIRROR / py_file.name
             shutil.copy2(py_file, dst)
             print(f"  -> Copiado {py_file.name} para papiro-de-cadmo/extractors/")
+    if PAPIRO_CFG_SRC.exists():
+        PAPIRO_CFG_MIRROR.mkdir(parents=True, exist_ok=True)
+        for json_file in PAPIRO_CFG_SRC.glob("*.json"):
+            dst = PAPIRO_CFG_MIRROR / json_file.name
+            shutil.copy2(json_file, dst)
+            print(f"  -> Copiado {json_file.name} para papiro-de-cadmo/config/")
     if WF_MIRROR.exists():
         for yml_file in WF_SRC.glob("*.yml"):
             dst = WF_MIRROR / yml_file.name
