@@ -11,6 +11,7 @@ import re
 import unicodedata
 from pathlib import Path
 from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
 import pandas as pd
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -68,6 +69,51 @@ MAPA_SINONIMOS = {
     "cpf": "cpf",
     "cpf mascarado": "cpf"
 }
+
+MAPA_NOMES_ENTES = {
+    "ceara_mirim": "Ceará-Mirim",
+    "cearamirim": "Ceará-Mirim",
+    "parnamirim": "Parnamirim",
+    "sga": "São Gonçalo do Amarante",
+    "macaiba": "Macaíba",
+    "extremoz": "Extremoz",
+    "nisia_floresta": "Nísia Floresta",
+    "monte_alegre": "Monte Alegre",
+    "ielmo_marinho": "Ielmo Marinho",
+    "sao_paulo_potengi": "São Paulo do Potengi",
+    "joao_camara": "João Câmara",
+    "poco_branco": "Poço Branco",
+    "taipu": "Taipú",
+    "touros": "Touros",
+    "rio_do_fogo": "Rio do Fogo",
+    "natal": "Natal",
+    "estado_rn": "Governo do Estado do Rio Grande do Norte",
+}
+
+
+def extrair_ente_e_competencia(nome_stem: str, competencia_padrao: str = "") -> Tuple[str, str]:
+    r"""
+    Extrai o ente_id e a competência (formato YYYY-MM) do stem do arquivo de forma resiliente.
+    Suporta nomes de entes com múltiplos underscores (ex: 'ceara_mirim_2026-10', 'sao_paulo_potengi_2026-10').
+    Usa regex r"\d{4}-\d{2}" para garantir que a competência seja estritamente ano-mês e nunca 'mirim'.
+    """
+    match = re.search(r"\d{4}-\d{2}", nome_stem)
+    if match:
+        comp = match.group(0)
+        prefixo = nome_stem[:match.start()].rstrip("_-")
+        ente_id = prefixo if prefixo else nome_stem
+    else:
+        comp = competencia_padrao or datetime.now().strftime("%Y-%m")
+        ente_id = nome_stem
+
+    # Garante que a competência seja estritamente no formato YYYY-MM e nunca 'mirim'
+    if not re.match(r"^\d{4}-\d{2}$", str(comp).strip()):
+        if competencia_padrao and re.match(r"^\d{4}-\d{2}$", str(competencia_padrao).strip()):
+            comp = competencia_padrao
+        else:
+            comp = datetime.now().strftime("%Y-%m")
+
+    return ente_id, comp
 
 
 def limpar_texto(val):
@@ -175,18 +221,30 @@ def normalizar_dataframe(df: pd.DataFrame, ente_default: str, comp_default: str,
     df_ren = df_ren.loc[:, ~df_ren.columns.duplicated()]
 
     # 2. Assegurar colunas essenciais
+    comp_default_limpo = str(comp_default).strip() if comp_default else ""
+    m_comp = re.search(r"\d{4}-\d{2}", comp_default_limpo)
+    comp_padrao_valida = m_comp.group(0) if m_comp else datetime.now().strftime("%Y-%m")
+
     for col in COLUNAS_PADRAO:
         if col not in df_ren.columns:
             if col == "ente_origem":
                 df_ren[col] = ente_default
             elif col == "competencia":
-                df_ren[col] = comp_default
+                df_ren[col] = comp_padrao_valida
             elif col == "carga_horaria":
                 df_ren[col] = "30h"
             elif col == "situacao_vinculo":
                 df_ren[col] = "ATIVO"
             else:
                 df_ren[col] = ""
+
+    # Sanitização defensiva da coluna competencia: nunca pode ser 'mirim' ou formato inválido
+    def _sanitizar_competencia(val):
+        s = str(val).strip() if pd.notna(val) else ""
+        m = re.search(r"\d{4}-\d{2}", s)
+        return m.group(0) if m else comp_padrao_valida
+
+    df_ren["competencia"] = df_ren["competencia"].apply(_sanitizar_competencia)
 
     # 3. Formatação
     df_ren["nome_completo"] = df_ren["nome_completo"].apply(limpar_texto).str.upper()
@@ -208,31 +266,32 @@ def normalizar_dataframe(df: pd.DataFrame, ente_default: str, comp_default: str,
     return df_ren[COLUNAS_PADRAO]
 
 
-def processar_todos():
+def processar_todos(competencia_override: Optional[str] = None):
     raiz = Path(__file__).resolve().parent.parent
     raw_dir = raiz / "data" / "raw"
     processed_dir = raiz / "data" / "processed"
     processed_dir.mkdir(parents=True, exist_ok=True)
 
-    arquivos = list(raw_dir.glob("*.csv"))
+    arquivos = sorted(raw_dir.glob("*.csv"))
     if not arquivos:
         logger.warning("Nenhum arquivo CSV encontrado em data/raw para normalização.")
         return None
 
-    competencia_padrao = datetime.now().strftime("%Y-%m")
+    competencia_padrao = competencia_override or datetime.now().strftime("%Y-%m")
     dfs_consolidados = []
 
     for arq in arquivos:
         nome_stem = arq.stem
-        partes = nome_stem.split("_")
-        ente_id = partes[0]
-        comp = partes[1] if len(partes) > 1 else competencia_padrao
+        ente_id, comp = extrair_ente_e_competencia(nome_stem, competencia_padrao)
 
-        logger.info(f"Normalizando dados de {arq.name} ({ente_id})...")
+        # Mapeia para o nome canônico do ente
+        ente_canonico = MAPA_NOMES_ENTES.get(ente_id.lower(), ente_id.replace("_", " ").title())
+
+        logger.info(f"Normalizando dados de {arq.name} ({ente_canonico} - {comp})...")
         try:
             df = ler_csv_transparencia(arq)
             if df is not None and len(df) > 0:
-                df_norm = normalizar_dataframe(df, ente_id.replace("_", " ").title(), comp)
+                df_norm = normalizar_dataframe(df, ente_canonico, comp)
                 dfs_consolidados.append(df_norm)
                 logger.info(f"Arquivo {arq.name} normalizado: {len(df_norm)} servidores adicionados.")
         except Exception as e:

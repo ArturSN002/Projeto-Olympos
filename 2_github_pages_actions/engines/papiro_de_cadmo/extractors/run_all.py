@@ -145,17 +145,30 @@ def extrair_portal(p: Dict[str, Any], raw_dir: Path, competencia: Optional[str] 
             else:
                 arquivo_valido = validar_csv_valido(Path(arquivo_salvo))
 
-        if arquivo_valido:
-            logger.info(f"Coleta de {ente_nome} concluída em {elapsed}s -> {Path(arquivo_salvo).name}")
-            return {"status": "sucesso", "ente": ente_nome, "arquivo": str(arquivo_salvo), "duracao_s": elapsed}
-        else:
-            # Exclui arquivo parcial corrompido ou vazio
+        # Se a extração remota não retornou arquivo válido, verifica se já existe
+        # base bruta válida previamente extraída para este ente em data/raw/
+        if not arquivo_valido:
             if arquivo_salvo and Path(arquivo_salvo).exists():
                 try:
                     Path(arquivo_salvo).unlink(missing_ok=True)
                 except Exception:
                     pass
+            arquivo_salvo = None
 
+            pid = str(p.get("id", "")).strip().lower()
+            if pid:
+                candidatos = sorted(raw_dir.glob(f"{pid}_*.csv"), reverse=True)
+                for cand in candidatos:
+                    if validar_csv_valido(cand):
+                        arquivo_salvo = cand
+                        arquivo_valido = True
+                        logger.info(f"Coleta de {ente_nome}: base prévia válida identificada em data/raw/ -> {cand.name}")
+                        break
+
+        if arquivo_valido:
+            logger.info(f"Coleta de {ente_nome} concluída em {elapsed}s -> {Path(arquivo_salvo).name}")
+            return {"status": "sucesso", "ente": ente_nome, "arquivo": str(arquivo_salvo), "duracao_s": elapsed}
+        else:
             logger.warning(
                 f"[Aviso] Coleta de {ente_nome} falhou ou retornou vazia. "
                 "Registrando log de aviso e prosseguindo imediatamente com os dados da próxima secretaria..."
@@ -164,6 +177,14 @@ def extrair_portal(p: Dict[str, Any], raw_dir: Path, competencia: Optional[str] 
 
     except Exception as e:
         elapsed = round(time.time() - t0, 2)
+        pid = str(p.get("id", "")).strip().lower()
+        if pid:
+            candidatos = sorted(raw_dir.glob(f"{pid}_*.csv"), reverse=True)
+            for cand in candidatos:
+                if validar_csv_valido(cand):
+                    logger.info(f"Coleta de {ente_nome}: recuperada após exceção via base prévia válida -> {cand.name}")
+                    return {"status": "sucesso", "ente": ente_nome, "arquivo": str(cand), "duracao_s": elapsed}
+
         logger.warning(
             f"[Aviso] Coleta de {ente_nome} falhou ou retornou vazia. "
             "Registrando log de aviso e prosseguindo imediatamente com os dados da próxima secretaria..."

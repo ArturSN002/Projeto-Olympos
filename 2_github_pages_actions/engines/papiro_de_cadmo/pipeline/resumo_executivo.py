@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 import json
 import logging
 import os
+import re
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -112,8 +113,12 @@ def obter_status_persistencia(raiz: Path) -> Dict[str, Any]:
     supabase_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "").strip()
     gcp_sa_key = os.environ.get("GCP_SA_KEY", "").strip()
     drive_folder_id = os.environ.get("DRIVE_FOLDER_ID", PASTA_DRIVE_OFICIAL_ID).strip()
+    gas_webhook_url = os.environ.get("GAS_WEBHOOK_URL", "").strip()
 
     status_sb_json = raiz / "data" / "processed" / "status_supabase.json"
+    if not status_sb_json.exists():
+        status_sb_json = raiz / "data" / "status_supabase.json"
+
     sb_detalhes = None
     if status_sb_json.exists():
         try:
@@ -122,21 +127,54 @@ def obter_status_persistencia(raiz: Path) -> Dict[str, Any]:
         except Exception:
             pass
 
+    status_drive_json = raiz / "data" / "processed" / "status_drive.json"
+    if not status_drive_json.exists():
+        status_drive_json = raiz / "data" / "status_drive.json"
+
+    drive_detalhes = None
+    if status_drive_json.exists():
+        try:
+            with open(status_drive_json, "r", encoding="utf-8") as f:
+                drive_detalhes = json.load(f)
+        except Exception:
+            pass
+
     # Status Supabase
-    if supabase_url and supabase_key:
-        if sb_detalhes and sb_detalhes.get("sucesso"):
+    if sb_detalhes:
+        if sb_detalhes.get("sucesso"):
             enviados = sb_detalhes.get("enviados", 0)
             status_supabase = f"🟢 Ativo ({enviados:,} tuplas persistidas)"
             status_supabase_badge = "🟢 Sincronizado"
         else:
-            status_supabase = f"🟢 Configurado ({TABELA_SUPABASE_OFICIAL})"
-            status_supabase_badge = "🟢 Conectado"
+            motivo_sb = sb_detalhes.get("motivo", "")
+            if not supabase_url or not supabase_key or "não configurad" in motivo_sb.lower():
+                status_supabase = "🟡 Pendente de credenciais (SUPABASE_URL / KEY)"
+                status_supabase_badge = "🟡 Aguardando Secrets"
+            else:
+                status_supabase = f"🔴 Falha ({motivo_sb or 'Erro PostgREST'})"
+                status_supabase_badge = "🔴 Falha"
+    elif supabase_url and supabase_key:
+        status_supabase = f"🟢 Configurado ({TABELA_SUPABASE_OFICIAL})"
+        status_supabase_badge = "🟢 Conectado"
     else:
         status_supabase = "🟡 Pendente de credenciais (SUPABASE_URL / KEY)"
         status_supabase_badge = "🟡 Aguardando Secrets"
 
     # Status Google Drive
-    if gcp_sa_key:
+    if drive_detalhes:
+        if drive_detalhes.get("sucesso"):
+            fid = drive_detalhes.get("file_id") or "salvo"
+            status_drive = f"🟢 Ativo (Pasta: {drive_folder_id}, ID: {fid})"
+            status_drive_badge = "🟢 Sincronizado"
+        else:
+            motivo_drive = drive_detalhes.get("motivo", "")
+            if (not gcp_sa_key and not gas_webhook_url) or "não configurad" in motivo_drive.lower():
+                status_drive = f"🟡 Pendente de GCP_SA_KEY (Pasta: {drive_folder_id})"
+                status_drive_badge = "🟡 Aguardando SA Key"
+            else:
+                status_drive = f"🔴 Falha ({motivo_drive or 'Erro Drive API'})"
+                status_drive_badge = "🔴 Falha"
+    elif gcp_sa_key or gas_webhook_url:
         status_drive = f"🟢 Ativo (Pasta: {drive_folder_id})"
         status_drive_badge = "🟢 Sincronizado"
     else:
@@ -230,14 +268,17 @@ def gerar_markdown_resumo(
     if df_processado is not None and not df_processado.empty:
         for ente_nome, grupo in df_processado.groupby("ente_origem"):
             contagem_por_ente[str(ente_nome)] = len(grupo)
-            comps = grupo["competencia"].dropna().unique()
-            if len(comps) > 0 and comps[0]:
-                competencia_por_ente[str(ente_nome)] = str(comps[0])
-                if competencia_geral == "--":
-                    competencia_geral = str(comps[0])
+            comps = [
+                str(c).strip() for c in grupo["competencia"].dropna().unique()
+                if c and str(c).strip().lower() != "mirim" and re.match(r"^\d{4}-\d{2}$", str(c).strip())
+            ]
+            if comps:
+                competencia_por_ente[str(ente_nome)] = comps[0]
+                if competencia_geral == "--" or not re.match(r"^\d{4}-\d{2}$", competencia_geral):
+                    competencia_geral = comps[0]
 
     # Se a competência geral ainda for vazia, define padrão
-    if competencia_geral == "--":
+    if competencia_geral == "--" or not re.match(r"^\d{4}-\d{2}$", competencia_geral):
         competencia_geral = datetime.now(timezone.utc).strftime("%Y-%m")
 
     # Linhas da Tabela Analítica
@@ -266,14 +307,20 @@ def gerar_markdown_resumo(
         p_id = p.get("id", "").strip().lower()
         k_nome = ente_nome.strip().lower()
 
-        # Determina contagem de servidores coletados
+        # Determina contagem de servidores coletados e competência
         qtd = 0
         comp_ente = competencia_por_ente.get(ente_nome) or competencia_geral
         for k_ente, v_qtd in contagem_por_ente.items():
             if k_nome in k_ente.lower() or p_id in k_ente.lower():
                 qtd = v_qtd
-                comp_ente = competencia_por_ente.get(k_ente, comp_ente)
+                c_candidato = competencia_por_ente.get(k_ente)
+                if c_candidato and re.match(r"^\d{4}-\d{2}$", str(c_candidato).strip()):
+                    comp_ente = str(c_candidato).strip()
                 break
+
+        # Proteção estrita contra competência 'mirim' ou formato inválido
+        if not comp_ente or str(comp_ente).strip().lower() == "mirim" or not re.match(r"^\d{4}-\d{2}$", str(comp_ente).strip()):
+            comp_ente = competencia_geral
 
         # Determina cruzamentos com Ceará-Mirim
         is_ceara = p.get("base_controle_local") or "ceará-mirim" in k_nome or "ceara-mirim" in k_nome
@@ -290,7 +337,9 @@ def gerar_markdown_resumo(
         if k_nome in sucessos_map or p_id in sucessos_map:
             suc = sucessos_map.get(k_nome) or sucessos_map.get(p_id)
             dur = suc.get("duracao_s", 0.0)
-            status_extracao = f"🟢 Sucesso ({dur:.1f}s)"
+            status_extracao = f"🟢 Sucesso ({dur:.1f}s)" if dur > 0 else "🟢 Sucesso"
+        elif qtd > 0:
+            status_extracao = "🟢 Sucesso"
         elif k_nome in falhas_map or p_id in falhas_map:
             flh = falhas_map.get(k_nome) or falhas_map.get(p_id)
             motivo = flh.get("motivo", "Falha de conexão")
@@ -298,7 +347,7 @@ def gerar_markdown_resumo(
                 motivo = motivo[:27] + "..."
             status_extracao = f"🔴 Falha ({motivo})"
         else:
-            status_extracao = f"🟢 Sucesso (Local)" if qtd > 0 else "⚪ Não executado"
+            status_extracao = "⚪ Não executado"
 
         # Determina status da persistência
         if qtd > 0:
@@ -308,6 +357,8 @@ def gerar_markdown_resumo(
                 status_persistencia = "🟢 Supabase (Drive Pend.)"
             elif "🟢" in persistencia["status_drive_badge"]:
                 status_persistencia = "🟢 Drive (Supabase Pend.)"
+            elif "🔴" in persistencia["status_supabase_badge"] or "🔴" in persistencia["status_drive_badge"]:
+                status_persistencia = "🔴 Falha Persistência"
             else:
                 status_persistencia = "🟡 Local (Pendente Secrets)"
         else:
