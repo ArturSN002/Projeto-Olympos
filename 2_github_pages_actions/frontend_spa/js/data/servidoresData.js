@@ -25,10 +25,83 @@
     return m ? parseInt(m[0], 10) : 30;
   }
 
+  function converterDocenteCearaMirim(d) {
+    var mat = String(d.m || d.matricula || '').trim();
+    var nome = String(d.n || d.nome || '').trim();
+    var cpf = d.c || d.cpfMascarado || '###.***.***-##';
+    var cargo = d.g || d.cargo || 'PROFESSOR NIVEL SUPERIOR';
+    var ch = parseCargaHoraria(d.h || d.cargaHoraria || 30);
+    var lot = d.l || d.lotacao || 'SECRETARIA MUNICIPAL DE EDUCAÇÃO BÁSICA';
+    return {
+      id: mat || ('cm_' + normalizarTexto(nome).replace(/\s+/g, '_')),
+      matricula: mat,
+      m: mat,
+      nome: nome,
+      n: nome,
+      cpfMascarado: cpf,
+      c: cpf,
+      ente: "SMEB Ceará-Mirim",
+      enteId: "ceara_mirim",
+      orgao: "Secretaria Municipal de Educação Básica",
+      quadro: "Docente",
+      cargo: cargo,
+      g: cargo,
+      funcao: "Docência Municipal",
+      cargaHoraria: ch,
+      cargaHorariaTexto: ch + "h",
+      h: ch + "h",
+      lotacao: lot,
+      l: lot,
+      lotacaoId: "smeb_sede",
+      turno: "Matutino/Vespertino",
+      regime: "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: "2010-02-15"
+    };
+  }
+
+  function converterServidorEstadoRN(d) {
+    var mat = String(d.m || d.matricula || '').trim();
+    var nome = String(d.n || d.nome || '').trim();
+    var cpf = d.c || d.cpfMascarado || '###.***.***-##';
+    var cargo = d.g || d.cargo || 'PROFESSOR EFETIVO';
+    var ch = parseCargaHoraria(d.h || d.cargaHoraria || 30);
+    var lot = d.l || d.lotacao || 'SEEC / Governo do Estado do RN';
+    var quadro = d.quadro || (normalizarTexto(cargo).indexOf('especialista') !== -1 ? 'Técnico' : 'Docente');
+    return {
+      id: mat || ('rn_' + normalizarTexto(nome).replace(/\s+/g, '_')),
+      matricula: mat,
+      m: mat,
+      nome: nome,
+      n: nome,
+      cpfMascarado: cpf,
+      c: cpf,
+      ente: d.ente || "Governo do Estado (SEEC)",
+      enteId: "governo_rn",
+      orgao: d.orgao || "SEEC / Governo do Estado do RN",
+      quadro: quadro,
+      cargo: cargo,
+      g: cargo,
+      funcao: d.funcao || "Docência / Gestão Estadual",
+      cargaHoraria: ch,
+      cargaHorariaTexto: ch + "h",
+      h: ch + "h",
+      lotacao: lot,
+      l: lot,
+      lotacaoId: d.lotacaoId || "seec_rn",
+      turno: d.turno || "Matutino",
+      regime: d.regime || "Efetivo / Estatutário",
+      situacao: "Ativo",
+      status: "ATIVO",
+      dataAdmissao: d.dataAdmissao || "2008-03-10"
+    };
+  }
+
   // --- 1. BASE CEARÁ-MIRIM (SMEB) ---
   var SERVIDORES_CEARA_MIRIM = [
     {
-      id: "cm_doc_001",
+      id: "0010016",
       matricula: "0010016",
       m: "0010016",
       nome: "ODJAIME CAMARA DE ARAUJO",
@@ -55,7 +128,7 @@
       dataAdmissao: "2010-02-15"
     },
     {
-      id: "cm_doc_002",
+      id: "0010024",
       matricula: "0010024",
       m: "0010024",
       nome: "MARIA MARGARETH DA SILVA PEREIRA",
@@ -82,7 +155,7 @@
       dataAdmissao: "2012-03-01"
     },
     {
-      id: "cm_doc_003",
+      id: "0010032",
       matricula: "0010032",
       m: "0010032",
       nome: "ANA PAULA RIBEIRO DE SOUZA",
@@ -109,7 +182,7 @@
       dataAdmissao: "2015-08-10"
     },
     {
-      id: "cm_adm_001",
+      id: "0042105",
       matricula: "0042105",
       m: "0042105",
       nome: "LUCAS MENDES COSTA",
@@ -136,7 +209,7 @@
       dataAdmissao: "2018-05-14"
     },
     {
-      id: "cm_adm_002",
+      id: "0042189",
       matricula: "0042189",
       m: "0042189",
       nome: "JULIANA FREIRE BARRETO",
@@ -163,7 +236,7 @@
       dataAdmissao: "2019-02-01"
     },
     {
-      id: "cm_apo_001",
+      id: "0038912",
       matricula: "0038912",
       m: "0038912",
       nome: "TEREZA CRISTINA FARIAS",
@@ -190,7 +263,7 @@
       dataAdmissao: "2014-06-20"
     },
     {
-      id: "cm_apo_002",
+      id: "0038988",
       matricula: "0038988",
       m: "0038988",
       nome: "JOAO PAULO BEZERRA CAVALCANTE",
@@ -217,7 +290,7 @@
       dataAdmissao: "2016-04-11"
     },
     {
-      id: "cm_tec_001",
+      id: "0051204",
       matricula: "0051204",
       m: "0051204",
       nome: "FELIPE AGUIAR NOBREGA",
@@ -244,7 +317,7 @@
       dataAdmissao: "2021-03-15"
     },
     {
-      id: "cm_tec_002",
+      id: "0051280",
       matricula: "0051280",
       m: "0051280",
       nome: "BEATRIZ CARVALHO DE MACEDO",
@@ -271,7 +344,7 @@
       dataAdmissao: "2021-04-01"
     },
     {
-      id: "cm_ope_001",
+      id: "0024501",
       matricula: "0024501",
       m: "0024501",
       nome: "MANOEL VICENTE DOS SANTOS",
@@ -298,7 +371,7 @@
       dataAdmissao: "2011-09-01"
     },
     {
-      id: "cm_ope_002",
+      id: "0024599",
       matricula: "0024599",
       m: "0024599",
       nome: "FRANCISCA HELENA ALVES",
@@ -329,7 +402,7 @@
   // --- 2. BASE GOVERNO DO ESTADO DO RN (SEEC) ---
   var SERVIDORES_ESTADO_RN = [
     {
-      id: "rn_doc_001",
+      id: "184920-1",
       matricula: "184920-1",
       m: "184920-1",
       nome: "ODJAIME CAMARA DE ARAUJO",
@@ -356,7 +429,7 @@
       dataAdmissao: "2008-03-10"
     },
     {
-      id: "rn_doc_002",
+      id: "192341-2",
       matricula: "192341-2",
       m: "192341-2",
       nome: "FRANCISCO DE ASSIS MEDEIROS",
@@ -383,7 +456,7 @@
       dataAdmissao: "2011-04-15"
     },
     {
-      id: "rn_doc_003",
+      id: "178923-4",
       matricula: "178923-4",
       m: "178923-4",
       nome: "MARIA APARECIDA DA SILVA COSTA",
@@ -410,7 +483,7 @@
       dataAdmissao: "2006-02-01"
     },
     {
-      id: "rn_doc_004",
+      id: "204891-0",
       matricula: "204891-0",
       m: "204891-0",
       nome: "JOSE CARLOS DO NASCIMENTO",
@@ -437,7 +510,7 @@
       dataAdmissao: "2013-08-20"
     },
     {
-      id: "rn_doc_005",
+      id: "211904-8",
       matricula: "211904-8",
       m: "211904-8",
       nome: "ANA CLAUDIA BEZERRA LIMA",
@@ -464,7 +537,7 @@
       dataAdmissao: "2015-02-15"
     },
     {
-      id: "rn_doc_006",
+      id: "198762-3",
       matricula: "198762-3",
       m: "198762-3",
       nome: "MARCOS ANTONIO ALVES PEREIRA",
@@ -491,7 +564,7 @@
       dataAdmissao: "2012-10-01"
     },
     {
-      id: "rn_tec_001",
+      id: "165432-9",
       matricula: "165432-9",
       m: "165432-9",
       nome: "LUCIA DE FATIMA RODRIGUES",
@@ -518,7 +591,7 @@
       dataAdmissao: "2004-03-20"
     },
     {
-      id: "rn_doc_007",
+      id: "223401-5",
       matricula: "223401-5",
       m: "223401-5",
       nome: "RAIMUNDO NONATO FERREIRA",
@@ -545,7 +618,7 @@
       dataAdmissao: "2016-09-12"
     },
     {
-      id: "rn_doc_008",
+      id: "189045-7",
       matricula: "189045-7",
       m: "189045-7",
       nome: "SANDRA REGINA DE SOUZA",
@@ -572,7 +645,7 @@
       dataAdmissao: "2009-05-18"
     },
     {
-      id: "rn_doc_009",
+      id: "201984-6",
       matricula: "201984-6",
       m: "201984-6",
       nome: "PAULO ROBERTO TAVARES",
@@ -599,7 +672,7 @@
       dataAdmissao: "2013-01-28"
     },
     {
-      id: "rn_adm_001",
+      id: "154321-7",
       matricula: "154321-7",
       m: "154321-7",
       nome: "CLARA BEATRIZ VASCONCELOS",
@@ -626,7 +699,7 @@
       dataAdmissao: "2005-07-15"
     },
     {
-      id: "rn_apo_001",
+      id: "142109-8",
       matricula: "142109-8",
       m: "142109-8",
       nome: "SEBASTIAO GOMES DA SILVA",
@@ -653,7 +726,7 @@
       dataAdmissao: "2003-11-03"
     },
     {
-      id: "rn_ope_001",
+      id: "131908-4",
       matricula: "131908-4",
       m: "131908-4",
       nome: "ANTONIO CLAUDIO DE SOUZA",
@@ -684,7 +757,7 @@
   // --- 3. BASE NATAL (SME NATAL) ---
   var SERVIDORES_NATAL = [
     {
-      id: "nat_doc_001",
+      id: "082341-9",
       matricula: "082341-9",
       m: "082341-9",
       nome: "FABIO HENRIQUE BEZERRA",
@@ -711,7 +784,7 @@
       dataAdmissao: "2014-03-10"
     },
     {
-      id: "nat_adm_001",
+      id: "071982-3",
       matricula: "071982-3",
       m: "071982-3",
       nome: "CAMILA DANTAS DE ALBUQUERQUE",
@@ -738,7 +811,7 @@
       dataAdmissao: "2017-09-01"
     },
     {
-      id: "nat_apo_001",
+      id: "065412-1",
       matricula: "065412-1",
       m: "065412-1",
       nome: "IVANILDO CANDIDO PEREIRA",
@@ -765,7 +838,7 @@
       dataAdmissao: "2013-05-19"
     },
     {
-      id: "nat_tec_001",
+      id: "059871-4",
       matricula: "059871-4",
       m: "059871-4",
       nome: "JULIANA ROCHA TAVARES",
@@ -792,7 +865,7 @@
       dataAdmissao: "2019-11-04"
     },
     {
-      id: "nat_ope_001",
+      id: "041239-8",
       matricula: "041239-8",
       m: "041239-8",
       nome: "MARIA DO CARMO SILVA",
@@ -823,7 +896,7 @@
   // --- 4. BASE PARNAMIRIM (SEMEC PARNAMIRIM) ---
   var SERVIDORES_PARNAMIRIM = [
     {
-      id: "par_doc_001",
+      id: "091245-6",
       matricula: "091245-6",
       m: "091245-6",
       nome: "ROBERTA KELLY NOGUEIRA",
@@ -850,7 +923,7 @@
       dataAdmissao: "2016-02-18"
     },
     {
-      id: "par_adm_001",
+      id: "084512-3",
       matricula: "084512-3",
       m: "084512-3",
       nome: "GABRIEL MONTEIRO SOUZA",
@@ -877,7 +950,7 @@
       dataAdmissao: "2018-08-01"
     },
     {
-      id: "par_apo_001",
+      id: "078921-0",
       matricula: "078921-0",
       m: "078921-0",
       nome: "ELIZABETH SOARES LIMA",
@@ -904,7 +977,7 @@
       dataAdmissao: "2015-05-12"
     },
     {
-      id: "par_tec_001",
+      id: "063214-5",
       matricula: "063214-5",
       m: "063214-5",
       nome: "TIAGO ALEXANDRE MOREIRA",
@@ -931,7 +1004,7 @@
       dataAdmissao: "2020-09-15"
     },
     {
-      id: "par_ope_001",
+      id: "051874-2",
       matricula: "051874-2",
       m: "051874-2",
       nome: "FRANCISCO CANINDE RAMOS",
@@ -962,7 +1035,7 @@
   // --- 5. BASE SÃO GONÇALO DO AMARANTE (SME SGA) ---
   var SERVIDORES_SGA = [
     {
-      id: "sga_doc_001",
+      id: "076541-2",
       matricula: "076541-2",
       m: "076541-2",
       nome: "ALDENOR FRANCISCO DE LIMA",
@@ -989,7 +1062,7 @@
       dataAdmissao: "2015-03-23"
     },
     {
-      id: "sga_adm_001",
+      id: "083219-4",
       matricula: "083219-4",
       m: "083219-4",
       nome: "PATRICIA GOMES DA SILVEIRA",
@@ -1016,7 +1089,7 @@
       dataAdmissao: "2017-06-12"
     },
     {
-      id: "sga_apo_001",
+      id: "064128-9",
       matricula: "064128-9",
       m: "064128-9",
       nome: "JOSE NILTON BARBOSA",
@@ -1043,7 +1116,7 @@
       dataAdmissao: "2013-09-02"
     },
     {
-      id: "sga_tec_001",
+      id: "079812-3",
       matricula: "079812-3",
       m: "079812-3",
       nome: "MARCELA GUIMARAES PINTO",
@@ -1070,7 +1143,7 @@
       dataAdmissao: "2019-04-16"
     },
     {
-      id: "sga_ope_001",
+      id: "049871-5",
       matricula: "049871-5",
       m: "049871-5",
       nome: "SEVERINO RAMOS DOS SANTOS",
@@ -1110,10 +1183,56 @@
   // --- API CANÔNICA window.OlymposServidores ---
   var OlymposServidores = {
     /**
-     * Retorna array consolidado de todos os servidores cadastrados nos 5 entes
+     * Retorna array consolidado de todos os servidores cadastrados nos 5 entes.
+     * Unifica dinamicamente DOCENTES_CEARA_MIRIM e SERVIDORES_ESTADO_RN se disponíveis.
      */
     obterTodos: function() {
-      return OLYMPOS_SERVIDORES_UNIFICADOS.slice();
+      var fonteDocentes = null;
+      if (typeof root !== 'undefined' && root.DOCENTES_CEARA_MIRIM && Array.isArray(root.DOCENTES_CEARA_MIRIM)) {
+        fonteDocentes = root.DOCENTES_CEARA_MIRIM;
+      } else if (typeof window !== 'undefined' && window.DOCENTES_CEARA_MIRIM && Array.isArray(window.DOCENTES_CEARA_MIRIM)) {
+        fonteDocentes = window.DOCENTES_CEARA_MIRIM;
+      } else if (typeof window !== 'undefined' && window.OlymposViews && window.OlymposViews.papiroCadmo && typeof window.OlymposViews.papiroCadmo.obterDocentesCearaMirim === 'function') {
+        fonteDocentes = window.OlymposViews.papiroCadmo.obterDocentesCearaMirim();
+      }
+
+      var cearaServidores = SERVIDORES_CEARA_MIRIM;
+      if (fonteDocentes && fonteDocentes.length > 0) {
+        var docentesDerivados = fonteDocentes.map(converterDocenteCearaMirim);
+        var outrosQuadrosCM = SERVIDORES_CEARA_MIRIM.filter(function(s) {
+          return normalizarTexto(s.quadro) !== 'docente';
+        });
+        cearaServidores = docentesDerivados.concat(outrosQuadrosCM);
+      }
+
+      var fonteEstado = null;
+      if (typeof root !== 'undefined' && root.SERVIDORES_ESTADO_RN && Array.isArray(root.SERVIDORES_ESTADO_RN)) {
+        fonteEstado = root.SERVIDORES_ESTADO_RN;
+      } else if (typeof window !== 'undefined' && window.SERVIDORES_ESTADO_RN && Array.isArray(window.SERVIDORES_ESTADO_RN)) {
+        fonteEstado = window.SERVIDORES_ESTADO_RN;
+      } else if (typeof window !== 'undefined' && window.OlymposViews && window.OlymposViews.papiroCadmo && window.OlymposViews.papiroCadmo.SERVIDORES_ESTADO_RN) {
+        fonteEstado = window.OlymposViews.papiroCadmo.SERVIDORES_ESTADO_RN;
+      }
+
+      var estadoServidores = SERVIDORES_ESTADO_RN;
+      if (fonteEstado && fonteEstado.length > 0) {
+        var estadoDerivados = fonteEstado.map(converterServidorEstadoRN);
+        var outrosQuadrosEstado = SERVIDORES_ESTADO_RN.filter(function(s) {
+          return normalizarTexto(s.quadro) !== 'docente';
+        });
+        var matsEstado = {};
+        estadoDerivados.forEach(function(s) { matsEstado[s.matricula] = true; });
+        var complementares = outrosQuadrosEstado.filter(function(s) { return !matsEstado[s.matricula]; });
+        estadoServidores = estadoDerivados.concat(complementares);
+      }
+
+      return [].concat(
+        cearaServidores,
+        estadoServidores,
+        SERVIDORES_NATAL,
+        SERVIDORES_PARNAMIRIM,
+        SERVIDORES_SGA
+      );
     },
 
     /**
@@ -1122,7 +1241,7 @@
      */
     obterPorEnte: function(enteId) {
       var norm = normalizarTexto(enteId).replace(/[^a-z0-9]/g, '');
-      return OLYMPOS_SERVIDORES_UNIFICADOS.filter(function(s) {
+      return this.obterTodos().filter(function(s) {
         var sEnteId = normalizarTexto(s.enteId || '').replace(/[^a-z0-9]/g, '');
         var sEnteNome = normalizarTexto(s.ente || '').replace(/[^a-z0-9]/g, '');
         return sEnteId.indexOf(norm) !== -1 || sEnteNome.indexOf(norm) !== -1;
@@ -1135,7 +1254,7 @@
      */
     obterPorQuadro: function(quadro) {
       var norm = normalizarTexto(quadro);
-      return OLYMPOS_SERVIDORES_UNIFICADOS.filter(function(s) {
+      return this.obterTodos().filter(function(s) {
         return normalizarTexto(s.quadro) === norm;
       });
     },
@@ -1150,7 +1269,7 @@
       var termoNorm = normalizarTexto(termo);
       var termoMat = normalizarMatricula(termo);
 
-      var lista = OLYMPOS_SERVIDORES_UNIFICADOS.filter(function(s) {
+      var lista = this.obterTodos().filter(function(s) {
         // Filtro por termo
         if (termoNorm) {
           var nomeNorm = normalizarTexto(s.nome);
@@ -1224,10 +1343,12 @@
       var termoNorm = normalizarTexto(matriculaOuNome);
       var termoMat = normalizarMatricula(matriculaOuNome);
 
+      var todos = this.obterTodos();
+
       // Localiza o servidor semente
       var servidorEncontrado = null;
-      for (var i = 0; i < OLYMPOS_SERVIDORES_UNIFICADOS.length; i++) {
-        var s = OLYMPOS_SERVIDORES_UNIFICADOS[i];
+      for (var i = 0; i < todos.length; i++) {
+        var s = todos[i];
         if (normalizarMatricula(s.matricula) === termoMat || normalizarTexto(s.nome) === termoNorm || normalizarTexto(s.nome).indexOf(termoNorm) !== -1) {
           servidorEncontrado = s;
           break;
@@ -1242,7 +1363,7 @@
       var matriculas = [];
       var cargaHorariaTotal = 0;
 
-      OLYMPOS_SERVIDORES_UNIFICADOS.forEach(function(s) {
+      todos.forEach(function(s) {
         if (normalizarTexto(s.nome) === nomeNormAlvo) {
           if (matriculas.indexOf(s.matricula) === -1) {
             matriculas.push(s.matricula);

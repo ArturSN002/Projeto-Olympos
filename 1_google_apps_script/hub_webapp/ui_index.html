@@ -236,7 +236,7 @@
           <span>Planilhas Diário Oficial</span>
           <span class="drive-arrow">↗</span>
         </a>
-        <a href="https://drive.google.com/drive/folders/1VxVVONEJya4XqI2GfxHK7AFqk8dpwX9I" target="_blank" rel="noopener" class="drawer-drive-item">
+        <a href="https://drive.google.com/drive/folders/1dcc_5GcNG0ciVE-i1J6iwtojATk-1utD" target="_blank" rel="noopener" class="drawer-drive-item">
           <span class="drive-icon">🔄</span>
           <span>Acervo Papiro de Cadmo</span>
           <span class="drive-arrow">↗</span>
@@ -272,7 +272,7 @@
           <a href="https://drive.google.com/drive/folders/1qGq5uqxOtN_V63itUheYatLIcj5R86O3" target="_blank" rel="noopener" class="folder-chip">Portarias 2026 ↗</a>
           <a href="https://drive.google.com/drive/folders/1H4bJXClx66Mr5PmRmSQBQLHDpAaKwdab" target="_blank" rel="noopener" class="folder-chip">Ofícios 2026 ↗</a>
           <a href="https://drive.google.com/drive/folders/1aj514v29gytXH9j5LY_V76ap9XIblwHS" target="_blank" rel="noopener" class="folder-chip">Planilhas Diário Oficial ↗</a>
-          <a href="https://drive.google.com/drive/folders/1VxVVONEJya4XqI2GfxHK7AFqk8dpwX9I" target="_blank" rel="noopener" class="folder-chip">Acervo Papiro de Cadmo ↗</a>
+          <a href="https://drive.google.com/drive/folders/1dcc_5GcNG0ciVE-i1J6iwtojATk-1utD" target="_blank" rel="noopener" class="folder-chip">Acervo Papiro de Cadmo ↗</a>
         </div>
       </section>
 
@@ -587,12 +587,12 @@
 
                   <div class="field-group" id="grpLicNome">
                     <label for="licNomeInput">Nome Completo do(a) Servidor(a)</label>
-                    <input type="text" id="licNomeInput" class="input-clean" placeholder="Ex: MARIA DA SILVA OLIVEIRA" />
+                    <input type="text" id="licNomeInput" class="input-clean" placeholder="Nome completo do(a) servidor(a)" />
                   </div>
 
                   <div class="field-group" id="grpLicMatricula">
                     <label for="licMatriculaInput">Matrícula Funcional</label>
-                    <input type="text" id="licMatriculaInput" class="input-clean" placeholder="Ex: 123456-7" />
+                    <input type="text" id="licMatriculaInput" class="input-clean" placeholder="Matrícula funcional" />
                   </div>
 
                   <div class="field-group" id="grpLicCargo">
@@ -828,7 +828,7 @@
                 <p class="section-desc">Motor ETL em Python + Playwright agendado todo dia 12 às 03:00 UTC para validar vínculos ativos de servidores cedidos e permutados entre Ceará-Mirim, 14 municípios potiguares e SEEC/RN.</p>
               </div>
               <div class="button-group">
-                <a href="https://drive.google.com/drive/folders/1VxVVONEJya4XqI2GfxHK7AFqk8dpwX9I" target="_blank" rel="noopener" class="folder-chip">
+                <a href="https://drive.google.com/drive/folders/1dcc_5GcNG0ciVE-i1J6iwtojATk-1utD" target="_blank" rel="noopener" class="folder-chip">
                   Pasta Setor Pessoal (CSVs) ↗
                 </a>
                 <a href="https://docs.google.com/spreadsheets/d/1fOZHe871yxu6UdF0vsRzjSzQBc7AVFRZZtx3JSCdwCY/edit" target="_blank" rel="noopener" class="folder-chip">
@@ -959,7 +959,7 @@
               <form id="formConsultaServidorCadmo" class="servidor-lookup-searchbar" autocomplete="off">
                 <div class="servidor-lookup-input-wrap">
                   <label for="consultaServidorInput" class="sr-only">Nome completo ou matrícula funcional do servidor</label>
-                  <input type="text" id="consultaServidorInput" list="listaServidoresCearaMirim" class="input-clean" placeholder="Digite o nome do(a) servidor(a) ou matrícula (ex: 0070671, Jose Farias, 198432-1)..." autocomplete="off" />
+                  <input type="text" id="consultaServidorInput" list="listaServidoresCearaMirim" class="input-clean" placeholder="Digite o nome do(a) servidor(a) ou matrícula..." autocomplete="off" />
                 </div>
                 <div class="button-group">
                   <button type="submit" id="btnExecutarConsultaServidor" class="btn btn-primary btn-sm">
@@ -1281,7 +1281,7 @@
               <!-- LINHA 1: BARRA DE BUSCA RÁPIDA -->
               <div style="display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap;">
                 <div style="flex: 1 1 300px; position: relative;">
-                  <input type="search" id="servidorBuscaInput" class="input-clean" placeholder="Digite nome, matrícula, cargo ou escola (ex: Jose Farias, 0070671, Professor, Adele)..." style="width: 100%; padding-left: 36px;" />
+                  <input type="search" id="servidorBuscaInput" class="input-clean" placeholder="Digite nome, matrícula, cargo ou escola..." style="width: 100%; padding-left: 36px;" />
                   <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 15px; color: var(--text-muted); pointer-events: none;">🔍</span>
                 </div>
                 <div class="button-group" style="align-items: center;">
@@ -1629,7 +1629,7 @@
                   <div class="modal-body" style="padding: 20px 24px; max-height: 75vh; overflow-y: auto;">
                     <div class="field-group" style="margin-bottom: 12px;">
                       <label for="agendaTitulo">Título do Evento / Reunião *</label>
-                      <input type="text" id="agendaTitulo" name="agendaTitulo" class="input-clean" placeholder="Ex: Reunião do CAE - Prestação de Contas PNAE" required />
+                      <input type="text" id="agendaTitulo" name="agendaTitulo" class="input-clean" placeholder="Título do evento ou reunião" required />
                     </div>
 
                     <div class="modal-grid-2col" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
@@ -1742,9 +1742,9 @@
                   <span class="stat-label">Rede Municipal</span>
                   <span class="pill-badge pill-gold">SMEB</span>
                 </div>
-                <div class="stat-value" id="kpiEscolasTotal">52</div>
+                <div class="stat-value" id="kpiEscolasTotal">--</div>
                 <div class="stat-meta" style="font-size: 11.5px; line-height: 1.45;">
-                  <span id="kpiEscolasUrbanas">10</span> urbanas • <span id="kpiEscolasRurais">35</span> rurais • <span id="kpiEscolasCeis">7</span> CEIs
+                  <span id="kpiEscolasUrbanas">--</span> urbanas • <span id="kpiEscolasRurais">--</span> rurais • <span id="kpiEscolasCeis">--</span> CEIs
                 </div>
               </div>
 
@@ -1754,7 +1754,7 @@
                   <span class="stat-label">Rede Estadual</span>
                   <span class="pill-badge pill-blue">SEEC / RN</span>
                 </div>
-                <div class="stat-value" id="kpiEscolasEstaduais">2</div>
+                <div class="stat-value" id="kpiEscolasEstaduais">--</div>
                 <div class="stat-meta">Ensino Fundamental e Médio</div>
               </div>
 
@@ -1764,7 +1764,7 @@
                   <span class="stat-label">Rede Federal</span>
                   <span class="pill-badge pill-green">MEC / IFRN</span>
                 </div>
-                <div class="stat-value" id="kpiEscolasFederais">1</div>
+                <div class="stat-value" id="kpiEscolasFederais">--</div>
                 <div class="stat-meta">Ensino Técnico e Superior</div>
               </div>
 
@@ -1774,7 +1774,7 @@
                   <span class="stat-label">Instituições Privadas</span>
                   <span class="pill-badge" style="background: rgba(168,85,247,0.15); color: #A855F7; border: 1px solid rgba(168,85,247,0.3);">Rede Privada</span>
                 </div>
-                <div class="stat-value" id="kpiEscolasPrivadas">2</div>
+                <div class="stat-value" id="kpiEscolasPrivadas">--</div>
                 <div class="stat-meta">Educação Básica Particular</div>
               </div>
             </div>
@@ -1947,7 +1947,7 @@
             <div class="controls-grid search-controls-responsive" style="align-items: end; margin-bottom: 14px;">
               <div class="field-group">
                 <label for="pageBuscaInput">Termo de Pesquisa (Servidor, Matrícula, Nº do Ato ou * para listar recentes)</label>
-                <input type="search" id="pageBuscaInput" class="input-clean" placeholder="Ex: Portaria 163, Ofício 155, Permuta, Maria..." />
+                <input type="search" id="pageBuscaInput" class="input-clean" placeholder="Pesquisar ato, servidor, portaria ou palavra-chave..." />
               </div>
               <div class="field-group">
                 <label for="pageBuscaAnoSelect">Recorte Temporal</label>
@@ -2212,7 +2212,7 @@
             <!-- Campo: Nome Completo -->
             <div class="field-group" style="margin-bottom: 14px;">
               <label for="novoUsuarioNome">Nome Completo *</label>
-              <input type="text" id="novoUsuarioNome" class="input-clean" placeholder="Ex: Maria Helena dos Santos" required autocomplete="name" />
+              <input type="text" id="novoUsuarioNome" class="input-clean" placeholder="Nome completo do usuário" required autocomplete="name" />
             </div>
 
             <!-- Campo: Email Institucional -->
@@ -2286,7 +2286,7 @@
             <!-- Campo: Nome -->
             <div class="field-group" style="margin-bottom: 12px;">
               <label for="escolaNome">Nome da Unidade Escolar *</label>
-              <input type="text" id="escolaNome" name="escolaNome" class="input-clean" placeholder="Ex: E. M. Alice Garcia Freire" required />
+              <input type="text" id="escolaNome" name="escolaNome" class="input-clean" placeholder="Nome da unidade escolar" required />
             </div>
 
             <!-- Linha: INEP, Rede e Categoria Institucional -->

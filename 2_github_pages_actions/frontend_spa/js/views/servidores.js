@@ -315,6 +315,38 @@ window.OlymposViews.servidores = (function() {
   }
 
   /**
+   * Reseta os contadores de KPIs para o estado neutro de carregamento (--)
+   */
+  function zerarKpis() {
+    var kpiTotalEl = document.getElementById('kpiServidoresTotal');
+    var kpiMunEl = document.getElementById('kpiServidoresMunicipais');
+    var kpiEstEl = document.getElementById('kpiServidoresEstaduais');
+    var kpiMultEl = document.getElementById('kpiServidoresMultiplos');
+    if (kpiTotalEl) kpiTotalEl.textContent = '--';
+    if (kpiMunEl) kpiMunEl.textContent = '--';
+    if (kpiEstEl) kpiEstEl.textContent = '--';
+    if (kpiMultEl) kpiMultEl.textContent = '--';
+  }
+
+  /**
+   * Exibe estado visual de carregamento na listagem
+   */
+  function exibirCarregando() {
+    var cardsContainer = document.getElementById('servidoresContainerCards');
+    var tbody = document.getElementById('tabelaServidoresGeralBody');
+    var statusEl = document.getElementById('servidoresContagemStatus');
+    if (statusEl) {
+      statusEl.textContent = 'Consultando quadro funcional dos entes monitorados...';
+    }
+    if (cardsContainer) {
+      cardsContainer.innerHTML = '<div class="surface-card text-center" style="padding: 32px;"><div class="spinner-gold" style="margin: 0 auto 12px;"></div><p class="text-muted" style="margin: 0;">Consultando quadro funcional dos entes monitorados...</p></div>';
+    }
+    if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="8" class="text-muted text-center" style="padding: 24px;">Consultando quadro funcional dos entes monitorados...</td></tr>';
+    }
+  }
+
+  /**
    * Atualiza os KPIs no topo da tela
    */
   function atualizarKpis(todosDossies) {
@@ -361,7 +393,7 @@ window.OlymposViews.servidores = (function() {
     if (!container) return;
 
     if (listaPaginada.length === 0) {
-      container.innerHTML = '<div class="surface-card text-center" style="padding: 32px;"><p class="text-muted" style="margin-bottom: 8px;">Nenhum servidor público encontrado para os critérios selecionados.</p><button type="button" class="btn btn-secondary btn-sm" id="btnResetarFiltrosVazio">Limpar filtros e busca</button></div>';
+      container.innerHTML = '<div class="surface-card text-center" style="padding: 32px;"><p class="text-muted" style="margin-bottom: 8px;">Nenhum vínculo funcional localizado para os parâmetros informados.</p><button type="button" class="btn btn-secondary btn-sm" id="btnResetarFiltrosVazio">Limpar filtros e busca</button></div>';
       var btnReset = document.getElementById('btnResetarFiltrosVazio');
       if (btnReset) {
         btnReset.addEventListener('click', function() {
@@ -450,7 +482,7 @@ window.OlymposViews.servidores = (function() {
     if (!tbody) return;
 
     if (listaPaginada.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" class="text-muted text-center" style="padding: 24px;">Nenhum servidor encontrado para os filtros ativos.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" class="text-muted text-center" style="padding: 24px;">Nenhum vínculo funcional localizado para os parâmetros informados.</td></tr>';
       return;
     }
 
@@ -963,12 +995,18 @@ window.OlymposViews.servidores = (function() {
       });
     }
 
+    // Inicia KPIs com traços e exibe estado de carregamento
+    zerarKpis();
+    exibirCarregando();
+
     // Renderiza a consulta inicial
     atualizarConsultaCompleta();
   }
 
   return {
     init: init,
+    zerarKpis: zerarKpis,
+    exibirCarregando: exibirCarregando,
     carregarTodosDossies: carregarTodosDossies,
     filtrarDossies: filtrarDossies,
     abrirDossieModal: abrirDossieModal,

@@ -5,9 +5,10 @@ public.folha_intermunicipal utilizando SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY.
 Versão 2.0.0 — Projeto Olympos
 """
 import os
+import json
 import logging
 from pathlib import Path
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Union
 import requests
 import pandas as pd
 
@@ -15,29 +16,54 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(na
 logger = logging.getLogger("papiro.supabase_uploader")
 
 
-def sincronizar_folha_supabase(caminho_csv: Path, tamanho_lote: int = 200) -> bool:
+class ResultadoSincronizacao(dict):
+    """
+    Dicionário estruturado com o resultado da sincronização no Supabase.
+    Avalia como True em contexto booleano se sucesso for True, e False caso contrário,
+    mantendo compatibilidade estrita com asserções booleanas legadas e testes unitários.
+    """
+    def __bool__(self) -> bool:
+        return bool(self.get("sucesso", False))
+
+
+def sincronizar_folha_supabase(caminho_csv: Path, tamanho_lote: int = 200) -> ResultadoSincronizacao:
     """
     Realiza a leitura do CSV consolidado e envia os registros em lotes para a tabela
-    folha_intermunicipal do Supabase.
+    folha_intermunicipal do Supabase. Retorna um dicionário estruturado com o resultado da operação.
     """
     supabase_url = os.environ.get("SUPABASE_URL")
     service_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 
     if not supabase_url or not service_key:
         logger.warning("[SUPABASE] SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY não configuradas. Pulando sincronização.")
-        return False
+        return ResultadoSincronizacao(
+            sucesso=False,
+            total=0,
+            enviados=0,
+            motivo="SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY não configuradas"
+        )
 
     caminho = Path(caminho_csv)
     if not caminho.exists():
         logger.error(f"[SUPABASE] Arquivo CSV não encontrado: {caminho}")
-        return False
+        return ResultadoSincronizacao(
+            sucesso=False,
+            total=0,
+            enviados=0,
+            motivo=f"Arquivo CSV não encontrado: {caminho}"
+        )
 
     try:
         df = pd.read_csv(caminho, dtype=str)
         df.fillna("", inplace=True)
     except Exception as e:
         logger.error(f"[SUPABASE] Falha ao ler CSV {caminho}: {e}")
-        return False
+        return ResultadoSincronizacao(
+            sucesso=False,
+            total=0,
+            enviados=0,
+            motivo=f"Falha ao ler CSV {caminho}: {e}"
+        )
 
     endpoint = f"{supabase_url.rstrip('/')}/rest/v1/folha_intermunicipal"
     headers = {
@@ -85,7 +111,23 @@ def sincronizar_folha_supabase(caminho_csv: Path, tamanho_lote: int = 200) -> bo
             logger.error(f"[SUPABASE EXCEPTION] Erro no lote {idx // tamanho_lote + 1}: {err}")
 
     logger.info(f"[SUPABASE] Sincronização concluída: {sucessos}/{total_registros} registros persistidos.")
-    return sucessos > 0
+    sucesso = (sucessos > 0 or total_registros == 0)
+    resultado = ResultadoSincronizacao(
+        sucesso=sucesso,
+        total=total_registros,
+        enviados=sucessos,
+        tamanho_lote=tamanho_lote,
+        endpoint=endpoint
+    )
+
+    try:
+        status_path = caminho.parent / "status_supabase.json"
+        with open(status_path, "w", encoding="utf-8") as f:
+            json.dump(dict(resultado), f, indent=2, ensure_ascii=False)
+    except Exception:
+        pass
+
+    return resultado
 
 
 def main():

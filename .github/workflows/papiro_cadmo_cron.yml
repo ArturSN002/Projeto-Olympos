@@ -56,7 +56,13 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-          DRIVE_FOLDER_ID: "1VxVVONEJya4XqI2GfxHK7AFqk8dpwX9I"
+          DRIVE_FOLDER_ID: "1dcc_5GcNG0ciVE-i1J6iwtojATk-1utD"
           PERMUTAS_SHEET_ID: "1fOZHe871yxu6UdF0vsRzjSzQBc7AVFRZZtx3JSCdwCY"
         run: |
           python -m pipeline.upload_drive
+
+      - name: 7. Publicar Resumo Executivo no GitHub Actions ($GITHUB_STEP_SUMMARY)
+        if: always()
+        run: |
+          python -m pipeline.resumo_executivo
+
