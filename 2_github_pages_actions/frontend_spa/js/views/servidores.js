@@ -347,7 +347,35 @@ window.OlymposViews.servidores = (function() {
   }
 
   /**
-   * Atualiza os KPIs no topo da tela
+   * Aplica diretamente os quantitativos consolidados dos 16 entes
+   */
+  function aplicarKpisOficiais(kpis) {
+    if (!kpis) return;
+    var kpiTotalEl = document.getElementById('kpiServidoresTotal');
+    var kpiMunEl = document.getElementById('kpiServidoresMunicipais');
+    var kpiEstEl = document.getElementById('kpiServidoresEstaduais');
+    var kpiMultEl = document.getElementById('kpiServidoresMultiplos');
+    var badgeTotal = document.getElementById('kpiServidoresTotalBadge');
+
+    if (kpiTotalEl && kpis.total_acervo) {
+      kpiTotalEl.textContent = Number(kpis.total_acervo).toLocaleString('pt-BR');
+    }
+    if (kpiMunEl && kpis.total_municipais) {
+      kpiMunEl.textContent = Number(kpis.total_municipais).toLocaleString('pt-BR');
+    }
+    if (kpiEstEl && kpis.total_estaduais) {
+      kpiEstEl.textContent = Number(kpis.total_estaduais).toLocaleString('pt-BR');
+    }
+    if (kpiMultEl && kpis.total_multiplos) {
+      kpiMultEl.textContent = Number(kpis.total_multiplos).toLocaleString('pt-BR');
+    }
+    if (badgeTotal && kpis.total_entes) {
+      badgeTotal.textContent = kpis.total_entes + ' Entes';
+    }
+  }
+
+  /**
+   * Atualiza os KPIs no topo da tela com base nos dossiês carregados
    */
   function atualizarKpis(todosDossies) {
     var kpiTotalEl = document.getElementById('kpiServidoresTotal');
@@ -357,32 +385,35 @@ window.OlymposViews.servidores = (function() {
 
     if (!kpiTotalEl) return;
 
-    var totalServidores = todosDossies.length;
+    var totalPessoas = todosDossies.length;
+    var totalVinculos = 0;
     var municipaisCount = 0;
     var estaduaisCount = 0;
     var multiplosCount = 0;
 
     todosDossies.forEach(function(d) {
+      totalVinculos += d.vinculos.length;
       if (d.vinculos.length > 1) {
         multiplosCount++;
       }
-      var temMun = d.vinculos.some(function(v) {
+      d.vinculos.forEach(function(v) {
         var e = normalizarTexto(v.enteId || v.ente);
-        return e.indexOf('ceara') !== -1 || e.indexOf('natal') !== -1 || e.indexOf('parnamirim') !== -1 || e.indexOf('sga') !== -1 || e.indexOf('goncalo') !== -1;
+        var isEstadual = e.indexOf('governo') !== -1 || e.indexOf('estado') !== -1 || e.indexOf('seec') !== -1;
+        if (isEstadual) {
+          estaduaisCount++;
+        } else {
+          municipaisCount++;
+        }
       });
-      var temEst = d.vinculos.some(function(v) {
-        var e = normalizarTexto(v.enteId || v.ente);
-        return e.indexOf('governo') !== -1 || e.indexOf('estado') !== -1 || e.indexOf('seec') !== -1 || e.indexOf('rn') !== -1;
-      });
-
-      if (temMun) municipaisCount++;
-      if (temEst) estaduaisCount++;
     });
 
-    kpiTotalEl.textContent = totalServidores.toLocaleString('pt-BR');
-    if (kpiMunEl) kpiMunEl.textContent = municipaisCount.toLocaleString('pt-BR');
-    if (kpiEstEl) kpiEstEl.textContent = estaduaisCount.toLocaleString('pt-BR');
-    if (kpiMultEl) kpiMultEl.textContent = multiplosCount.toLocaleString('pt-BR');
+    // Se temos mais que a base de amostra antiga, exibe os números consolidados
+    if (totalVinculos > 908 || kpiTotalEl.textContent === '--') {
+      kpiTotalEl.textContent = totalVinculos.toLocaleString('pt-BR');
+      if (kpiMunEl) kpiMunEl.textContent = municipaisCount.toLocaleString('pt-BR');
+      if (kpiEstEl) kpiEstEl.textContent = estaduaisCount.toLocaleString('pt-BR');
+      if (kpiMultEl) kpiMultEl.textContent = multiplosCount.toLocaleString('pt-BR');
+    }
   }
 
   /**
@@ -412,7 +443,13 @@ window.OlymposViews.servidores = (function() {
         if (eNorm.indexOf('ceara') !== -1) badgeColor = 'pill-gold';
         else if (eNorm.indexOf('natal') !== -1) badgeColor = 'pill-green';
         else if (eNorm.indexOf('parnamirim') !== -1) badgeColor = 'pill-purple';
-        else if (eNorm.indexOf('sga') !== -1) badgeColor = 'pill-amber';
+        else if (eNorm.indexOf('sga') !== -1 || eNorm.indexOf('goncalo') !== -1) badgeColor = 'pill-amber';
+        else if (eNorm.indexOf('governo') !== -1 || eNorm.indexOf('estado') !== -1 || eNorm.indexOf('seec') !== -1) badgeColor = 'pill-blue';
+        else if (eNorm.indexOf('macaiba') !== -1) badgeColor = 'pill-pink';
+        else if (eNorm.indexOf('extremoz') !== -1) badgeColor = 'pill-cyan';
+        else if (eNorm.indexOf('touros') !== -1) badgeColor = 'pill-teal';
+        else if (eNorm.indexOf('joao') !== -1) badgeColor = 'pill-orange';
+        else badgeColor = 'pill-indigo';
 
         return '<div class="servidor-vinculo-item">' +
           '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">' +
@@ -999,8 +1036,25 @@ window.OlymposViews.servidores = (function() {
     zerarKpis();
     exibirCarregando();
 
-    // Renderiza a consulta inicial
-    atualizarConsultaCompleta();
+    // 1. Carrega imediatamente os KPIs oficiais consolidados dos 16 entes
+    if (window.OlymposServidores && typeof window.OlymposServidores.obterResumoKpisAsync === 'function') {
+      window.OlymposServidores.obterResumoKpisAsync().then(function(kpis) {
+        if (kpis) {
+          aplicarKpisOficiais(kpis);
+        }
+      }).catch(function() {});
+    }
+
+    // 2. Carrega a base consolidada completa dos 16 entes (47k+ servidores)
+    if (window.OlymposServidores && typeof window.OlymposServidores.carregarBaseConsolidadaAsync === 'function') {
+      window.OlymposServidores.carregarBaseConsolidadaAsync().then(function() {
+        atualizarConsultaCompleta();
+      }).catch(function() {
+        atualizarConsultaCompleta();
+      });
+    } else {
+      atualizarConsultaCompleta();
+    }
   }
 
   return {

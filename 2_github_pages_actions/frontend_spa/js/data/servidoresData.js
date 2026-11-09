@@ -1180,13 +1180,21 @@
     SERVIDORES_SGA
   );
 
+  var BASE_CONSOLIDADA_DINAMICA = null;
+  var RESUMO_KPIS_DINAMICO = null;
+  var promessaCarregamentoBase = null;
+
   // --- API CANÔNICA window.OlymposServidores ---
   var OlymposServidores = {
     /**
-     * Retorna array consolidado de todos os servidores cadastrados nos 5 entes.
-     * Unifica dinamicamente DOCENTES_CEARA_MIRIM e SERVIDORES_ESTADO_RN se disponíveis.
+     * Retorna array consolidado de todos os servidores cadastrados nos 16 entes.
+     * Prioriza a base consolidada dinâmica (47k+ registros) quando carregada.
      */
     obterTodos: function() {
+      if (BASE_CONSOLIDADA_DINAMICA && BASE_CONSOLIDADA_DINAMICA.length > 0) {
+        return BASE_CONSOLIDADA_DINAMICA;
+      }
+
       var fonteDocentes = null;
       if (typeof root !== 'undefined' && root.DOCENTES_CEARA_MIRIM && Array.isArray(root.DOCENTES_CEARA_MIRIM)) {
         fonteDocentes = root.DOCENTES_CEARA_MIRIM;
@@ -1233,6 +1241,136 @@
         SERVIDORES_PARNAMIRIM,
         SERVIDORES_SGA
       );
+    },
+
+    /**
+     * Carrega de forma assíncrona o catálogo consolidado completo (JSON otimizado dos 16 entes)
+     * @returns {Promise<Array>} Array de servidores consolidados
+     */
+    carregarBaseConsolidadaAsync: function() {
+      if (BASE_CONSOLIDADA_DINAMICA && BASE_CONSOLIDADA_DINAMICA.length > 0) {
+        return Promise.resolve(BASE_CONSOLIDADA_DINAMICA);
+      }
+      if (promessaCarregamentoBase) {
+        return promessaCarregamentoBase;
+      }
+
+      promessaCarregamentoBase = fetch('data/servidores_consolidados.json')
+        .then(function(resp) {
+          if (!resp.ok) throw new Error('HTTP ' + resp.status);
+          return resp.json();
+        })
+        .then(function(lista) {
+          if (!Array.isArray(lista) || lista.length === 0) {
+            throw new Error('Formato inválido de servidores_consolidados.json');
+          }
+          var formatados = lista.map(function(item) {
+            var nome = String(item.n || item.nome || '').trim();
+            var mat = String(item.m || item.matricula || '').trim();
+            var ente = String(item.e || item.ente || 'Ente Federativo').trim();
+            var cargo = String(item.g || item.cargo || 'Cargo não informado').trim();
+            var ch = parseCargaHoraria(item.h || item.cargaHoraria);
+            var lot = String(item.l || item.lotacao || 'Lotação não informada').trim();
+            var cpf = String(item.c || item.cpf || '###.***.***-##').trim();
+            var situacao = String(item.s || item.situacao || 'ATIVO').trim();
+
+            var quadro = 'Administrativo';
+            var normG = normalizarTexto(cargo);
+            if (normG.indexOf('prof') !== -1 || normG.indexOf('docen') !== -1 || normG.indexOf('pedag') !== -1 || normG.indexOf('educad') !== -1 || normG.indexOf('magist') !== -1) {
+              quadro = 'Docente';
+            } else if (normG.indexOf('diretor') !== -1 || normG.indexOf('coordenad') !== -1 || normG.indexOf('gestao') !== -1) {
+              quadro = 'Gestão Escolar';
+            } else if (normG.indexOf('psicol') !== -1 || normG.indexOf('assistente social') !== -1 || normG.indexOf('especial') !== -1 || normG.indexOf('nutric') !== -1 || normG.indexOf('tecnic') !== -1) {
+              quadro = 'Técnico';
+            } else if (normG.indexOf('merend') !== -1 || normG.indexOf('motor') !== -1 || normG.indexOf('asg') !== -1 || normG.indexOf('vigia') !== -1 || normG.indexOf('guarda') !== -1 || normG.indexOf('servicos gerais') !== -1) {
+              quadro = 'Apoio';
+            }
+
+            var enteId = normalizarTexto(ente).replace(/[^a-z0-9]/g, '_');
+
+            return {
+              id: mat ? (enteId + '_' + mat) : ('serv_' + Math.random().toString(36).substr(2, 9)),
+              matricula: mat,
+              m: mat,
+              nome: nome,
+              n: nome,
+              cpfMascarado: cpf,
+              c: cpf,
+              ente: ente,
+              enteId: enteId,
+              orgao: lot || ente,
+              quadro: quadro,
+              cargo: cargo,
+              g: cargo,
+              funcao: cargo,
+              cargaHoraria: ch,
+              cargaHorariaTexto: (ch > 0 ? (ch + 'h') : '30h'),
+              h: (ch > 0 ? (ch + 'h') : '30h'),
+              lotacao: lot,
+              l: lot,
+              situacao: situacao,
+              status: situacao,
+              regime: 'Efetivo / Estatutário'
+            };
+          });
+
+          BASE_CONSOLIDADA_DINAMICA = formatados;
+          OLYMPOS_SERVIDORES_UNIFICADOS = formatados;
+          console.info('[OlymposServidores] Base consolidada intermunicipal carregada: ' + formatados.length + ' servidores.');
+          return formatados;
+        })
+        .catch(function(err) {
+          console.warn('[OlymposServidores] Fallback para base semente local: ' + err.message);
+          promessaCarregamentoBase = null;
+          return OlymposServidores.obterTodos();
+        });
+
+      return promessaCarregamentoBase;
+    },
+
+    /**
+     * Retorna as métricas de resumo dos KPIs oficiais (via Supabase RPC ou fallback local)
+     */
+    obterResumoKpisAsync: function() {
+      if (RESUMO_KPIS_DINAMICO) {
+        return Promise.resolve(RESUMO_KPIS_DINAMICO);
+      }
+
+      function lerArquivoLocal() {
+        return fetch('data/resumo_kpis.json')
+          .then(function(r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+          })
+          .then(function(d) {
+            RESUMO_KPIS_DINAMICO = d;
+            return d;
+          });
+      }
+
+      // Tenta via Supabase RPC primeiro se configurado
+      try {
+        if (window.OlymposSupabase && typeof window.OlymposSupabase.getClient === 'function') {
+          var sb = window.OlymposSupabase.getClient();
+          if (sb && typeof sb.rpc === 'function') {
+            return sb.rpc('obter_resumo_kpis_folha', { p_competencia: 'todas' })
+              .then(function(resp) {
+                if (resp && resp.data && resp.data.total_acervo) {
+                  RESUMO_KPIS_DINAMICO = resp.data;
+                  return resp.data;
+                }
+                return lerArquivoLocal();
+              })
+              .catch(function() {
+                return lerArquivoLocal();
+              });
+          }
+        }
+      } catch (e) {}
+
+      return lerArquivoLocal().catch(function() {
+        return null;
+      });
     },
 
     /**

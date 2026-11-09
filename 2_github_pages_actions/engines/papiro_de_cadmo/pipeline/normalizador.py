@@ -310,6 +310,16 @@ def processar_todos(competencia_override: Optional[str] = None):
         logger.info("=" * 60)
         logger.info(f"CONSOLIDAÇÃO FINALIZADA COM SUCESSO: {len(df_final)} servidores salvos em {caminho_saida}")
         logger.info("=" * 60)
+
+        try:
+            try:
+                from .gerar_json_frontend import gerar_catalogos_frontend
+            except (ImportError, ValueError):
+                from gerar_json_frontend import gerar_catalogos_frontend
+            gerar_catalogos_frontend(caminho_saida)
+        except Exception as e_json:
+            logger.warning(f"Falha não-bloqueante ao gerar catálogos JSON do frontend: {e_json}")
+
         return caminho_saida
 
     return None

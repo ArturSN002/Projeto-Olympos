@@ -56,6 +56,7 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          GAS_WEBHOOK_URL: ${{ secrets.GAS_WEBHOOK_URL }}
           DRIVE_FOLDER_ID: "1dcc_5GcNG0ciVE-i1J6iwtojATk-1utD"
           PERMUTAS_SHEET_ID: "1fOZHe871yxu6UdF0vsRzjSzQBc7AVFRZZtx3JSCdwCY"
         run: |
