@@ -12,8 +12,11 @@ window.OlymposViews.papiroCadmo = (function() {
   let markersLayer = null;
   let routeLayer = null;
   let observerCadmo = null;
-  let abaAtiva = 'permutas'; // 'permutas', 'vinculos' ou 'docentes'
+  let abaAtiva = 'permutas'; // 'permutas', 'vinculos', 'docentes' ou 'vigentes'
   let termoBuscaServidor = '';
+  let filtroEnteVigente = 'TODOS';
+  let filtroFluxoVigente = 'TODOS';
+  let filtroStatusVigente = 'TODOS';
 
   const BANCO_STORAGE_KEY = 'olympos_permutas_banco';
 
@@ -937,6 +940,7 @@ window.OlymposViews.papiroCadmo = (function() {
     const tabPermutas = document.getElementById('tabAbaPermutas');
     const tabVinculos = document.getElementById('tabAbaVinculos');
     const tabDocentes = document.getElementById('tabAbaDocentesGeral');
+    const tabVigentes = document.getElementById('tabAbaPermutasVigentes');
     if (tabPermutas && !tabPermutas._bound) {
       tabPermutas._bound = true;
       tabPermutas.addEventListener('click', function() {
@@ -953,6 +957,12 @@ window.OlymposViews.papiroCadmo = (function() {
       tabDocentes._bound = true;
       tabDocentes.addEventListener('click', function() {
         alternarAbaResultados('docentes');
+      });
+    }
+    if (tabVigentes && !tabVigentes._bound) {
+      tabVigentes._bound = true;
+      tabVigentes.addEventListener('click', function() {
+        alternarAbaResultados('vigentes');
       });
     }
 
@@ -1090,6 +1100,7 @@ window.OlymposViews.papiroCadmo = (function() {
     const tabP = document.getElementById('tabAbaPermutas');
     const tabV = document.getElementById('tabAbaVinculos');
     const tabD = document.getElementById('tabAbaDocentesGeral');
+    const tabVig = document.getElementById('tabAbaPermutasVigentes');
     if (tabP) {
       if (aba === 'permutas') tabP.classList.add('active');
       else tabP.classList.remove('active');
@@ -1101,6 +1112,10 @@ window.OlymposViews.papiroCadmo = (function() {
     if (tabD) {
       if (aba === 'docentes') tabD.classList.add('active');
       else tabD.classList.remove('active');
+    }
+    if (tabVig) {
+      if (aba === 'vigentes') tabVig.classList.add('active');
+      else tabVig.classList.remove('active');
     }
 
     renderizarAbaAtivaComFiltro();
@@ -1673,7 +1688,7 @@ window.OlymposViews.papiroCadmo = (function() {
     if (termoBuscaServidor) {
       row.classList.remove('hidden');
       row.style.display = 'flex';
-      const rotulo = tipo === 'permutas' ? 'oportunidade(s)' : (tipo === 'vinculos' ? 'vínculo(s)' : 'docente(s)');
+      const rotulo = tipo === 'permutas' ? 'oportunidade(s)' : (tipo === 'vinculos' ? 'vínculo(s)' : (tipo === 'vigentes' ? 'servidor(es) em permuta' : 'docente(s)'));
       texto.innerHTML = 'Filtro ativo: "<strong>' + window.OlymposApp.escapeHtml(termoBuscaServidor) + '</strong>" — <strong>' + encontrados + '</strong> de ' + total + ' ' + rotulo + ' exibido(s)';
     } else {
       row.classList.add('hidden');
@@ -1698,6 +1713,8 @@ window.OlymposViews.papiroCadmo = (function() {
       executarCruzamentoVinculosHera();
     } else if (abaAtiva === 'docentes') {
       executarListagemDocentesGeral();
+    } else if (abaAtiva === 'vigentes') {
+      executarServidoresEmPermuta();
     } else {
       executarMatchingHera();
     }
@@ -2636,6 +2653,417 @@ window.OlymposViews.papiroCadmo = (function() {
     container.innerHTML = html;
   }
 
+  function definirFiltroEnteVigente(val) {
+    filtroEnteVigente = val;
+    executarServidoresEmPermuta();
+  }
+
+  function definirFiltroFluxoVigente(val) {
+    filtroFluxoVigente = val;
+    executarServidoresEmPermuta();
+  }
+
+  function definirFiltroStatusVigente(val) {
+    filtroStatusVigente = val;
+    executarServidoresEmPermuta();
+  }
+
+  function limparFiltrosVigentes() {
+    filtroEnteVigente = 'TODOS';
+    filtroFluxoVigente = 'TODOS';
+    filtroStatusVigente = 'TODOS';
+    termoBuscaServidor = '';
+    const inBusca = document.getElementById('cadmoBuscaServidorInput');
+    const btnLimpar = document.getElementById('btnLimparBuscaServidor');
+    if (inBusca) inBusca.value = '';
+    if (btnLimpar) {
+      btnLimpar.classList.add('hidden');
+      btnLimpar.style.display = 'none';
+    }
+    executarServidoresEmPermuta();
+  }
+
+  function exportarPermutasVigentesCsv() {
+    const catalogo = (window.OLYMPOS_PERMUTAS_VIGENTES && typeof window.OLYMPOS_PERMUTAS_VIGENTES === 'object')
+      ? window.OLYMPOS_PERMUTAS_VIGENTES
+      : null;
+    const servidores = (catalogo && Array.isArray(catalogo.servidores)) ? catalogo.servidores : [];
+    if (!servidores.length) {
+      if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+        window.OlymposApp.showToast('Nenhum registro de permuta ativa disponível para exportação.', true);
+      }
+      return;
+    }
+
+    const colunas = [
+      'Ordem',
+      'Termo de Cooperacao',
+      'Ente Parceiro',
+      'Fluxo',
+      'Origem',
+      'Destino',
+      'Nome do Servidor',
+      'CPF Mascarado',
+      'Matricula Origem',
+      'Matricula Destino',
+      'Cargo Origem',
+      'Cargo ou Funcao Exercida',
+      'Local de Trabalho',
+      'Aditivo',
+      'Data Inicio',
+      'Data Fim',
+      'Status Vigencia',
+      'Pasta Drive'
+    ];
+
+    function csvEscape(val) {
+      if (val === null || val === undefined) return '""';
+      const str = String(val).replace(/"/g, '""');
+      return '"' + str + '"';
+    }
+
+    const linhas = [colunas.join(';')];
+    servidores.forEach(function(s) {
+      linhas.push([
+        s.ordem,
+        csvEscape(s.termo),
+        csvEscape(s.ente_parceiro),
+        csvEscape(s.fluxo_rotulo || s.fluxo),
+        csvEscape(s.origem),
+        csvEscape(s.destino),
+        csvEscape(s.nome),
+        csvEscape(s.cpf_mascarado),
+        csvEscape(s.matricula_origem),
+        csvEscape(s.matricula_destino),
+        csvEscape(s.cargo_origem),
+        csvEscape(s.cargo_funcao_exercida),
+        csvEscape(s.local_trabalho),
+        csvEscape(s.aditivo),
+        csvEscape(s.data_inicio),
+        csvEscape(s.data_fim),
+        csvEscape(s.status_texto || s.status_vigencia),
+        csvEscape(s.drive_pasta_url)
+      ].join(';'));
+    });
+
+    const csvContent = '\uFEFF' + linhas.join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'permutas_vigentes_ceara_mirim_14_entes.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+      window.OlymposApp.showToast('Planilha de permutas vigentes (' + servidores.length + ' servidores) exportada com sucesso!');
+    }
+  }
+
+  function copiarDadosServidorPermuta(id) {
+    const catalogo = window.OLYMPOS_PERMUTAS_VIGENTES || {};
+    const s = (catalogo.servidores || []).find(function(item) { return item.id === id; });
+    if (!s) return;
+
+    const texto = [
+      '--- FICHA DE PERMUTA VIGENTE (SMEB / OLYMPOS) ---',
+      'Servidor(a): ' + s.nome,
+      'CPF: ' + s.cpf_mascarado,
+      'Termo de Cooperação: ' + s.termo,
+      'Ente Conveniado: ' + s.ente_parceiro,
+      'Fluxo: ' + s.fluxo_rotulo + ' (' + s.origem + ' -> ' + s.destino + ')',
+      'Matrícula: Origem ' + s.matricula_origem + ' | Destino ' + s.matricula_destino,
+      'Cargo/Função: ' + s.cargo_origem + (s.cargo_funcao_exercida ? ' (' + s.cargo_funcao_exercida + ')' : ''),
+      'Lotação/Local: ' + s.local_trabalho,
+      'Vigência: ' + s.aditivo + ' (' + s.data_inicio + ' a ' + s.data_fim + ') - ' + (s.status_texto || s.status_vigencia),
+      'Pasta Drive Oficial: ' + s.drive_pasta_url
+    ].join('\n');
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(texto).then(function() {
+        if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+          window.OlymposApp.showToast('Ficha de ' + s.nome + ' copiada para a área de transferência!');
+        }
+      }).catch(function() {
+        prompt('Copie a ficha da permuta:', texto);
+      });
+    } else {
+      prompt('Copie a ficha da permuta:', texto);
+    }
+  }
+
+  function executarServidoresEmPermuta() {
+    const container = document.getElementById('resultadoMatchingHera');
+    const badgeTotal = document.getElementById('badgeTotalMatches');
+    if (!container) return;
+
+    const catalogo = (window.OLYMPOS_PERMUTAS_VIGENTES && typeof window.OLYMPOS_PERMUTAS_VIGENTES === 'object')
+      ? window.OLYMPOS_PERMUTAS_VIGENTES
+      : {
+          totais: { total_em_permuta: 160, cedidos_por_cm: 82, recebidos_em_cm: 78, total_entes_parceiros: 14 },
+          por_ente: {},
+          servidores: []
+        };
+
+    const todos = catalogo.servidores || [];
+    const totais = catalogo.totais || {
+      total_em_permuta: todos.length || 160,
+      cedidos_por_cm: 82,
+      recebidos_em_cm: 78,
+      total_entes_parceiros: 14
+    };
+    const porEnte = catalogo.por_ente || {};
+    const driveUrl = catalogo.drive_pasta_url || 'https://drive.google.com/drive/folders/1SDBCXU3LjI0Qnf6E6O6SLqRjctHz70k0';
+
+    // Filtragem dos registros
+    const filtrados = todos.filter(function(s) {
+      if (filtroEnteVigente !== 'TODOS' && s.ente_parceiro !== filtroEnteVigente) {
+        return false;
+      }
+      if (filtroFluxoVigente !== 'TODOS' && s.fluxo !== filtroFluxoVigente) {
+        return false;
+      }
+      if (filtroStatusVigente !== 'TODOS' && s.status_vigencia !== filtroStatusVigente) {
+        return false;
+      }
+      if (termoBuscaServidor) {
+        const q = normalizarBusca(termoBuscaServidor);
+        const corpus = [
+          s.nome,
+          s.cpf_mascarado,
+          s.matricula_origem,
+          s.matricula_destino,
+          s.cargo_origem,
+          s.cargo_funcao_exercida,
+          s.local_trabalho,
+          s.ente_parceiro,
+          s.termo,
+          s.aditivo,
+          s.fluxo_rotulo
+        ].map(normalizarBusca).join(' ');
+        if (!corpus.includes(q)) return false;
+      }
+      return true;
+    });
+
+    if (badgeTotal) {
+      if (termoBuscaServidor || filtroEnteVigente !== 'TODOS' || filtroFluxoVigente !== 'TODOS' || filtroStatusVigente !== 'TODOS') {
+        badgeTotal.textContent = filtrados.length + ' de ' + todos.length + ' servidores em permuta';
+      } else {
+        badgeTotal.textContent = todos.length + ' servidores em permuta ativa';
+      }
+    }
+
+    const previewPill = document.getElementById('heraMatchPreviewPill');
+    if (previewPill) {
+      previewPill.textContent = 'Permutas Ativas: ' + filtrados.length;
+      previewPill.classList.remove('hidden');
+    }
+
+    atualizarResumoBusca(filtrados.length, todos.length, 'vigentes');
+
+    // Montagem do HTML
+    let html = '';
+
+    // 1. CARDS DE KPIS EXECUTIVOS
+    html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px;">';
+
+    // Card 1: Total
+    html +=
+      '<div style="background: var(--bg-surface, #1e293b); border: 1px solid var(--border-hairline, rgba(255,255,255,0.08)); border-radius: var(--radius-md, 8px); padding: 14px 16px;">' +
+        '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">' +
+          '<span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted, #94a3b8); font-weight: 600;">Total em Permuta</span>' +
+          '<span class="pill-badge pill-gold" style="font-size: 10px;">14 Entes</span>' +
+        '</div>' +
+        '<div style="font-size: 26px; font-weight: 700; color: var(--text-main, #f8fafc); line-height: 1.1;">' + totais.total_em_permuta + '</div>' +
+        '<div style="font-size: 11.5px; color: var(--text-secondary, #cbd5e1); margin-top: 4px;">Servidores com permuta oficial ativa</div>' +
+      '</div>';
+
+    // Card 2: Cedidos por CM
+    html +=
+      '<div style="background: var(--bg-surface, #1e293b); border: 1px solid var(--border-hairline, rgba(255,255,255,0.08)); border-radius: var(--radius-md, 8px); padding: 14px 16px;">' +
+        '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">' +
+          '<span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted, #94a3b8); font-weight: 600;">Cedidos por Ceará-Mirim</span>' +
+          '<span class="pill-badge pill-purple" style="font-size: 10px;">↗ Origem SMEB</span>' +
+        '</div>' +
+        '<div style="font-size: 26px; font-weight: 700; color: #a78bfa; line-height: 1.1;">' + totais.cedidos_por_cm + '</div>' +
+        '<div style="font-size: 11.5px; color: var(--text-secondary, #cbd5e1); margin-top: 4px;">Servidores SMEB cedidos a outros entes</div>' +
+      '</div>';
+
+    // Card 3: Recebidos em CM
+    html +=
+      '<div style="background: var(--bg-surface, #1e293b); border: 1px solid var(--border-hairline, rgba(255,255,255,0.08)); border-radius: var(--radius-md, 8px); padding: 14px 16px;">' +
+        '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">' +
+          '<span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted, #94a3b8); font-weight: 600;">Recebidos em Ceará-Mirim</span>' +
+          '<span class="pill-badge pill-green" style="font-size: 10px;">↙ Acolhidos na Rede</span>' +
+        '</div>' +
+        '<div style="font-size: 26px; font-weight: 700; color: #34d399; line-height: 1.1;">' + totais.recebidos_em_cm + '</div>' +
+        '<div style="font-size: 11.5px; color: var(--text-secondary, #cbd5e1); margin-top: 4px;">Servidores de fora alocados nas escolas SMEB</div>' +
+      '</div>';
+
+    // Card 4: Pasta no Google Drive
+    html +=
+      '<div style="background: var(--bg-surface, #1e293b); border: 1px solid rgba(99, 102, 241, 0.35); border-radius: var(--radius-md, 8px); padding: 14px 16px; display: flex; flex-direction: column; justify-content: space-between;">' +
+        '<div>' +
+          '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">' +
+            '<span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #818cf8; font-weight: 600;">Google Drive Oficial</span>' +
+            '<span class="pill-badge pill-blue" style="font-size: 10px;">Nuvem</span>' +
+          '</div>' +
+          '<div style="font-size: 13.5px; font-weight: 600; color: var(--text-main, #f8fafc); line-height: 1.2;">Pasta das Permutas</div>' +
+          '<div style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted, #94a3b8); margin-top: 2px;">1SDBCXU3LjI0Qnf6E6O6SLqRjctHz70k0</div>' +
+        '</div>' +
+        '<div style="margin-top: 8px;">' +
+          '<a href="' + driveUrl + '" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" style="font-size: 11px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 4px 8px; color: #818cf8; border-color: rgba(99, 102, 241, 0.4); text-decoration: none;">' +
+            '<span>📂 Abrir Pasta no Drive ↗</span>' +
+          '</a>' +
+        '</div>' +
+      '</div>';
+
+    html += '</div>';
+
+    // 2. TOOLBAR DE FILTROS & AÇÕES
+    html += '<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 14px; padding: 10px 14px; background: var(--bg-tonal, rgba(255,255,255,0.03)); border: 1px solid var(--border-hairline, rgba(255,255,255,0.06)); border-radius: var(--radius-md, 8px);">';
+
+    // Filtros à esquerda
+    html += '<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">';
+
+    // Dropdown Ente
+    html += '<div style="display: flex; align-items: center; gap: 6px;">' +
+      '<span style="font-size: 11.5px; color: var(--text-muted);">Ente:</span>' +
+      '<select class="input-clean" style="font-size: 12px; padding: 4px 8px; border-radius: 6px; background: var(--bg-surface, #1e293b); color: var(--text-main); border: 1px solid var(--border-hairline);" onchange="window.OlymposViews.papiroCadmo.definirFiltroEnteVigente(this.value)">' +
+        '<option value="TODOS"' + (filtroEnteVigente === 'TODOS' ? ' selected' : '') + '>Todos os Entes (' + todos.length + ')</option>';
+
+    const entesOrdenados = Object.keys(porEnte).sort(function(a, b) {
+      return (porEnte[b].total || 0) - (porEnte[a].total || 0);
+    });
+
+    entesOrdenados.forEach(function(ente) {
+      const q = porEnte[ente].total || 0;
+      html += '<option value="' + window.OlymposApp.escapeHtml(ente) + '"' + (filtroEnteVigente === ente ? ' selected' : '') + '>' + window.OlymposApp.escapeHtml(ente) + ' (' + q + ')</option>';
+    });
+
+    html += '</select></div>';
+
+    // Dropdown Fluxo
+    html += '<div style="display: flex; align-items: center; gap: 6px;">' +
+      '<span style="font-size: 11.5px; color: var(--text-muted);">Fluxo:</span>' +
+      '<select class="input-clean" style="font-size: 12px; padding: 4px 8px; border-radius: 6px; background: var(--bg-surface, #1e293b); color: var(--text-main); border: 1px solid var(--border-hairline);" onchange="window.OlymposViews.papiroCadmo.definirFiltroFluxoVigente(this.value)">' +
+        '<option value="TODOS"' + (filtroFluxoVigente === 'TODOS' ? ' selected' : '') + '>Todos os Fluxos</option>' +
+        '<option value="CEDIDO_POR_CM"' + (filtroFluxoVigente === 'CEDIDO_POR_CM' ? ' selected' : '') + '>↗ Cedidos por CM (' + totais.cedidos_por_cm + ')</option>' +
+        '<option value="RECEBIDO_EM_CM"' + (filtroFluxoVigente === 'RECEBIDO_EM_CM' ? ' selected' : '') + '>↙ Recebidos em CM (' + totais.recebidos_em_cm + ')</option>' +
+      '</select></div>';
+
+    // Dropdown Status
+    html += '<div style="display: flex; align-items: center; gap: 6px;">' +
+      '<span style="font-size: 11.5px; color: var(--text-muted);">Status:</span>' +
+      '<select class="input-clean" style="font-size: 12px; padding: 4px 8px; border-radius: 6px; background: var(--bg-surface, #1e293b); color: var(--text-main); border: 1px solid var(--border-hairline);" onchange="window.OlymposViews.papiroCadmo.definirFiltroStatusVigente(this.value)">' +
+        '<option value="TODOS"' + (filtroStatusVigente === 'TODOS' ? ' selected' : '') + '>Todos os Status</option>' +
+        '<option value="VIGENTE"' + (filtroStatusVigente === 'VIGENTE' ? ' selected' : '') + '>🟢 Vigente</option>' +
+        '<option value="A_RENOVAR"' + (filtroStatusVigente === 'A_RENOVAR' ? ' selected' : '') + '>🟡 A Renovar (53 dias)</option>' +
+      '</select></div>';
+
+    html += '</div>';
+
+    // Botões de Ação à direita
+    html += '<div style="display: flex; align-items: center; gap: 8px;">';
+    html += '<button type="button" class="btn btn-secondary btn-sm" style="font-size: 11.5px; display: flex; align-items: center; gap: 6px;" onclick="window.OlymposViews.papiroCadmo.exportarPermutasVigentesCsv()">' +
+      '<span>📥 Exportar CSV</span>' +
+    '</button>';
+    html += '<a href="' + driveUrl + '" target="_blank" rel="noopener" class="btn btn-primary btn-sm" style="font-size: 11.5px; display: flex; align-items: center; gap: 6px; text-decoration: none;">' +
+      '<span>📂 Pasta Drive ↗</span>' +
+    '</a>';
+    html += '</div>';
+
+    html += '</div>';
+
+    // 3. TABELA / LISTA DE REGISTROS
+    if (filtrados.length === 0) {
+      html +=
+        '<div class="output-panel text-center" style="padding: 36px 20px;">' +
+          '<div style="font-size: 2rem; margin-bottom: 8px;">🔍</div>' +
+          '<strong style="display:block; font-size:15px; margin-bottom:6px; color:var(--text-main);">Nenhum servidor em permuta encontrado com os filtros selecionados</strong>' +
+          '<p style="font-size:13px; color:var(--text-muted); max-width:480px; margin:0 auto 14px;">Ajuste o filtro de ente parceiro, fluxo ou termo de busca.</p>' +
+          '<button type="button" class="btn btn-secondary btn-sm" onclick="window.OlymposViews.papiroCadmo.limparFiltrosVigentes()">Limpar Filtros</button>' +
+        '</div>';
+      container.innerHTML = html;
+      return;
+    }
+
+    html += '<div style="margin-bottom: 8px; font-size: 12px; color: var(--text-muted); display:flex; justify-content:space-between; align-items:center;">' +
+      '<span>Exibindo <strong>' + filtrados.length + '</strong> de <strong>' + todos.length + '</strong> servidores em permuta ativa</span>' +
+      '<span class="pill-badge pill-gold" style="font-size:11px;">Termos de Cooperação Intermunicipais</span>' +
+      '</div>';
+
+    html += '<div class="table-responsive" style="max-height: 480px; overflow-y: auto;">' +
+      '<table class="data-table" style="width:100%; font-size:12px;">' +
+        '<thead>' +
+          '<tr>' +
+            '<th style="width:38px; text-align:center;">#</th>' +
+            '<th style="width:230px;">Servidor / CPF</th>' +
+            '<th style="width:170px;">Termo / Ente Parceiro</th>' +
+            '<th style="width:145px;">Fluxo</th>' +
+            '<th style="width:110px;">Matrículas</th>' +
+            '<th style="width:150px;">Cargo / Função</th>' +
+            '<th>Lotação / Local</th>' +
+            '<th style="width:135px;">Vigência</th>' +
+            '<th style="width:75px; text-align:center;">Ações</th>' +
+          '</tr>' +
+        '</thead>' +
+        '<tbody>';
+
+    filtrados.forEach(function(s) {
+      const isCedido = s.fluxo === 'CEDIDO_POR_CM';
+      const fluxoPill = isCedido
+        ? '<span class="pill-badge pill-purple" style="font-size:10.5px; white-space:nowrap;">↗ Cedido p/ CM</span>'
+        : '<span class="pill-badge pill-green" style="font-size:10.5px; white-space:nowrap;">↙ Recebido em CM</span>';
+
+      const isRenovar = s.status_vigencia === 'A_RENOVAR';
+      const statusPill = isRenovar
+        ? '<span class="pill-badge pill-gold" style="font-size:10px; display:inline-block; margin-bottom:2px;" title="Vencimento próximo em 01/01/2027">🟡 A Renovar</span>'
+        : '<span class="pill-badge pill-teal" style="font-size:10px; display:inline-block; margin-bottom:2px;">🟢 Vigente</span>';
+
+      html +=
+        '<tr>' +
+          '<td style="text-align:center; font-family:var(--font-mono); color:var(--text-muted); font-size:11px;">' + s.ordem + '</td>' +
+          '<td>' +
+            '<strong style="color:var(--text-main); font-size:12.5px;">' + window.OlymposApp.escapeHtml(s.nome) + '</strong>' +
+            '<div style="font-family:var(--font-mono); font-size:11px; color:var(--text-muted); margin-top:1px;">' + window.OlymposApp.escapeHtml(s.cpf_mascarado) + '</div>' +
+          '</td>' +
+          '<td>' +
+            '<span class="pill-badge pill-blue" style="font-size:10.5px; font-weight:600;">' + window.OlymposApp.escapeHtml(s.ente_parceiro) + '</span>' +
+            '<div style="font-size:11px; color:var(--text-secondary); margin-top:2px;">' + window.OlymposApp.escapeHtml(s.termo) + '</div>' +
+          '</td>' +
+          '<td>' + fluxoPill + '</td>' +
+          '<td style="font-family:var(--font-mono); font-size:11px;">' +
+            '<div><span style="color:var(--text-muted);">Origem:</span> ' + window.OlymposApp.escapeHtml(s.matricula_origem) + '</div>' +
+            (s.matricula_destino && s.matricula_destino !== 'N/I' ? '<div style="color:var(--text-muted);"><span style="color:var(--text-muted);">Destino:</span> ' + window.OlymposApp.escapeHtml(s.matricula_destino) + '</div>' : '') +
+          '</td>' +
+          '<td>' +
+            '<div style="font-weight:500;">' + window.OlymposApp.escapeHtml(s.cargo_origem) + '</div>' +
+            (s.cargo_funcao_exercida && s.cargo_funcao_exercida !== s.cargo_origem ? '<div style="font-size:11px; color:var(--brand-gold);">' + window.OlymposApp.escapeHtml(s.cargo_funcao_exercida) + '</div>' : '') +
+          '</td>' +
+          '<td style="font-size:11.5px; color:var(--text-secondary);">' +
+            window.OlymposApp.escapeHtml(s.local_trabalho || 'SMEB') +
+          '</td>' +
+          '<td style="font-size:11px;">' +
+            statusPill +
+            '<div style="color:var(--text-muted);">' + window.OlymposApp.escapeHtml(s.aditivo) + '</div>' +
+            '<div style="font-size:10.5px; color:var(--text-muted);">' + window.OlymposApp.escapeHtml(s.data_inicio) + ' a ' + window.OlymposApp.escapeHtml(s.data_fim) + '</div>' +
+          '</td>' +
+          '<td style="text-align:center;">' +
+            '<button type="button" class="btn btn-secondary btn-sm" style="font-size:10.5px; padding:3px 6px;" title="Copiar ficha funcional da permuta" onclick="window.OlymposViews.papiroCadmo.copiarDadosServidorPermuta(\'' + s.id + '\')">' +
+              '📋 Copiar' +
+            '</button>' +
+          '</td>' +
+        '</tr>';
+    });
+
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+  }
+
   function tracarRotaPermuta(origemA, origemB, score) {
     if (!leafletMap || !routeLayer) return;
     routeLayer.clearLayers();
@@ -2866,6 +3294,13 @@ window.OlymposViews.papiroCadmo = (function() {
     obterVinculosTransparencia: function() { return VINCULOS_TRANSPARENCIA; },
     preencherFormComDocente: preencherFormComDocente,
     executarListagemDocentesGeral: executarListagemDocentesGeral,
+    executarServidoresEmPermuta: executarServidoresEmPermuta,
+    exportarPermutasVigentesCsv: exportarPermutasVigentesCsv,
+    copiarDadosServidorPermuta: copiarDadosServidorPermuta,
+    definirFiltroEnteVigente: definirFiltroEnteVigente,
+    definirFiltroFluxoVigente: definirFiltroFluxoVigente,
+    definirFiltroStatusVigente: definirFiltroStatusVigente,
+    limparFiltrosVigentes: limparFiltrosVigentes,
     limparBuscaServidor: limparBuscaServidor,
     filtrarMatchesPorTermo: filtrarMatchesPorTermo,
     normalizarBusca: normalizarBusca,

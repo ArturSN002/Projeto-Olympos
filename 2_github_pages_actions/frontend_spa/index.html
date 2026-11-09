@@ -834,6 +834,9 @@
                 <a href="https://docs.google.com/spreadsheets/d/1fOZHe871yxu6UdF0vsRzjSzQBc7AVFRZZtx3JSCdwCY/edit" target="_blank" rel="noopener" class="folder-chip">
                   Matriz Oficial de Permutas ↗
                 </a>
+                <a href="https://drive.google.com/drive/folders/1SDBCXU3LjI0Qnf6E6O6SLqRjctHz70k0" target="_blank" rel="noopener" class="folder-chip" style="border-color: rgba(99, 102, 241, 0.4); color: #818cf8;">
+                  📂 Pasta de Permutas (Drive) ↗
+                </a>
                 <button id="cadmoTriggerEtlBtn" class="btn btn-primary btn-sm">Executar Coleta Sob Demanda</button>
               </div>
             </div>
@@ -1109,6 +1112,9 @@
 
                     <!-- Abas de Visualização (Permutas Recíprocas, Acúmulos CF/88 e Base Geral) -->
                     <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                      <button type="button" id="tabAbaPermutasVigentes" class="btn btn-secondary btn-sm" style="font-size: 12px; font-weight: 600;">
+                        <span>🔄 Em Permuta Ativa (160)</span>
+                      </button>
                       <button type="button" id="tabAbaPermutas" class="btn btn-secondary btn-sm active" style="font-size: 12px; font-weight: 600;">
                         <span>🤝 Permutas Recíprocas (Hera)</span>
                       </button>
@@ -2541,6 +2547,7 @@
     <script src="js/views/liraOrfeu.js"></script>
     <script src="js/views/diarioOficial.js"></script>
     <script src="js/data/servidoresData.js"></script>
+    <script src="js/data/permutasVigentesData.js"></script>
     <script src="js/views/papiroCadmo.js"></script>
     <script src="js/views/servidores.js"></script>
     <script src="js/views/calendario.js"></script>
