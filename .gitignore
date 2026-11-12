@@ -79,5 +79,13 @@ data/raw/
 **/data/processed/*.csv
 **/data/processed/*.json
 
+# Diretorios Internos, Documentacao e Scripts de Sincronizacao
+1_google_apps_script/
+3_skills_personas/
+4_relatorios_implementacao/
+5_manuais_instalacao/
+tests/
+sync_mirrors.py
+
 # ==============================================================================
 # ==============================================================================
