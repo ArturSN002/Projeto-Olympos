@@ -12,7 +12,7 @@ window.OlymposViews.papiroCadmo = (function() {
   let markersLayer = null;
   let routeLayer = null;
   let observerCadmo = null;
-  let abaAtiva = 'permutas'; // 'permutas', 'vinculos', 'docentes' ou 'vigentes'
+  let abaAtiva = 'vigentes'; // 'vigentes', 'permutas', 'vinculos' ou 'docentes'
   let termoBuscaServidor = '';
   let filtroEnteVigente = 'TODOS';
   let filtroFluxoVigente = 'TODOS';
@@ -827,7 +827,7 @@ window.OlymposViews.papiroCadmo = (function() {
     configurarUploadCsv();
     popularSelectsFormularioPermuta();
     inicializarMapa();
-    executarMatchingHera();
+    alternarAbaResultados('vigentes');
     observarVisibilidadePagina();
     alternarColapsoHera(false);
     sincronizarServidoresUnificados(false);
@@ -3301,6 +3301,7 @@ window.OlymposViews.papiroCadmo = (function() {
     definirFiltroFluxoVigente: definirFiltroFluxoVigente,
     definirFiltroStatusVigente: definirFiltroStatusVigente,
     limparFiltrosVigentes: limparFiltrosVigentes,
+    alternarAbaResultados: alternarAbaResultados,
     limparBuscaServidor: limparBuscaServidor,
     filtrarMatchesPorTermo: filtrarMatchesPorTermo,
     normalizarBusca: normalizarBusca,

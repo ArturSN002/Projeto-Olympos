@@ -689,7 +689,17 @@ window.OlymposViews.servidores = (function() {
     var input = document.getElementById('servidorBuscaInput');
     if (input) input.value = '';
 
-    // Reset pills
+    // Reset selects dropdown (M3)
+    var selEnte = document.getElementById('filtroEnteSelect') || document.getElementById('servidorFiltroEnteSelect');
+    if (selEnte) selEnte.value = 'todos';
+    var selQuadro = document.getElementById('filtroQuadroSelect') || document.getElementById('servidorFiltroQuadroSelect');
+    if (selQuadro) selQuadro.value = 'todos';
+    var selRegime = document.getElementById('filtroRegimeSelect') || document.getElementById('servidorFiltroRegimeSelect');
+    if (selRegime) selRegime.value = 'todos';
+    var selVinculos = document.getElementById('filtroVinculosSelect') || document.getElementById('servidorFiltroVinculosSelect');
+    if (selVinculos) selVinculos.value = 'todos';
+
+    // Reset pills (fallback)
     document.querySelectorAll('[data-filtro-ente]').forEach(function(el) {
       el.classList.toggle('active', el.getAttribute('data-filtro-ente') === 'todos');
     });
@@ -930,7 +940,44 @@ window.OlymposViews.servidores = (function() {
       });
     }
 
-    // Filtros de Ente
+    // Novos Selects Dropdown (M3)
+    var selEnte = document.getElementById('filtroEnteSelect') || document.getElementById('servidorFiltroEnteSelect');
+    if (selEnte && !selEnte._bound) {
+      selEnte._bound = true;
+      selEnte.addEventListener('change', function() {
+        filtroEnte = selEnte.value || 'todos';
+        atualizarConsultaCompleta();
+      });
+    }
+
+    var selQuadro = document.getElementById('filtroQuadroSelect') || document.getElementById('servidorFiltroQuadroSelect');
+    if (selQuadro && !selQuadro._bound) {
+      selQuadro._bound = true;
+      selQuadro.addEventListener('change', function() {
+        filtroCargo = selQuadro.value || 'todos';
+        atualizarConsultaCompleta();
+      });
+    }
+
+    var selRegime = document.getElementById('filtroRegimeSelect') || document.getElementById('servidorFiltroRegimeSelect');
+    if (selRegime && !selRegime._bound) {
+      selRegime._bound = true;
+      selRegime.addEventListener('change', function() {
+        filtroRegime = selRegime.value || 'todos';
+        atualizarConsultaCompleta();
+      });
+    }
+
+    var selVinculos = document.getElementById('filtroVinculosSelect') || document.getElementById('servidorFiltroVinculosSelect');
+    if (selVinculos && !selVinculos._bound) {
+      selVinculos._bound = true;
+      selVinculos.addEventListener('change', function() {
+        filtroVinculos = selVinculos.value || 'todos';
+        atualizarConsultaCompleta();
+      });
+    }
+
+    // Filtros de Ente (Fallback pills / data attributes)
     document.querySelectorAll('[data-filtro-ente]').forEach(function(btn) {
       if (!btn._bound) {
         btn._bound = true;

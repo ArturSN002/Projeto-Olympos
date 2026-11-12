@@ -1,1 +1,0 @@
-[2026-10-28] Edição FEMURN (1 atos): [Secretaria Municipal de Educação Básica] Lei nº 9.394/1996), Lei Federal nº 15.247/2025 (Compromisso Nacional Criança Alfabetizada), novo Pla (ID: 2407C44B) -> https://drive.google.com/file/d/1HQeKuZDaqlF9YJkTwB-KH-AkM9gYYXPA/view?usp=drivesdk

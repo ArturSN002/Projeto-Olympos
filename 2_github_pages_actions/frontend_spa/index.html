@@ -233,7 +233,7 @@
         </a>
         <a href="https://drive.google.com/drive/folders/1aj514v29gytXH9j5LY_V76ap9XIblwHS" target="_blank" rel="noopener" class="drawer-drive-item">
           <span class="drive-icon">📊</span>
-          <span>Planilhas Diário Oficial</span>
+          <span>Backup Diário Oficial</span>
           <span class="drive-arrow">↗</span>
         </a>
         <a href="https://drive.google.com/drive/folders/1dcc_5GcNG0ciVE-i1J6iwtojATk-1utD" target="_blank" rel="noopener" class="drawer-drive-item">
@@ -734,8 +734,8 @@
                 <p class="section-desc">Coleta pesada com Chromium + OCR no GitHub Actions conectada diretamente ao receptor único no GAS do Hub Olympos, gravando sempre na planilha oficial fixa (aba <code>Publicações</code>).</p>
               </div>
               <div class="button-group">
-                <a id="promSheetLinkBtn" href="https://drive.google.com/drive/folders/1aj514v29gytXH9j5LY_V76ap9XIblwHS" target="_blank" rel="noopener" class="folder-chip">
-                  Pasta de Planilhas Diárias (Drive) ↗
+                <a id="promSheetLinkBtn" href="https://docs.google.com/spreadsheets/d/1tU6rvgB2jNGaGqHK1oecNMQX7-5QcB8Q-1fNgzWcZqs/edit" target="_blank" rel="noopener" class="folder-chip">
+                  Planilha Oficial de Publicações ↗
                 </a>
                 <button id="prometheusTriggerActionBtn" class="btn btn-accent btn-sm">Coletar Agora (GitHub Actions)</button>
                 <button id="prometheusChatSummaryBtn" class="btn btn-secondary btn-sm">Enviar Resumo ao Chat</button>
@@ -780,21 +780,27 @@
                   <span id="prometheusCountSummary">Carregando atos oficiais...</span>
                 </div>
               </div>
-              <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-                <select id="prometheusPeriodFilter" class="input-clean" style="width: auto; padding: 7px 12px; font-size: 13px; font-weight: 600; border-color: var(--accent-gold);" title="Filtro de período de publicação">
+              <div class="diario-controls-toolbar">
+                <select id="prometheusPeriodFilter" class="input-clean filter-select-modern" title="Filtro de período de publicação">
                   <option value="SEMANA" selected>📅 Esta Semana (Padrão)</option>
                   <option value="15DIAS">📅 Últimos 15 Dias</option>
                   <option value="MES">📅 Este Mês</option>
                   <option value="30DIAS">📅 Últimos 30 Dias</option>
                   <option value="TODOS">📚 Todo o Acervo</option>
                 </select>
-                <select id="prometheusSectorFilter" class="input-clean" style="width: auto; padding: 7px 12px; font-size: 13px;">
-                  <option value="TODOS">Todos os Setores</option>
+                <select id="prometheusSectorFilter" class="input-clean filter-select-modern" title="Filtro de setor">
+                  <option value="TODOS" selected>Todos os Setores</option>
                   <option value="Portarias 2026">Portarias 2026</option>
                   <option value="Gabinete 2026">Gabinete 2026</option>
                   <option value="Assessoria Jurídica 2026">Assessoria Jurídica 2026</option>
                 </select>
-                <input type="search" id="prometheusSearchInput" class="input-clean" style="width: 220px; padding: 7px 12px; font-size: 13px;" placeholder="Filtrar ato, servidor ou código..." />
+                <select id="prometheusSortFilter" class="input-clean filter-select-modern" title="Critério de ordenação das publicações">
+                  <option value="DATA_DESC" selected>📅 Data (Mais recente primeiro)</option>
+                  <option value="DATA_ASC">📅 Data (Mais antiga primeiro)</option>
+                  <option value="NOME_AZ">🔤 Município / Secretaria (A–Z)</option>
+                  <option value="NOME_ZA">🔤 Município / Secretaria (Z–A)</option>
+                </select>
+                <input type="search" id="prometheusSearchInput" class="input-clean" placeholder="Filtrar ato, servidor ou código..." />
               </div>
             </div>
 
@@ -802,8 +808,8 @@
               <table class="clean-table table-responsive-cards">
                 <thead>
                   <tr>
-                    <th style="width: 135px;">Data</th>
-                    <th style="width: 175px;">Setor / Categoria</th>
+                    <th id="thDiarioData" style="width: 135px; cursor: pointer; user-select: none;" title="Clique para ordenar por data (Mais recente / Mais antiga)">Data <span id="sortIndicatorData">🔽</span></th>
+                    <th id="thDiarioSetor" style="width: 175px; cursor: pointer; user-select: none;" title="Clique para ordenar por município / secretaria / setor">Setor / Categoria <span id="sortIndicatorNome">↕</span></th>
                     <th>Ato Oficial &amp; Entidades Identificadas (NER)</th>
                     <th class="text-right" style="width: 130px;">Documento</th>
                   </tr>
@@ -1112,10 +1118,10 @@
 
                     <!-- Abas de Visualização (Permutas Recíprocas, Acúmulos CF/88 e Base Geral) -->
                     <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                      <button type="button" id="tabAbaPermutasVigentes" class="btn btn-secondary btn-sm" style="font-size: 12px; font-weight: 600;">
+                      <button type="button" id="tabAbaPermutasVigentes" class="btn btn-secondary btn-sm active" style="font-size: 12px; font-weight: 600;">
                         <span>🔄 Em Permuta Ativa (160)</span>
                       </button>
-                      <button type="button" id="tabAbaPermutas" class="btn btn-secondary btn-sm active" style="font-size: 12px; font-weight: 600;">
+                      <button type="button" id="tabAbaPermutas" class="btn btn-secondary btn-sm" style="font-size: 12px; font-weight: 600;">
                         <span>🤝 Permutas Recíprocas (Hera)</span>
                       </button>
                       <button type="button" id="tabAbaVinculos" class="btn btn-secondary btn-sm" style="font-size: 12px; font-weight: 600;">
@@ -1300,58 +1306,61 @@
                 </div>
               </div>
 
-              <!-- LINHA 2: GRUPOS DE FILTROS PILLS (ENTE, CARGO, REGIME, ACUMULAÇÃO) -->
-              <div style="display: flex; flex-direction: column; gap: 10px;">
-                <!-- Filtro por Ente -->
-                <div class="filter-pills-group" role="group" aria-label="Filtrar por Ente Público" style="flex-wrap: wrap; gap: 6px;">
-                  <span class="filter-group-label" style="font-size: 11.5px; font-weight: 700; color: var(--text-secondary); min-width: 60px;">Ente:</span>
-                  <button type="button" class="btn-mini active" data-filtro-ente="todos">Todos (16 Entes)</button>
-                  <button type="button" class="btn-mini" data-filtro-ente="ceara-mirim">Ceará-Mirim</button>
-                  <button type="button" class="btn-mini" data-filtro-ente="governo-rn">Governo do RN (SEEC)</button>
-                  <button type="button" class="btn-mini" data-filtro-ente="natal">Natal</button>
-                  <button type="button" class="btn-mini" data-filtro-ente="parnamirim">Parnamirim</button>
-                  <button type="button" class="btn-mini" data-filtro-ente="sga">São Gonçalo do Amarante</button>
-                  <button type="button" class="btn-mini" data-filtro-ente="macaiba">Macaíba</button>
-                  <button type="button" class="btn-mini" data-filtro-ente="extremoz">Extremoz</button>
-                  <button type="button" class="btn-mini" data-filtro-ente="nisia-floresta">Nísia Floresta</button>
-                  <button type="button" class="btn-mini" data-filtro-ente="touros">Touros</button>
-                  <button type="button" class="btn-mini" data-filtro-ente="monte-alegre">Monte Alegre</button>
-                  <button type="button" class="btn-mini" data-filtro-ente="joao-camara">João Câmara</button>
-                  <button type="button" class="btn-mini" data-filtro-ente="poco-branco">Poço Branco</button>
-                  <button type="button" class="btn-mini" data-filtro-ente="ielmo-marinho">Ielmo Marinho</button>
-                  <button type="button" class="btn-mini" data-filtro-ente="sao-paulo-potengi">São Paulo do Potengi</button>
-                  <button type="button" class="btn-mini" data-filtro-ente="taipu">Taipú</button>
-                  <button type="button" class="btn-mini" data-filtro-ente="rio-do-fogo">Rio do Fogo</button>
+              <!-- LINHA 2: GRID RESPONSIVO DE FILTROS EM DROPDOWNS MODERNOS -->
+              <div class="servidor-selects-grid">
+                <div class="filter-select-field">
+                  <label for="filtroEnteSelect" class="filter-select-label">🏛️ Ente Federativo</label>
+                  <select id="filtroEnteSelect" class="input-clean filter-select-modern" data-filtro-select="ente" title="Filtrar por Ente Público">
+                    <option value="todos" data-filtro-ente="todos" selected>Todos os Entes (16 Entes Federativos)</option>
+                    <option value="ceara-mirim" data-filtro-ente="ceara-mirim">Ceará-Mirim (SMEB)</option>
+                    <option value="governo-rn" data-filtro-ente="governo-rn">Governo do RN (SEEC)</option>
+                    <option value="natal" data-filtro-ente="natal">Natal (SME)</option>
+                    <option value="parnamirim" data-filtro-ente="parnamirim">Parnamirim (SEMEC)</option>
+                    <option value="sga" data-filtro-ente="sga">São Gonçalo do Amarante</option>
+                    <option value="macaiba" data-filtro-ente="macaiba">Macaíba</option>
+                    <option value="extremoz" data-filtro-ente="extremoz">Extremoz</option>
+                    <option value="nisia-floresta" data-filtro-ente="nisia-floresta">Nísia Floresta</option>
+                    <option value="touros" data-filtro-ente="touros">Touros</option>
+                    <option value="monte-alegre" data-filtro-ente="monte-alegre">Monte Alegre</option>
+                    <option value="joao-camara" data-filtro-ente="joao-camara">João Câmara</option>
+                    <option value="poco-branco" data-filtro-ente="poco-branco">Poço Branco</option>
+                    <option value="ielmo-marinho" data-filtro-ente="ielmo-marinho">Ielmo Marinho</option>
+                    <option value="sao-paulo-potengi" data-filtro-ente="sao-paulo-potengi">São Paulo do Potengi</option>
+                    <option value="taipu" data-filtro-ente="taipu">Taipú</option>
+                    <option value="rio-do-fogo" data-filtro-ente="rio-do-fogo">Rio do Fogo</option>
+                  </select>
                 </div>
 
-                <!-- Filtro por Cargo / Carreira -->
-                <div class="filter-pills-group" role="group" aria-label="Filtrar por Quadro Funcional">
-                  <span class="filter-group-label" style="font-size: 11.5px; font-weight: 700; color: var(--text-secondary); min-width: 60px;">Quadro:</span>
-                  <button type="button" class="btn-mini active" data-filtro-cargo="todos">Todos os Quadros</button>
-                  <button type="button" class="btn-mini" data-filtro-cargo="docente">Docente / Professor</button>
-                  <button type="button" class="btn-mini" data-filtro-cargo="gestao">Gestão Escolar</button>
-                  <button type="button" class="btn-mini" data-filtro-cargo="tecnico">Técnico / Especialista</button>
-                  <button type="button" class="btn-mini" data-filtro-cargo="administrativo">Administrativo</button>
-                  <button type="button" class="btn-mini" data-filtro-cargo="apoio">Apoio / Operacional</button>
+                <div class="filter-select-field">
+                  <label for="filtroQuadroSelect" class="filter-select-label">📋 Quadro Funcional</label>
+                  <select id="filtroQuadroSelect" class="input-clean filter-select-modern" data-filtro-select="cargo" title="Filtrar por Quadro Funcional">
+                    <option value="todos" data-filtro-cargo="todos" selected>Todos os Quadros</option>
+                    <option value="docente" data-filtro-cargo="docente">Docente / Professor</option>
+                    <option value="gestao" data-filtro-cargo="gestao">Gestão Escolar</option>
+                    <option value="tecnico" data-filtro-cargo="tecnico">Técnico / Especialista</option>
+                    <option value="administrativo" data-filtro-cargo="administrativo">Administrativo</option>
+                    <option value="apoio" data-filtro-cargo="apoio">Apoio / Operacional</option>
+                  </select>
                 </div>
 
-                <!-- Filtro por Regime / Situação & Acumulação -->
-                <div style="display: flex; gap: 14px; flex-wrap: wrap; align-items: center;">
-                  <div class="filter-pills-inline" role="group" aria-label="Filtrar por Regime Jurídico">
-                    <span class="filter-group-label" style="font-size: 11.5px; font-weight: 700; color: var(--text-secondary);">Regime:</span>
-                    <button type="button" class="btn-mini active" data-filtro-regime="todos">Todos</button>
-                    <button type="button" class="btn-mini" data-filtro-regime="efetivo">Efetivo</button>
-                    <button type="button" class="btn-mini" data-filtro-regime="comissionado">Comissionado</button>
-                    <button type="button" class="btn-mini" data-filtro-regime="temporario">Temporário</button>
-                  </div>
+                <div class="filter-select-field">
+                  <label for="filtroRegimeSelect" class="filter-select-label">📜 Regime Jurídico</label>
+                  <select id="filtroRegimeSelect" class="input-clean filter-select-modern" data-filtro-select="regime" title="Filtrar por Regime Jurídico">
+                    <option value="todos" data-filtro-regime="todos" selected>Todos os Regimes</option>
+                    <option value="efetivo" data-filtro-regime="efetivo">Efetivo / Estatutário</option>
+                    <option value="comissionado" data-filtro-regime="comissionado">Comissionado</option>
+                    <option value="temporario" data-filtro-regime="temporario">Temporário / Contrato</option>
+                  </select>
+                </div>
 
-                  <div class="filter-pills-inline" role="group" aria-label="Filtrar por Auditoria CF/88">
-                    <span class="filter-group-label" style="font-size: 11.5px; font-weight: 700; color: var(--text-secondary);">Vínculos:</span>
-                    <button type="button" class="btn-mini active" data-filtro-vinculos="todos">Todos</button>
-                    <button type="button" class="btn-mini" data-filtro-vinculos="unico">Vínculo Único</button>
-                    <button type="button" class="btn-mini" data-filtro-vinculos="duplo">Acúmulo Lícito (≤ 60h)</button>
-                    <button type="button" class="btn-mini" data-filtro-vinculos="alerta">Alerta CF/88 (> 60h)</button>
-                  </div>
+                <div class="filter-select-field">
+                  <label for="filtroVinculosSelect" class="filter-select-label">⚖️ Vínculos / CF/88</label>
+                  <select id="filtroVinculosSelect" class="input-clean filter-select-modern" data-filtro-select="vinculos" title="Filtrar por Auditoria CF/88">
+                    <option value="todos" data-filtro-vinculos="todos" selected>Todos os Vínculos</option>
+                    <option value="unico" data-filtro-vinculos="unico">Vínculo Único</option>
+                    <option value="duplo" data-filtro-vinculos="duplo">Acúmulo Lícito (≤ 60h)</option>
+                    <option value="alerta" data-filtro-vinculos="alerta">Alerta CF/88 (> 60h)</option>
+                  </select>
                 </div>
               </div>
             </div>
@@ -1833,50 +1842,53 @@
             <!-- BARRA DE FILTROS E BUSCA INTEGRADA (CATEGORIA INSTITUCIONAL, REDE, SEGMENTOS & ZONA) -->
             <div class="escolas-filter-toolbar">
               <div class="escolas-filter-top-row">
-                <div class="escolas-search-and-rede">
+                <div class="escolas-search-and-rede" style="width: 100%;">
                   <input type="search" id="escolaBuscaInput" class="input-clean escolas-search-input" placeholder="Buscar por escola, bairro ou INEP..." />
-
-                  <!-- Filtro por Categoria Institucional -->
-                  <div class="filter-pills-group" role="group" aria-label="Filtrar por Categoria Institucional">
-                    <span class="filter-group-label">Categoria:</span>
-                    <button type="button" class="btn-mini active" data-filtro-categoria="todas">Todas</button>
-                    <button type="button" class="btn-mini" data-filtro-categoria="escola">Escolas</button>
-                    <button type="button" class="btn-mini" data-filtro-categoria="cei">Centro de Educação Infantil</button>
-                    <button type="button" class="btn-mini" data-filtro-categoria="instituicao">Instituição</button>
-                  </div>
-
-                  <!-- Filtro por Rede -->
-                  <div class="filter-pills-group" role="group" aria-label="Filtrar por Rede">
-                    <span class="filter-group-label">Rede:</span>
-                    <button type="button" class="btn-mini active" data-filtro-rede="todas">Todas</button>
-                    <button type="button" class="btn-mini" data-filtro-rede="Municipal">Municipal</button>
-                    <button type="button" class="btn-mini" data-filtro-rede="Estadual">Estadual</button>
-                    <button type="button" class="btn-mini" data-filtro-rede="Federal">Federal</button>
-                    <button type="button" class="btn-mini" data-filtro-rede="Privada">Privada</button>
-                  </div>
                 </div>
-
                 <span id="escolasContagemExibida" class="escolas-count-label">Carregando unidades...</span>
               </div>
 
-              <!-- Filtro por Segmento (Inclusivo) + Filtro de Zona -->
-              <div class="escolas-filter-bottom-row">
-                <div class="filter-pills-inline" role="group" aria-label="Filtrar por Segmento">
-                  <span class="filter-group-label">Segmento:</span>
-                  <button type="button" class="btn-mini active" data-filtro-segmento="todos">Todos</button>
-                  <button type="button" class="btn-mini" data-filtro-segmento="Ed. Infantil">Ed. Infantil</button>
-                  <button type="button" class="btn-mini" data-filtro-segmento="Ens. Fundamental I">Ens. Fundamental I</button>
-                  <button type="button" class="btn-mini" data-filtro-segmento="Ens. Fundamental II">Ens. Fundamental II</button>
-                  <button type="button" class="btn-mini" data-filtro-segmento="Ensino Médio">Ensino Médio</button>
+              <!-- GRID RESPONSIVO DE FILTROS EM DROPDOWNS MODERNOS -->
+              <div class="escolas-selects-grid">
+                <div class="filter-select-field">
+                  <label for="escolaFiltroCategoriaSelect" class="filter-select-label">🏫 Categoria</label>
+                  <select id="escolaFiltroCategoriaSelect" class="input-clean filter-select-modern" data-filtro-select="categoria" title="Filtrar por Categoria Institucional">
+                    <option value="todas" data-filtro-categoria="todas" selected>Todas as Categorias</option>
+                    <option value="escola" data-filtro-categoria="escola">Escolas</option>
+                    <option value="cei" data-filtro-categoria="cei">Centros de Ed. Infantil (CEI)</option>
+                    <option value="instituicao" data-filtro-categoria="instituicao">Instituições / Sede</option>
+                  </select>
                 </div>
 
-                <div class="escolas-filter-divider"></div>
+                <div class="filter-select-field">
+                  <label for="escolaFiltroRedeSelect" class="filter-select-label">🌐 Rede de Ensino</label>
+                  <select id="escolaFiltroRedeSelect" class="input-clean filter-select-modern" data-filtro-select="rede" title="Filtrar por Rede de Ensino">
+                    <option value="todas" data-filtro-rede="todas" selected>Todas as Redes</option>
+                    <option value="Municipal" data-filtro-rede="Municipal">Municipal</option>
+                    <option value="Estadual" data-filtro-rede="Estadual">Estadual</option>
+                    <option value="Federal" data-filtro-rede="Federal">Federal</option>
+                    <option value="Privada" data-filtro-rede="Privada">Privada</option>
+                  </select>
+                </div>
 
-                <div class="filter-pills-inline" role="group" aria-label="Filtrar por Zona">
-                  <span class="filter-group-label">Zona:</span>
-                  <button type="button" class="btn-mini active" data-filtro-zona="todas">Todas</button>
-                  <button type="button" class="btn-mini" data-filtro-zona="Urbana">Urbanas</button>
-                  <button type="button" class="btn-mini" data-filtro-zona="Rural">Rurais</button>
+                <div class="filter-select-field">
+                  <label for="escolaFiltroSegmentoSelect" class="filter-select-label">📚 Segmento</label>
+                  <select id="escolaFiltroSegmentoSelect" class="input-clean filter-select-modern" data-filtro-select="segmento" title="Filtrar por Segmento de Ensino">
+                    <option value="todos" data-filtro-segmento="todos" selected>Todos os Segmentos</option>
+                    <option value="Ed. Infantil" data-filtro-segmento="Ed. Infantil">Ed. Infantil</option>
+                    <option value="Ens. Fundamental I" data-filtro-segmento="Ens. Fundamental I">Ens. Fundamental I</option>
+                    <option value="Ens. Fundamental II" data-filtro-segmento="Ens. Fundamental II">Ens. Fundamental II</option>
+                    <option value="Ensino Médio" data-filtro-segmento="Ensino Médio">Ensino Médio</option>
+                  </select>
+                </div>
+
+                <div class="filter-select-field">
+                  <label for="escolaFiltroZonaSelect" class="filter-select-label">📍 Localização / Zona</label>
+                  <select id="escolaFiltroZonaSelect" class="input-clean filter-select-modern" data-filtro-select="zona" title="Filtrar por Zona Urbana ou Rural">
+                    <option value="todas" data-filtro-zona="todas" selected>Todas as Zonas</option>
+                    <option value="Urbana" data-filtro-zona="Urbana">Zona Urbana</option>
+                    <option value="Rural" data-filtro-zona="Rural">Zona Rural</option>
+                  </select>
                 </div>
               </div>
             </div>

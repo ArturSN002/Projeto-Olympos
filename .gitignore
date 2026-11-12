@@ -89,3 +89,18 @@ sync_mirrors.py
 
 # ==============================================================================
 # ==============================================================================
+
+# ==============================================================================
+# Escopo do Repositorio: somente Frontend (GitHub Pages)
+# Ignora tudo que nao e frontend (backend, engines, Apps Script, docs internos).
+# Mantidos: .github/, 2_github_pages_actions/frontend_spa/, README.md, .gitignore
+# ==============================================================================
+/1_google_apps_script/
+/3_skills_personas/
+/4_relatorios_implementacao/
+/5_manuais_instalacao/
+/tests/
+/sync_mirrors.py
+/2_github_pages_actions/engines/
+/2_github_pages_actions/supabase/
+/2_github_pages_actions/workflows_mirror/

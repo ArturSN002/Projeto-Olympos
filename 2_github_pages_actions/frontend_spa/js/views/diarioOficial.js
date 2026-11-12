@@ -28,7 +28,32 @@ window.OlymposViews.diarioOficial = (function() {
     bind('prometheusTriggerActionBtn', 'click', dispararColetaGitHubActions);
     bind('prometheusPeriodFilter', 'change', renderizarTabela);
     bind('prometheusSectorFilter', 'change', renderizarTabela);
+    bind('prometheusSortFilter', 'change', renderizarTabela);
     bind('prometheusSearchInput', 'input', renderizarTabela);
+
+    // Ordenação por clique nos cabeçalhos da tabela
+    const thData = document.getElementById('thDiarioData');
+    if (thData && !thData._bound) {
+      thData._bound = true;
+      thData.addEventListener('click', function() {
+        const sortSelect = document.getElementById('prometheusSortFilter');
+        if (!sortSelect) return;
+        sortSelect.value = (sortSelect.value === 'DATA_DESC') ? 'DATA_ASC' : 'DATA_DESC';
+        renderizarTabela();
+      });
+    }
+
+    const thSetor = document.getElementById('thDiarioSetor');
+    if (thSetor && !thSetor._bound) {
+      thSetor._bound = true;
+      thSetor.addEventListener('click', function() {
+        const sortSelect = document.getElementById('prometheusSortFilter');
+        if (!sortSelect) return;
+        sortSelect.value = (sortSelect.value === 'NOME_AZ') ? 'NOME_ZA' : 'NOME_AZ';
+        renderizarTabela();
+      });
+    }
+
     bind('diarioSalvarBoletimEmailBtn', 'click', function() {
       const inEl = document.getElementById('diarioBoletimEmailInput');
       if (window.OlymposApp && typeof window.OlymposApp.salvarBoletimEmails === 'function') {

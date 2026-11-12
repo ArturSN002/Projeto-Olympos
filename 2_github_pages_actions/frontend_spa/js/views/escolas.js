@@ -788,6 +788,44 @@ window.OlymposViews.escolas = (function() {
       });
     }
 
+    // Novos Selects Dropdown (M3)
+    var selCat = document.getElementById('escolaFiltroCategoriaSelect') || document.getElementById('selectFiltroCategoriaEscolas');
+    if (selCat && !selCat._bound) {
+      selCat._bound = true;
+      selCat.addEventListener('change', function() {
+        activeCategoryFilter = selCat.value || 'todas';
+        renderizarInterface();
+      });
+    }
+
+    var selRede = document.getElementById('escolaFiltroRedeSelect') || document.getElementById('selectFiltroRedeEscolas');
+    if (selRede && !selRede._bound) {
+      selRede._bound = true;
+      selRede.addEventListener('change', function() {
+        activeRedeFilter = selRede.value || 'todas';
+        renderizarInterface();
+      });
+    }
+
+    var selSeg = document.getElementById('escolaFiltroSegmentoSelect') || document.getElementById('selectFiltroSegmentoEscolas');
+    if (selSeg && !selSeg._bound) {
+      selSeg._bound = true;
+      selSeg.addEventListener('change', function() {
+        activeSegmentFilter = selSeg.value || 'todos';
+        renderizarInterface();
+      });
+    }
+
+    var selZona = document.getElementById('escolaFiltroZonaSelect') || document.getElementById('selectFiltroZonaEscolas');
+    if (selZona && !selZona._bound) {
+      selZona._bound = true;
+      selZona.addEventListener('change', function() {
+        activeZonaFilter = selZona.value || 'todas';
+        renderizarInterface();
+      });
+    }
+
+    // Fallback para botões de filtro / data-attributes
     document.querySelectorAll('[data-filtro-rede]').forEach(function(btn) {
       if (!btn._bound) {
         btn._bound = true;
@@ -1379,21 +1417,29 @@ window.OlymposViews.escolas = (function() {
 
   function setFiltroRede(rede) {
     activeRedeFilter = rede || 'todas';
+    var sel = document.getElementById('escolaFiltroRedeSelect') || document.getElementById('selectFiltroRedeEscolas');
+    if (sel) sel.value = activeRedeFilter;
     renderizarInterface();
   }
 
   function setFiltroSegmento(seg) {
     activeSegmentFilter = seg || 'todos';
+    var sel = document.getElementById('escolaFiltroSegmentoSelect') || document.getElementById('selectFiltroSegmentoEscolas');
+    if (sel) sel.value = activeSegmentFilter;
     renderizarInterface();
   }
 
   function setFiltroCategoria(cat) {
     activeCategoryFilter = cat || 'todas';
+    var sel = document.getElementById('escolaFiltroCategoriaSelect') || document.getElementById('selectFiltroCategoriaEscolas');
+    if (sel) sel.value = activeCategoryFilter;
     renderizarInterface();
   }
 
   function setFiltroZona(zona) {
     activeZonaFilter = zona || 'todas';
+    var sel = document.getElementById('escolaFiltroZonaSelect') || document.getElementById('selectFiltroZonaEscolas');
+    if (sel) sel.value = activeZonaFilter;
     renderizarInterface();
   }
 

@@ -1,1 +1,0 @@
-[2026-10-28] [HÉLIO/FEMURN]: Publicado Lei nº 9.394/1996), Lei Federal nº 15.247/2025 (Compromisso Nacional Criança Alfabetizada), novo Pla (https://drive.google.com/file/d/1HQeKuZDaqlF9YJkTwB-KH-AkM9gYYXPA/view?usp=drivesdk)
