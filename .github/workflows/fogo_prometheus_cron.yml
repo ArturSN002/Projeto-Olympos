@@ -2,8 +2,8 @@ name: "Olympos — Fogo de Prometheus (Monitor Diário FEMURN)"
 
 on:
   schedule:
-    # 10:00 UTC = 07:00 BRT (America/Fortaleza), Segunda a Sexta
-    - cron: '0 10 * * 1-5'
+    # 03:10 UTC = 00:10 BRT (Horário de Brasília), Segunda a Sexta
+    - cron: '10 3 * * 1-5'
   workflow_dispatch:
     inputs:
       data_inicio:

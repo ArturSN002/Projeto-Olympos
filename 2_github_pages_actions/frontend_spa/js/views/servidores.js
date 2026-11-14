@@ -128,6 +128,7 @@ window.OlymposViews.servidores = (function() {
       if (!jaExiste) {
         dossie.vinculos.push({
           id: s.id,
+          matricula: mat,
           ente: enteNome,
           enteId: s.enteId || '',
           orgao: s.orgao || enteNome,
@@ -407,8 +408,8 @@ window.OlymposViews.servidores = (function() {
       });
     });
 
-    // Se temos mais que a base de amostra antiga, exibe os números consolidados
-    if (totalVinculos > 908 || kpiTotalEl.textContent === '--') {
+    // Se temos a base consolidada completa (40k+ registros) ou se os KPIs ainda não foram definidos, atualiza os contadores do topo
+    if (totalVinculos >= 40000 || kpiTotalEl.textContent === '--') {
       kpiTotalEl.textContent = totalVinculos.toLocaleString('pt-BR');
       if (kpiMunEl) kpiMunEl.textContent = municipaisCount.toLocaleString('pt-BR');
       if (kpiEstEl) kpiEstEl.textContent = estaduaisCount.toLocaleString('pt-BR');
@@ -532,17 +533,17 @@ window.OlymposViews.servidores = (function() {
       var lotacaoPrin = d.lotacoes[0] || 'Lotação não informada';
 
       html += '<tr>' +
-        '<td>' +
+        '<td data-label="Servidor">' +
           '<div style="font-weight: 700; color: var(--text-main);">' + escapeHtml(d.nome) + '</div>' +
           '<div style="font-size: 11px; color: var(--text-muted);">CPF: ' + escapeHtml(d.cpfMascarado) + '</div>' +
         '</td>' +
-        '<td><span class="code-badge" style="font-size: 11.5px;">' + escapeHtml(matStr) + '</span></td>' +
-        '<td><span style="font-size: 12px; color: var(--text-secondary);">' + escapeHtml(entesStr) + '</span></td>' +
-        '<td><span style="font-size: 12.5px; font-weight: 600;">' + escapeHtml(cargoPrin) + '</span></td>' +
-        '<td><span class="pill-badge pill-gold" style="font-size: 11px;">' + d.cargaHorariaTotal + 'h sem.</span></td>' +
-        '<td><span style="font-size: 12px; color: var(--text-muted);">' + escapeHtml(lotacaoPrin) + '</span></td>' +
-        '<td><span class="pill-badge ' + auditoria.badgeClass + '" style="font-size: 11px;">' + escapeHtml(auditoria.badgeTexto) + '</span></td>' +
-        '<td class="text-right">' +
+        '<td data-label="Matrícula(s)"><span class="code-badge" style="font-size: 11.5px;">' + escapeHtml(matStr) + '</span></td>' +
+        '<td data-label="Ente(s)"><span style="font-size: 12px; color: var(--text-secondary);">' + escapeHtml(entesStr) + '</span></td>' +
+        '<td data-label="Cargo Principal"><span style="font-size: 12.5px; font-weight: 600;">' + escapeHtml(cargoPrin) + '</span></td>' +
+        '<td data-label="Carga Horária"><span class="pill-badge pill-gold" style="font-size: 11px;">' + d.cargaHorariaTotal + 'h sem.</span></td>' +
+        '<td data-label="Lotação Principal"><span style="font-size: 12px; color: var(--text-muted);">' + escapeHtml(lotacaoPrin) + '</span></td>' +
+        '<td data-label="Auditoria CF/88"><span class="pill-badge ' + auditoria.badgeClass + '" style="font-size: 11px;">' + escapeHtml(auditoria.badgeTexto) + '</span></td>' +
+        '<td data-label="Ações" class="text-right">' +
           '<button type="button" class="btn btn-secondary btn-sm btn-abrir-dossie-tab" data-nome="' + escapeHtml(d.nome) + '">Dossiê</button>' +
         '</td>' +
       '</tr>';

@@ -2596,7 +2596,7 @@ window.OlymposViews.papiroCadmo = (function() {
       '</div>';
 
     html += '<div class="table-responsive" style="max-height: 480px; overflow-y: auto;">' +
-      '<table class="data-table" style="width:100%; font-size:12.5px;">' +
+      '<table class="clean-table table-responsive-cards" style="width:100%; font-size:12.5px;">' +
         '<thead>' +
           '<tr>' +
             '<th style="width:90px;">Matrícula</th>' +
@@ -2634,13 +2634,13 @@ window.OlymposViews.papiroCadmo = (function() {
 
       html +=
         '<tr>' +
-          '<td style="font-family:var(--font-mono); font-weight:600; color:var(--text-main);">' + window.OlymposApp.escapeHtml(matSrv) + '</td>' +
-          '<td><strong>' + window.OlymposApp.escapeHtml(nomeSrv) + '</strong></td>' +
-          '<td>' + enteBadge + '</td>' +
-          '<td style="font-size:11.5px; color:var(--text-secondary);">' + window.OlymposApp.escapeHtml(cargoSrv) + '</td>' +
-          '<td style="text-align:center;"><span class="pill-badge pill-green" style="font-size:11px;">' + window.OlymposApp.escapeHtml(chSrv) + '</span></td>' +
-          '<td style="font-size:11.5px; color:var(--text-muted);">' + window.OlymposApp.escapeHtml(lotSrv || (isEstado ? 'Rede Estadual SEEC/RN' : 'SMEB / Rede Municipal')) + '</td>' +
-          '<td style="text-align:right;">' +
+          '<td data-label="Matrícula" style="font-family:var(--font-mono); font-weight:600; color:var(--text-main);">' + window.OlymposApp.escapeHtml(matSrv) + '</td>' +
+          '<td data-label="Nome do Servidor"><strong>' + window.OlymposApp.escapeHtml(nomeSrv) + '</strong></td>' +
+          '<td data-label="Ente / Vínculo">' + enteBadge + '</td>' +
+          '<td data-label="Cargo / Função" style="font-size:11.5px; color:var(--text-secondary);">' + window.OlymposApp.escapeHtml(cargoSrv) + '</td>' +
+          '<td data-label="C.H." style="text-align:center;"><span class="pill-badge pill-green" style="font-size:11px;">' + window.OlymposApp.escapeHtml(chSrv) + '</span></td>' +
+          '<td data-label="Escola / Lotação" style="font-size:11.5px; color:var(--text-muted);">' + window.OlymposApp.escapeHtml(lotSrv || (isEstado ? 'Rede Estadual SEEC/RN' : 'SMEB / Rede Municipal')) + '</td>' +
+          '<td data-label="Ação" style="text-align:right;">' +
             '<button type="button" class="btn btn-secondary btn-sm" style="font-size:11px; padding:3px 8px;" ' +
               'onclick="window.OlymposViews.papiroCadmo.preencherFormComDocente(\'' + window.OlymposApp.escapeHtml(nomeSrv) + '\', \'' + window.OlymposApp.escapeHtml(matSrv) + '\', \'' + window.OlymposApp.escapeHtml(cargoSrv) + '\', \'' + window.OlymposApp.escapeHtml(chSrv) + '\', \'' + window.OlymposApp.escapeHtml(lotSrv) + '\')">' +
               '⚡ Permuta' +
@@ -2997,7 +2997,7 @@ window.OlymposViews.papiroCadmo = (function() {
       '</div>';
 
     html += '<div class="table-responsive" style="max-height: 480px; overflow-y: auto;">' +
-      '<table class="data-table" style="width:100%; font-size:12px;">' +
+      '<table class="clean-table table-responsive-cards" style="width:100%; font-size:12px;">' +
         '<thead>' +
           '<tr>' +
             '<th style="width:38px; text-align:center;">#</th>' +
@@ -3026,33 +3026,33 @@ window.OlymposViews.papiroCadmo = (function() {
 
       html +=
         '<tr>' +
-          '<td style="text-align:center; font-family:var(--font-mono); color:var(--text-muted); font-size:11px;">' + s.ordem + '</td>' +
-          '<td>' +
+          '<td data-label="#" style="text-align:center; font-family:var(--font-mono); color:var(--text-muted); font-size:11px;">' + s.ordem + '</td>' +
+          '<td data-label="Servidor / CPF">' +
             '<strong style="color:var(--text-main); font-size:12.5px;">' + window.OlymposApp.escapeHtml(s.nome) + '</strong>' +
             '<div style="font-family:var(--font-mono); font-size:11px; color:var(--text-muted); margin-top:1px;">' + window.OlymposApp.escapeHtml(s.cpf_mascarado) + '</div>' +
           '</td>' +
-          '<td>' +
+          '<td data-label="Termo / Ente">' +
             '<span class="pill-badge pill-blue" style="font-size:10.5px; font-weight:600;">' + window.OlymposApp.escapeHtml(s.ente_parceiro) + '</span>' +
             '<div style="font-size:11px; color:var(--text-secondary); margin-top:2px;">' + window.OlymposApp.escapeHtml(s.termo) + '</div>' +
           '</td>' +
-          '<td>' + fluxoPill + '</td>' +
-          '<td style="font-family:var(--font-mono); font-size:11px;">' +
+          '<td data-label="Fluxo">' + fluxoPill + '</td>' +
+          '<td data-label="Matrículas" style="font-family:var(--font-mono); font-size:11px;">' +
             '<div><span style="color:var(--text-muted);">Origem:</span> ' + window.OlymposApp.escapeHtml(s.matricula_origem) + '</div>' +
             (s.matricula_destino && s.matricula_destino !== 'N/I' ? '<div style="color:var(--text-muted);"><span style="color:var(--text-muted);">Destino:</span> ' + window.OlymposApp.escapeHtml(s.matricula_destino) + '</div>' : '') +
           '</td>' +
-          '<td>' +
+          '<td data-label="Cargo / Função">' +
             '<div style="font-weight:500;">' + window.OlymposApp.escapeHtml(s.cargo_origem) + '</div>' +
             (s.cargo_funcao_exercida && s.cargo_funcao_exercida !== s.cargo_origem ? '<div style="font-size:11px; color:var(--brand-gold);">' + window.OlymposApp.escapeHtml(s.cargo_funcao_exercida) + '</div>' : '') +
           '</td>' +
-          '<td style="font-size:11.5px; color:var(--text-secondary);">' +
+          '<td data-label="Lotação / Local" style="font-size:11.5px; color:var(--text-secondary);">' +
             window.OlymposApp.escapeHtml(s.local_trabalho || 'SMEB') +
           '</td>' +
-          '<td style="font-size:11px;">' +
+          '<td data-label="Vigência" style="font-size:11px;">' +
             statusPill +
             '<div style="color:var(--text-muted);">' + window.OlymposApp.escapeHtml(s.aditivo) + '</div>' +
             '<div style="font-size:10.5px; color:var(--text-muted);">' + window.OlymposApp.escapeHtml(s.data_inicio) + ' a ' + window.OlymposApp.escapeHtml(s.data_fim) + '</div>' +
           '</td>' +
-          '<td style="text-align:center;">' +
+          '<td data-label="Ações" style="text-align:center;">' +
             '<button type="button" class="btn btn-secondary btn-sm" style="font-size:10.5px; padding:3px 6px;" title="Copiar ficha funcional da permuta" onclick="window.OlymposViews.papiroCadmo.copiarDadosServidorPermuta(\'' + s.id + '\')">' +
               '📋 Copiar' +
             '</button>' +

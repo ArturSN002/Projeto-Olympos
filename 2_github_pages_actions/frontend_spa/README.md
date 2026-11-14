@@ -53,7 +53,7 @@ Interface web moderna, responsiva e modular do **Hub Olympos** da Secretaria Mun
 ### Opção 1 (Recomendada): Monorepo Unificado do Hub Olympos
 Na raiz do projeto (`Projetos Bases/`), a pasta `.github/workflows/` já integra as três automações sem expor códigos Python/GAS no site público:
 - `deploy-hub-pages.yml` — Publica **exclusivamente** a pasta `hub-olympos-frontend/` no GitHub Pages.
-- `fogo_prometheus_cron.yml` — Executa o coletor diário FEMURN (`07:00 BRT`, seg–sex) e envia para o receptor único no GAS (`hub-olympos-webapp`).
+- `fogo_prometheus_cron.yml` — Executa o coletor diário FEMURN (`00:10 BRT` / `10 3 * * 1-5`, seg–sex) e envia para o receptor único no GAS (`hub-olympos-webapp`).
 - `papiro_cadmo_mensal.yml` — Executa o ETL mensal dos 16 portais potiguares (todo dia 12 às `03:00 UTC`).
 
 ### Opção 2: Repositório Dedicado Apenas ao Frontend

@@ -241,15 +241,15 @@ window.OlymposViews.diarioOficial = (function() {
 
       if (stElem) {
         stElem.textContent = sw.webhookAtivo
-          ? 'Webhook Autenticado & Cron Diário Ativo (07:00 BRT)'
+          ? 'Webhook Autenticado & Cron Diário Ativo (00:10 BRT)'
           : 'Acervo Oficial FEMURN Conectado • Base Supabase & Drive Ativa';
       }
       if (lrElem) {
         lrElem.textContent = 'Última recepção: ' + (sw.ultimaExecucao || 'Edição 3452 FEMURN (06/11/2026)') +
           (sw.totalSalvos !== undefined ? (' • ' + sw.totalSalvos + ' ato(s) na última edição') : '');
       }
-      if (sheetBtn && (data.pastaPlanilhasUrl || data.planilhaOficialUrl)) {
-        sheetBtn.href = data.pastaPlanilhasUrl || data.planilhaOficialUrl;
+      if (sheetBtn) {
+        sheetBtn.href = data.planilhaOficialUrl || 'https://docs.google.com/spreadsheets/d/1tU6rvgB2jNGaGqHK1oecNMQX7-5QcB8Q-1fNgzWcZqs/edit';
       }
 
       // 3. Extrai linhas das planilhas diárias recebidas do receptor GAS
@@ -318,6 +318,35 @@ window.OlymposViews.diarioOficial = (function() {
       const blob = [p.titulo, p.codigo, p.categoria, (p.servidores || []).join(' '), (p.matriculas || []).join(' '), p.origem || ''].join(' ').toLowerCase();
       const matchTerm = (!termFilter || blob.includes(termFilter));
       return matchPeriod && matchSector && matchTerm;
+    });
+
+    const sortSelect = document.getElementById('prometheusSortFilter');
+    const sortFilter = sortSelect ? sortSelect.value : 'DATA_DESC';
+
+    const indData = document.getElementById('sortIndicatorData');
+    const indNome = document.getElementById('sortIndicatorNome');
+    if (indData) indData.textContent = (sortFilter === 'DATA_DESC') ? '🔽' : (sortFilter === 'DATA_ASC' ? '🔼' : '↕');
+    if (indNome) indNome.textContent = (sortFilter === 'NOME_AZ') ? '🔽' : (sortFilter === 'NOME_ZA' ? '🔼' : '↕');
+
+    filtered.sort(function(a, b) {
+      if (sortFilter === 'DATA_DESC') {
+        const da = parseDataPublicacao(a.data);
+        const db = parseDataPublicacao(b.data);
+        const ta = da ? da.getTime() : 0;
+        const tb = db ? db.getTime() : 0;
+        return tb - ta;
+      } else if (sortFilter === 'DATA_ASC') {
+        const da = parseDataPublicacao(a.data);
+        const db = parseDataPublicacao(b.data);
+        const ta = da ? da.getTime() : 0;
+        const tb = db ? db.getTime() : 0;
+        return ta - tb;
+      } else if (sortFilter === 'NOME_AZ') {
+        return (a.titulo || '').localeCompare(b.titulo || '', 'pt-BR');
+      } else if (sortFilter === 'NOME_ZA') {
+        return (b.titulo || '').localeCompare(a.titulo || '', 'pt-BR');
+      }
+      return 0;
     });
 
     const activeBadge = document.getElementById('prometheusActivePeriodBadge');

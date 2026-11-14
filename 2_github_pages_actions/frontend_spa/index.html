@@ -231,6 +231,11 @@
           <span>Ofícios 2026</span>
           <span class="drive-arrow">↗</span>
         </a>
+        <a href="https://docs.google.com/spreadsheets/d/1tU6rvgB2jNGaGqHK1oecNMQX7-5QcB8Q-1fNgzWcZqs/edit" target="_blank" rel="noopener" class="drawer-drive-item">
+          <span class="drive-icon">📋</span>
+          <span>Planilha Diário Oficial</span>
+          <span class="drive-arrow">↗</span>
+        </a>
         <a href="https://drive.google.com/drive/folders/1aj514v29gytXH9j5LY_V76ap9XIblwHS" target="_blank" rel="noopener" class="drawer-drive-item">
           <span class="drive-icon">📊</span>
           <span>Backup Diário Oficial</span>
@@ -271,7 +276,8 @@
           <a href="https://drive.google.com/drive/folders/1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu" target="_blank" rel="noopener" class="folder-chip">Memórias Operacionais (.md) ↗</a>
           <a href="https://drive.google.com/drive/folders/1qGq5uqxOtN_V63itUheYatLIcj5R86O3" target="_blank" rel="noopener" class="folder-chip">Portarias 2026 ↗</a>
           <a href="https://drive.google.com/drive/folders/1H4bJXClx66Mr5PmRmSQBQLHDpAaKwdab" target="_blank" rel="noopener" class="folder-chip">Ofícios 2026 ↗</a>
-          <a href="https://drive.google.com/drive/folders/1aj514v29gytXH9j5LY_V76ap9XIblwHS" target="_blank" rel="noopener" class="folder-chip">Planilhas Diário Oficial ↗</a>
+          <a href="https://docs.google.com/spreadsheets/d/1tU6rvgB2jNGaGqHK1oecNMQX7-5QcB8Q-1fNgzWcZqs/edit" target="_blank" rel="noopener" class="folder-chip">Planilha Diário Oficial ↗</a>
+          <a href="https://drive.google.com/drive/folders/1aj514v29gytXH9j5LY_V76ap9XIblwHS" target="_blank" rel="noopener" class="folder-chip">Backup Diário Oficial ↗</a>
           <a href="https://drive.google.com/drive/folders/1dcc_5GcNG0ciVE-i1J6iwtojATk-1utD" target="_blank" rel="noopener" class="folder-chip">Acervo Papiro de Cadmo ↗</a>
         </div>
       </section>
@@ -748,7 +754,7 @@
               <div class="arch-front-col">
                 <span class="pill-badge pill-gold" style="align-self: flex-start;">FRENTE 1 • GITHUB ACTIONS (MOTOR PESADO)</span>
                 <strong style="font-size: 14px;" id="promWebhookStatus">Verificando integração...</strong>
-                <span style="font-size: 12.5px; color: var(--text-secondary);" id="promLastRun">Execução automática seg–sex às 07:00 BRT com Playwright, pypdf e Tesseract OCR.</span>
+                <span style="font-size: 12.5px; color: var(--text-secondary);" id="promLastRun">Execução automática seg–sex às 00:10 BRT com Playwright, pypdf e Tesseract OCR.</span>
               </div>
               <div class="arch-front-col">
                 <span class="pill-badge pill-green" style="align-self: flex-start;">FRENTE 2 • HUB GAS GATEWAY (RECEPTOR ÚNICO)</span>
@@ -762,10 +768,10 @@
               <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
                 <div>
                   <div style="font-weight: 600; font-size: 13.5px; color: var(--text-main);">📧 Destinatários do Boletim Diário (Fogo de Prometheus)</div>
-                  <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Lista de e-mails para envio automático do briefing executivo diário da FEMURN às 07:00 BRT.</div>
+                  <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Lista de e-mails para envio automático do briefing executivo diário da FEMURN às 00:10 BRT.</div>
                 </div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-                  <input type="text" id="diarioBoletimEmailInput" class="input-clean" style="width: 280px; font-size: 12px; padding: 6px 12px;" placeholder="gabinete@smeb.cearamirim.rn.gov.br" />
+                  <input type="text" id="diarioBoletimEmailInput" class="input-clean" style="flex: 1 1 200px; max-width: 100%; font-size: 12px; padding: 6px 12px;" placeholder="gabinete@smeb.cearamirim.rn.gov.br" />
                   <button type="button" id="diarioSalvarBoletimEmailBtn" class="btn btn-primary btn-sm" style="font-size: 12px; padding: 6px 14px;">Salvar E-mails</button>
                 </div>
               </div>
@@ -797,8 +803,8 @@
                 <select id="prometheusSortFilter" class="input-clean filter-select-modern" title="Critério de ordenação das publicações">
                   <option value="DATA_DESC" selected>📅 Data (Mais recente primeiro)</option>
                   <option value="DATA_ASC">📅 Data (Mais antiga primeiro)</option>
-                  <option value="NOME_AZ">🔤 Município / Secretaria (A–Z)</option>
-                  <option value="NOME_ZA">🔤 Município / Secretaria (Z–A)</option>
+                  <option value="NOME_AZ">🔤 Título da Publicação / Ato (A–Z)</option>
+                  <option value="NOME_ZA">🔤 Título da Publicação / Ato (Z–A)</option>
                 </select>
                 <input type="search" id="prometheusSearchInput" class="input-clean" placeholder="Filtrar ato, servidor ou código..." />
               </div>
@@ -876,7 +882,7 @@
 
             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;">
               <strong style="font-family: var(--font-display); font-size: 15px;">Portais da Transparência Monitorados</strong>
-              <input type="search" id="cadmoPortalFilterInput" class="input-clean" style="width: 240px; padding: 7px 12px; font-size: 13px;" placeholder="Filtrar município ou tecnologia..." />
+              <input type="search" id="cadmoPortalFilterInput" class="input-clean" style="flex: 1 1 200px; max-width: 100%; padding: 7px 12px; font-size: 13px;" placeholder="Filtrar município ou tecnologia..." />
             </div>
 
             <div id="cadmoPortaisGrid" class="controls-grid" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px;"></div>
@@ -2092,7 +2098,7 @@
                 <div>
                   <span class="section-eyebrow">BOLETIM DIÁRIO FEMURN • FOGO DE PROMETHEUS</span>
                   <h3 class="section-title" style="font-size: 1.15rem;">Destinatários do Resumo Executivo por E-mail</h3>
-                  <p class="section-desc" style="margin-bottom: 0;">E-mails institucionais que recebem o briefing matinal às 07:00 BRT com atos da FEMURN e links do Drive (<code>BOLETIM_DESTINATARIOS_EMAIL</code>).</p>
+                  <p class="section-desc" style="margin-bottom: 0;">E-mails institucionais que recebem o briefing matinal às 00:10 BRT com atos da FEMURN e links do Drive (<code>BOLETIM_DESTINATARIOS_EMAIL</code>).</p>
                 </div>
               </div>
               <div class="controls-grid" style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 12px; align-items: end;">

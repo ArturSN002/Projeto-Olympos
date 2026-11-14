@@ -1181,6 +1181,32 @@
   );
 
   var BASE_CONSOLIDADA_DINAMICA = null;
+  var RESUMO_OFICIAL_FALLBACK = {
+    competencia: "2026-11",
+    atualizado_em: "2026-11-09T00:02:43.748330+00:00",
+    total_acervo: 47270,
+    total_municipais: 27108,
+    total_estaduais: 20162,
+    total_multiplos: 3615,
+    total_entes: 15,
+    por_ente: {
+      "Governo do Estado do Rio Grande do Norte": 20162,
+      "Parnamirim": 5855,
+      "Natal": 4756,
+      "Ceará-Mirim": 3634,
+      "Macaíba": 2455,
+      "Nísia Floresta": 1991,
+      "Extremoz": 1586,
+      "Touros": 1376,
+      "João Câmara": 1173,
+      "Poço Branco": 992,
+      "Monte Alegre": 820,
+      "Ielmo Marinho": 784,
+      "São Paulo do Potengi": 702,
+      "Taipú": 693,
+      "Rio do Fogo": 291
+    }
+  };
   var RESUMO_KPIS_DINAMICO = null;
   var promessaCarregamentoBase = null;
 
@@ -1369,7 +1395,8 @@
       } catch (e) {}
 
       return lerArquivoLocal().catch(function() {
-        return null;
+        RESUMO_KPIS_DINAMICO = RESUMO_OFICIAL_FALLBACK;
+        return RESUMO_OFICIAL_FALLBACK;
       });
     },
 
