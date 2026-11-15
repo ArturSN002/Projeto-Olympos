@@ -3126,10 +3126,10 @@ window.OlymposViews.papiroCadmo = (function() {
     html += '</div>';
 
     // 2. TOOLBAR DE FILTROS & AÇÕES
-    html += '<div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 14px; padding: 10px 14px; background: var(--bg-tonal, rgba(255,255,255,0.03)); border: 1px solid var(--border-hairline, rgba(255,255,255,0.06)); border-radius: var(--radius-md, 8px);">';
+    html += '<div class="permuta-vigente-filtros">';
 
     // Filtros à esquerda
-    html += '<div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">';
+    html += '<div class="permuta-vigente-selects">';
 
     // Dropdown Ente
     html += '<div style="display: flex; align-items: center; gap: 6px;">' +
@@ -3169,7 +3169,7 @@ window.OlymposViews.papiroCadmo = (function() {
     html += '</div>';
 
     // Botões de Ação à direita
-    html += '<div style="display: flex; align-items: center; gap: 8px;">';
+    html += '<div class="permuta-vigente-actions">';
     html += '<button type="button" class="btn btn-secondary btn-sm" style="font-size: 11.5px; display: flex; align-items: center; gap: 6px;" onclick="window.OlymposViews.papiroCadmo.exportarPermutasVigentesCsv()">' +
       '<span>📥 Exportar CSV</span>' +
     '</button>';
@@ -3454,10 +3454,10 @@ window.OlymposViews.papiroCadmo = (function() {
     const comp = prompt('Competência opcional (AAAA-MM, ex: 2026-09). Deixe vazio para coletar o mês anterior completo:', '');
     if (comp === null) return;
 
-    window.OlymposApp.showToast('Acionando pipeline O Papiro de Cadmo no GitHub Actions...');
+    window.OlymposApp.showToast('Iniciando atualização do quadro de servidores...');
     window.OlymposApi.chamar('cadmo_disparar_coleta', { competencia: comp.trim() }, function(res) {
       if (res && res.ok) {
-        window.OlymposApp.showToast(res.mensagem || 'Pipeline O Papiro de Cadmo acionado!');
+        window.OlymposApp.showToast(res.mensagem || 'Atualização iniciada com sucesso!');
       } else {
         window.OlymposApp.showToast((res && res.mensagem) || 'Falha ao acionar coleta.', true);
       }

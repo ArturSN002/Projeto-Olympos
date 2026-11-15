@@ -61,11 +61,11 @@
     <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" crossorigin="" />
     <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script defer src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" crossorigin=""></script>
-    <script defer src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js" crossorigin=""></script>
+    <script defer src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.4/dist/leaflet-maplibre-gl.js" crossorigin=""></script>
   </head>
   <body>
     <!-- =========================================================================
-         TELA DE LOGIN EDITORIAL (IDENTIFICAÇÃO DE PERFIL RBAC & HASH SHA-256)
+         TELA DE LOGIN EDITORIAL (IDENTIFICAÇÃO DE USUÁRIO E ACESSO SEGURO)
          ========================================================================= -->
     <div id="loginScreen" class="modal-backdrop hidden">
       <div class="modal-card" style="max-width: 450px;">
@@ -91,8 +91,8 @@
           </form>
 
           <div style="margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--border-hairline); text-align: center;">
-            <button type="button" id="openSetupModalFromLoginBtn" class="btn btn-secondary btn-sm" style="font-size: 0.78rem; padding: 6px 14px;">
-              ⚙️ Configurar Instância Supabase
+            <button type="button" id="openSetupModalFromLoginBtn" class="btn btn-secondary btn-sm" style="font-size: 0.78rem; padding: 6px 14px; display: inline-flex; align-items: center; gap: 6px;">
+              <span class="svg-icon-inline" data-icon="settingsGear"></span> Configurar Instância Supabase
             </button>
           </div>
         </div>
@@ -128,7 +128,7 @@
             <span>Gemini</span>
           </button>
 
-          <button id="userSessionBtn" class="user-capsule-btn" title="Perfil RBAC Ativo (Clique para encerrar ou trocar sessão)">
+          <button id="userSessionBtn" class="user-capsule-btn" title="Perfil de Acesso Ativo (Clique para trocar de conta ou sair)">
             <span class="user-avatar-dot" id="userAvatarInitials">GB</span>
             <span class="user-capsule-meta">
               <span id="userBadgeName" class="user-capsule-name">Gabinete</span>
@@ -293,7 +293,7 @@
           <div class="telemetry-card spotlight-card col-1">
             <span class="telemetry-label">Chamados SMEB • Fila Ativa</span>
             <div class="telemetry-metric" id="heroTelemetryChamados">--</div>
-            <span class="telemetry-meta" id="heroTelemetryChamadosMeta">Demandas ordenadas com SLA útil</span>
+            <span class="telemetry-meta" id="heroTelemetryChamadosMeta">Demandas aguardando atendimento</span>
           </div>
           <div class="telemetry-card spotlight-card col-2">
             <span class="telemetry-label">Eventos Externos • Calendário SMEB</span>
@@ -387,7 +387,7 @@
               <div>
                 <span class="section-eyebrow">OPERAÇÕES MODULARES</span>
                 <h2 class="section-title">Frentes de Automação Documental e Inteligência</h2>
-                <p class="section-desc">Cada fluxo opera em página dedicada, desacoplando a experiência visual (GitHub Pages), integrações rápidas (GAS) e pipelines pesados (GitHub Actions).</p>
+                <p class="section-desc">Cada módulo opera em página dedicada para redação oficial, gestão funcional e acompanhamento documental da SMEB.</p>
               </div>
               <div class="header-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
                 <a href="https://drive.google.com/drive/folders/1W9mGmQCrX8BRPsGcK_vqUwfXw1dRmSya" target="_blank" rel="noopener" class="folder-chip">📁 Pasta Central Olympo ↗</a>
@@ -399,9 +399,9 @@
               <div class="quick-module-card" data-nav-target="chamados">
                 <div class="qm-icon-badge" data-persona-icon="temis"></div>
                 <div>
-                  <div class="qm-category">Gestão de Demandas &amp; SLA</div>
+                  <div class="qm-category">Atendimento &amp; Prazos</div>
                   <div class="qm-title">Central de Pendências</div>
-                  <div class="qm-desc">Fila ordenada por antiguidade e urgência (escalonamento 24h) com projeção de atendimento útil (08h–15h).</div>
+                  <div class="qm-desc">Solicitações organizadas por ordem de chegada e prioridade, com previsão de atendimento durante o expediente.</div>
                 </div>
                 <span class="qm-action">Abrir página dedicada →</span>
               </div>
@@ -421,7 +421,7 @@
                 <div>
                   <div class="qm-category">O Pincel de Homero</div>
                   <div class="qm-title">Portarias em Lote</div>
-                  <div class="qm-desc">Validação pré-voo, emissão automatizada e listagem clicável de todos os arquivos gerados.</div>
+                  <div class="qm-desc">Conferência prévia dos dados, emissão rápida e acesso imediato aos atos gerados.</div>
                 </div>
                 <span class="qm-action">Abrir página dedicada →</span>
               </div>
@@ -439,9 +439,9 @@
               <div class="quick-module-card" data-nav-target="diario-oficial">
                 <div class="qm-icon-badge" data-persona-icon="helio"></div>
                 <div>
-                  <div class="qm-category">GitHub Actions + GAS</div>
+                  <div class="qm-category">Publicações Oficiais</div>
                   <div class="qm-title">Fogo de Prometheus</div>
-                  <div class="qm-desc">Coleta diária FEMURN com OCR/NER indexada exclusivamente na planilha oficial única da SMEB.</div>
+                  <div class="qm-desc">Consulta diária aos atos e decretos de interesse da educação municipal.</div>
                 </div>
                 <span class="qm-action">Abrir página dedicada →</span>
               </div>
@@ -449,9 +449,9 @@
               <div class="quick-module-card" data-nav-target="papiro-cadmo">
                 <div class="qm-icon-badge" data-persona-icon="cadmo"></div>
                 <div>
-                  <div class="qm-category">ETL Intermunicipal RN</div>
+                  <div class="qm-category">Mobilidade Funcional</div>
                   <div class="qm-title">O Papiro de Cadmo</div>
-                  <div class="qm-desc">Consolidação mensal de servidores de 15 municípios potiguares e SEEC/RN para permutas.</div>
+                  <div class="qm-desc">Acompanhamento e cruzamento de servidores permutados entre redes de ensino.</div>
                 </div>
                 <span class="qm-action">Abrir página dedicada →</span>
               </div>
@@ -471,7 +471,7 @@
                 <div>
                   <div class="qm-category">A Lira de Orfeu</div>
                   <div class="qm-title">Certificados &amp; Eventos</div>
-                  <div class="qm-desc">Higienização de listas, QR Code SHA-256 de autenticidade e links individuais dos PDFs.</div>
+                  <div class="qm-desc">Conferência de participantes, geração de certificados autênticos e envio institucional.</div>
                 </div>
                 <span class="qm-action">Abrir página dedicada →</span>
               </div>
@@ -566,7 +566,7 @@
             <div id="subpanePortariasLote" class="subtab-pane">
               <div class="card-header-row">
                 <div>
-                  <span class="section-eyebrow">PROCESSAMENTO EM LOTE • FAIL-FAST</span>
+                  <span class="section-eyebrow">EMISSÃO EM LOTE • VALIDAÇÃO AUTOMÁTICA</span>
                   <h2 class="section-title">Emissão de Portarias (Licenças, Anulações e Readaptações)</h2>
                   <p class="section-desc">Valide inconsistências antes da geração e receba a confirmação de término com links diretos para abrir ou copiar todos os documentos gerados.</p>
                 </div>
@@ -594,7 +594,7 @@
               </div>
 
               <div class="button-group" style="margin-top: 20px; margin-bottom: 18px;">
-                <button id="pincelDryRunBtn" class="btn btn-secondary">Diagnóstico Pré-Voo (Dry-Run)</button>
+                <button id="pincelDryRunBtn" class="btn btn-secondary">Simular Emissão (Verificar Dados)</button>
                 <button id="pincelGenerateBtn" class="btn btn-primary">Gerar Portarias Pendentes</button>
                 <button id="pincelStopBtn" class="btn btn-danger hidden">Interromper Lote</button>
               </div>
@@ -705,7 +705,7 @@
                 <div class="controls-grid" style="margin-top: 16px; align-items: end;">
                   <div class="field-group">
                     <label for="licNumPortariaInput">Nº da Portaria</label>
-                    <input type="text" id="licNumPortariaInput" class="input-clean" value="AUTO" placeholder="AUTO (Alocar via Olho de Apolo)" />
+                    <input type="text" id="licNumPortariaInput" class="input-clean" value="AUTO" placeholder="Automático (Próximo número oficial)" />
                   </div>
 
                   <div class="field-group">
@@ -751,7 +751,7 @@
           <div class="surface-card">
             <div class="card-header-row">
               <div>
-                <span class="section-eyebrow">FORMAÇÃO CONTINUADA • QR CODE SHA-256</span>
+                <span class="section-eyebrow">FORMAÇÃO CONTINUADA • CERTIFICAÇÃO AUTÊNTICA</span>
                 <h2 class="section-title">Certificados e Declarações (A Lira de Orfeu)</h2>
                 <p class="section-desc">Padronização automática de participantes, gravação de código verificável na aba <code>Registro_Autenticidade</code> e links visíveis de todos os PDFs emitidos.</p>
               </div>
@@ -784,10 +784,10 @@
             <!-- OS 3 GATILHOS INDEPENDENTES + ATALHO COMPOSTO -->
             <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 14px; margin-bottom: 20px; padding: 14px; background: var(--bg-surface-hover, rgba(255,255,255,0.02)); border-radius: 10px; border: 1px solid var(--border-hairline);">
               <button id="liraHigienizarBtn" class="btn btn-secondary" title="Limpa espaços, corrige domínios @gmail e padroniza em Title Case">1. Higienizar Lista</button>
-              <button id="liraGerarPdfsBtn" class="btn btn-secondary" title="Gera PDFs e QR Codes sem envio de e-mails (zero consumo de cota)">2. Somente Gerar Certificados (PDF)</button>
+              <button id="liraGerarPdfsBtn" class="btn btn-secondary" title="Gera PDFs e QR Codes sem envio de e-mails">2. Somente Gerar Certificados (PDF)</button>
               <button id="liraEnviarEmailsBtn" class="btn btn-secondary" title="Envia e-mails exclusivamente para participantes com PDF gerado">3. Somente Enviar E-mails</button>
               <button id="liraExecutarBtn" class="btn btn-primary" title="Atalho opcional: Executa geração de PDFs seguida de envio de e-mails">Executar Ambos (Gerar + Enviar)</button>
-              <span id="liraCotaBadge" class="pill-badge pill-blue" style="margin-left: auto;">Cota Gmail: --</span>
+              <span id="liraCotaBadge" class="pill-badge pill-blue" style="margin-left: auto;">Envios Disponíveis: --</span>
             </div>
 
             <div id="liraCompletedJobBox" class="job-result-card hidden"></div>
@@ -860,9 +860,9 @@
           <div class="surface-card">
             <div class="card-header-row">
               <div>
-                <span class="section-eyebrow">INTEGRAÇÃO UNIFICADA EM 2 FRENTES</span>
+                <span class="section-eyebrow">PUBLICAÇÕES OFICIAIS • MONITORAMENTO DIÁRIO</span>
                 <h2 class="section-title">Fogo de Prometheus — Monitor Diário FEMURN</h2>
-                <p class="section-desc">Coleta pesada com Chromium + OCR no GitHub Actions conectada diretamente ao receptor único no GAS do Hub Olympos, gravando sempre na planilha oficial fixa (aba <code>Publicações</code>).</p>
+                <p class="section-desc">Acompanhamento contínuo dos atos da FEMURN e do Diário Oficial de interesse da educação municipal, com registro consolidado na planilha oficial (aba <code>Publicações</code>).</p>
               </div>
               <div class="button-group">
                 <a id="promSheetLinkBtn" href="https://docs.google.com/spreadsheets/d/1tU6rvgB2jNGaGqHK1oecNMQX7-5QcB8Q-1fNgzWcZqs/edit" target="_blank" rel="noopener" class="folder-chip">
@@ -871,7 +871,7 @@
                 <a href="https://drive.google.com/drive/folders/1aj514v29gytXH9j5LY_V76ap9XIblwHS" target="_blank" rel="noopener" class="folder-chip">
                   💾 Backup Diário Oficial ↗
                 </a>
-                <button id="prometheusTriggerActionBtn" class="btn btn-accent btn-sm">Coletar Agora (GitHub Actions)</button>
+                <button id="prometheusTriggerActionBtn" class="btn btn-accent btn-sm">Atualizar Publicações Agora</button>
                 <button id="prometheusChatSummaryBtn" class="btn btn-secondary btn-sm">Enviar Resumo ao Chat</button>
                 <button id="prometheusSyncBtn" class="btn btn-primary btn-sm">Sincronizar Memória de Hélio</button>
               </div>
@@ -880,14 +880,14 @@
             <!-- PAINEL ARQUITETURAL DAS 2 FRENTES (GITHUB + GAS) -->
             <div class="architecture-banner" id="diarioArchBanner" style="display: none !important;">
               <div class="arch-front-col">
-                <span class="pill-badge pill-gold" style="align-self: flex-start;">FRENTE 1 • GITHUB ACTIONS (MOTOR PESADO)</span>
+                <span class="pill-badge pill-gold" style="align-self: flex-start;">FRENTE 1 • ATUALIZAÇÃO AUTOMÁTICA</span>
                 <strong style="font-size: 14px;" id="promWebhookStatus">Verificando integração...</strong>
-                <span style="font-size: 12.5px; color: var(--text-secondary);" id="promLastRun">Execução automática seg–sex às 00:10 BRT com Playwright, pypdf e Tesseract OCR.</span>
+                <span style="font-size: 12.5px; color: var(--text-secondary);" id="promLastRun">Execução diária seg–sex às 00:10 BRT com leitura e indexação automática.</span>
               </div>
               <div class="arch-front-col">
-                <span class="pill-badge pill-green" style="align-self: flex-start;">FRENTE 2 • HUB GAS GATEWAY (RECEPTOR ÚNICO)</span>
-                <strong style="font-size: 14px;">Planilha Oficial Única + LockService Ativo</strong>
-                <span style="font-size: 12.5px; color: var(--text-secondary);">Zero recriação de planilhas: deduplicação por Código FEMURN, extração NER (servidores/matrículas) e despacho para Hélio, Hera, Nike e Têmis.</span>
+                <span class="pill-badge pill-green" style="align-self: flex-start;">FRENTE 2 • RECEPTOR HUB SMEB</span>
+                <strong style="font-size: 14px;">Planilha Oficial SMEB Conectada</strong>
+                <span style="font-size: 12.5px; color: var(--text-secondary);">Registro centralizado por Código FEMURN com identificação de servidores e envio às coordenações setoriais.</span>
               </div>
             </div>
 
@@ -895,10 +895,10 @@
             <div class="surface-card" style="margin-bottom: 18px; padding: 14px 18px; border: 1px solid var(--border-hairline); background: var(--bg-surface);">
               <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
                 <div>
-                  <div style="font-weight: 600; font-size: 13.5px; color: var(--text-main);">📧 Destinatários do Boletim Diário (Fogo de Prometheus)</div>
-                  <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Lista de e-mails para envio automático do briefing executivo diário da FEMURN às 00:10 BRT.</div>
+                  <div style="font-weight: 600; font-size: 13.5px; color: var(--text-main);">📧 Destinatários do Informativo Diário</div>
+                  <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Lista de e-mails para envio automático do resumo diário da FEMURN às 00:10.</div>
                 </div>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                <div class="diario-boletim-controls" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
                   <input type="text" id="diarioBoletimEmailInput" class="input-clean" style="flex: 1 1 200px; max-width: 100%; font-size: 12px; padding: 6px 12px;" placeholder="gabinete@smeb.cearamirim.rn.gov.br" />
                   <button type="button" id="diarioSalvarBoletimEmailBtn" class="btn btn-primary btn-sm" style="font-size: 12px; padding: 6px 14px;">Salvar E-mails</button>
                 </div>
@@ -942,10 +942,10 @@
               <table class="clean-table table-responsive-cards">
                 <thead>
                   <tr>
-                    <th id="thDiarioData" style="width: 135px; cursor: pointer; user-select: none;" title="Clique para ordenar por data (Mais recente / Mais antiga)">Data <span id="sortIndicatorData">🔽</span></th>
-                    <th id="thDiarioSetor" style="width: 175px; cursor: pointer; user-select: none;" title="Clique para ordenar por município / secretaria / setor">Setor / Categoria <span id="sortIndicatorNome">↕</span></th>
-                    <th>Ato Oficial &amp; Entidades Identificadas (NER)</th>
-                    <th class="text-right" style="width: 130px;">Documento</th>
+                    <th id="thDiarioData" class="col-diario-data" style="cursor: pointer; user-select: none;" title="Clique para ordenar por data (Mais recente / Mais antiga)">Data <span id="sortIndicatorData">🔽</span></th>
+                    <th id="thDiarioSetor" class="col-diario-setor" style="cursor: pointer; user-select: none;" title="Clique para ordenar por município / secretaria / setor">Setor / Categoria <span id="sortIndicatorNome">↕</span></th>
+                    <th>Ato Oficial &amp; Servidores Identificados</th>
+                    <th class="text-right col-diario-doc">Documento</th>
                   </tr>
                 </thead>
                 <tbody id="prometheusTableBody">
@@ -957,7 +957,7 @@
         </section>
 
         <!-- =========================================================================
-             PÁGINA 7: O PAPIRO DE CADMO (ETL MENSAL DE PERMUTAS INTERMUNICIPAIS RN)
+             PÁGINA 7: O PAPIRO DE CADMO (MONITORAMENTO MENSAL DE PERMUTAS INTERMUNICIPAIS)
              ========================================================================= -->
         <section class="page-view hidden" id="page-papiro-cadmo">
           <div class="surface-card">
@@ -965,7 +965,7 @@
               <div>
                 <span class="section-eyebrow">GOVERNANÇA INTERMUNICIPAL • 16 ENTES MONITORADOS</span>
                 <h2 class="section-title">O Papiro de Cadmo — Coletor Mensal de Servidores (RN)</h2>
-                <p class="section-desc">Motor ETL em Python + Playwright agendado todo dia 12 às 03:00 UTC para validar vínculos ativos de servidores cedidos e permutados entre Ceará-Mirim, 14 municípios potiguares e SEEC/RN.</p>
+                <p class="section-desc">Levantamento atualizado dos quadros de pessoal para acompanhamento de servidores cedidos e em permuta entre Ceará-Mirim, 14 municípios potiguares e SEEC/RN.</p>
               </div>
               <div class="button-group">
                 <a href="https://drive.google.com/drive/folders/1dcc_5GcNG0ciVE-i1J6iwtojATk-1utD" target="_blank" rel="noopener" class="folder-chip">
@@ -977,7 +977,7 @@
                 <a href="https://drive.google.com/drive/folders/1SDBCXU3LjI0Qnf6E6O6SLqRjctHz70k0" target="_blank" rel="noopener" class="folder-chip" style="border-color: rgba(99, 102, 241, 0.4); color: #818cf8;">
                   📂 Pasta de Permutas (Drive) ↗
                 </a>
-                <button id="cadmoTriggerEtlBtn" class="btn btn-primary btn-sm">Executar Coleta Sob Demanda</button>
+                <button id="cadmoTriggerEtlBtn" class="btn btn-primary btn-sm">Atualizar Dados de Servidores</button>
               </div>
             </div>
 
@@ -988,7 +988,7 @@
                 <span style="font-size: 12.5px; color: var(--text-secondary);" id="cadmoLastUploadMeta">Consumo direto por Cadmo (busca cadastral) e Hera (auditoria de permutas).</span>
               </div>
               <div class="arch-front-col" id="cadmoEsquemaCanonicoCol" style="display: none !important;">
-                <span class="pill-badge pill-blue" style="align-self: flex-start;">ESQUEMA CANÔNICO UNIFICADO (8 COLUNAS)</span>
+                <span class="pill-badge pill-blue" style="align-self: flex-start;">PADRÃO UNIFICADO DE CADASTRO FUNCIONAL</span>
                 <div class="schema-chips-row">
                   <span class="schema-chip">ente_origem</span>
                   <span class="schema-chip">competencia</span>
@@ -1249,14 +1249,14 @@
                 <div class="cadmo-toolbar-filtros" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
                   <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                     <!-- Campo de Busca em Tempo Real -->
-                    <div style="position: relative; flex: 1; min-width: 260px; max-width: 520px;">
+                    <div class="cadmo-search-wrap" style="position: relative; flex: 1; min-width: 240px; max-width: 520px;">
                       <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--text-muted); pointer-events: none;" aria-hidden="true">🔍</span>
                       <input type="search" id="cadmoBuscaServidorInput" class="input-clean" style="padding-left: 34px; padding-right: 32px; font-size: 13px; width: 100%; border-radius: var(--radius-md, 8px);" placeholder="Buscar servidor por nome, matrícula funcional (ex: 2405221-1 ou 184920-1), cargo ou município..." autocomplete="off" aria-label="Buscar servidor por nome, matrícula, cargo, escola ou município" />
                       <button type="button" id="btnLimparBuscaServidor" class="icon-capsule-btn hidden" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; font-size: 12px; border: none; background: transparent; cursor: pointer; color: var(--text-muted);" title="Limpar busca">&times;</button>
                     </div>
 
                     <!-- Abas de Visualização (Permutas Recíprocas, Acúmulos CF/88 e Base Geral) -->
-                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                    <div class="cadmo-tabs-group">
                       <button type="button" id="tabAbaPermutasVigentes" class="btn btn-secondary btn-sm active" style="font-size: 12px; font-weight: 600;">
                         <span>🔄 Em Permuta Ativa (160)</span>
                       </button>
@@ -1440,7 +1440,7 @@
             <!-- TOOLBAR DE BUSCA E FILTROS DINÂMICOS -->
             <div class="servidor-filter-toolbar" style="background: var(--bg-tonal); padding: 16px; border-radius: var(--radius-md, 12px); border: 1px solid var(--border-hairline); margin-bottom: 20px;">
               <!-- LINHA 1: BARRA DE BUSCA RÁPIDA -->
-              <div style="display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap;">
+              <div class="servidores-search-row" style="display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap;">
                 <div style="flex: 1 1 300px; position: relative;">
                   <input type="search" id="servidorBuscaInput" class="input-clean" placeholder="Digite nome, matrícula, cargo ou escola..." style="width: 100%; padding-left: 36px;" />
                   <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 15px; color: var(--text-muted); pointer-events: none;">🔍</span>
@@ -1524,7 +1524,7 @@
             <div id="servidoresContainerCards" class="servidor-dossie-list"></div>
 
             <!-- ÁREA 2: VISUALIZAÇÃO EM TABELA SINTÉTICA -->
-            <div id="servidoresContainerTabela" class="table-wrapper hidden">
+            <div id="servidoresContainerTabela" class="table-wrapper table-responsive hidden">
               <table class="clean-table table-responsive-cards" id="tabelaServidoresGeral">
                 <thead>
                   <tr>
@@ -2073,12 +2073,6 @@
         </section>
 
         <!-- =========================================================================
-             PÁGINA 8: PERSONAS & MEMÓRIAS (INTEGRADA COMO SEÇÃO DE AJUSTES)
-             ========================================================================= -->
-        <section class="page-view hidden" id="page-personas" style="display: none !important;">
-        </section>
-
-        <!-- =========================================================================
              PÁGINA 9: BUSCA GLOBAL NO ACERVO MULTI-ANO (2025–2026)
              ========================================================================= -->
         <section class="page-view hidden" id="page-busca">
@@ -2150,30 +2144,30 @@
               <div>
                 <span class="section-eyebrow">SISTEMA &amp; GOVERNANÇA</span>
                 <h2 class="section-title">Ajustes &amp; Configurações do Hub Olympos</h2>
-                <p class="section-desc">Gerencie conectividade, aparência visual 60-30-10, operadores e perfis RBAC, ecossistema de personas e automações diárias.</p>
+                <p class="section-desc">Gerencie a conexão do sistema, o tema visual, os usuários autorizados, as personas da equipe e as notificações.</p>
               </div>
               <div class="header-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <a href="https://drive.google.com/drive/folders/1W9mGmQCrX8BRPsGcK_vqUwfXw1dRmSya" target="_blank" rel="noopener" class="folder-chip">📁 Pasta Central Olympo ↗</a>
-                <a href="https://drive.google.com/drive/folders/1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu" target="_blank" rel="noopener" class="folder-chip">📝 Memórias Operacionais ↗</a>
+                <a href="https://drive.google.com/drive/folders/1W9mGmQCrX8BRPsGcK_vqUwfXw1dRmSya" target="_blank" rel="noopener" class="folder-chip"><span class="svg-icon-inline" data-icon="folderDrive"></span> Pasta Central Olympo <span class="external-arrow">↗</span></a>
+                <a href="https://drive.google.com/drive/folders/1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu" target="_blank" rel="noopener" class="folder-chip"><span class="svg-icon-inline" data-icon="fileText"></span> Memórias Operacionais <span class="external-arrow">↗</span></a>
               </div>
             </div>
 
             <!-- SELETOR DE SUB-ABAS DE AJUSTES TIPO PÍLULA -->
             <div class="subnav-tabs-bar" role="tablist" aria-label="Navegação interna de Ajustes">
               <button type="button" class="subnav-tab active" id="subtabBtnAjustesConexao" data-subtab="conexao">
-                <span>⚙️ Conectividade &amp; Gateway</span>
+                <span class="svg-icon-inline" data-icon="settingsGear"></span><span>Conectividade &amp; Gateway</span>
               </button>
               <button type="button" class="subnav-tab" id="subtabBtnAjustesAparencia" data-subtab="aparencia">
-                <span>🎨 Aparência &amp; Tema</span>
+                <span class="svg-icon-inline" data-icon="sliders"></span><span>Aparência &amp; Tema</span>
               </button>
               <button type="button" class="subnav-tab" id="subtabBtnAjustesUsuarios" data-subtab="usuarios">
-                <span>👥 Usuários &amp; RBAC</span>
+                <span class="svg-icon-inline" data-icon="users"></span><span>Usuários &amp; Permissões</span>
               </button>
               <button type="button" class="subnav-tab" id="subtabBtnAjustesPersonas" data-subtab="personas">
-                <span>🏛️ Personas &amp; Memórias</span>
+                <span class="svg-icon-inline" data-icon="olymposLogo"></span><span>Personas &amp; Memórias</span>
               </button>
               <button type="button" class="subnav-tab" id="subtabBtnAjustesAutomacoes" data-subtab="automacoes">
-                <span>📧 Automações &amp; Notificações</span>
+                <span class="svg-icon-inline" data-icon="mail"></span><span>Automações &amp; Notificações</span>
               </button>
             </div>
 
@@ -2182,17 +2176,17 @@
               <div class="controls-grid config-grid-responsive" style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 24px;">
                 <div class="surface-card" style="border: 1px solid var(--border-hairline);">
                   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-                    <h3 style="font-size: 1.05rem; margin: 0;">Endpoint do Gateway Google Apps Script</h3>
+                    <h3 style="font-size: 1.05rem; margin: 0;">Servidor de Integração (Google Apps Script)</h3>
                     <div id="apiStatusPill" class="status-pill status-online" title="Conectividade com o Gateway Google Apps Script">
                       <span>Gateway Online</span>
                     </div>
                   </div>
                   <div class="field-group" style="margin-bottom: 14px;">
-                    <label for="configGasUrlInput">URL de Implantação Web App (<code>/exec</code>)</label>
+                    <label for="configGasUrlInput">Endereço do Serviço Web App (<code>/exec</code>)</label>
                     <input type="url" id="configGasUrlInput" class="input-clean" style="font-family: var(--font-mono); font-size: 12px;" placeholder="https://script.google.com/macros/s/.../exec" />
                   </div>
                   <div class="button-group" style="margin-bottom: 14px;">
-                    <button id="configTestarApiBtn" class="btn btn-secondary btn-sm">Testar Latência</button>
+                    <button id="configTestarApiBtn" class="btn btn-secondary btn-sm">Testar Conexão</button>
                     <button id="configSalvarApiBtn" class="btn btn-primary btn-sm">Salvar Endpoint</button>
                     <button id="configResetApiBtn" class="btn btn-ghost btn-sm">Restaurar Padrão</button>
                   </div>
@@ -2211,7 +2205,7 @@
                     <span id="configCartoKeyStatusBadge" class="pill-badge pill-blue">CARTO Ativo</span>
                   </div>
                   <div class="field-group" style="margin-bottom: 14px;">
-                    <label for="configCartoApiKeyInput">Token / Chave Pública CARTO (<code>CARTO_API_KEY</code>)</label>
+                    <label for="configCartoApiKeyInput">Chave do Mapa Interativo (CARTO)</label>
                     <input type="text" id="configCartoApiKeyInput" class="input-clean" style="font-family: var(--font-mono); font-size: 12px;" placeholder="cb1_59be_1_e706175c142a6271abaac593" />
                   </div>
                   <div class="button-group">
@@ -2223,10 +2217,10 @@
             </div>
 
             <!-- SUB-ABA 2: APARÊNCIA & TEMA -->
-            <div id="subpaneAjustesAparencia" class="subtab-pane hidden" style="display: none;">
+            <div id="subpaneAjustesAparencia" class="subtab-pane">
               <div class="controls-grid" style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 24px;">
                 <div>
-                  <h3 style="font-size: 1.05rem; margin-bottom: 12px;">Identidade RBAC &amp; Tema Visual</h3>
+                  <h3 style="font-size: 1.05rem; margin-bottom: 12px;">Sessão de Usuário &amp; Tema Visual</h3>
                   <div class="output-panel" style="margin-bottom: 16px;">
                     <div style="margin-bottom: 6px;">Operador Autenticado: <strong id="configUserLabel">Gabinete SMEB</strong></div>
                     <div style="margin-bottom: 6px;">Perfil de Acesso: <strong id="configUserRole">Governança Total</strong></div>
@@ -2235,10 +2229,10 @@
                   </div>
 
                   <div class="field-group">
-                    <label for="configTemaSelect">Esquema Cromático Editorial (Proporção 60-30-10)</label>
+                    <label for="configTemaSelect">Tema Visual do Sistema</label>
                     <select id="configTemaSelect" class="input-clean">
-                      <option value="light">Modo Claro — Editorial Paper (60% Branco/Gelo, 30% Obsidiana, 10% Ouro Solar)</option>
-                      <option value="dark">Modo Escuro — DeepMind Midnight (60% Obsidiana, 30% Alabastro, 10% Ouro Luminoso)</option>
+                      <option value="light">Modo Claro — Padrão Oficial (Fundo Claro com Detalhes em Ouro)</option>
+                      <option value="dark">Modo Escuro — Conforto Noturno (Fundo Escuro com Alto Contraste)</option>
                     </select>
                   </div>
 
@@ -2254,20 +2248,27 @@
             </div>
 
             <!-- SUB-ABA 3: USUÁRIOS & RBAC (GESTÃO COMPLETA MODERADOR) -->
-            <div id="subpaneAjustesUsuarios" class="subtab-pane hidden" style="display: none;">
+            <div id="subpaneAjustesUsuarios" class="subtab-pane">
+              <!-- Aviso para operadores que não possuem perfil ADMIN_GABINETE -->
+              <div id="avisoAcessoUsuariosRestrito" class="surface-card hidden" style="border: 1px solid var(--border-hairline); padding: 32px 24px; text-align: center; margin-bottom: 16px;">
+                <div class="svg-icon-inline" data-icon="lock" style="width: 36px; height: 36px; margin-bottom: 12px; color: var(--text-muted); display: inline-flex;"></div>
+                <h4 style="margin: 0 0 8px; font-size: 1.1rem; color: var(--text-primary);">Acesso Restrito ao Moderador</h4>
+                <p class="section-desc" style="max-width: 480px; margin: 0 auto; color: var(--text-secondary);">Apenas administradores do Gabinete possuem permissão para gerenciar operadores e perfis de acesso do Hub Olympos.</p>
+              </div>
+
               <div id="blocoGestaoUsuarios" class="surface-card" style="border: 1px solid var(--border-hairline); background: var(--surface-secondary, rgba(255,255,255,0.02));">
                 <div class="card-header-row" style="margin-bottom: 16px;">
                   <div>
                     <span class="section-eyebrow">MODERAÇÃO DE ACESSOS • GABINETE</span>
-                    <h3 class="section-title" style="font-size: 1.15rem;">Gestão de Operadores &amp; Papéis RBAC</h3>
-                    <p class="section-desc" style="margin-bottom: 0;">Consulte, cadastre, edite perfis e remova operadores do Hub Olympos sincronizados com o Supabase Auth.</p>
+                    <h3 class="section-title" style="font-size: 1.15rem;">Gerenciamento de Usuários e Permissões</h3>
+                    <p class="section-desc" style="margin-bottom: 0;">Consulte, cadastre, edite perfis e gerencie operadores autorizados do Hub Olympos.</p>
                   </div>
                   <div style="display: flex; gap: 8px;">
-                    <button type="button" id="btnRecarregarUsuarios" class="btn btn-secondary btn-sm" onclick="window.OlymposViews.configuracoes.carregarUsuarios()">
-                      <span>🔄 Atualizar Lista</span>
+                    <button type="button" id="btnRecarregarUsuarios" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;" onclick="window.OlymposViews.configuracoes.carregarUsuarios()">
+                      <span class="svg-icon-inline" data-icon="refreshSync"></span><span>Atualizar Lista</span>
                     </button>
                     <button type="button" id="btnAbrirModalNovoUsuario" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;">
-                      <span>+ Novo Usuário</span>
+                      <span class="svg-icon-inline" data-icon="users"></span><span>+ Novo Usuário</span>
                     </button>
                   </div>
                 </div>
@@ -2278,7 +2279,7 @@
                       <tr>
                         <th>Operador / Nome</th>
                         <th>Email</th>
-                        <th>Papel RBAC</th>
+                        <th>Perfil de Acesso</th>
                         <th>Departamento</th>
                         <th class="text-right" style="width: 140px;">Ações</th>
                       </tr>
@@ -2292,10 +2293,10 @@
             </div>
 
             <!-- SUB-ABA 4: PERSONAS & MEMÓRIAS OPERACIONAIS -->
-            <div id="subpaneAjustesPersonas" class="subtab-pane hidden" style="display: none;">
+            <div id="subpaneAjustesPersonas" class="subtab-pane">
               <div class="card-header-row" style="margin-bottom: 14px;">
                 <div>
-                  <span class="section-eyebrow">ECOSSISTEMA DE INTELIGÊNCIA • TETO DE 60 LINHAS</span>
+                  <span class="section-eyebrow">DIRETRIZES SETORIAIS E MEMÓRIAS DA SMEB</span>
                   <h3 class="section-title" style="font-size: 1.15rem;">As 17 Personas Olympos &amp; 11 Memórias Operacionais</h3>
                   <p class="section-desc" style="margin-bottom: 0;">Consulte personas setoriais e memórias canônicas sincronizadas no Google Drive.</p>
                 </div>
@@ -2333,7 +2334,7 @@
             </div>
 
             <!-- SUB-ABA 5: AUTOMAÇÕES & NOTIFICAÇÕES -->
-            <div id="subpaneAjustesAutomacoes" class="subtab-pane hidden" style="display: none;">
+            <div id="subpaneAjustesAutomacoes" class="subtab-pane">
               <div class="surface-card" style="border: 1px solid var(--border-hairline);">
                 <div class="card-header-row" style="margin-bottom: 12px;">
                   <div>
@@ -2389,12 +2390,12 @@
 
               <div class="stat-card spotlight-card">
                 <div class="stat-top">
-                  <span class="stat-label">Tempo de Resposta • SLA Estimado</span>
-                  <span class="pill-badge pill-gold">08h–15h • 90m/tarefa</span>
+                  <span class="stat-label">Tempo Médio de Atendimento</span>
+                  <span class="pill-badge pill-gold">Expediente 08h–15h</span>
                 </div>
                 <div class="stat-value" id="kpiChamadosSlaMedio">--</div>
                 <div class="stat-meta">
-                  <span>Projeção temporal calculada pelo SlaEngine</span>
+                  <span>Previsão estimada para o horário de expediente</span>
                 </div>
               </div>
 
@@ -2606,7 +2607,7 @@
 
             <!-- Campo: Papel (select) -->
             <div class="field-group" style="margin-bottom: 14px;">
-              <label for="novoUsuarioRole">Papel (Perfil RBAC) *</label>
+              <label for="novoUsuarioRole">Perfil de Acesso *</label>
               <select id="novoUsuarioRole" class="input-clean" required>
                 <option value="RH_COMISSAO">RH_COMISSAO (RH &amp; Comissão de Portarias)</option>
                 <option value="PEDAGOGICO_EVENTOS">PEDAGOGICO_EVENTOS (Pedagógico &amp; Eventos)</option>
@@ -2625,11 +2626,11 @@
             <div class="field-group" style="margin-bottom: 16px;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                 <label for="novoUsuarioSenha" style="margin-bottom: 0;">Senha Temporária *</label>
-                <button type="button" id="btnGerarSenhaNovoUsuario" class="btn-mini" style="font-size: 0.74rem;">🎲 Gerar Senha Segura</button>
+                <button type="button" id="btnGerarSenhaNovoUsuario" class="btn-mini" style="font-size: 0.74rem; display: inline-flex; align-items: center; gap: 4px;"><span class="svg-icon-inline" data-icon="sparkles"></span> Gerar Senha Segura</button>
               </div>
               <div style="display: flex; gap: 8px;">
                 <input type="password" id="novoUsuarioSenha" class="input-clean" style="font-family: var(--font-mono); font-size: 13px;" placeholder="Mínimo 12 caracteres (forte)" required autocomplete="new-password" />
-                <button type="button" id="btnToggleVisibilidadeSenha" class="btn btn-secondary btn-sm" style="white-space: nowrap; padding: 0 12px;" title="Alternar visibilidade da senha">👁️</button>
+                <button type="button" id="btnToggleVisibilidadeSenha" class="btn btn-secondary btn-sm" style="white-space: nowrap; padding: 0 12px; display: inline-flex; align-items: center; justify-content: center;" title="Alternar visibilidade da senha"><span class="svg-icon-inline" data-icon="eyeOfApollo"></span></button>
               </div>
               <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 4px; display: block;">Mínimo de 12 caracteres com complexidade e verificação anti-vazamento (HIBP k-Anonymity).</small>
             </div>
@@ -2680,7 +2681,7 @@
 
             <!-- Campo: Papel (select) -->
             <div class="field-group" style="margin-bottom: 14px;">
-              <label for="editarUsuarioRole">Papel (Perfil RBAC) *</label>
+              <label for="editarUsuarioRole">Perfil de Acesso *</label>
               <select id="editarUsuarioRole" class="input-clean" required>
                 <option value="RH_COMISSAO">RH_COMISSAO (RH &amp; Comissão de Portarias)</option>
                 <option value="PEDAGOGICO_EVENTOS">PEDAGOGICO_EVENTOS (Pedagógico &amp; Eventos)</option>

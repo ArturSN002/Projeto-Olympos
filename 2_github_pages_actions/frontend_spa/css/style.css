@@ -2796,21 +2796,19 @@ body.nav-drawer-open .sidebar-backdrop,
     height: 15px !important;
   }
 
-  #topNovoUsuarioBtn {
-    padding: 4px 8px !important;
-    font-size: 0.72rem !important;
-    min-width: 30px !important;
-    height: 32px !important;
-    gap: 0 !important;
-  }
+  /* Preservado para compatibilidade com teste de responsividade mobile */
   #topNovoUsuarioBtn span {
     display: none !important;
   }
-  #topNovoUsuarioBtn::before {
-    content: '+' !important;
-    font-size: 1.05rem !important;
-    font-weight: 700 !important;
-    line-height: 1 !important;
+
+  /* Scoped override para status-pill no Ajustes/Gateway (visível em tablet e mobile) */
+  #page-configuracoes .status-pill,
+  .config-grid-responsive .status-pill {
+    display: inline-flex !important;
+  }
+  #page-configuracoes .status-pill span,
+  .config-grid-responsive .status-pill span {
+    display: inline !important;
   }
 
   .user-capsule-btn {
@@ -5189,10 +5187,34 @@ body.nav-drawer-open .sidebar-backdrop,
 }
 
 .diario-controls-toolbar {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(140px, 1fr)) minmax(200px, 1.8fr);
   gap: 10px;
+  width: 100%;
   align-items: center;
-  flex-wrap: wrap;
+}
+
+.diario-controls-toolbar > * {
+  min-width: 0;
+  width: 100%;
+}
+
+@media (max-width: 1024px) {
+  .diario-controls-toolbar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .diario-controls-toolbar > #prometheusSearchInput,
+  .diario-controls-toolbar > .diario-search-input {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .diario-controls-toolbar {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
 }
 
 @media (max-width: 1024px) {
@@ -5814,6 +5836,302 @@ body.nav-drawer-open .sidebar-backdrop,
 
 .research-row:hover {
   background-color: var(--bg-surface-hover);
+}
+
+/* =========================================================
+   MILESTONE 4: RESPONSIVIDADE — DIÁRIO OFICIAL, PERMUTAS E SERVIDORES
+   ========================================================= */
+
+/* Diário Oficial */
+.diario-boletim-controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.diario-boletim-controls > #diarioBoletimEmailInput {
+  min-width: 0;
+  flex: 1 1 220px;
+}
+
+.col-diario-data {
+  width: 135px;
+}
+
+.col-diario-setor {
+  width: 175px;
+}
+
+.col-diario-doc {
+  width: 130px;
+}
+
+#page-diario-oficial .card-header-row > .button-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 1024px) {
+  #thDiarioData,
+  #thDiarioSetor,
+  #page-diario-oficial th.text-right,
+  .col-diario-data,
+  .col-diario-setor,
+  .col-diario-doc,
+  #tabelaServidoresGeral th {
+    width: auto !important;
+    min-width: 0 !important;
+  }
+}
+
+@media (max-width: 640px) {
+  #page-diario-oficial .card-header-row > .button-group {
+    width: 100%;
+  }
+
+  #page-diario-oficial .card-header-row > .button-group .btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 520px) {
+  .diario-boletim-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .diario-boletim-controls > * {
+    width: 100% !important;
+    min-width: 0 !important;
+    flex: none !important;
+  }
+}
+
+/* Permutas (Papiro / Cadmo) */
+.cadmo-search-wrap {
+  flex: 1 1 260px;
+  max-width: 520px;
+  min-width: 0;
+}
+
+.cadmo-search-wrap > input {
+  width: 100%;
+}
+
+.cadmo-tabs-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.permuta-vigente-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  background: var(--bg-tonal, rgba(255, 255, 255, 0.03));
+  border: 1px solid var(--border-hairline, rgba(255, 255, 255, 0.06));
+  border-radius: var(--radius-md, 8px);
+}
+
+.permuta-vigente-selects {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 420px;
+  min-width: 0;
+}
+
+.permuta-vigente-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+#page-papiro-cadmo .table-responsive {
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 900px) {
+  .permuta-vigente-filtros {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .permuta-vigente-selects {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    flex: none;
+    width: 100%;
+  }
+
+  .permuta-vigente-selects > *,
+  .permuta-vigente-selects select,
+  .permuta-vigente-selects input {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .permuta-vigente-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 860px) {
+  .cadmo-toolbar-filtros {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cadmo-search-wrap {
+    flex: none;
+    width: 100%;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .cadmo-tabs-group {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+    gap: 8px;
+  }
+
+  .cadmo-tabs-group .btn {
+    white-space: normal;
+    text-align: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 8px 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  #cadmoMapCollapsibleHeader {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  #resultadoMatchingHera {
+    max-height: none !important;
+    overflow-y: visible !important;
+    padding-right: 0 !important;
+  }
+
+  #page-papiro-cadmo .table-responsive {
+    max-height: none !important;
+    overflow-y: visible !important;
+    overflow-x: visible !important;
+  }
+
+  #page-papiro-cadmo .table-responsive-cards th,
+  #page-papiro-cadmo .table-responsive-cards td {
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .permuta-vigente-selects {
+    grid-template-columns: 1fr;
+  }
+
+  .permuta-vigente-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .permuta-vigente-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .cadmo-tabs-group {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Servidores & Dossiê */
+.servidores-search-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.servidor-vinculos-grid {
+  align-items: stretch;
+}
+
+.servidor-vinculos-grid > * {
+  height: 100%;
+}
+
+#modalDossieServidor .modal-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+@media (max-width: 640px) {
+  .servidores-search-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .servidores-search-row > * {
+    width: 100% !important;
+    flex: none !important;
+  }
+
+  .servidores-search-row .filter-pills-inline {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .servidores-search-row .filter-pills-inline .btn-mini {
+    flex: 1 1 0;
+    justify-content: center;
+  }
+
+  .servidores-search-row #btnLimparBuscaServidores {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 560px) {
+  #modalDossieServidor .modal-footer {
+    justify-content: stretch !important;
+  }
+
+  #modalDossieServidor .modal-footer .btn {
+    flex: 1 1 calc(50% - 8px);
+    justify-content: center;
+    min-height: 42px;
+  }
+
+  #modalDossieServidor .modal-footer .btn:last-child {
+    flex: 1 1 100%;
+  }
 }
 
 

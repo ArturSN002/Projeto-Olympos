@@ -66,7 +66,7 @@ window.OlymposViews.certificados = (function() {
     if (resultado && resultado.valido) {
       const c = resultado.certificado || {};
       badge.className = 'pill-badge pill-green';
-      badge.innerHTML = '<strong>✓ Certificado Autêntico Verificado (ECDSA P-256)</strong><br>' +
+      badge.innerHTML = '<strong>✓ Certificado Autêntico Verificado</strong><br>' +
         'Titular: <strong>' + (window.OlymposApp ? window.OlymposApp.escapeHtml(c.recipient_name || '--') : (c.recipient_name || '--')) + '</strong> • ' +
         'Evento: <strong>' + (window.OlymposApp ? window.OlymposApp.escapeHtml(c.event_name || '--') : (c.event_name || '--')) + '</strong> • ' +
         'Carga Horária: <strong>' + (c.hours || '--') + 'h</strong> • ' +
@@ -225,7 +225,7 @@ window.OlymposViews.certificados = (function() {
   function atualizarBadgeCota(cota) {
     const badge = document.getElementById('liraCotaBadge');
     if (!badge) return;
-    badge.textContent = 'Cota Gmail: ' + (cota !== undefined ? cota : '--');
+    badge.textContent = 'Envios Disponíveis: ' + (cota !== undefined ? cota : '--');
     if (cota !== undefined && cota <= 10) {
       badge.className = 'pill-badge pill-amber';
     } else {
@@ -725,14 +725,14 @@ window.OlymposViews.certificados = (function() {
       return;
     }
 
-    if (!confirm('Iniciar geração de PDFs com QR Code para a aba "' + sheetName + '"? (Estritamente zero envios de e-mail e preservação total da cota)')) return;
+    if (!confirm('Iniciar a geração dos certificados em PDF para a aba "' + sheetName + '"? (Esta etapa gera apenas os documentos, sem envio de e-mails)')) return;
 
     if (btn) {
       btn.disabled = true;
-      btn.textContent = 'Gerando PDFs e QR Codes...';
+      btn.textContent = 'Gerando certificados em PDF...';
     }
     if (doneBox) doneBox.classList.add('hidden');
-    if (out) out.innerHTML = 'Processando geração de PDFs (placeholders, hash SHA-256 e gravação na pasta oficial)...';
+    if (out) out.innerHTML = 'Gerando certificados em PDF e salvando na pasta oficial...';
 
     window.OlymposApi.chamar('certificados_gerar_pdfs', {
       spreadsheetId: planId,
@@ -755,7 +755,7 @@ window.OlymposViews.certificados = (function() {
             '<div class="job-result-header">' +
               '<div class="job-result-title">' +
                 '<span class="job-done-badge">' + checkSvg + '</span>' +
-                '<span>Geração de PDFs Concluída — ' + escape(res.evento || 'Evento') + '</span>' +
+                '<span>Geração de Certificados Concluída — ' + escape(res.evento || 'Evento') + '</span>' +
               '</div>' +
               '<div class="button-group">' +
                 (arquivos.length > 0 ? '<button type="button" id="liraCopyAllPdfsBtn" class="btn btn-secondary btn-sm">Copiar Todos os Links</button>' : '') +
@@ -763,7 +763,7 @@ window.OlymposViews.certificados = (function() {
               '</div>' +
             '</div>' +
             '<div style="font-size:13.5px; color:var(--text-secondary);">' +
-              '<strong>' + pdfs + ' novo(s) PDF(s) gerado(s)</strong> com QR Code e Hash SHA-256. Zero e-mails enviados.' +
+              '<strong>' + pdfs + ' certificado(s) gerado(s)</strong> com QR Code de autenticidade (nenhum e-mail enviado).' +
             '</div>' +
             '<div class="job-links-list" id="liraGeneratedPdfsList"></div>';
 
@@ -827,7 +827,7 @@ window.OlymposViews.certificados = (function() {
       btn.textContent = 'Disparando e-mails oficiais...';
     }
     if (doneBox) doneBox.classList.add('hidden');
-    if (out) out.innerHTML = 'Disparando e-mails oficiais com o PDF anexado e validando cota diária do Gmail...';
+    if (out) out.innerHTML = 'Enviando e-mails oficiais com o certificado em anexo...';
 
     window.OlymposApi.chamar('certificados_enviar_emails', {
       spreadsheetId: planId,
@@ -857,7 +857,7 @@ window.OlymposViews.certificados = (function() {
               '</div>' +
             '</div>' +
             '<div style="font-size:13.5px; color:var(--text-secondary);">' +
-              '<strong>' + emails + ' e-mail(s) oficial(is) enviado(s)</strong> • Cota diária restante: <strong>' + (res.cotaRestante !== undefined ? res.cotaRestante : '--') + '</strong>' +
+              '<strong>' + emails + ' e-mail(s) oficial(is) enviado(s)</strong> • Envios restantes hoje: <strong>' + (res.cotaRestante !== undefined ? res.cotaRestante : '--') + '</strong>' +
               (res.agendamentoPosCota ? ' • Retomada automática agendada para ' + escape(res.agendamentoPosCota.horarioAgendado) : '') +
             '</div>';
           doneBox.classList.remove('hidden');
@@ -903,7 +903,7 @@ window.OlymposViews.certificados = (function() {
       btn.textContent = 'Emitindo PDFs e enviando e-mails...';
     }
     if (doneBox) doneBox.classList.add('hidden');
-    if (out) out.innerHTML = 'Processando lote na Lira de Orfeu (geração de PDFs, gravação de hash SHA-256 e envio)...';
+    if (out) out.innerHTML = 'Processando certificados (geração de PDFs e envio institucional)...';
 
     window.OlymposApi.chamar('certificados_executar', {
       spreadsheetId: planId,
@@ -939,7 +939,7 @@ window.OlymposViews.certificados = (function() {
               '</div>' +
             '</div>' +
             '<div style="font-size:13.5px; color:var(--text-secondary);">' +
-              '<strong>' + pdfs + ' novo(s) PDF(s) gerado(s)</strong> • <strong>' + emails + ' e-mail(s) enviado(s)</strong> • Cota restante: <strong>' + (res.cotaRestante !== undefined ? res.cotaRestante : '--') + '</strong>' +
+              '<strong>' + pdfs + ' certificado(s) gerado(s)</strong> • <strong>' + emails + ' e-mail(s) enviado(s)</strong> • Envios restantes: <strong>' + (res.cotaRestante !== undefined ? res.cotaRestante : '--') + '</strong>' +
               (res.agendamentoPosCota ? ' • Retomada automática agendada para ' + escape(res.agendamentoPosCota.horarioAgendado) : '') +
             '</div>' +
             '<div class="job-links-list" id="liraGeneratedLinksList"></div>';

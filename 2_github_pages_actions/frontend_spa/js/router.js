@@ -13,13 +13,13 @@ window.OlymposRouter = (function() {
     'oficios': {
       eyebrow: 'REDAÇÃO OFICIAL • PADRÃO PR/2018',
       title: 'Emissão de Ofícios do Gabinete.',
-      subtitle: 'Geração imediata de expedientes oficiais formatados no Google Docs com reserva atômica de numeração pelo Olho de Apolo.',
+      subtitle: 'Geração imediata de expedientes oficiais formatados no Google Docs com numeração sequencial automática.',
       category: 'atos'
     },
     'portarias': {
       eyebrow: 'O PINCEL DE HOMERO • PROCESSAMENTO EM LOTE',
       title: 'Portarias de Licenças e Readaptações.',
-      subtitle: 'Diagnóstico pré-voo, auto-numeração sequencial, carimbo de revogação cruzada e exibição imediata dos links dos documentos gerados.',
+      subtitle: 'Verificação prévia de dados funcionais, numeração sequencial e emissão em lote de portarias no Google Docs.',
       category: 'atos'
     },
     'licencas': {
@@ -31,19 +31,19 @@ window.OlymposRouter = (function() {
     'certificados': {
       eyebrow: 'A LIRA DE ORFEU • FORMAÇÃO & EVENTOS',
       title: 'Certificados e Declarações Autenticáveis.',
-      subtitle: 'Padronização prévia de nomes e e-mails, QR Code com hash SHA-256 de autenticidade, links de acesso aos PDFs e proteção automática de cota.',
+      subtitle: 'Padronização de listas de participantes, QR Code de verificação de autenticidade, geração de PDFs e envio institucional.',
       category: 'atos'
     },
     'diario-oficial': {
-      eyebrow: 'FOGO DE PROMETHEUS • GITHUB ACTIONS + GAS',
+      eyebrow: 'PUBLICAÇÕES OFICIAIS • MONITORAMENTO DIÁRIO',
       title: 'Vigilância do Diário Oficial FEMURN.',
-      subtitle: 'Integração unificada nas duas frentes do Hub: coleta diária em Python/OCR no GitHub Actions e indexação exclusiva na planilha oficial única da SMEB.',
+      subtitle: 'Acompanhamento diário dos atos da FEMURN e do Diário Oficial de interesse da educação municipal.',
       category: 'inteligencia'
     },
     'papiro-cadmo': {
-      eyebrow: 'O PAPIRO DE CADMO • ETL INTERMUNICIPAL RN',
+      eyebrow: 'QUADRO DE PERMUTAS • MOBILIDADE INTERMUNICIPAL',
       title: 'Monitoramento Mensal de Servidores Permutados.',
-      subtitle: 'Extração automatizada de 15 municípios potiguares e SEEC/RN com consolidação em esquema canônico de 8 colunas para Cadmo e Hera.',
+      subtitle: 'Acompanhamento mensal de permutas e cessões de servidores entre Ceará-Mirim e redes parceiras.',
       category: 'inteligencia'
     },
     'servidores': {
@@ -55,7 +55,7 @@ window.OlymposRouter = (function() {
     'escolas': {
       eyebrow: 'GEORREFERENCIAMENTO MUNICIPAL • REDE ESCOLAR SMEB',
       title: 'Mapa e Gestão das Escolas Municipais.',
-      subtitle: 'Localização cartográfica, cadastro georreferenciado (CRUD com latitude e longitude) e distribuição territorial das unidades da SMEB de Ceará-Mirim.',
+      subtitle: 'Localização cartográfica, cadastro atualizado das unidades de ensino e distribuição territorial da rede.',
       category: 'gestao'
     },
     'calendario': {
@@ -67,25 +67,25 @@ window.OlymposRouter = (function() {
     'personas': {
       eyebrow: 'ARQUITETURA COGNITIVA • 17 PERSONAS & 11 MEMÓRIAS',
       title: 'Ecossistema Olympos e Memórias .md.',
-      subtitle: 'Governança em tempo real dos 11 arquivos de memória operacional (teto de 60 linhas sem criação de duplicatas) e das 6 personas roteadas por anfitriã.',
+      subtitle: 'Painel de diretrizes operacionais, memórias institucionais e assistentes especializados da SMEB.',
       category: 'inteligencia'
     },
     'busca': {
       eyebrow: 'ÍNDICE RECURSIVO • EXERCÍCIOS 2025–2026',
       title: 'Busca Global no Acervo SMEB.',
-      subtitle: 'Pesquisa tokenizada e insensível a acentos ou separadores em pastas setoriais ativas de 2026 e no acervo histórico de 2025.',
+      subtitle: 'Localização rápida de documentos, ofícios e portarias nas pastas setoriais de 2026 e no acervo de 2025.',
       category: 'inteligencia'
     },
     'chamados': {
       eyebrow: 'CENTRAL DE ATENDIMENTO • SMEB 2026',
       title: 'Chamados e Pendências Operacionais.',
-      subtitle: 'Fila de demandas prioritárias da SMEB com ordenação por antiguidade (criado_em ASC), badges de SLA útil (08h–15h) e resolução imediata.',
+      subtitle: 'Acompanhamento das solicitações prioritárias da SMEB organizadas por ordem de chegada e previsão de atendimento no expediente.',
       category: 'atendimento'
     },
     'configuracoes': {
       eyebrow: 'INFRAESTRUTURA • DUAL-FRONT GATEWAY',
       title: 'Conexão, Sessão e Preferências.',
-      subtitle: 'Gerenciamento do endpoint Google Apps Script, diagnóstico de latência, perfil RBAC ativo e alternância entre Modo Claro e Modo Escuro.',
+      subtitle: 'Configurações de conectividade, aparência visual do sistema, gestão de usuários e diretrizes operacionais.',
       category: 'sistema'
     }
   };
@@ -198,8 +198,8 @@ window.OlymposRouter = (function() {
     }
 
     if (pageId === 'configuracoes') {
-      if (window.OlymposViews && window.OlymposViews.configuracoes && typeof window.OlymposViews.configuracoes.alternarSubtab === 'function') {
-        window.OlymposViews.configuracoes.alternarSubtab(targetSubtab || 'conexao');
+      if (window.OlymposViews && window.OlymposViews.configuracoes && typeof window.OlymposViews.configuracoes.init === 'function') {
+        window.OlymposViews.configuracoes.init(targetSubtab || 'conexao');
       }
     }
 
@@ -208,6 +208,7 @@ window.OlymposRouter = (function() {
 
   function dispararCarregamentoPagina(pageId) {
     if (!window.OlymposViews) return;
+    if (pageId === 'configuracoes') return;
     const map = {
       'visao-geral': 'visaoGeral',
       'oficios': 'oficios',

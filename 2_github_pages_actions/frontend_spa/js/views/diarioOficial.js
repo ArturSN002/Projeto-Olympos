@@ -214,8 +214,8 @@ window.OlymposViews.diarioOficial = (function() {
           integrarPublicacoesSupabase(listaSupabase);
           const stElem = document.getElementById('promWebhookStatus');
           const lrElem = document.getElementById('promLastRun');
-          if (stElem) stElem.textContent = 'Acervo Oficial FEMURN Conectado • Base Supabase SSOT Ativa';
-          if (lrElem) lrElem.textContent = 'Última recepção: Sincronização Contínua Supabase SSOT';
+          if (stElem) stElem.textContent = 'Acervo do Diário Oficial Conectado • Base Atualizada';
+          if (lrElem) lrElem.textContent = 'Última sincronização: Base Atualizada';
         }
       }).catch(function(eSup) {
         console.warn('[DiarioOficial] Consulta Supabase em fallback:', eSup);
@@ -232,10 +232,10 @@ window.OlymposViews.diarioOficial = (function() {
       if (!data || data.status === 'ERRO' || !data.statusWebhook) {
         isLoaded = true;
         if (stElem && publicacoesUnificadas.length === 0) {
-          stElem.textContent = 'Receptor GAS Pronto • Base de atos oficiais pronta para consulta';
+          stElem.textContent = 'Integração Pronta • Base de atos oficiais disponível para consulta';
         }
         if (lrElem && publicacoesUnificadas.length === 0) {
-          lrElem.textContent = 'Última recepção: Acervo oficial 2026 sincronizado';
+          lrElem.textContent = 'Última sincronização: Acervo oficial 2026 atualizado';
         }
         renderizarTabela();
         return;
@@ -246,11 +246,11 @@ window.OlymposViews.diarioOficial = (function() {
 
       if (stElem) {
         stElem.textContent = sw.webhookAtivo
-          ? 'Webhook Autenticado & Cron Diário Ativo (00:10 BRT)'
-          : 'Acervo Oficial FEMURN Conectado • Base Supabase SSOT Ativa';
+          ? 'Atualizações Diárias Ativas (00:10 BRT)'
+          : 'Acervo do Diário Oficial Conectado • Base Atualizada';
       }
       if (lrElem) {
-        lrElem.textContent = 'Última recepção: ' + (sw.ultimaExecucao || 'Base SSOT Atualizada') +
+        lrElem.textContent = 'Última sincronização: ' + (sw.ultimaExecucao || 'Base Atualizada') +
           (sw.totalSalvos !== undefined ? (' • ' + sw.totalSalvos + ' ato(s) na última edição') : '');
       }
       if (sheetBtn) {
@@ -458,13 +458,13 @@ window.OlymposViews.diarioOficial = (function() {
     const dt = prompt('Data opcional para varredura na FEMURN (DD/MM/AAAA). Deixe vazio para coletar a edição de hoje:', '');
     if (dt === null) return;
 
-    window.OlymposApp.showToast('Solicitando disparo do workflow Fogo de Prometheus...');
+    window.OlymposApp.showToast('Solicitando atualização diária das publicações...');
     window.OlymposApi.chamar('prometheus_disparar_coleta', {
       dataInicio: dt.trim(),
       dataFim: dt.trim()
     }, function(res) {
       if (res && res.ok) {
-        window.OlymposApp.showToast(res.mensagem || 'Solicitação enviada ao GitHub Actions!');
+        window.OlymposApp.showToast(res.mensagem || 'Solicitação enviada com sucesso!');
       } else {
         window.OlymposApp.showToast((res && res.mensagem) || 'Não foi possível disparar remotamente.', true);
       }

@@ -57,9 +57,18 @@ window.OlymposCarto = (function() {
   function appendKeyParam(url) {
     var key = getApiKey();
     if (!key) return url;
-    if (url.indexOf('api_key=') !== -1 || url.indexOf('key=') !== -1) return url;
+    if (url.indexOf('key=') !== -1) {
+      if (url.indexOf('api_key=') === -1) {
+        var sep = url.indexOf('?') === -1 ? '?' : '&';
+        return url + sep + 'api_key=' + encodeURIComponent(key);
+      }
+      return url;
+    }
     var sep = url.indexOf('?') === -1 ? '?' : '&';
-    return url + sep + 'api_key=' + encodeURIComponent(key);
+    if (url.indexOf('api_key=') !== -1) {
+      return url + sep + 'key=' + encodeURIComponent(key);
+    }
+    return url + sep + 'key=' + encodeURIComponent(key) + '&api_key=' + encodeURIComponent(key);
   }
 
   function getStyleUrl(isDark) {
@@ -79,7 +88,7 @@ window.OlymposCarto = (function() {
   function transformRequest(url) {
     var key = getApiKey();
     if (key && typeof url === 'string' && (url.indexOf('cartocdn.com') !== -1 || url.indexOf('carto.com') !== -1)) {
-      var targetUrl = (url.indexOf('api_key=') === -1 && url.indexOf('key=') === -1)
+      var targetUrl = (url.indexOf('key=') === -1)
         ? appendKeyParam(url)
         : url;
       return {

@@ -42,7 +42,10 @@ window.OlymposViews.configuracoes = (function() {
     }
   ];
 
-  function init() {
+  function init(initialSubtab) {
+    if (initialSubtab) {
+      subtabAtiva = initialSubtab;
+    }
     bindEvents();
     carregarValoresAtuais();
     alternarSubtab(subtabAtiva);
@@ -62,7 +65,7 @@ window.OlymposViews.configuracoes = (function() {
     bind('configResetApiBtn', 'click', function() {
       window.OlymposApi.setApiUrl(window.OlymposApi.DEFAULT_API_URL);
       carregarValoresAtuais();
-      window.OlymposApp.showToast('Endpoint restaurado para a implantação oficial do Hub!');
+      window.OlymposApp.showToast('Endereço do serviço restaurado para o padrão oficial!');
     });
     bind('configLogoutBtn', 'click', function() {
       window.OlymposApp.fazerLogout();
@@ -93,6 +96,13 @@ window.OlymposViews.configuracoes = (function() {
         btn.addEventListener('click', function() {
           alternarSubtab(btn.getAttribute('data-subtab'));
         });
+      }
+    });
+
+    // Usuários: Abrir modal novo usuário
+    bind('btnAbrirModalNovoUsuario', 'click', function() {
+      if (window.OlymposApp && typeof window.OlymposApp.abrirModalNovoUsuario === 'function') {
+        window.OlymposApp.abrirModalNovoUsuario();
       }
     });
 
@@ -136,6 +146,7 @@ window.OlymposViews.configuracoes = (function() {
       if (el) {
         const isCurrent = key === subtabId;
         el.classList.toggle('active', isCurrent);
+        el.classList.toggle('hidden', !isCurrent);
         el.style.display = isCurrent ? 'block' : 'none';
       }
     });
@@ -146,6 +157,10 @@ window.OlymposViews.configuracoes = (function() {
       if (window.OlymposViews && window.OlymposViews.personas && typeof window.OlymposViews.personas.init === 'function') {
         window.OlymposViews.personas.init();
       }
+    }
+
+    if (window.OlymposIcons && typeof window.OlymposIcons.hydrateAll === 'function') {
+      window.OlymposIcons.hydrateAll();
     }
   }
 
@@ -209,11 +224,11 @@ window.OlymposViews.configuracoes = (function() {
           </td>
           <td style="padding: 12px 14px; text-align: right; white-space: nowrap;">
             <div style="display: inline-flex; gap: 6px;">
-              <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; padding: 4px 8px;" onclick="window.OlymposViews.configuracoes.abrirModalEditarUsuario('${u.id}')">
-                ✏️ Editar
+              <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; padding: 4px 8px; display: inline-flex; align-items: center; gap: 4px;" onclick="window.OlymposViews.configuracoes.abrirModalEditarUsuario('${u.id}')">
+                <span class="svg-icon-inline" style="width: 13px; height: 13px;">${window.OlymposIcons ? window.OlymposIcons.ui('edit') : ''}</span> Editar
               </button>
-              <button type="button" class="btn btn-danger btn-sm" style="font-size: 0.75rem; padding: 4px 8px;" ${isSelf ? 'disabled title="Você não pode excluir sua própria conta"' : ''} onclick="window.OlymposViews.configuracoes.excluirUsuario('${u.id}')">
-                🗑️ Excluir
+              <button type="button" class="btn btn-danger btn-sm" style="font-size: 0.75rem; padding: 4px 8px; display: inline-flex; align-items: center; gap: 4px;" ${isSelf ? 'disabled title="Você não pode excluir sua própria conta"' : ''} onclick="window.OlymposViews.configuracoes.excluirUsuario('${u.id}')">
+                <span class="svg-icon-inline" style="width: 13px; height: 13px;">${window.OlymposIcons ? window.OlymposIcons.ui('trash') : ''}</span> Excluir
               </button>
             </div>
           </td>
@@ -227,7 +242,7 @@ window.OlymposViews.configuracoes = (function() {
           <thead>
             <tr style="background: var(--bg-tonal); border-bottom: 1px solid var(--border-hairline); color: var(--text-muted); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.5px;">
               <th style="padding: 10px 14px;">Operador</th>
-              <th style="padding: 10px 14px;">Papel RBAC</th>
+              <th style="padding: 10px 14px;">Perfil de Acesso</th>
               <th style="padding: 10px 14px;">Lotação / Departamento</th>
               <th style="padding: 10px 14px;">Status</th>
               <th style="padding: 10px 14px; text-align: right;">Ações</th>
@@ -239,6 +254,10 @@ window.OlymposViews.configuracoes = (function() {
         </table>
       </div>
     `;
+
+    if (window.OlymposIcons && typeof window.OlymposIcons.hydrateAll === 'function') {
+      window.OlymposIcons.hydrateAll();
+    }
   }
 
   function abrirModalEditarUsuario(id) {
@@ -440,17 +459,17 @@ window.OlymposViews.configuracoes = (function() {
 
     btn.disabled = true;
     btn.textContent = 'Verificando...';
-    resBox.innerHTML = 'Medindo latência com o Gateway Google Apps Script...';
+    resBox.innerHTML = 'Verificando conexão com o serviço Google Apps Script...';
 
     window.OlymposApi.testarConexao(function(res) {
       btn.disabled = false;
-      btn.textContent = 'Testar Latência';
+      btn.textContent = 'Testar Conexão';
 
       if (res.ok) {
         resBox.innerHTML =
-          '<div style="color:var(--success); font-weight:700;">Gateway Conectado com Sucesso</div>' +
+          '<div style="color:var(--success); font-weight:700;">Conexão Estabelecida com Sucesso</div>' +
           '<div style="margin-top:4px; font-family:var(--font-mono); font-size:11.5px;">' +
-            'Latência: ' + res.latency + ' ms • Sistema: ' + window.OlymposApp.escapeHtml((res.data && res.data.sistema) || 'Hub Olympos') +
+            'Tempo de resposta: ' + res.latency + ' ms • Sistema: ' + window.OlymposApp.escapeHtml((res.data && res.data.sistema) || 'Hub Olympos') +
             ' • Versão: ' + window.OlymposApp.escapeHtml((res.data && res.data.versao) || '2.0.3') +
           '</div>';
         window.OlymposApp.atualizarStatusConexao(true);

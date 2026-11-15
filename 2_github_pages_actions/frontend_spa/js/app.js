@@ -528,8 +528,8 @@ window.OlymposApp = (function() {
     currentUserSession = null;
     const blocoGestao = document.getElementById('blocoGestaoUsuarios');
     if (blocoGestao) blocoGestao.classList.add('hidden');
-    const topNovoUsuarioBtn = document.getElementById('topNovoUsuarioBtn');
-    if (topNovoUsuarioBtn) topNovoUsuarioBtn.classList.add('hidden');
+    const avisoRestrito = document.getElementById('avisoAcessoUsuariosRestrito');
+    if (avisoRestrito) avisoRestrito.classList.remove('hidden');
     showToast('Sessão encerrada.');
     solicitarLogin();
   }
@@ -588,20 +588,12 @@ window.OlymposApp = (function() {
     // Controle de Visibilidade RBAC para Moderador (ADMIN_GABINETE)
     const isAdmin = Boolean(sessao.perfil && (sessao.perfil.id === 'ADMIN_GABINETE' || sessao.perfil.nome === 'ADMIN_GABINETE'));
     const blocoGestao = document.getElementById('blocoGestaoUsuarios');
-    if (blocoGestao) {
-      if (isAdmin) {
-        blocoGestao.classList.remove('hidden');
-      } else {
-        blocoGestao.classList.add('hidden');
-      }
-    }
-    const topNovoUsuarioBtn = document.getElementById('topNovoUsuarioBtn');
-    if (topNovoUsuarioBtn) {
-      if (isAdmin) {
-        topNovoUsuarioBtn.classList.remove('hidden');
-      } else {
-        topNovoUsuarioBtn.classList.add('hidden');
-      }
+    const avisoRestrito = document.getElementById('avisoAcessoUsuariosRestrito');
+    if (blocoGestao) blocoGestao.classList.toggle('hidden', !isAdmin);
+    if (avisoRestrito) avisoRestrito.classList.toggle('hidden', isAdmin);
+
+    if (window.OlymposIcons && typeof window.OlymposIcons.hydrateAll === 'function') {
+      window.OlymposIcons.hydrateAll();
     }
   }
 
@@ -968,9 +960,6 @@ window.OlymposApp = (function() {
     // Modal de Cadastro de Novo Usuário (Exclusivo ADMIN_GABINETE)
     const btnOpenNovoUser = document.getElementById('btnAbrirModalNovoUsuario');
     if (btnOpenNovoUser) btnOpenNovoUser.addEventListener('click', abrirModalNovoUsuario);
-
-    const btnTopNovoUser = document.getElementById('topNovoUsuarioBtn');
-    if (btnTopNovoUser) btnTopNovoUser.addEventListener('click', abrirModalNovoUsuario);
 
     const btnCloseNovoUser = document.getElementById('closeModalNovoUsuarioBtn');
     if (btnCloseNovoUser) btnCloseNovoUser.addEventListener('click', fecharModalNovoUsuario);
@@ -1414,6 +1403,9 @@ window.OlymposApp = (function() {
         showToast('Usuário ' + email + ' cadastrado com sucesso!');
         const form = document.getElementById('formNovoUsuario');
         if (form) form.reset();
+        if (window.OlymposViews && window.OlymposViews.configuracoes && typeof window.OlymposViews.configuracoes.carregarUsuarios === 'function') {
+          window.OlymposViews.configuracoes.carregarUsuarios();
+        }
         setTimeout(function() {
           fecharModalNovoUsuario();
           if (btnSubmit) {
@@ -1494,6 +1486,7 @@ window.OlymposApp = (function() {
     testarEnvioBoletim: testarEnvioBoletim,
     fecharDropdowns: fecharDropdowns,
     resetMobileApp: resetMobileApp,
-    escapeHtml: escapeHtml
+    escapeHtml: escapeHtml,
+    hydrateVectorIcons: hydrateVectorIcons
   };
 })();

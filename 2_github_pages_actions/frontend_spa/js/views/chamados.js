@@ -117,7 +117,7 @@ window.OlymposViews.chamados = (function() {
   function carregarChamados(forcarRecarregamento) {
     const container = document.getElementById('chamadosListaContainer');
     if (container && (!window.OlymposSignals || window.OlymposSignals.tickets.peek().length === 0 || forcarRecarregamento)) {
-      container.innerHTML = '<div class="empty-state-card" style="padding: 36px; text-align: center;"><div class="empty-state-icon">⏳</div><p>Sincronizando fila de chamados com o Supabase e Planilha...</p></div>';
+      container.innerHTML = '<div class="empty-state-card" style="padding: 36px; text-align: center;"><div class="empty-state-icon">⏳</div><p>Carregando solicitações em aberto...</p></div>';
     }
 
     // 1. Tenta carregar do Supabase SSOT
@@ -239,7 +239,7 @@ window.OlymposViews.chamados = (function() {
           <div class="chamado-header">
             <span class="chamado-id font-mono">#${window.OlymposApp ? window.OlymposApp.escapeHtml(t.id) : t.id}</span>
             ${badgeUrgente}
-            <span class="badge-sla sla-badge">SLA Estimado: ${window.OlymposApp ? window.OlymposApp.escapeHtml(slaFormatado) : slaFormatado}</span>
+            <span class="badge-sla sla-badge">Previsão: ${window.OlymposApp ? window.OlymposApp.escapeHtml(slaFormatado) : slaFormatado}</span>
             <span class="badge-status" style="background: var(--bg-base); color: var(--text-muted); border: 1px solid var(--border-hairline);">${status}</span>
           </div>
 
@@ -248,7 +248,7 @@ window.OlymposViews.chamados = (function() {
             <p class="text-secondary">
               <span>Setor: <strong>${window.OlymposApp ? window.OlymposApp.escapeHtml(t.setor || 'Geral') : (t.setor || 'Geral')}</strong></span> •
               <span>Dia solicitado: <strong>${window.OlymposApp ? window.OlymposApp.escapeHtml(t.dia_entrega_solicitado || 'Conforme fila') : (t.dia_entrega_solicitado || 'Conforme fila')}</strong></span> •
-              <span class="text-muted">Aberto em ${formatarDataHora(t.created_at || t.criado_em)} (${t.horas_em_aberto || 0}h na fila)</span>
+              <span class="text-muted">Aberto em ${formatarDataHora(t.created_at || t.criado_em)} (aguardando há ${t.horas_em_aberto || 0}h)</span>
             </p>
             <div class="chamado-descricao">
               ${window.OlymposApp ? window.OlymposApp.escapeHtml(t.descricao || 'Sem descrição informada.') : (t.descricao || 'Sem descrição informada.')}
@@ -271,7 +271,7 @@ window.OlymposViews.chamados = (function() {
   function buildCardActions(ticket, status) {
     const idSafe = window.OlymposApp ? window.OlymposApp.escapeHtml(ticket.id) : ticket.id;
     if (status === 'RESOLVIDO' || status === 'CONCLUIDO') {
-      return `<span class="text-success" style="font-weight: 600; font-size: 0.82rem;">✅ Resolvido • Finalizado sem disparo de e-mail</span>`;
+      return `<span class="text-success" style="font-weight: 600; font-size: 0.82rem;">✅ Demanda concluída com sucesso</span>`;
     }
 
     const parts = [];
@@ -280,7 +280,7 @@ window.OlymposViews.chamados = (function() {
         <button type="button" class="btn-atendimento-chamado"
                 onclick="window.marcarAtendimentoChamado('${idSafe}')"
                 data-action="chamados_marcar_atendimento"
-                title="Pausar contagem de escalonamento de 24h">
+                title="Marcar chamado como em atendimento">
           👁️ Em Atendimento
         </button>
       `);
@@ -290,7 +290,7 @@ window.OlymposViews.chamados = (function() {
       <button type="button" class="btn btn-primary btn-finalizar-chamado"
               onclick="window.finalizarChamado('${idSafe}')"
               data-action="chamados_finalizar"
-              title="Confirmar resolução da pendência (Sem envio de e-mail)">
+              title="Confirmar conclusão da solicitação">
         Finalizar
       </button>
     `);
@@ -387,7 +387,7 @@ window.OlymposViews.chamados = (function() {
     }
 
     if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
-      window.OlymposApp.showToast('Chamado #' + id + ' em atendimento. Escalonamento de 24h pausado.', 'info');
+      window.OlymposApp.showToast('Chamado #' + id + ' em atendimento.', 'info');
     }
 
     // Persistência assíncrona no backend
@@ -420,7 +420,7 @@ window.OlymposViews.chamados = (function() {
     }
 
     if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
-      window.OlymposApp.showToast('Chamado #' + id + ' finalizado com sucesso! (Nenhum e-mail disparado).', 'success');
+      window.OlymposApp.showToast('Chamado #' + id + ' finalizado com sucesso!', 'success');
     }
 
     // Persistência assíncrona no backend GAS e Supabase
