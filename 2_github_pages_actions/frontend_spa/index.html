@@ -157,6 +157,7 @@
             </div>
           </div>
           <span class="nav-divider-dot" aria-hidden="true"></span>
+          <a href="#chamados" class="nav-link" data-page="chamados">Chamados</a>
           <a href="#diario-oficial" class="nav-link" data-page="diario-oficial">Diário Oficial</a>
           <a href="#papiro-cadmo" class="nav-link" data-page="papiro-cadmo">Permutas</a>
           <a href="#servidores" class="nav-link" data-page="servidores">Servidores</a>
@@ -198,6 +199,7 @@
             <a href="#certificados" class="nav-link dropdown-item" role="menuitem" data-page="certificados">Certificados</a>
           </div>
         </div>
+        <a href="#chamados" class="nav-link" data-page="chamados">Chamados</a>
         <a href="#diario-oficial" class="nav-link" data-page="diario-oficial">Diário Oficial</a>
         <a href="#papiro-cadmo" class="nav-link" data-page="papiro-cadmo">Permutas</a>
         <a href="#servidores" class="nav-link" data-page="servidores">Servidores</a>
@@ -264,14 +266,51 @@
          HERO EDITORIAL CONTEXTUAL + ATALHOS OFICIAIS (SEM IDS TÉCNICOS VISÍVEIS)
          ========================================================================= -->
     <div class="editorial-shell">
-      <section class="editorial-hero">
-        <div id="pageHeaderEyebrow" class="eyebrow-pill">GOVERNANÇA EXECUTIVA • SMEB 2026 • V2.03</div>
-        <h1 id="pageHeaderTitle" class="hero-display-title">Inteligência documental e governança pública.</h1>
+      <div class="ambient-glow" aria-hidden="true"></div>
+      <section class="editorial-hero subtle-grid" style="position: relative; overflow: hidden; padding-top: 32px; padding-bottom: 24px;">
+        <div class="eyebrow eyebrow-pill" style="display: inline-flex; align-items: center; gap: 8px;">
+          <span class="animate-ping dot" style="display: inline-block; width: 8px; height: 8px; border-radius: 9999px; background: var(--accent-primary);" aria-hidden="true"></span>
+          <span id="pageHeaderEyebrow">SMEB Hub Olympos • GOVERNANÇA EXECUTIVA 2026 • V3.0</span>
+        </div>
+        <h1 id="pageHeaderTitle" class="hero-display-title">
+          Inteligência documental e governança com <span class="aurora-text">Design Científico</span>.
+        </h1>
         <p id="pageHeaderSubtitle" class="hero-lead-subtitle">
           Painel central da Secretaria Municipal de Educação Básica de Ceará-Mirim: numeração sequencial oficial, atalhos operacionais e calendário escolar.
         </p>
 
-        <div class="hero-shortcuts-bar hide-mobile">
+        <!-- Dual Pill Actions -->
+        <div class="hero-dual-actions" style="display: flex; gap: 12px; align-items: center; margin: 18px 0 20px; flex-wrap: wrap;">
+          <a href="#chamados" class="btn btn-primary" style="border-radius: 9999px; padding: 10px 22px; display: inline-flex; align-items: center; gap: 8px;">
+            <span>Abrir Central de Chamados</span>
+            <span class="arrow-shift">↗</span>
+          </a>
+          <a href="#diario-oficial" class="btn btn-ghost" style="border-radius: 9999px; padding: 10px 22px; display: inline-flex; align-items: center; gap: 8px;">
+            <span>Consultar Diário Oficial</span>
+            <span class="arrow-shift">↗</span>
+          </a>
+        </div>
+
+        <!-- Faixa de Telemetria Científica em 3 Colunas -->
+        <div class="telemetry-strip grid grid-cols-3" style="margin-top: 20px;">
+          <div class="telemetry-card spotlight-card col-1">
+            <span class="telemetry-label">Diário Oficial • FEMURN</span>
+            <div class="telemetry-metric" id="heroTelemetryDiario">--</div>
+            <span class="telemetry-meta" id="heroTelemetryDiarioMeta">Matérias sincronizadas via Supabase SSOT</span>
+          </div>
+          <div class="telemetry-card spotlight-card col-2">
+            <span class="telemetry-label">Lira de Orfeu • Certificados</span>
+            <div class="telemetry-metric" id="heroTelemetryLira">--</div>
+            <span class="telemetry-meta" id="heroTelemetryLiraMeta">Cota de e-mail e emissões ativas</span>
+          </div>
+          <div class="telemetry-card spotlight-card col-3">
+            <span class="telemetry-label">Chamados SMEB • Fila Ativa</span>
+            <div class="telemetry-metric" id="heroTelemetryChamados">--</div>
+            <span class="telemetry-meta" id="heroTelemetryChamadosMeta">Demandas ordenadas com SLA útil</span>
+          </div>
+        </div>
+
+        <div class="hero-shortcuts-bar hide-mobile" style="margin-top: 16px;">
           <a href="https://drive.google.com/drive/folders/1W9mGmQCrX8BRPsGcK_vqUwfXw1dRmSya" target="_blank" rel="noopener" class="folder-chip">Pasta Central Olympo ↗</a>
           <a href="https://drive.google.com/drive/folders/1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu" target="_blank" rel="noopener" class="folder-chip">Memórias Operacionais (.md) ↗</a>
           <a href="https://drive.google.com/drive/folders/1qGq5uqxOtN_V63itUheYatLIcj5R86O3" target="_blank" rel="noopener" class="folder-chip">Portarias 2026 ↗</a>
@@ -692,12 +731,15 @@
                 <h2 class="section-title">Certificados e Declarações (A Lira de Orfeu)</h2>
                 <p class="section-desc">Padronização automática de participantes, gravação de código verificável na aba <code>Registro_Autenticidade</code> e links visíveis de todos os PDFs emitidos.</p>
               </div>
-              <a href="https://drive.google.com/drive/folders/1XriqpPQsWjQxJROsE_FyaQQpCwybJSUJ" target="_blank" rel="noopener" class="folder-chip">
-                Abrir Pasta A Lira de Orfeu ↗
-              </a>
+              <div class="button-group" style="display: flex; gap: 8px; align-items: center;">
+                <button type="button" id="liraNovaAbaBtn" class="btn btn-secondary btn-sm">+ Nova Aba de Evento</button>
+                <a href="https://drive.google.com/drive/folders/1XriqpPQsWjQxJROsE_FyaQQpCwybJSUJ" target="_blank" rel="noopener" class="folder-chip">
+                  Abrir Pasta A Lira de Orfeu ↗
+                </a>
+              </div>
             </div>
 
-            <div class="controls-grid">
+            <div class="controls-grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 18px;">
               <div class="field-group">
                 <label for="liraModalidadeSelect">1. Modalidade do Documento</label>
                 <select id="liraModalidadeSelect" class="input-clean">
@@ -715,15 +757,74 @@
               </div>
             </div>
 
-            <div class="button-group" style="margin-top: 20px; margin-bottom: 16px;">
-              <button id="liraHigienizarBtn" class="btn btn-secondary">Padronizar Nomes e E-mails</button>
-              <button id="liraExecutarBtn" class="btn btn-primary">Emitir PDFs e Enviar por E-mail</button>
+            <!-- OS 3 GATILHOS INDEPENDENTES + ATALHO COMPOSTO -->
+            <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 14px; margin-bottom: 20px; padding: 14px; background: var(--bg-surface-hover, rgba(255,255,255,0.02)); border-radius: 10px; border: 1px solid var(--border-hairline);">
+              <button id="liraHigienizarBtn" class="btn btn-secondary" title="Limpa espaços, corrige domínios @gmail e padroniza em Title Case">1. Higienizar Lista</button>
+              <button id="liraGerarPdfsBtn" class="btn btn-secondary" title="Gera PDFs e QR Codes sem envio de e-mails (zero consumo de cota)">2. Somente Gerar Certificados (PDF)</button>
+              <button id="liraEnviarEmailsBtn" class="btn btn-secondary" title="Envia e-mails exclusivamente para participantes com PDF gerado">3. Somente Enviar E-mails</button>
+              <button id="liraExecutarBtn" class="btn btn-primary" title="Atalho opcional: Executa geração de PDFs seguida de envio de e-mails">Executar Ambos (Gerar + Enviar)</button>
+              <span id="liraCotaBadge" class="pill-badge pill-blue" style="margin-left: auto;">Cota Gmail: --</span>
             </div>
 
             <div id="liraCompletedJobBox" class="job-result-card hidden"></div>
 
-            <div id="liraOutput" class="output-panel">
+            <div id="liraOutput" class="output-panel" style="margin-bottom: 20px;">
               Selecione a planilha do evento e a aba de participantes para higienizar registros ou iniciar a emissão com QR Code.
+            </div>
+
+            <!-- GESTÃO INTERATIVA DE PARTICIPANTES (F14) -->
+            <div class="lira-participantes-section" style="margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--border-hairline);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+                <div>
+                  <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700;">Participantes da Aba</h3>
+                  <span id="liraParticipantesContagem" style="font-size: 12.5px; color: var(--text-muted);">Nenhuma aba carregada</span>
+                </div>
+                <div class="button-group" style="display: flex; gap: 8px;">
+                  <button type="button" id="liraColarLoteBtn" class="btn btn-secondary btn-sm">📋 Colar em Lote</button>
+                  <button type="button" id="liraRecarregarParticipantesBtn" class="btn btn-secondary btn-sm">🔄 Atualizar Lista</button>
+                </div>
+              </div>
+
+              <!-- Formulário Rápido de Adição -->
+              <form id="liraFormQuickAdd" style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 16px; padding: 12px 14px; background: var(--bg-surface-hover, rgba(255,255,255,0.03)); border-radius: 8px; border: 1px solid var(--border-hairline);">
+                <div class="field-group" style="flex: 2; min-width: 180px;">
+                  <label for="liraQuickNome" style="font-size: 11.5px; font-weight: 600;">Nome Completo *</label>
+                  <input type="text" id="liraQuickNome" class="input-clean" placeholder="Ex: Maria da Silva" required />
+                </div>
+                <div class="field-group" style="flex: 2; min-width: 180px;">
+                  <label for="liraQuickEmail" style="font-size: 11.5px; font-weight: 600;">E-mail *</label>
+                  <input type="email" id="liraQuickEmail" class="input-clean" placeholder="maria.silva@escola.rn.gov.br" required />
+                </div>
+                <div class="field-group" style="flex: 1; min-width: 90px;">
+                  <label for="liraQuickNota" style="font-size: 11.5px; font-weight: 600;">Nota (opcional)</label>
+                  <input type="text" id="liraQuickNota" class="input-clean" placeholder="Ex: 9,5" />
+                </div>
+                <div class="field-group" style="flex: 1; min-width: 110px;">
+                  <label for="liraQuickCarga" style="font-size: 11.5px; font-weight: 600;">Carga Horária</label>
+                  <input type="text" id="liraQuickCarga" class="input-clean" placeholder="Ex: 40h" />
+                </div>
+                <button type="submit" id="liraQuickAddBtn" class="btn btn-primary btn-sm" style="height: 38px; white-space: nowrap;">+ Adicionar</button>
+              </form>
+
+              <!-- Grade de Participantes -->
+              <div class="table-wrapper" style="max-height: 440px; overflow-y: auto;">
+                <table class="clean-table" id="liraTabelaParticipantes">
+                  <thead>
+                    <tr>
+                      <th style="width: 50px;">Linha</th>
+                      <th>Nome Completo</th>
+                      <th>E-mail</th>
+                      <th style="width: 90px;">Nota</th>
+                      <th style="width: 110px;">Carga Horária</th>
+                      <th style="width: 150px;">Certificado (PDF)</th>
+                      <th style="width: 130px;">Status Envio</th>
+                    </tr>
+                  </thead>
+                  <tbody id="liraTabelaParticipantesBody">
+                    <tr><td colspan="7" class="text-muted text-center" style="padding: 24px;">Selecione uma planilha e aba para carregar os participantes.</td></tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </section>
@@ -2115,6 +2216,112 @@
             </div>
           </div>
         </section>
+
+        <!-- =========================================================================
+             PÁGINA 14: CENTRAL DE CHAMADOS & PENDÊNCIAS (SMEB 2026 • V3.0)
+             ========================================================================= -->
+        <section class="page-view hidden" id="page-chamados" aria-labelledby="chamadosSectionTitle">
+          <div class="chamados-view-container">
+            <!-- Hero & Métricas da Fila -->
+            <div class="stats-grid">
+              <div class="stat-card spotlight-card">
+                <div class="stat-top">
+                  <span class="stat-label">Fila de Chamados • Pendentes</span>
+                  <span class="pill-badge pill-blue" id="kpiChamadosFilaTotal">0 na fila</span>
+                </div>
+                <div class="stat-value" id="kpiChamadosTotal">0</div>
+                <div class="stat-meta">
+                  <span>Demandas ativas em análise ou atendimento</span>
+                </div>
+              </div>
+
+              <div class="stat-card spotlight-card">
+                <div class="stat-top">
+                  <span class="stat-label">Prioridade Máxima • Urgências</span>
+                  <span class="pill-badge pill-red" id="kpiChamadosUrgentesBadge">🚨 0 Urgentes</span>
+                </div>
+                <div class="stat-value text-danger" id="kpiChamadosUrgentes">0</div>
+                <div class="stat-meta">
+                  <span>Solicitados ou escalonados após 24h sem leitura</span>
+                </div>
+              </div>
+
+              <div class="stat-card spotlight-card">
+                <div class="stat-top">
+                  <span class="stat-label">Tempo de Resposta • SLA Estimado</span>
+                  <span class="pill-badge pill-gold">08h–15h • 90m/tarefa</span>
+                </div>
+                <div class="stat-value" id="kpiChamadosSlaMedio">--</div>
+                <div class="stat-meta">
+                  <span>Projeção temporal calculada pelo SlaEngine</span>
+                </div>
+              </div>
+
+              <div class="stat-card spotlight-card">
+                <div class="stat-top">
+                  <span class="stat-label">Resolvidos • Concluídos</span>
+                  <span class="pill-badge pill-green">Finalizados</span>
+                </div>
+                <div class="stat-value text-success" id="kpiChamadosResolvidos">0</div>
+                <div class="stat-meta">
+                  <span>Demandas solucionadas com sucesso na SMEB</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Barra de Filtros e Busca Reativa (Preact Signals) -->
+            <div class="chamados-toolbar">
+              <div class="chamados-search-row">
+                <input type="search" id="chamadosBuscaInput" class="chamados-search-input" placeholder="🔍 Buscar por nome, e-mail, setor, dia ou descrição..." autocomplete="off" />
+                
+                <div class="field-group" style="margin: 0; min-width: 180px;">
+                  <select id="chamadosSetorSelect" class="input-clean" style="height: 42px; border-radius: 9999px;">
+                    <option value="TODOS">Todos os Setores</option>
+                    <option value="Gabinete">Gabinete</option>
+                    <option value="Recursos Humanos">Recursos Humanos (RH)</option>
+                    <option value="Pedagógico">Pedagógico</option>
+                    <option value="Inspeção Escolar">Inspeção Escolar</option>
+                    <option value="Transporte">Transporte</option>
+                    <option value="Alimentação Escolar">Alimentação Escolar</option>
+                    <option value="Jurídico">Jurídico</option>
+                    <option value="Financeiro">Financeiro / Contabilidade</option>
+                    <option value="Outro">Outro Setor</option>
+                  </select>
+                </div>
+
+                <button type="button" id="chamadosAtualizarBtn" class="btn btn-secondary btn-sm" style="border-radius: 9999px; height: 42px; padding: 0 16px;">
+                  🔄 Atualizar Fila
+                </button>
+              </div>
+
+              <div style="display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+                <div class="filter-pills-group" id="filterStatusGroup">
+                  <span style="font-size: 0.76rem; font-family: var(--font-mono); color: var(--text-muted); margin-right: 4px;">STATUS:</span>
+                  <button type="button" class="filter-pill active" data-status="ABERTOS">Fila Aberta</button>
+                  <button type="button" class="filter-pill" data-status="EM_ATENDIMENTO">Em Atendimento</button>
+                  <button type="button" class="filter-pill" data-status="CONCLUIDOS">Concluídos</button>
+                  <button type="button" class="filter-pill" data-status="TODOS">Todos</button>
+                </div>
+
+                <div class="filter-pills-group" id="filterUrgenciaGroup">
+                  <span style="font-size: 0.76rem; font-family: var(--font-mono); color: var(--text-muted); margin-right: 4px;">PRIORIDADE:</span>
+                  <button type="button" class="filter-pill active" data-urgencia="TODOS">Todos</button>
+                  <button type="button" class="filter-pill" data-urgencia="URGENTE">🚨 Urgentes</button>
+                  <button type="button" class="filter-pill" data-urgencia="PADRAO">Padrão</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Contêiner da Grade de Chamados (Reatividade via Signals) -->
+            <div id="chamadosListaContainer" class="chamados-grid">
+              <div class="empty-state-card" style="padding: 40px; text-align: center;">
+                <div class="empty-state-icon">⏳</div>
+                <p>Carregando fila de chamados...</p>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section class="page-view hidden" id="page-pendencias" aria-hidden="true"></section>
       </main>
     </div>
 
@@ -2546,6 +2753,137 @@
       </div>
     </div>
 
+    <!-- =========================================================================
+         MODAL DE CRIAÇÃO DINÂMICA DE ABA DE EVENTO — LIRA DE ORFEU (#modalLiraNovaAba)
+         ========================================================================= -->
+    <div id="modalLiraNovaAba" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalLiraNovaAbaTitulo">
+      <div class="modal-card" style="max-width: 680px; width: 94%;">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <span class="badge badge-purple" style="font-size: 0.72rem; margin-bottom: 4px;">Formação Continuada • A Lira de Orfeu</span>
+            <h3 id="modalLiraNovaAbaTitulo" style="margin: 0; font-size: 1.25rem; font-weight: 700;">Criar Nova Aba de Evento</h3>
+          </div>
+          <button id="closeModalLiraNovaAbaBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal">&times;</button>
+        </div>
+
+        <form id="formLiraNovaAba">
+          <div class="modal-body" style="padding: 20px 24px; max-height: 75vh; overflow-y: auto;">
+            <p class="section-desc" style="margin-top: 0; margin-bottom: 14px;">
+              Configura os metadados do evento (Linha 2: A2:H2) e a grade inicial de participantes (Linha 4: A4:F4) na planilha selecionada.
+            </p>
+
+            <div class="controls-grid" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+              <div class="field-group">
+                <label for="liraNovaAbaNome">Nome da Nova Aba *</label>
+                <input type="text" id="liraNovaAbaNome" name="nomeAba" class="input-clean" placeholder="Ex: Jornada_Pedagogica_2026" required />
+              </div>
+              <div class="field-group">
+                <label for="liraNovaAbaModalidade">Modalidade do Documento *</label>
+                <select id="liraNovaAbaModalidade" name="modalidade" class="input-clean" required>
+                  <option value="CERTIFICADO" selected>Certificado (.pptx / Slides)</option>
+                  <option value="DECLARACAO">Declaração (Google Docs)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field-group" style="margin-bottom: 12px;">
+              <label for="liraNovaAbaEvento">Nome Oficial do Evento / Formação (A2) *</label>
+              <input type="text" id="liraNovaAbaEvento" name="eventName" class="input-clean" placeholder="Ex: I Seminário Municipal de Práticas Pedagógicas" required />
+            </div>
+
+            <div class="controls-grid" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+              <div class="field-group">
+                <label for="liraNovaAbaTemplate">ID do Template no Google Drive (B2)</label>
+                <input type="text" id="liraNovaAbaTemplate" name="templateId" class="input-clean" placeholder="ID do arquivo Slides ou Docs" />
+              </div>
+              <div class="field-group">
+                <label for="liraNovaAbaPasta">ID da Pasta Destino no Drive (C2)</label>
+                <input type="text" id="liraNovaAbaPasta" name="folderId" class="input-clean" placeholder="Padrão: Pasta da Lira de Orfeu" />
+              </div>
+            </div>
+
+            <div class="controls-grid" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+              <div class="field-group">
+                <label for="liraNovaAbaData">Data do Evento (D2) *</label>
+                <input type="text" id="liraNovaAbaData" name="eventDate" class="input-clean" placeholder="dd/mm/aaaa ou 15 de Novembro de 2026" required />
+              </div>
+              <div class="field-group">
+                <label for="liraNovaAbaPeriodo">Carga Horária Base (E2) *</label>
+                <input type="text" id="liraNovaAbaPeriodo" name="period" class="input-clean" value="40h" placeholder="Ex: 40h ou 20 horas" required />
+              </div>
+            </div>
+
+            <div class="controls-grid" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+              <div class="field-group">
+                <label for="liraNovaAbaResponsavel">Responsável / Signatário (F2)</label>
+                <input type="text" id="liraNovaAbaResponsavel" name="responsavel" class="input-clean" value="Secretário(a) Municipal de Educação Básica" />
+              </div>
+              <div class="field-group">
+                <label for="liraNovaAbaEmailContato">E-mail de Contato para Suporte (G2)</label>
+                <input type="email" id="liraNovaAbaEmailContato" name="emailContato" class="input-clean" value="educacao@cearamirim.rn.gov.br" />
+              </div>
+            </div>
+
+            <div class="field-group" style="margin-bottom: 12px;">
+              <label for="liraNovaAbaMensagem">Mensagem Adicional / Rodapé do E-mail (H2)</label>
+              <textarea id="liraNovaAbaMensagem" name="bonusMessage" class="input-clean" rows="2" placeholder="Mensagem personalizada incluída no rodapé do e-mail oficial"></textarea>
+            </div>
+
+            <div id="liraNovaAbaFeedback" class="output-panel hidden" style="margin-top: 10px; font-size: 13px;"></div>
+          </div>
+
+          <div class="modal-footer" style="padding: 14px 24px; border-top: 1px solid var(--border-hairline); display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" id="btnCancelarNovaAbaLira" class="btn btn-secondary btn-sm">Cancelar</button>
+            <button type="submit" id="btnSalvarNovaAbaLira" class="btn btn-primary btn-sm">+ Criar Aba de Evento</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- =========================================================================
+         MODAL DE IMPORTAÇÃO EM LOTE DE PARTICIPANTES (#modalLiraColarLote)
+         ========================================================================= -->
+    <div id="modalLiraColarLote" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalLiraColarLoteTitulo">
+      <div class="modal-card" style="max-width: 640px; width: 94%;">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <span class="badge badge-blue" style="font-size: 0.72rem; margin-bottom: 4px;">Importação Rápida • A Lira de Orfeu</span>
+            <h3 id="modalLiraColarLoteTitulo" style="margin: 0; font-size: 1.25rem; font-weight: 700;">Colar Participantes em Lote</h3>
+          </div>
+          <button id="closeModalLiraColarLoteBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal">&times;</button>
+        </div>
+
+        <div class="modal-body" style="padding: 20px 24px; max-height: 75vh; overflow-y: auto;">
+          <p class="section-desc" style="margin-top: 0; margin-bottom: 12px;">
+            Copie as colunas da sua planilha do Excel ou Google Sheets e cole no campo abaixo.
+            O formato recomendado é <strong>E-mail</strong> e <strong>Nome Completo</strong>, com <strong>Nota</strong> e <strong>Carga Horária</strong> opcionais (separadas por tabulação ou vírgula).
+          </p>
+
+          <div class="field-group" style="margin-bottom: 12px;">
+            <label for="liraColarLoteTextarea">Dados dos Participantes (uma linha por participante)</label>
+            <textarea id="liraColarLoteTextarea" class="input-clean" rows="10" placeholder="maria.silva@escola.rn.gov.br&#9;Maria da Silva&#9;9,5&#9;40h&#10;joao.souza@gmail.com&#9;João de Souza&#9;10,0&#9;20h" style="font-family: monospace; font-size: 12.5px;"></textarea>
+          </div>
+
+          <div id="liraColarLoteFeedback" class="output-panel hidden" style="margin-top: 10px; font-size: 13px;"></div>
+        </div>
+
+        <div class="modal-footer" style="padding: 14px 24px; border-top: 1px solid var(--border-hairline); display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" id="btnCancelarLiraColarLote" class="btn btn-secondary btn-sm">Cancelar</button>
+          <button type="button" id="btnProcessarLiraColarLote" class="btn btn-primary btn-sm">Importar Participantes</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================================
+         INSPETOR 60-30-10 & ALTERNADOR DE TEMA EDITORIAL
+         ========================================================================= -->
+    <div id="inspectorWidget" class="fixed bottom-4 right-4">
+      <div class="inspect-60" title="60% Base Dominante (Obsidian Void / Scientific Daylight)">60% Base</div>
+      <div class="inspect-30" title="30% Superfícies &amp; Tipografia (Surface Hairline)">30% Surface</div>
+      <div class="inspect-10" title="10% Acento &amp; Foco (Azul Elétrico DeepMind)">10% Accent</div>
+      <button id="themeToggleBtnInspector" type="button" class="btn-theme-toggle" onclick="window.OlymposApp &amp;&amp; window.OlymposApp.alternarTema()" aria-label="Alternar Tema">Alternar Tema</button>
+    </div>
+
     <!-- Supabase JS v2 CDN — Fixado em v2.119.0 com Proteção Subresource Integrity (SRI) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.js" integrity="sha384-uteMfOloLDGt042uDz+xHGF3ym63/WQ6rFq7murQRG8Ih7QrXGEGNtWd8688sb4O" crossorigin="anonymous"></script>
 
@@ -2555,14 +2893,17 @@
     <script src="js/olympos_password_guard.js"></script>
     <script src="js/supabase_client.js"></script>
     <script src="js/api.js"></script>
+    <script src="js/signals.js"></script>
     <script src="js/router.js"></script>
     <script src="js/views/visaoGeral.js"></script>
     <script src="js/views/oficios.js"></script>
     <script src="js/views/portarias.js"></script>
     <script src="js/views/licencas.js"></script>
     <script src="js/certificados_crypto.js"></script>
+    <script src="js/sla_engine.js"></script>
     <script src="js/views/certificados.js"></script>
     <script src="js/views/liraOrfeu.js"></script>
+    <script src="js/views/chamados.js"></script>
     <script src="js/views/diarioOficial.js"></script>
     <script src="js/data/servidoresData.js"></script>
     <script src="js/data/permutasVigentesData.js"></script>

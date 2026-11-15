@@ -11,10 +11,70 @@ window.OlymposViews.visaoGeral = (function() {
 
   function init() {
     bindEvents();
+    bindSpotlightInteractions();
     renderizarConstelacao17Personas(lastOverviewData ? lastOverviewData.memorias : null);
+    atualizarTelemetriaCientifica();
     if (!isLoaded) {
       definirEstadoInicialNumeracao();
       carregarDados();
+    }
+  }
+
+  function bindSpotlightInteractions() {
+    if (typeof document === 'undefined' || typeof document.querySelectorAll !== 'function') return;
+    const cards = document.querySelectorAll('.spotlight-card');
+    cards.forEach(function(card) {
+      if (card._boundSpotlight) return;
+      card._boundSpotlight = true;
+      card.addEventListener('mousemove', function(e) {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        card.style.setProperty('--mouse-x', x + 'px');
+        card.style.setProperty('--mouse-y', y + 'px');
+      });
+    });
+  }
+
+  function atualizarTelemetriaCientifica() {
+    // 1. Diário Oficial
+    const elDiario = document.getElementById('heroTelemetryDiario');
+    if (elDiario) {
+      if (window.OlymposSupabase && window.OlymposSupabase.client) {
+        window.OlymposSupabase.client
+          .from('publicacoes_diario')
+          .select('id', { count: 'exact', head: true })
+          .then(function(res) {
+            if (res.count !== null && res.count !== undefined) {
+              elDiario.textContent = res.count + ' atos';
+            } else {
+              elDiario.textContent = 'Ativo (SSOT)';
+            }
+          })
+          .catch(function() {
+            elDiario.textContent = 'Online (SSOT)';
+          });
+      } else {
+        elDiario.textContent = 'Ativo (SSOT)';
+      }
+    }
+
+    // 2. Lira de Orfeu
+    const elLira = document.getElementById('heroTelemetryLira');
+    if (elLira) {
+      const cota = document.getElementById('kpiCotaEmail');
+      elLira.textContent = (cota && cota.textContent && cota.textContent !== '--') ? cota.textContent : 'Ativo';
+    }
+
+    // 3. Chamados SMEB
+    const elChamados = document.getElementById('heroTelemetryChamados');
+    if (elChamados) {
+      if (window.OlymposSignals) {
+        const fila = window.OlymposSignals.getActiveQueue();
+        elChamados.textContent = fila.length + ' demandas';
+      } else {
+        elChamados.textContent = 'Fila Ativa';
+      }
     }
   }
 
@@ -178,6 +238,8 @@ window.OlymposViews.visaoGeral = (function() {
         meta.textContent = 'Fogo de Prometheus: ' + data.statusPrometheus.ultimaExecucao;
       }
     }
+
+    atualizarTelemetriaCientifica();
   }
 
   function renderizarConstelacao17Personas(memoriasLive) {

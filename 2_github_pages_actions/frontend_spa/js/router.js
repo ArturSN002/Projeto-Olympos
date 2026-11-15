@@ -76,6 +76,12 @@ window.OlymposRouter = (function() {
       subtitle: 'Pesquisa tokenizada e insensível a acentos ou separadores em pastas setoriais ativas de 2026 e no acervo histórico de 2025.',
       category: 'inteligencia'
     },
+    'chamados': {
+      eyebrow: 'CENTRAL DE ATENDIMENTO • SMEB 2026',
+      title: 'Chamados e Pendências Operacionais.',
+      subtitle: 'Fila de demandas prioritárias da SMEB com ordenação por antiguidade (criado_em ASC), badges de SLA útil (08h–15h) e resolução imediata.',
+      category: 'atendimento'
+    },
     'configuracoes': {
       eyebrow: 'INFRAESTRUTURA • DUAL-FRONT GATEWAY',
       title: 'Conexão, Sessão e Preferências.',
@@ -103,6 +109,9 @@ window.OlymposRouter = (function() {
 
   function navegarPara(pageId, replaceState) {
     let targetSubtab = null;
+    if (pageId === 'pendencias') {
+      pageId = 'chamados';
+    }
     if (pageId === 'permutas') {
       pageId = 'papiro-cadmo';
     }
@@ -191,6 +200,7 @@ window.OlymposRouter = (function() {
       'calendario': 'calendario',
       'personas': 'personas',
       'busca': 'busca',
+      'chamados': 'chamados',
       'configuracoes': 'configuracoes'
     };
     const key = map[pageId];

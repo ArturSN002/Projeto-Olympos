@@ -124,16 +124,41 @@
   }
 
   /**
+   * Extrai horas como número inteiro positivo com suporte a strings como '40h', '20 horas', etc.
+   */
+  function extrairHorasNumericas(valor, fallback) {
+    if (typeof valor === 'number' && !isNaN(valor)) {
+      return Math.round(valor);
+    }
+    if (valor) {
+      const match = String(valor).match(/\d+/);
+      if (match) {
+        const parsed = parseInt(match[0], 10);
+        if (!isNaN(parsed) && parsed > 0) return parsed;
+      }
+    }
+    if (fallback) {
+      const matchFb = String(fallback).match(/\d+/);
+      if (matchFb) {
+        const parsedFb = parseInt(matchFb[0], 10);
+        if (!isNaN(parsedFb) && parsedFb > 0) return parsedFb;
+      }
+    }
+    return 40;
+  }
+
+  /**
    * Constrói o payload estruturado canônico do certificado institucional.
    */
   function gerarPayloadCanonico(dados) {
     const d = dados || {};
+    const rawHours = d.hours !== undefined ? d.hours : (d.carga_horaria !== undefined ? d.carga_horaria : (d.cargaHoraria !== undefined ? d.cargaHoraria : (d.frequencia !== undefined ? d.frequencia : d.periodo)));
     return {
       cert_id: String(d.cert_id || d.codigo || d.id || 'SMEB-2026-CERT').trim(),
       event_date: String(d.event_date || d.data_evento || d.dataEvento || '2026-11-07').trim(),
       event_name: String(d.event_name || d.evento || d.nome_evento || 'Formação SMEB').trim(),
       event_type: String(d.event_type || d.tipo || 'CERTIFICADO').trim().toUpperCase(),
-      hours: Number(d.hours || d.carga_horaria || d.cargaHoraria || 40),
+      hours: extrairHorasNumericas(rawHours, 40),
       issued_at: String(d.issued_at || d.data_emissao || new Date().toISOString()).trim(),
       issuer: "SMEB Ceará-Mirim/RN",
       recipient_id_hash: String(d.recipient_id_hash || d.hash_aluno || d.cpf_hash || 'ANON_ID').trim(),

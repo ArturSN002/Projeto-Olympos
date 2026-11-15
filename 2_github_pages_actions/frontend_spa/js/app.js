@@ -1472,6 +1472,7 @@ window.OlymposApp = (function() {
     handleLoginSubmit: handleLoginSubmit,
     fazerLogout: fazerLogout,
     definirTema: definirTema,
+    alternarTema: alternarTema,
     atualizarStatusConexao: atualizarStatusConexao,
     getSession: getSession,
     getSessaoAtual: getSessaoAtual,

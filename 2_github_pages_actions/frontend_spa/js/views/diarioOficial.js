@@ -65,26 +65,30 @@ window.OlymposViews.diarioOficial = (function() {
   function integrarPublicacoesSupabase(lista) {
     if (!Array.isArray(lista) || lista.length === 0) return;
     const urlsVistas = new Set(publicacoesUnificadas.map(function(x) { return x.url; }));
+    const codigosVistos = new Set(publicacoesUnificadas.map(function(x) { return x.codigo; }).filter(Boolean));
 
     lista.forEach(function(item) {
       const ner = item.conteudo_ner || {};
       const cat = (item.ato_tipo || 'PORTARIA').toUpperCase();
-      let setor = 'Gabinete 2026';
+      let setor = item.orgao || 'Gabinete 2026';
       if (cat.includes('PORTARIA')) setor = 'Portarias 2026';
       else if (cat.includes('EDITAL') || cat.includes('PSS') || cat.includes('JURIDICO')) setor = 'Assessoria Jurídica 2026';
 
-      const url = item.url_arquivo || item.urlDrive || 'https://drive.google.com/drive/folders/1qGq5uqxOtN_V63itUheYatLIcj5R86O3';
-      if (urlsVistas.has(url)) return;
-      urlsVistas.add(url);
+      const codigo = item.codigo_femurn || item.edicao || (item.numero_ato ? ('Ato ' + item.numero_ato) : (ner.numero_ato ? ('Ato ' + ner.numero_ato) : ''));
+      const url = item.url_drive || item.url_arquivo || item.urlDrive || (ner.url_materia || ner.link_pdf) || 'https://drive.google.com/drive/folders/1qGq5uqxOtN_V63itUheYatLIcj5R86O3';
+      if (codigo && codigosVistos.has(codigo)) return;
+      if (url && urlsVistas.has(url) && !codigo) return;
+      if (url) urlsVistas.add(url);
+      if (codigo) codigosVistos.add(codigo);
 
       publicacoesUnificadas.push({
         data: item.data_publicacao || item.data || '--',
         setor: setor,
         categoria: cat,
         titulo: item.titulo || 'Publicação FEMURN',
-        codigo: item.edicao || (ner.numero_ato ? ('Ato ' + ner.numero_ato) : ''),
-        servidores: ner.servidores || item.servidores_envolvidos || [],
-        matriculas: ner.matriculas || [],
+        codigo: codigo,
+        servidores: (Array.isArray(item.servidores_envolvidos) && item.servidores_envolvidos.length > 0) ? item.servidores_envolvidos : (ner.servidores || []),
+        matriculas: (Array.isArray(item.matriculas) && item.matriculas.length > 0) ? item.matriculas : (ner.matriculas || []),
         url: url
       });
     });
@@ -202,10 +206,11 @@ window.OlymposViews.diarioOficial = (function() {
       window.OlymposApp.renderSkeletonTable(tbody, 5, 4, ['15%', '20%', '50%', '15%']);
     }
 
-    // 1. Carrega imediatamente do Supabase (publicacoes_diario e catalogos_json)
+    // 1. Carrega imediatamente do Supabase (publicacoes_diario e catalogos_json) — Prioridade SSOT Zero-Latency (~45ms)
     if (window.OlymposSupabase && typeof window.OlymposSupabase.carregarPublicacoesDiario === 'function') {
       window.OlymposSupabase.carregarPublicacoesDiario().then(function(listaSupabase) {
         if (Array.isArray(listaSupabase) && listaSupabase.length > 0) {
+          isLoaded = true;
           integrarPublicacoesSupabase(listaSupabase);
           const stElem = document.getElementById('promWebhookStatus');
           const lrElem = document.getElementById('promLastRun');
