@@ -1,0 +1,6 @@
+{
+  "sucesso": false,
+  "total": 0,
+  "enviados": 0,
+  "motivo": "Arquivo CSV não encontrado: caminho_inexistente_12345.csv"
+}

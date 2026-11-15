@@ -1,9 +1,9 @@
 /**
- * Service Worker Oficial — Hub Olympos V2.03
+ * Service Worker Oficial — Hub Olympos V3.1
  * Estratégia: Cache de Shell Estático Offline com proteção absoluta de chamadas dinâmicas.
  */
 
-const CACHE_NAME = 'olympos-shell-v2.0.3';
+const CACHE_NAME = 'olympos-shell-v3.1.0';
 
 const SHELL_ASSETS = [
   './',

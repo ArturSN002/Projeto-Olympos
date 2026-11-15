@@ -9,6 +9,9 @@ window.OlymposViews = window.OlymposViews || {};
 window.OlymposViews.papiroCadmo = (function() {
   let isStatusLoaded = false;
   let leafletMap = null;
+  let maplibreLayer = null;
+  let cartoTileLayer = null;
+  let themeObserverCadmo = null;
   let markersLayer = null;
   let routeLayer = null;
   let observerCadmo = null;
@@ -1206,10 +1209,55 @@ window.OlymposViews.papiroCadmo = (function() {
         scrollWheelZoom: false
       });
 
-      window.L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 18,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      }).addTo(leafletMap);
+      const aplicarCamadaBaseCadmo = function() {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const cartoRasterUrl = isDark
+          ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+          : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+        const cartoGlStyle = isDark
+          ? 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
+          : 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
+
+        if (cartoTileLayer) {
+          cartoTileLayer.setUrl(cartoRasterUrl);
+        } else {
+          cartoTileLayer = window.L.tileLayer(cartoRasterUrl, {
+            subdomains: 'abcd',
+            maxZoom: 20,
+            attribution: '&copy; <a href="https://openfreemap.org">OpenFreeMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          }).addTo(leafletMap);
+        }
+
+        if (typeof window.maplibregl !== 'undefined' && typeof window.L.maplibreGL === 'function') {
+          try {
+            if (maplibreLayer && typeof maplibreLayer.getMaplibreMap === 'function') {
+              const glMap = maplibreLayer.getMaplibreMap();
+              if (glMap && typeof glMap.setStyle === 'function') {
+                glMap.setStyle(cartoGlStyle);
+              }
+            } else {
+              maplibreLayer = window.L.maplibreGL({
+                style: cartoGlStyle,
+                attributionControl: false
+              }).addTo(leafletMap);
+            }
+          } catch (eGl) {
+            console.warn('[PapiroCadmo] Fallback Carto Raster ativo:', eGl);
+          }
+        }
+      };
+
+      aplicarCamadaBaseCadmo();
+
+      if (!themeObserverCadmo && typeof MutationObserver !== 'undefined') {
+        themeObserverCadmo = new MutationObserver(function() {
+          aplicarCamadaBaseCadmo();
+        });
+        themeObserverCadmo.observe(document.documentElement, {
+          attributes: true,
+          attributeFilter: ['data-theme']
+        });
+      }
 
       markersLayer = window.L.layerGroup().addTo(leafletMap);
       routeLayer = window.L.layerGroup().addTo(leafletMap);

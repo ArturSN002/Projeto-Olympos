@@ -12,6 +12,9 @@ window.OlymposViews.escolas = (function() {
 
   var STORAGE_KEY = 'olympos_escolas_municipais';
   var leafletMap = null;
+  var maplibreLayer = null;
+  var cartoTileLayer = null;
+  var themeObserverMapa = null;
   var markersLayer = null;
   var tempClickMarker = null;
   var markerMap = {}; // id -> L.marker
@@ -251,7 +254,64 @@ window.OlymposViews.escolas = (function() {
   }
 
   /**
-   * Inicializa o mapa Leaflet 1.9.4
+   * Obtém o estilo vetorial MapLibre GL JS (OpenFreeMap / Carto) e o fallback raster Carto conforme o tema ativo
+   */
+  function obterConfigEstiloMapa() {
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    return {
+      isDark: isDark,
+      openFreeMapStyle: isDark
+        ? 'https://tiles.openfreemap.org/styles/dark'
+        : 'https://tiles.openfreemap.org/styles/liberty',
+      cartoGlStyle: isDark
+        ? 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
+        : 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+      cartoRasterUrl: isDark
+        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+        : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+      attribution: '&copy; <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> • SMEB Ceará-Mirim'
+    };
+  }
+
+  /**
+   * Aplica ou atualiza a camada base MapLibre GL JS + Carto / OpenFreeMap no mapa
+   */
+  function aplicarCamadaBaseMapa() {
+    if (!leafletMap || typeof window.L === 'undefined') return;
+    var cfg = obterConfigEstiloMapa();
+
+    // Camada base Carto Retina (Voyager / Dark Matter) de alta velocidade + suporte vetorial MapLibre GL JS
+    if (cartoTileLayer) {
+      cartoTileLayer.setUrl(cfg.cartoRasterUrl);
+    } else {
+      cartoTileLayer = window.L.tileLayer(cfg.cartoRasterUrl, {
+        subdomains: 'abcd',
+        maxZoom: 20,
+        attribution: cfg.attribution
+      }).addTo(leafletMap);
+    }
+
+    if (typeof window.maplibregl !== 'undefined' && typeof window.L.maplibreGL === 'function') {
+      try {
+        if (maplibreLayer && typeof maplibreLayer.getMaplibreMap === 'function') {
+          var glMap = maplibreLayer.getMaplibreMap();
+          if (glMap && typeof glMap.setStyle === 'function') {
+            glMap.setStyle(cfg.cartoGlStyle);
+          }
+        } else {
+          maplibreLayer = window.L.maplibreGL({
+            style: cfg.cartoGlStyle,
+            attributionControl: false
+          }).addTo(leafletMap);
+        }
+      } catch (eGl) {
+        console.warn('[EscolasView] Fallback Carto Raster ativo (WebGL indisponível):', eGl);
+      }
+    }
+  }
+
+  /**
+   * Inicializa o mapa interativo com MapLibre GL JS + Carto / OpenFreeMap (e bridge Leaflet)
    */
   function inicializarMapa() {
     var mapEl = document.getElementById('mapaEscolasCearaMirim') || document.getElementById('mapaEscolas');
@@ -265,16 +325,23 @@ window.OlymposViews.escolas = (function() {
         scrollWheelZoom: true
       });
 
-      window.L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors • SMEB Ceará-Mirim'
-      }).addTo(leafletMap);
+      aplicarCamadaBaseMapa();
 
       markersLayer = window.L.layerGroup().addTo(leafletMap);
 
       leafletMap.on('click', function(e) {
         tratarCliqueMapa(e);
       });
+
+      if (!themeObserverMapa && typeof MutationObserver !== 'undefined') {
+        themeObserverMapa = new MutationObserver(function() {
+          aplicarCamadaBaseMapa();
+        });
+        themeObserverMapa.observe(document.documentElement, {
+          attributes: true,
+          attributeFilter: ['data-theme']
+        });
+      }
     }
 
     setTimeout(function() {
@@ -525,6 +592,12 @@ window.OlymposViews.escolas = (function() {
 
       var redeClass = 'pill-rede-' + (rede.toLowerCase());
 
+      var icPin = window.OlymposIcons ? window.OlymposIcons.fromEmojiOrKey('mapPin') : '';
+      var icEdit = window.OlymposIcons ? window.OlymposIcons.fromEmojiOrKey('edit') : '';
+      var icTrash = window.OlymposIcons ? window.OlymposIcons.fromEmojiOrKey('trash') : '';
+      var icCompass = window.OlymposIcons ? window.OlymposIcons.fromEmojiOrKey('compass') : '';
+      var icCopy = window.OlymposIcons ? window.OlymposIcons.fromEmojiOrKey('copyClip') : '';
+
       var popupHtml =
         '<div class="cadmo-map-popup escola-map-popup">' +
           '<div class="escola-popup-header">' +
@@ -533,18 +606,18 @@ window.OlymposViews.escolas = (function() {
           '</div>' +
           '<strong class="escola-popup-title">' + escapeHtml(escola.nome) + '</strong>' +
           '<div class="escola-popup-segmentos">' + segmentosHtml + '</div>' +
-          (escola.bairroDistrito ? '<div class="escola-popup-detail">📍 <strong>Bairro/Distrito:</strong> ' + escapeHtml(escola.bairroDistrito) + '</div>' : '') +
+          (escola.bairroDistrito ? '<div class="escola-popup-detail">' + icPin + ' <strong>Bairro/Distrito:</strong> ' + escapeHtml(escola.bairroDistrito) + '</div>' : '') +
           (escola.endereco ? '<div class="escola-popup-address">' + escapeHtml(escola.endereco) + '</div>' : '') +
           (escola.inep ? '<div class="escola-popup-detail">INEP: <code>' + escapeHtml(escola.inep) + '</code></div>' : '') +
-          (escola.telefone ? '<div class="escola-popup-detail">📞 ' + escapeHtml(escola.telefone) + '</div>' : '') +
+          (escola.telefone ? '<div class="escola-popup-detail">Tel: ' + escapeHtml(escola.telefone) + '</div>' : '') +
           '<div class="escola-popup-coords">' +
             lat.toFixed(6) + ', ' + lng.toFixed(6) +
           '</div>' +
           '<div class="escola-popup-actions">' +
-            '<button type="button" class="btn-map-action" onclick="window.OlymposViews.escolas.abrirModalEdicao(\'' + escola.id + '\')">✏️ Editar</button>' +
-            '<button type="button" class="btn-map-action" onclick="window.OlymposViews.escolas.excluirEscola(\'' + escola.id + '\')">🗑️ Excluir</button>' +
-            '<a href="' + rotaUrl + '" target="_blank" rel="noopener" class="btn-map-action">🗺️ Rota</a>' +
-            '<button type="button" class="btn-map-action" onclick="window.OlymposViews.escolas.copiarCoordenadas(' + lat + ', ' + lng + ')">📋 Copiar</button>' +
+            '<button type="button" class="btn-map-action" onclick="window.OlymposViews.escolas.abrirModalEdicao(\'' + escola.id + '\')">' + icEdit + ' Editar</button>' +
+            '<button type="button" class="btn-map-action" onclick="window.OlymposViews.escolas.excluirEscola(\'' + escola.id + '\')">' + icTrash + ' Excluir</button>' +
+            '<a href="' + rotaUrl + '" target="_blank" rel="noopener" class="btn-map-action">' + icCompass + ' Rota</a>' +
+            '<button type="button" class="btn-map-action" onclick="window.OlymposViews.escolas.copiarCoordenadas(' + lat + ', ' + lng + ')">' + icCopy + ' Copiar</button>' +
           '</div>' +
         '</div>';
 
@@ -762,11 +835,14 @@ window.OlymposViews.escolas = (function() {
                   lat.toFixed(6) + ', ' + lng.toFixed(6) +
                 '</span>';
       html += '</td>';
+      var icPinRow = window.OlymposIcons ? window.OlymposIcons.fromEmojiOrKey('mapPin') : '';
+      var icEditRow = window.OlymposIcons ? window.OlymposIcons.fromEmojiOrKey('edit') : '';
+      var icTrashRow = window.OlymposIcons ? window.OlymposIcons.fromEmojiOrKey('trash') : '';
       html += '<td data-label="Ações" class="text-right" style="white-space: nowrap;">';
       html +=   '<div class="escola-row-actions" style="display: inline-flex; gap: 6px; flex-wrap: wrap;">';
-      html +=     '<button type="button" class="btn btn-secondary btn-mini" title="Visualizar e centralizar no mapa" onclick="window.OlymposViews.escolas.centralizarEscola(' + lat + ', ' + lng + ', \'' + escola.id + '\')">📍 Mapa</button>';
-      html +=     '<button type="button" class="btn btn-secondary btn-mini" title="Editar informações cadastrais" onclick="window.OlymposViews.escolas.abrirModalEdicao(\'' + escola.id + '\')">✏️ Editar</button>';
-      html +=     '<button type="button" class="btn btn-ghost btn-mini" style="color: #EF4444;" title="Excluir escola" onclick="window.OlymposViews.escolas.excluirEscola(\'' + escola.id + '\')">🗑️</button>';
+      html +=     '<button type="button" class="btn btn-secondary btn-mini" title="Visualizar e centralizar no mapa" onclick="window.OlymposViews.escolas.centralizarEscola(' + lat + ', ' + lng + ', \'' + escola.id + '\')">' + icPinRow + ' Mapa</button>';
+      html +=     '<button type="button" class="btn btn-secondary btn-mini" title="Editar informações cadastrais" onclick="window.OlymposViews.escolas.abrirModalEdicao(\'' + escola.id + '\')">' + icEditRow + ' Editar</button>';
+      html +=     '<button type="button" class="btn btn-ghost btn-mini" style="color: #EF4444;" title="Excluir escola" onclick="window.OlymposViews.escolas.excluirEscola(\'' + escola.id + '\')">' + icTrashRow + '</button>';
       html +=   '</div>';
       html += '</td>';
       html += '</tr>';

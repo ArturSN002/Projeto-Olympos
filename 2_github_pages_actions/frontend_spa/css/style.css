@@ -4454,48 +4454,135 @@ body.nav-drawer-open .sidebar-backdrop,
   }
 }
 
-@media (max-width: 560px) {
-  .calendario-kpis-grid {
-    grid-template-columns: 1fr;
-  }
-
-  /* Rolagem horizontal fluida na grade do calendário para nunca quebrar colunas */
+@media (max-width: 768px) {
   .cal-grid-wrapper {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    border-radius: 14px;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    box-sizing: border-box;
   }
 
   .cal-grid-weekdays,
   .cal-grid-days {
-    min-width: 500px; /* Garante ~71px por dia para toque acessível e sem corte */
+    min-width: 0 !important;
+    width: 100% !important;
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  }
+
+  .cal-weekday {
+    padding: 8px 2px;
+    font-size: 10px;
+    letter-spacing: 0;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .cal-day-cell {
-    min-height: 70px;
-    padding: 5px;
+    min-width: 0;
+    min-height: 64px;
+    padding: 4px 3px;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+
+  .cal-day-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    margin-bottom: 3px;
+  }
+
+  .cal-day-number {
+    font-size: 11.5px;
+    line-height: 1.1;
   }
 
   .cal-day-tag {
-    font-size: 7.5px;
-    padding: 1px 2px;
+    font-size: 6.5px;
+    padding: 1px 3px;
     border-radius: 3px;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.2;
   }
 
   .cal-event-chip {
-    padding: 1px 4px;
-    font-size: 8.5px;
+    padding: 1px 3px;
+    font-size: 7.5px;
+    max-width: 100%;
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 560px) {
+  .calendario-kpis-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  /* Grade de 7 colunas 100% responsiva sem corte lateral no mobile */
+  .cal-grid-wrapper {
+    overflow-x: hidden;
+    border-radius: 14px;
+    width: 100%;
+  }
+
+  .cal-grid-weekdays,
+  .cal-grid-days {
+    min-width: 0 !important;
+    width: 100% !important;
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  }
+
+  .cal-day-cell {
+    min-height: 58px;
+    padding: 3px 2px;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .cal-day-tag {
+    font-size: 6px;
+    padding: 1px 2px;
+    border-radius: 3px;
+    letter-spacing: 0;
+  }
+
+  .cal-event-chip {
+    padding: 1px 2px;
+    font-size: 7px;
+  }
+
+  .cal-event-chip .cal-chip-icon {
+    display: none;
   }
 
   .cal-summary-card {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 14px 16px;
-    gap: 12px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: start;
+    padding: 12px 14px;
+    gap: 8px;
+  }
+
+  .cal-summary-col {
+    align-items: center;
+    text-align: center;
   }
 
   .cal-summary-divider {
     display: none;
+  }
+
+  .cal-summary-text {
+    grid-column: 1 / -1;
+    border-top: 1px solid var(--border-hairline);
+    padding-top: 8px;
+    margin-top: 2px;
+    font-size: 12px;
   }
 }
 
@@ -5138,11 +5225,52 @@ body.nav-drawer-open .sidebar-backdrop,
 }
 
 .subtle-grid {
+  position: relative;
+}
+
+.subtle-grid::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
   background-size: 64px 64px;
   background-image: linear-gradient(to right, var(--border-hairline) 1px, transparent 1px),
                     linear-gradient(to bottom, var(--border-hairline) 1px, transparent 1px);
   mask-image: radial-gradient(ellipse 60% 50% at 50% 0%, #000 70%, transparent 100%);
   -webkit-mask-image: radial-gradient(ellipse 60% 50% at 50% 0%, #000 70%, transparent 100%);
+}
+
+.editorial-hero > * {
+  position: relative;
+  z-index: 2;
+}
+
+.hero-display-title {
+  color: var(--text-primary) !important;
+  opacity: 1 !important;
+  text-shadow: none;
+}
+
+.hero-lead-subtitle {
+  color: var(--text-secondary) !important;
+  opacity: 1 !important;
+}
+
+.svg-icon-inline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.1em;
+  height: 1.1em;
+  vertical-align: -0.16em;
+  flex-shrink: 0;
+}
+
+.svg-icon-inline svg {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 /* Floating Glassmorphic Pill Navbar */
@@ -5318,14 +5446,15 @@ body.nav-drawer-open .sidebar-backdrop,
   color: var(--text-muted);
 }
 
-/* Widget Inspetor 60-30-10 Flutuante */
+/* Widget Inspetor 60-30-10 Exclusivo na Seção de Ajustes */
 #inspectorWidget,
 .inspector-widget {
-  position: fixed;
-  bottom: 1.25rem;
-  right: 1.25rem;
-  z-index: 9999;
-  display: flex;
+  position: static;
+  bottom: auto;
+  right: auto;
+  z-index: 1;
+  display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   padding: 8px 14px;
@@ -5334,10 +5463,11 @@ body.nav-drawer-open .sidebar-backdrop,
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border-hairline);
   border-radius: 9999px;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.28);
+  box-shadow: var(--shadow-sm);
   font-family: var(--font-mono, monospace);
   font-size: 0.74rem;
   transition: all 0.3s var(--ease-deepmind);
+  max-width: 100%;
 }
 
 .inspect-60,

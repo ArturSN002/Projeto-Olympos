@@ -408,7 +408,7 @@ window.OlymposViews.servidores = (function() {
       });
     });
 
-    // Se temos a base consolidada completa (40k+ registros) ou se os KPIs ainda não foram definidos, atualiza os contadores do topo
+    // Atualiza os contadores exclusivamente a partir dos dados verdadeiros carregados
     if (totalVinculos >= 40000 || kpiTotalEl.textContent === '--') {
       kpiTotalEl.textContent = totalVinculos.toLocaleString('pt-BR');
       if (kpiMunEl) kpiMunEl.textContent = municipaisCount.toLocaleString('pt-BR');
@@ -1080,20 +1080,11 @@ window.OlymposViews.servidores = (function() {
       });
     }
 
-    // Inicia KPIs com traços e exibe estado de carregamento
+    // Inicia KPIs com traços (--) e exibe estado de carregamento sem valores estáticos intermediários
     zerarKpis();
     exibirCarregando();
 
-    // 1. Carrega imediatamente os KPIs oficiais consolidados dos 16 entes
-    if (window.OlymposServidores && typeof window.OlymposServidores.obterResumoKpisAsync === 'function') {
-      window.OlymposServidores.obterResumoKpisAsync().then(function(kpis) {
-        if (kpis) {
-          aplicarKpisOficiais(kpis);
-        }
-      }).catch(function() {});
-    }
-
-    // 2. Carrega a base consolidada completa dos 16 entes (47k+ servidores)
+    // Carrega a base consolidada completa dos entes (47k+ servidores) e popula os valores reais
     if (window.OlymposServidores && typeof window.OlymposServidores.carregarBaseConsolidadaAsync === 'function') {
       window.OlymposServidores.carregarBaseConsolidadaAsync().then(function() {
         atualizarConsultaCompleta();

@@ -1811,7 +1811,7 @@ window.OlymposViews.calendario = (function() {
       } else if (ehExame) {
         html += '    <span class="cal-day-tag exame" title="Exames Finais">Exame</span>';
       } else if (ehAgenda) {
-        html += '    <span class="cal-day-tag agenda" title="Possui compromisso da Agenda Intersetorial">🗓️ Agenda</span>';
+        html += '    <span class="cal-day-tag agenda" title="Possui compromisso da Agenda Intersetorial">Agenda</span>';
       } else if (ehLetivo) {
         html += '    <span class="cal-day-tag letivo" title="Dia Letivo Regular">Letivo</span>';
       }
@@ -1829,11 +1829,13 @@ window.OlymposViews.calendario = (function() {
       for (var evIdx = 0; evIdx < Math.min(2, eventosDoDia.length); evIdx++) {
         var ev = eventosDoDia[evIdx];
         var isCustomEvt = ev.custom || (typeof ev.id === 'string' && ev.id.indexOf('age_') === 0);
-        var icone = ev.icone || (isCustomEvt ? '🗓️' : '📌');
-        var tituloCurto = ev.titulo.length > 28 ? ev.titulo.substring(0, 26) + '...' : ev.titulo;
         var chipCategoria = ev.categoria || 'agenda_intersetorial';
+        var iconeSvg = (window.OlymposIcons && typeof window.OlymposIcons.fromEmojiOrKey === 'function')
+          ? window.OlymposIcons.fromEmojiOrKey(ev.icone, chipCategoria)
+          : (ev.icone || (isCustomEvt ? '•' : '•'));
+        var tituloCurto = ev.titulo.length > 28 ? ev.titulo.substring(0, 26) + '...' : ev.titulo;
         html += '    <div class="cal-event-chip ' + chipCategoria + '" title="' + escapeAttr(ev.titulo + (ev.setor ? ' (' + ev.setor + ')' : '')) + '">';
-        html += '      <span class="cal-chip-icon">' + icone + '</span>';
+        html += '      <span class="cal-chip-icon">' + iconeSvg + '</span>';
         html += '      <span class="cal-chip-text">' + escapeHtml(tituloCurto) + '</span>';
         html += '    </div>';
       }
@@ -1918,11 +1920,16 @@ window.OlymposViews.calendario = (function() {
     var html = '<div class="cal-timeline-list">';
     eventosMes.forEach(function(ev) {
       var isCustomEvt = ev.custom || (typeof ev.id === 'string' && ev.id.indexOf('age_') === 0);
-      var icone = ev.icone || (isCustomEvt ? '🗓️' : '📅');
+      var iconeSvg = (window.OlymposIcons && typeof window.OlymposIcons.fromEmojiOrKey === 'function')
+        ? window.OlymposIcons.fromEmojiOrKey(ev.icone, ev.categoria || 'agenda_intersetorial')
+        : (ev.icone || '');
+      var editSvg = (window.OlymposIcons && typeof window.OlymposIcons.fromEmojiOrKey === 'function')
+        ? window.OlymposIcons.fromEmojiOrKey('edit')
+        : '';
       var periodoFormatado = formatarPeriodoEvento(ev.dataInicio, ev.dataFim);
 
       html += '<div class="cal-timeline-item ' + ev.categoria + '">';
-      html += '  <div class="cal-timeline-marker">' + icone + '</div>';
+      html += '  <div class="cal-timeline-marker">' + iconeSvg + '</div>';
       html += '  <div class="cal-timeline-content">';
       html += '    <div class="cal-timeline-header" style="display:flex; justify-content:space-between; align-items:center;">';
       html += '      <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">';
@@ -1933,7 +1940,7 @@ window.OlymposViews.calendario = (function() {
       }
       html += '      </div>';
       if (isCustomEvt) {
-        html += '      <button type="button" class="btn btn-ghost btn-sm" style="font-size:11px; padding:2px 8px; color:var(--brand-gold);" onclick="window.OlymposViews.calendario.abrirModalFormAgenda(\'' + escapeAttr(ev.id) + '\')">✏️ Editar</button>';
+        html += '      <button type="button" class="btn btn-ghost btn-sm" style="font-size:11px; padding:2px 8px; color:var(--brand-gold); display:inline-flex; align-items:center; gap:4px;" onclick="window.OlymposViews.calendario.abrirModalFormAgenda(\'' + escapeAttr(ev.id) + '\')">' + editSvg + ' Editar</button>';
       }
       html += '    </div>';
       html += '    <h5 class="cal-timeline-title">' + escapeHtml(ev.titulo) + '</h5>';
@@ -1978,7 +1985,7 @@ window.OlymposViews.calendario = (function() {
       html += '  </div>';
 
       html += '  <div class="cal-bim-periodo">';
-      html += '    <span>📅 <strong>Período:</strong> ' + formatarDataExtensa(bim.dataInicio) + ' até ' + formatarDataExtensa(bim.dataFim) + '</span>';
+      html += '    <span>' + (window.OlymposIcons ? window.OlymposIcons.fromEmojiOrKey('calendar') : '') + ' <strong>Período:</strong> ' + formatarDataExtensa(bim.dataInicio) + ' até ' + formatarDataExtensa(bim.dataFim) + '</span>';
       html += '  </div>';
 
       html += '  <div class="cal-bim-progress-section">';
@@ -1994,7 +2001,7 @@ window.OlymposViews.calendario = (function() {
       // Sábados Letivos Temáticos do Bimestre
       if (bim.sabadosLetivos && bim.sabadosLetivos.length > 0) {
         html += '  <div class="cal-bim-sabados">';
-        html += '    <div class="cal-bim-section-subtitle">⭐ Sábados Letivos Temáticos</div>';
+        html += '    <div class="cal-bim-section-subtitle">' + (window.OlymposIcons ? window.OlymposIcons.fromEmojiOrKey('star') : '') + ' Sábados Letivos Temáticos</div>';
         html += '    <ul class="cal-bim-list">';
         bim.sabadosLetivos.forEach(function(sab) {
           html += '      <li><strong>' + formatarDataCurta(sab.data) + ':</strong> ' + escapeHtml(sab.tema) + '</li>';
@@ -2006,7 +2013,7 @@ window.OlymposViews.calendario = (function() {
       // Marcos Principais do Bimestre
       if (bim.marcos && bim.marcos.length > 0) {
         html += '  <div class="cal-bim-marcos">';
-        html += '    <div class="cal-bim-section-subtitle">📌 Principais Marcos &amp; Prazos</div>';
+        html += '    <div class="cal-bim-section-subtitle">' + (window.OlymposIcons ? window.OlymposIcons.fromEmojiOrKey('mapPin') : '') + ' Principais Marcos &amp; Prazos</div>';
         html += '    <ul class="cal-bim-list">';
         bim.marcos.forEach(function(marco) {
           html += '      <li>' + escapeHtml(marco) + '</li>';
@@ -2017,7 +2024,7 @@ window.OlymposViews.calendario = (function() {
 
       html += '  <div class="cal-bim-footer">';
       html += '    <button type="button" class="btn btn-secondary btn-sm btn-ver-bim-mes" data-mes-inicio="' + obterMesDeData(bim.dataInicio) + '">';
-      html += '      <span>🔍 Explorar no Calendário Mensal</span>';
+      html += '      <span>' + (window.OlymposIcons ? window.OlymposIcons.fromEmojiOrKey('searchLens') : '') + ' Explorar no Calendário Mensal</span>';
       html += '    </button>';
       html += '  </div>';
       html += '</div>';
@@ -2067,15 +2074,16 @@ window.OlymposViews.calendario = (function() {
       tituloEl.textContent = dia + ' de ' + MESES_NOMES[mes] + ' de ' + ano + ' (' + DIAS_SEMANA_NOMES[diaSemana] + ')';
     }
     if (badgeEl) {
-      badgeEl.textContent = ehLetivo ? '📚 Dia Letivo Homologado' : (ehRecesso ? '🏖️ Recesso Escolar' : '📅 Agenda SMEB');
+      badgeEl.textContent = ehLetivo ? 'Dia Letivo Homologado' : (ehRecesso ? 'Recesso Escolar' : 'Agenda SMEB');
     }
 
     var html = '<div class="cal-modal-content-wrap">';
 
     // Status Legal do Dia
+    var statusIconSvg = window.OlymposIcons ? window.OlymposIcons.fromEmojiOrKey(ehLetivo ? 'checkCircle' : (ehRecesso ? 'sunBeach' : 'eyeOfApollo')) : '';
     html += '<div class="cal-modal-status-box ' + (ehLetivo ? 'letivo' : (ehRecesso ? 'recesso' : 'neutro')) + '">';
     html += '  <div class="cal-modal-status-header">';
-    html += '    <span class="cal-modal-status-icon">' + (ehLetivo ? '✅' : (ehRecesso ? '🏖️' : 'ℹ️')) + '</span>';
+    html += '    <span class="cal-modal-status-icon">' + statusIconSvg + '</span>';
     html += '    <div>';
     html += '      <h4 class="cal-modal-status-title">' + (ehLetivo ? 'Dia Letivo Homologado (Computa p/ os ' + dados.totalDiasLetivos + ' dias)' : 'Dia Não Letivo') + '</h4>';
     html += '      <p class="cal-modal-status-sub">' + (ehSabadoLetivo ? 'Sábado Letivo Temático Homologado' : (ehRecesso ? 'Recesso Escolar Discente' : (diaSemana === 0 || diaSemana === 6 ? 'Fim de Semana Regular' : 'Atividades administrativas / Recesso'))) + '</p>';
@@ -2092,14 +2100,16 @@ window.OlymposViews.calendario = (function() {
     } else {
       eventosDoDia.forEach(function(ev) {
         var isCustom = ev.custom || (typeof ev.id === 'string' && ev.id.indexOf('age_') === 0);
+        var evIconSvg = window.OlymposIcons ? window.OlymposIcons.fromEmojiOrKey(ev.icone, ev.categoria || 'agenda_intersetorial') : '';
+        var editSvg = window.OlymposIcons ? window.OlymposIcons.fromEmojiOrKey('edit') : '';
         html += '<div class="cal-modal-event-card ' + ev.categoria + '">';
         html += '  <div class="cal-modal-event-head">';
-        html += '    <span class="cal-modal-event-icon">' + (ev.icone || (isCustom ? '🗓️' : '📌')) + '</span>';
+        html += '    <span class="cal-modal-event-icon">' + evIconSvg + '</span>';
         html += '    <div style="flex:1;">';
         html += '      <div style="display:flex; justify-content:space-between; align-items:center;">';
         html += '        <span class="cal-pill-badge ' + ev.categoria + '">' + formatarCategoriaLabel(ev.categoria) + '</span>';
         if (isCustom) {
-          html += '        <button type="button" class="btn btn-ghost btn-sm" style="font-size:11px; padding:2px 8px; color:var(--brand-gold);" onclick="window.OlymposViews.calendario.abrirModalFormAgenda(\'' + escapeAttr(ev.id) + '\')">✏️ Editar</button>';
+          html += '        <button type="button" class="btn btn-ghost btn-sm" style="font-size:11px; padding:2px 8px; color:var(--brand-gold); display:inline-flex; align-items:center; gap:4px;" onclick="window.OlymposViews.calendario.abrirModalFormAgenda(\'' + escapeAttr(ev.id) + '\')">' + editSvg + ' Editar</button>';
         }
         html += '      </div>';
         html += '      <h5 class="cal-modal-event-title">' + escapeHtml(ev.titulo) + '</h5>';
@@ -2136,9 +2146,9 @@ window.OlymposViews.calendario = (function() {
     html += '<div class="cal-modal-logistics-box">';
     html += '  <h5 class="cal-modal-subtitle">Impacto Operacional &amp; Logístico</h5>';
     html += '  <div class="cal-modal-logistics-grid">';
-    html += '    <div class="cal-log-item"><span class="cal-log-icon">🚌</span><div><strong>Transporte Escolar:</strong> ' + (ehLetivo ? 'Operação Regular em todas as 48 rotas' : 'Suspenso / Rotas especiais se houver evento') + '</div></div>';
-    html += '    <div class="cal-log-item"><span class="cal-log-icon">🍲</span><div><strong>Alimentação Escolar:</strong> ' + (ehLetivo ? 'Cardápio padrão nutricional servido nas escolas' : 'Não servido (recesso/feriado)') + '</div></div>';
-    html += '    <div class="cal-log-item"><span class="cal-log-icon">🏛️</span><div><strong>Secretaria Municipal:</strong> Expediente normal na SMEB (Gabinete e Diretorias)</div></div>';
+    html += '    <div class="cal-log-item"><span class="cal-log-icon">' + (window.OlymposIcons ? window.OlymposIcons.fromEmojiOrKey('compass') : '') + '</span><div><strong>Transporte Escolar:</strong> ' + (ehLetivo ? 'Operação Regular em todas as 48 rotas' : 'Suspenso / Rotas especiais se houver evento') + '</div></div>';
+    html += '    <div class="cal-log-item"><span class="cal-log-icon">' + (window.OlymposIcons ? window.OlymposIcons.fromEmojiOrKey('fireOfPrometheus') : '') + '</span><div><strong>Alimentação Escolar:</strong> ' + (ehLetivo ? 'Cardápio padrão nutricional servido nas escolas' : 'Não servido (recesso/feriado)') + '</div></div>';
+    html += '    <div class="cal-log-item"><span class="cal-log-icon">' + (window.OlymposIcons ? window.OlymposIcons.fromEmojiOrKey('olymposLogo') : '') + '</span><div><strong>Secretaria Municipal:</strong> Expediente normal na SMEB (Gabinete e Diretorias)</div></div>';
     html += '  </div>';
     html += '</div>';
 

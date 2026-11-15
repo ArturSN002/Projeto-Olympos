@@ -2,7 +2,7 @@
 <html lang="pt-BR" data-theme="light">
   <head>
     <meta charset="UTF-8" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://unpkg.com https://*.googleusercontent.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://script.google.com https://script.googleusercontent.com https://api.pwnedpasswords.com https://unpkg.com https://cdn.jsdelivr.net; worker-src 'self'; manifest-src 'self'; base-uri 'self'; object-src 'none';" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com https://tiles.openfreemap.org https://*.basemaps.cartocdn.com https://basemaps.cartocdn.com data:; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://*.basemaps.cartocdn.com https://basemaps.cartocdn.com https://tiles.openfreemap.org https://*.openfreemap.org https://unpkg.com https://*.googleusercontent.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://script.google.com https://script.googleusercontent.com https://api.pwnedpasswords.com https://unpkg.com https://cdn.jsdelivr.net https://*.basemaps.cartocdn.com https://basemaps.cartocdn.com https://tiles.openfreemap.org https://*.openfreemap.org; worker-src 'self' blob:; manifest-src 'self'; base-uri 'self'; object-src 'none';" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Olympos — Inteligência Documental SMEB Ceará-Mirim</title>
     <!-- Favicon Oficial Olympos (SVG em Data URI para zero 404s + Fallback Físico) -->
@@ -30,11 +30,11 @@
           }
           if ('caches' in window) {
             caches.keys().then(function(keys) {
-              var stale = keys.filter(function(k) { return k !== 'olympos-shell-v2.0.3'; });
+              var stale = keys.filter(function(k) { return k !== 'olympos-shell-v3.1'; });
               if (stale.length > 0) {
                 Promise.all(stale.map(function(k) { return caches.delete(k); })).then(function() {
-                  if (!sessionStorage.getItem('olympos_sw_purged_v203')) {
-                    sessionStorage.setItem('olympos_sw_purged_v203', '1');
+                  if (!sessionStorage.getItem('olympos_sw_purged_v31')) {
+                    sessionStorage.setItem('olympos_sw_purged_v31', '1');
                     if ('serviceWorker' in navigator) {
                       navigator.serviceWorker.getRegistrations().then(function(regs) {
                         regs.forEach(function(r) { r.update(); });
@@ -52,9 +52,12 @@
       })();
     </script>
     <link rel="stylesheet" href="styles.css" />
-    <!-- Leaflet.js 1.9.4 & OpenStreetMap (Painel Georreferenciado de Permutas Cadmo & Hera) -->
+    <!-- MapLibre GL JS + Carto / OpenFreeMap & Leaflet.js 1.9.4 (Georreferenciamento Vetorial & Raster) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" crossorigin=""></script>
+    <script src="https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js" crossorigin=""></script>
   </head>
   <body>
     <!-- =========================================================================
@@ -102,7 +105,7 @@
           <div class="brand-lockup" id="brandHomeLink">
             <span class="brand-mark" id="brandMarkSvg" aria-hidden="true"></span>
             <span class="brand-wordmark">Olympos</span>
-            <span class="brand-edition-pill">SMEB 2026 • V2.03</span>
+            <span class="brand-edition-pill">SMEB 2026</span>
           </div>
         </div>
 
@@ -117,10 +120,11 @@
             <span>Gateway Online</span>
           </div>
 
-          <button id="themeToggleBtn" class="icon-capsule-btn" title="Alternar Modo Claro / Modo Escuro" aria-label="Alternar Tema"></button>
+          <button id="themeToggleBtn" class="icon-capsule-btn hidden" style="display: none !important;" title="Alternar Modo Claro / Modo Escuro" aria-label="Alternar Tema"></button>
 
           <button id="topGeminiBtn" class="btn btn-sm btn-gemini-companion" title="Abrir Assistente Gemini SMEB (Janela Lateral Desktop)" aria-label="Abrir Assistente Gemini">
-            <span class="gemini-sparkle" aria-hidden="true">✨</span>
+            <span class="gemini-sparkle svg-icon-inline" data-icon="sparkles" aria-hidden="true"></span>
+            <span class="sr-only">✨</span>
             <span>Gemini</span>
           </button>
 
@@ -157,7 +161,7 @@
             </div>
           </div>
           <span class="nav-divider-dot" aria-hidden="true"></span>
-          <a href="#chamados" class="nav-link" data-page="chamados">Chamados</a>
+          <a href="#chamados" class="nav-link" data-page="chamados">Pendências</a>
           <a href="#diario-oficial" class="nav-link" data-page="diario-oficial">Diário Oficial</a>
           <a href="#papiro-cadmo" class="nav-link" data-page="papiro-cadmo">Permutas</a>
           <a href="#servidores" class="nav-link" data-page="servidores">Servidores</a>
@@ -180,7 +184,6 @@
       <div class="drawer-header">
         <div style="display: flex; align-items: center; gap: 8px;">
           <span class="drawer-title">Navegação Olympos</span>
-          <span class="version-badge-mini">V2.03</span>
         </div>
         <button class="drawer-close-btn" onclick="document.body.classList.remove('nav-drawer-open')" aria-label="Fechar menu">✕</button>
       </div>
@@ -199,7 +202,7 @@
             <a href="#certificados" class="nav-link dropdown-item" role="menuitem" data-page="certificados">Certificados</a>
           </div>
         </div>
-        <a href="#chamados" class="nav-link" data-page="chamados">Chamados</a>
+        <a href="#chamados" class="nav-link" data-page="chamados">Pendências</a>
         <a href="#diario-oficial" class="nav-link" data-page="diario-oficial">Diário Oficial</a>
         <a href="#papiro-cadmo" class="nav-link" data-page="papiro-cadmo">Permutas</a>
         <a href="#servidores" class="nav-link" data-page="servidores">Servidores</a>
@@ -214,37 +217,37 @@
       <div class="mobile-drawer-drive-section">
         <span class="drawer-section-title">Atalhos Drive</span>
         <a href="https://drive.google.com/drive/folders/1W9mGmQCrX8BRPsGcK_vqUwfXw1dRmSya" target="_blank" rel="noopener" class="drawer-drive-item">
-          <span class="drive-icon">📁</span>
+          <span class="drive-icon svg-icon-inline" data-icon="folderDrive"></span>
           <span>Pasta Central Olympo</span>
           <span class="drive-arrow">↗</span>
         </a>
         <a href="https://drive.google.com/drive/folders/1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu" target="_blank" rel="noopener" class="drawer-drive-item">
-          <span class="drive-icon">📝</span>
+          <span class="drive-icon svg-icon-inline" data-icon="edit"></span>
           <span>Memórias Operacionais</span>
           <span class="drive-arrow">↗</span>
         </a>
         <a href="https://drive.google.com/drive/folders/1qGq5uqxOtN_V63itUheYatLIcj5R86O3" target="_blank" rel="noopener" class="drawer-drive-item">
-          <span class="drive-icon">📜</span>
+          <span class="drive-icon svg-icon-inline" data-icon="papyrusOfCadmus"></span>
           <span>Portarias 2026</span>
           <span class="drive-arrow">↗</span>
         </a>
         <a href="https://drive.google.com/drive/folders/1H4bJXClx66Mr5PmRmSQBQLHDpAaKwdab" target="_blank" rel="noopener" class="drawer-drive-item">
-          <span class="drive-icon">✉️</span>
+          <span class="drive-icon svg-icon-inline" data-icon="mail"></span>
           <span>Ofícios 2026</span>
           <span class="drive-arrow">↗</span>
         </a>
         <a href="https://docs.google.com/spreadsheets/d/1tU6rvgB2jNGaGqHK1oecNMQX7-5QcB8Q-1fNgzWcZqs/edit" target="_blank" rel="noopener" class="drawer-drive-item">
-          <span class="drive-icon">📋</span>
+          <span class="drive-icon svg-icon-inline" data-icon="clipboard"></span>
           <span>Planilha Diário Oficial</span>
           <span class="drive-arrow">↗</span>
         </a>
         <a href="https://drive.google.com/drive/folders/1aj514v29gytXH9j5LY_V76ap9XIblwHS" target="_blank" rel="noopener" class="drawer-drive-item">
-          <span class="drive-icon">📊</span>
+          <span class="drive-icon svg-icon-inline" data-icon="chart"></span>
           <span>Backup Diário Oficial</span>
           <span class="drive-arrow">↗</span>
         </a>
         <a href="https://drive.google.com/drive/folders/1dcc_5GcNG0ciVE-i1J6iwtojATk-1utD" target="_blank" rel="noopener" class="drawer-drive-item">
-          <span class="drive-icon">🔄</span>
+          <span class="drive-icon svg-icon-inline" data-icon="refreshSync"></span>
           <span>Acervo Papiro de Cadmo</span>
           <span class="drive-arrow">↗</span>
         </a>
@@ -253,10 +256,10 @@
       <!-- AÇÕES DE MANUTENÇÃO MOBILE (RESET PWA) -->
       <div class="mobile-drawer-reset-section show-mobile-only">
         <button type="button" id="mobileResetSiteBtn" class="drawer-reset-btn" onclick="window.OlymposApp &amp;&amp; window.OlymposApp.resetMobileApp()" title="Limpar cache do navegador e recarregar versão mais recente">
-          <span class="reset-icon">🔄</span>
+          <span class="reset-icon svg-icon-inline" data-icon="refreshSync"></span>
           <span class="reset-text">
             <strong>Resetar Aplicativo</strong>
-            <small>Limpar Cache PWA &amp; Atualizar V2.03</small>
+            <small>Limpar Cache PWA &amp; Recarregar</small>
           </span>
         </button>
       </div>
@@ -387,6 +390,16 @@
             </div>
 
             <div class="quick-modules-grid">
+              <div class="quick-module-card" data-nav-target="chamados">
+                <div class="qm-icon-badge" data-persona-icon="temis"></div>
+                <div>
+                  <div class="qm-category">Gestão de Demandas &amp; SLA</div>
+                  <div class="qm-title">Central de Pendências</div>
+                  <div class="qm-desc">Fila ordenada por antiguidade e urgência (escalonamento 24h) com projeção de atendimento útil (08h–15h).</div>
+                </div>
+                <span class="qm-action">Abrir página dedicada →</span>
+              </div>
+
               <div class="quick-module-card" data-nav-target="oficios">
                 <div class="qm-icon-badge" data-persona-icon="homero"></div>
                 <div>
@@ -1523,7 +1536,8 @@
               </div>
               <div class="button-group">
                 <button type="button" id="btnExportarIcalTop" class="btn btn-primary btn-sm" title="Exportar Calendário Oficial (.ics) para Google Calendar">
-                  <span>📅 Exportar Calendário (.ics)</span>
+                  <span class="svg-icon-inline" data-icon="calendar"></span>
+                  <span>Exportar Calendário (.ics)</span>
                 </button>
               </div>
             </div>
@@ -1532,7 +1546,7 @@
             <div class="calendario-kpis-grid" id="calendarioKpisGrid">
               <div class="cal-kpi-card">
                 <div class="cal-kpi-header">
-                  <span class="cal-kpi-icon">📚</span>
+                  <span class="cal-kpi-icon svg-icon-inline" data-icon="book"></span>
                   <span class="cal-kpi-badge letivo">LDB 200+</span>
                 </div>
                 <div class="cal-kpi-value" id="calKpiDiasLetivos">203</div>
@@ -1542,7 +1556,7 @@
 
               <div class="cal-kpi-card">
                 <div class="cal-kpi-header">
-                  <span class="cal-kpi-icon">📊</span>
+                  <span class="cal-kpi-icon svg-icon-inline" data-icon="chart"></span>
                   <span class="cal-kpi-badge bimestre">4 Bimestres</span>
                 </div>
                 <div class="cal-kpi-value" id="calKpiBimestres">4</div>
@@ -1552,7 +1566,7 @@
 
               <div class="cal-kpi-card">
                 <div class="cal-kpi-header">
-                  <span class="cal-kpi-icon">🏖️</span>
+                  <span class="cal-kpi-icon svg-icon-inline" data-icon="sunBeach"></span>
                   <span class="cal-kpi-badge recesso">15 Dias</span>
                 </div>
                 <div class="cal-kpi-value" id="calKpiRecesso">15d</div>
@@ -1562,7 +1576,7 @@
 
               <div class="cal-kpi-card">
                 <div class="cal-kpi-header">
-                  <span class="cal-kpi-icon">⭐</span>
+                  <span class="cal-kpi-icon svg-icon-inline" data-icon="star"></span>
                   <span class="cal-kpi-badge sabado">8 Sábados</span>
                 </div>
                 <div class="cal-kpi-value" id="calKpiSabados">8</div>
@@ -1572,7 +1586,7 @@
 
               <div class="cal-kpi-card">
                 <div class="cal-kpi-header">
-                  <span class="cal-kpi-icon">📝</span>
+                  <span class="cal-kpi-icon svg-icon-inline" data-icon="clipboard"></span>
                   <span class="cal-kpi-badge matricula">4 Fases</span>
                 </div>
                 <div class="cal-kpi-value" id="calKpiMatriculas">4</div>
@@ -1586,20 +1600,24 @@
               <!-- Seletor de Ano: 2026 Oficial vs 2027 Planejamento -->
               <div class="cal-year-toggle-group" role="group" aria-label="Seletor de Ano Letivo">
                 <button type="button" class="btn-cal-year active" id="btnAno2026" data-year="2026">
-                  <span>🏛️ 2026 Oficial</span>
+                  <span class="svg-icon-inline" data-icon="olymposLogo"></span>
+                  <span>2026 Oficial</span>
                 </button>
                 <button type="button" class="btn-cal-year" id="btnAno2027" data-year="2027">
-                  <span>🔮 2027 Planejamento</span>
+                  <span class="svg-icon-inline" data-icon="compass"></span>
+                  <span>2027 Planejamento</span>
                 </button>
               </div>
 
               <!-- Abas de Visualização: Mês vs Bimestre -->
               <div class="cal-view-tabs-group" role="tablist" aria-label="Visualizações do Calendário">
                 <button type="button" class="btn-cal-tab active" id="btnCalTabMes" data-tab="mes" role="tab" aria-selected="true">
-                  <span>📅 Visualização Mensal</span>
+                  <span class="svg-icon-inline" data-icon="calendar"></span>
+                  <span>Visualização Mensal</span>
                 </button>
                 <button type="button" class="btn-cal-tab" id="btnCalTabBimestre" data-tab="bimestre" role="tab" aria-selected="false">
-                  <span>📊 Visão por Bimestre</span>
+                  <span class="svg-icon-inline" data-icon="chart"></span>
+                  <span>Visão por Bimestre</span>
                 </button>
               </div>
 
@@ -1608,7 +1626,8 @@
                   <span>+ Novo Evento da Agenda</span>
                 </button>
                 <button type="button" class="btn btn-secondary btn-sm" id="btnExportarIcal">
-                  <span>📥 Exportar .ics (Google Calendar)</span>
+                  <span class="svg-icon-inline" data-icon="download"></span>
+                  <span>Exportar .ics (Google Calendar)</span>
                 </button>
               </div>
             </div>
@@ -2175,6 +2194,14 @@
                     <option value="light">Modo Claro — Editorial Paper (60% Branco/Gelo, 30% Obsidiana, 10% Ouro Solar)</option>
                     <option value="dark">Modo Escuro — DeepMind Midnight (60% Obsidiana, 30% Alabastro, 10% Ouro Luminoso)</option>
                   </select>
+                </div>
+
+                <!-- Widget de Inspeção Cromática 60-30-10 e Alternância de Tema (Exclusivo em Ajustes) -->
+                <div id="inspectorWidget" class="fixed bottom-4 right-4 inspector-settings-embedded" style="margin-top: 14px;">
+                  <div class="inspect-60" title="60% Base Dominante (Obsidian Void / Scientific Daylight)">60% Base</div>
+                  <div class="inspect-30" title="30% Superfícies &amp; Tipografia (Surface Hairline)">30% Surface</div>
+                  <div class="inspect-10" title="10% Acento &amp; Foco (Azul Elétrico DeepMind)">10% Accent</div>
+                  <button id="themeToggleBtnInspector" type="button" class="btn-theme-toggle" onclick="window.OlymposApp &amp;&amp; window.OlymposApp.alternarTema()" aria-label="Alternar Tema">Alternar Tema</button>
                 </div>
               </div>
             </div>
@@ -2877,13 +2904,6 @@
     <!-- =========================================================================
          INSPETOR 60-30-10 & ALTERNADOR DE TEMA EDITORIAL
          ========================================================================= -->
-    <div id="inspectorWidget" class="fixed bottom-4 right-4">
-      <div class="inspect-60" title="60% Base Dominante (Obsidian Void / Scientific Daylight)">60% Base</div>
-      <div class="inspect-30" title="30% Superfícies &amp; Tipografia (Surface Hairline)">30% Surface</div>
-      <div class="inspect-10" title="10% Acento &amp; Foco (Azul Elétrico DeepMind)">10% Accent</div>
-      <button id="themeToggleBtnInspector" type="button" class="btn-theme-toggle" onclick="window.OlymposApp &amp;&amp; window.OlymposApp.alternarTema()" aria-label="Alternar Tema">Alternar Tema</button>
-    </div>
-
     <!-- Supabase JS v2 CDN — Fixado em v2.119.0 com Proteção Subresource Integrity (SRI) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.js" integrity="sha384-uteMfOloLDGt042uDz+xHGF3ym63/WQ6rFq7murQRG8Ih7QrXGEGNtWd8688sb4O" crossorigin="anonymous"></script>
 
