@@ -16,6 +16,7 @@ const SHELL_ASSETS = [
   './js/app.js',
   './js/api.js',
   './js/icons.js',
+  './js/carto_config.js',
   './js/perf_engine.js',
   './js/router.js',
   './js/supabase_client.js',

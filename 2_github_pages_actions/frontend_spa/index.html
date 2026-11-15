@@ -2245,6 +2245,28 @@
               </div>
               <div id="configBoletimEmailFeedback" class="stat-label" style="margin-top: 8px; font-size: 12px;"></div>
             </div>
+
+            <!-- PAINEL DE INTEGRAÇÃO CARTOGRÁFICA CARTO (CARTO_API_KEY) -->
+            <div class="surface-card" style="margin-top: 24px; border: 1px solid var(--border-hairline);">
+              <div class="card-header-row" style="margin-bottom: 12px;">
+                <div>
+                  <span class="section-eyebrow">GEORREFERENCIAMENTO VETORIAL • MAPLIBRE GL JS + CARTO</span>
+                  <h3 class="section-title" style="font-size: 1.15rem;">Chave de API CARTO (<code>CARTO_API_KEY</code>)</h3>
+                  <p class="section-desc" style="margin-bottom: 0;">Injetada automaticamente via GitHub Actions Secrets (<code>secrets.CARTO_API_KEY</code>) no deploy do GitHub Pages ou configurável localmente abaixo.</p>
+                </div>
+                <span id="configCartoKeyStatusBadge" class="pill-badge pill-blue">CARTO Ativo</span>
+              </div>
+              <div class="controls-grid" style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 12px; align-items: end;">
+                <div class="field-group">
+                  <label for="configCartoApiKeyInput">Token / Chave Pública CARTO (<code>CARTO_API_KEY</code>)</label>
+                  <input type="text" id="configCartoApiKeyInput" class="input-clean" style="font-family: var(--font-mono); font-size: 12px;" placeholder="Injetada via GitHub Secret CARTO_API_KEY (ou insira manualmente)" />
+                </div>
+                <div class="button-group">
+                  <button type="button" id="configSalvarCartoKeyBtn" class="btn btn-primary btn-sm">Salvar CARTO_API_KEY</button>
+                  <button type="button" id="configLimparCartoKeyBtn" class="btn btn-ghost btn-sm">Usar Padrão do GitHub</button>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -2921,6 +2943,7 @@
 
     <!-- SCRIPTS MODULARES -->
     <script src="js/icons.js"></script>
+    <script src="js/carto_config.js"></script>
     <script src="js/perf_engine.js"></script>
     <script src="js/setup_modal.js"></script>
     <script src="js/olympos_password_guard.js"></script>

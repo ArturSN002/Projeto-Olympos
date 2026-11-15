@@ -258,17 +258,23 @@ window.OlymposViews.escolas = (function() {
    */
   function obterConfigEstiloMapa() {
     var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    var carto = (typeof window !== 'undefined' && window.OlymposCarto) ? window.OlymposCarto : null;
     return {
       isDark: isDark,
       openFreeMapStyle: isDark
         ? 'https://tiles.openfreemap.org/styles/dark'
         : 'https://tiles.openfreemap.org/styles/liberty',
-      cartoGlStyle: isDark
-        ? 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
-        : 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-      cartoRasterUrl: isDark
-        ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-        : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+      cartoGlStyle: carto && typeof carto.getStyleUrl === 'function'
+        ? carto.getStyleUrl(isDark)
+        : (isDark
+            ? 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
+            : 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json'),
+      cartoRasterUrl: carto && typeof carto.getRasterTileUrl === 'function'
+        ? carto.getRasterTileUrl(isDark)
+        : (isDark
+            ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+            : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'),
+      transformRequest: carto && typeof carto.transformRequest === 'function' ? carto.transformRequest : undefined,
       attribution: '&copy; <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> • SMEB Ceará-Mirim'
     };
   }
@@ -280,7 +286,7 @@ window.OlymposViews.escolas = (function() {
     if (!leafletMap || typeof window.L === 'undefined') return;
     var cfg = obterConfigEstiloMapa();
 
-    // Camada base Carto Retina (Voyager / Dark Matter) de alta velocidade + suporte vetorial MapLibre GL JS
+    // Camada base Carto Retina (Voyager / Dark Matter) de alta velocidade + suporte vetorial MapLibre GL JS (autenticado via CARTO_API_KEY)
     if (cartoTileLayer) {
       cartoTileLayer.setUrl(cfg.cartoRasterUrl);
     } else {
@@ -299,10 +305,14 @@ window.OlymposViews.escolas = (function() {
             glMap.setStyle(cfg.cartoGlStyle);
           }
         } else {
-          maplibreLayer = window.L.maplibreGL({
+          var glOpts = {
             style: cfg.cartoGlStyle,
             attributionControl: false
-          }).addTo(leafletMap);
+          };
+          if (typeof cfg.transformRequest === 'function') {
+            glOpts.transformRequest = cfg.transformRequest;
+          }
+          maplibreLayer = window.L.maplibreGL(glOpts).addTo(leafletMap);
         }
       } catch (eGl) {
         console.warn('[EscolasView] Fallback Carto Raster ativo (WebGL indisponível):', eGl);

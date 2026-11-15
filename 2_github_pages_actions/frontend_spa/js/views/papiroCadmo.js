@@ -1211,12 +1211,17 @@ window.OlymposViews.papiroCadmo = (function() {
 
       const aplicarCamadaBaseCadmo = function() {
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        const cartoRasterUrl = isDark
-          ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-          : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-        const cartoGlStyle = isDark
-          ? 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
-          : 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
+        const carto = (typeof window !== 'undefined' && window.OlymposCarto) ? window.OlymposCarto : null;
+        const cartoRasterUrl = (carto && typeof carto.getRasterTileUrl === 'function')
+          ? carto.getRasterTileUrl(isDark)
+          : (isDark
+              ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+              : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png');
+        const cartoGlStyle = (carto && typeof carto.getStyleUrl === 'function')
+          ? carto.getStyleUrl(isDark)
+          : (isDark
+              ? 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json'
+              : 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json');
 
         if (cartoTileLayer) {
           cartoTileLayer.setUrl(cartoRasterUrl);
@@ -1236,10 +1241,14 @@ window.OlymposViews.papiroCadmo = (function() {
                 glMap.setStyle(cartoGlStyle);
               }
             } else {
-              maplibreLayer = window.L.maplibreGL({
+              const glOpts = {
                 style: cartoGlStyle,
                 attributionControl: false
-              }).addTo(leafletMap);
+              };
+              if (carto && typeof carto.transformRequest === 'function') {
+                glOpts.transformRequest = carto.transformRequest;
+              }
+              maplibreLayer = window.L.maplibreGL(glOpts).addTo(leafletMap);
             }
           } catch (eGl) {
             console.warn('[PapiroCadmo] Fallback Carto Raster ativo:', eGl);

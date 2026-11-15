@@ -31,6 +31,33 @@ window.OlymposViews.configuracoes = (function() {
     bind('configTemaSelect', 'change', function(e) {
       window.OlymposApp.definirTema(e.target.value);
     });
+    bind('configSalvarCartoKeyBtn', 'click', function() {
+      const inKey = document.getElementById('configCartoApiKeyInput');
+      if (inKey && window.OlymposCarto) {
+        window.OlymposCarto.setApiKey(inKey.value);
+        atualizarStatusCartoUi();
+        window.OlymposApp.showToast('CARTO_API_KEY atualizada para os mapas MapLibre GL + Carto!');
+      }
+    });
+    bind('configLimparCartoKeyBtn', 'click', function() {
+      if (window.OlymposCarto) {
+        window.OlymposCarto.setApiKey('');
+        carregarValoresAtuais();
+        window.OlymposApp.showToast('Restaurado para a CARTO_API_KEY injetada pelo GitHub Actions!');
+      }
+    });
+  }
+
+  function atualizarStatusCartoUi() {
+    const inKey = document.getElementById('configCartoApiKeyInput');
+    const badge = document.getElementById('configCartoKeyStatusBadge');
+    if (!window.OlymposCarto) return;
+    const key = window.OlymposCarto.getApiKey();
+    if (inKey) inKey.value = key;
+    if (badge) {
+      badge.textContent = key ? 'CARTO_API_KEY Ativa' : 'CARTO Basemaps Padrão';
+      badge.className = key ? 'pill-badge pill-green' : 'pill-badge pill-blue';
+    }
   }
 
   function carregarValoresAtuais() {
@@ -39,6 +66,8 @@ window.OlymposViews.configuracoes = (function() {
 
     const selTema = document.getElementById('configTemaSelect');
     if (selTema) selTema.value = document.documentElement.getAttribute('data-theme') || 'light';
+
+    atualizarStatusCartoUi();
 
     const session = window.OlymposApp.getSession();
     const userLabel = document.getElementById('configUserLabel');

@@ -191,6 +191,7 @@ python Olympos/tests/run_all_tests.py
 
 ## 6. Segurança, Privacidade e Conformidade com a LGPD
 
-- **Zero Credenciais no Código-Fonte:** Nenhuma chave de API privada, token de service role, senha de banco de dados ou credencial de serviço é armazenada no versionamento. Variáveis confidenciais são injetadas estritamente em tempo de execução via **GitHub Secrets** ou no ambiente de execução do **Google Apps Script ScriptProperties**.
+- **Zero Credenciais no Código-Fonte:** Nenhuma chave de API privada, token de service role, senha de banco de dados ou credencial de serviço é armazenada no versionamento. Variáveis confidenciais são injetadas estritamente em tempo de execução via **GitHub Secrets** (`SUPABASE_URL`, `SUPABASE_KEY`, `GEMINI_API_KEY`, `GAS_WEBHOOK_URL`, `CARTO_API_KEY`) ou no ambiente de execução do **Google Apps Script ScriptProperties**.
+- **Integração Geoespacial MapLibre GL JS + Carto (`CARTO_API_KEY`):** Durante o deploy para o GitHub Pages (`.github/workflows/deploy_pages.yml`), a variável secreta `CARTO_API_KEY` (`${{ secrets.CARTO_API_KEY }}`) é injetada automaticamente no módulo `js/carto_config.js` (`window.OlymposCarto`), autenticando estilos vetoriais (`dark-matter-gl-style` / `positron-gl-style`) e tiles do Carto nos mapas de Escolas e Permutas.
 - **Princípio do Menor Privilégio (PoLP):** O acesso público da SPA às publicações e chamados utiliza a chave pública anônima do Supabase, com operações restritas pelas políticas de Row Level Security (RLS).
 - **Privacidade Operacional de E-mails:** Em total observância aos requisitos do projeto, e-mails automáticos são restritos exclusivamente ao envio de SLA na criação do chamado, prevenindo spam e ruído operacional no encerramento de tarefas.

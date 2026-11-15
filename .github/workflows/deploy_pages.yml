@@ -32,11 +32,17 @@ jobs:
         with:
           enablement: true
 
-      - name: 3. Empacotar exclusivamente o Frontend Estático
+      - name: 3. Injetar CARTO_API_KEY dos GitHub Secrets no Frontend
+        env:
+          CARTO_API_KEY: ${{ secrets.CARTO_API_KEY }}
+        run: |
+          python3 -c "import os, json, re, pathlib; p = pathlib.Path('2_github_pages_actions/frontend_spa/js/carto_config.js'); k = os.environ.get('CARTO_API_KEY', '').strip(); txt = p.read_text(encoding='utf-8'); txt = re.sub(r'apiKey:\s*\'[^\']*\'', 'apiKey: ' + json.dumps(k), txt, count=1); p.write_text(txt, encoding='utf-8')"
+
+      - name: 4. Empacotar exclusivamente o Frontend Estático
         uses: actions/upload-pages-artifact@v5
         with:
           path: "2_github_pages_actions/frontend_spa"
 
-      - name: 4. Publicar no GitHub Pages
+      - name: 5. Publicar no GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
