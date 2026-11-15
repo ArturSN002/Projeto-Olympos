@@ -21,26 +21,36 @@ window.OlymposApp = (function() {
     bindGlobalElements();
     window.OlymposRouter.init();
     verificarStatusConexaoInicial();
+    if (window.OlymposPerfEngine && typeof window.OlymposPerfEngine.scheduleIdleWarmup === 'function') {
+      window.OlymposPerfEngine.scheduleIdleWarmup();
+    }
   });
 
   function hydrateVectorIcons() {
     if (!window.OlymposIcons) return;
+    const uiFn = typeof window.OlymposIcons.ui === 'function' ? window.OlymposIcons.ui : window.OlymposIcons.get;
     const setHtml = function(id, svg) {
       const el = document.getElementById(id);
-      if (el) el.innerHTML = svg;
+      if (el && svg) el.innerHTML = svg;
     };
 
-    setHtml('brandMarkSvg', window.OlymposIcons.ui('olymposMark'));
-    setHtml('topQuickSearchBtn', window.OlymposIcons.ui('search'));
-    setHtml('mobileMenuToggleBtn', window.OlymposIcons.ui('menu'));
-    setHtml('closeModalBtn', window.OlymposIcons.ui('close'));
-    setHtml('closeContadoresModalBtn', window.OlymposIcons.ui('close'));
-    setHtml('pincelDoneCheckSvg', window.OlymposIcons.ui('check'));
+    if (typeof uiFn === 'function') {
+      setHtml('brandMarkSvg', uiFn('olymposMark'));
+      setHtml('topQuickSearchBtn', uiFn('search'));
+      setHtml('mobileMenuToggleBtn', uiFn('menu'));
+      setHtml('closeModalBtn', uiFn('close'));
+      setHtml('closeContadoresModalBtn', uiFn('close'));
+      setHtml('pincelDoneCheckSvg', uiFn('check'));
+    }
 
     document.querySelectorAll('[data-persona-icon]').forEach(function(badge) {
       const key = badge.getAttribute('data-persona-icon');
       badge.innerHTML = window.OlymposIcons.get(key);
     });
+
+    if (typeof window.OlymposIcons.hydrateAll === 'function') {
+      window.OlymposIcons.hydrateAll();
+    }
   }
 
   // =========================================================================

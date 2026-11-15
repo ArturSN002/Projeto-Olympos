@@ -21,6 +21,8 @@ window.OlymposViews.servidores = (function() {
   var debounceTimer = null;
   var listaFiltradaCache = [];
   var servidorModalAtivo = null;
+  var dossiesAgrupadosCache = null;
+  var dossiesRawCountCache = -1;
 
   function escapeHtml(str) {
     if (window.OlymposApp && typeof window.OlymposApp.escapeHtml === 'function') {
@@ -65,6 +67,10 @@ window.OlymposViews.servidores = (function() {
       // Fallback para bases legadas se carregadas
       if (window.SERVIDORES_CEARA_MIRIM) rawServidores = rawServidores.concat(window.SERVIDORES_CEARA_MIRIM);
       if (window.SERVIDORES_ESTADO_RN) rawServidores = rawServidores.concat(window.SERVIDORES_ESTADO_RN);
+    }
+
+    if (dossiesAgrupadosCache && dossiesRawCountCache === rawServidores.length && rawServidores.length > 0) {
+      return dossiesAgrupadosCache;
     }
 
     // Agrupa servidores por nome canônico para formar dossiês consolidados
@@ -147,12 +153,22 @@ window.OlymposViews.servidores = (function() {
       }
     });
 
-    // Calcula auditoria CF/88 Art. 37, XVI para cada dossiê
+    // Calcula auditoria CF/88 Art. 37, XVI e índice de busca pré-normalizado para cada dossiê
     var listaDossies = ordemNomes.map(function(k) {
       var d = mapaDossies[k];
       d.auditoria = calcularAuditoriaCf88(d.vinculos, d.cargaHorariaTotal);
+      d._searchBlob = normalizarTexto(
+        d.nome + ' ' +
+        d.cargos.join(' ') + ' ' +
+        d.lotacoes.join(' ') + ' ' +
+        d.entes.join(' ')
+      );
+      d._normMats = d.matriculas.map(normalizarMatricula);
       return d;
     });
+
+    dossiesAgrupadosCache = listaDossies;
+    dossiesRawCountCache = rawServidores.length;
 
     return listaDossies;
   }
@@ -235,25 +251,35 @@ window.OlymposViews.servidores = (function() {
     var termoMat = normalizarMatricula(termoBusca);
 
     return todosDossies.filter(function(d) {
-      // 1. Termo de Busca
+      // 1. Termo de Busca (via índice pré-normalizado O(1) quando disponível)
       if (termoNorm) {
-        var matchNome = normalizarTexto(d.nome).indexOf(termoNorm) !== -1;
-        var matchMat = d.matriculas.some(function(m) {
-          var mNorm = normalizarMatricula(m);
-          return mNorm && (mNorm.indexOf(termoMat) !== -1 || termoMat.indexOf(mNorm) !== -1);
-        });
-        var matchCargo = d.cargos.some(function(c) {
-          return normalizarTexto(c).indexOf(termoNorm) !== -1;
-        });
-        var matchLotacao = d.lotacoes.some(function(l) {
-          return normalizarTexto(l).indexOf(termoNorm) !== -1;
-        });
-        var matchEnte = d.entes.some(function(e) {
-          return normalizarTexto(e).indexOf(termoNorm) !== -1;
-        });
+        if (d._searchBlob) {
+          var matchFast = d._searchBlob.indexOf(termoNorm) !== -1;
+          if (!matchFast && termoMat && d._normMats) {
+            matchFast = d._normMats.some(function(mNorm) {
+              return mNorm && (mNorm.indexOf(termoMat) !== -1 || termoMat.indexOf(mNorm) !== -1);
+            });
+          }
+          if (!matchFast) return false;
+        } else {
+          var matchNome = normalizarTexto(d.nome).indexOf(termoNorm) !== -1;
+          var matchMat = d.matriculas.some(function(m) {
+            var mNorm = normalizarMatricula(m);
+            return mNorm && (mNorm.indexOf(termoMat) !== -1 || termoMat.indexOf(mNorm) !== -1);
+          });
+          var matchCargo = d.cargos.some(function(c) {
+            return normalizarTexto(c).indexOf(termoNorm) !== -1;
+          });
+          var matchLotacao = d.lotacoes.some(function(l) {
+            return normalizarTexto(l).indexOf(termoNorm) !== -1;
+          });
+          var matchEnte = d.entes.some(function(e) {
+            return normalizarTexto(e).indexOf(termoNorm) !== -1;
+          });
 
-        if (!matchNome && !matchMat && !matchCargo && !matchLotacao && !matchEnte) {
-          return false;
+          if (!matchNome && !matchMat && !matchCargo && !matchLotacao && !matchEnte) {
+            return false;
+          }
         }
       }
 

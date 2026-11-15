@@ -16,6 +16,7 @@ const SHELL_ASSETS = [
   './js/app.js',
   './js/api.js',
   './js/icons.js',
+  './js/perf_engine.js',
   './js/router.js',
   './js/supabase_client.js',
   './js/setup_modal.js',
@@ -95,18 +96,21 @@ self.addEventListener('fetch', function(event) {
     return;
   }
 
-  // 4. Recursos do Shell EstÃ¡tico (CSS, JS, Imagens, Fontes, Manifest): Network-First com fallback para Cache
+  // 4. Recursos do Shell Estático (CSS, JS, Imagens, Fontes, Manifest): Stale-While-Revalidate para resposta instantânea (<1ms) + atualização em background
   event.respondWith(
-    fetch(req).then(function(networkResponse) {
-      if (networkResponse && networkResponse.status === 200) {
-        const clone = networkResponse.clone();
-        caches.open(CACHE_NAME).then(function(cache) {
-          cache.put(req, clone);
-        });
-      }
-      return networkResponse;
-    }).catch(function() {
-      return caches.match(req);
+    caches.match(req).then(function(cachedResponse) {
+      const fetchPromise = fetch(req).then(function(networkResponse) {
+        if (networkResponse && networkResponse.status === 200) {
+          const clone = networkResponse.clone();
+          caches.open(CACHE_NAME).then(function(cache) {
+            cache.put(req, clone);
+          });
+        }
+        return networkResponse;
+      }).catch(function() {
+        return cachedResponse;
+      });
+      return cachedResponse || fetchPromise;
     })
   );
 });

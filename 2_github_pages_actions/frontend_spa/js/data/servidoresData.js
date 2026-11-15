@@ -1281,69 +1281,94 @@
         return promessaCarregamentoBase;
       }
 
-      promessaCarregamentoBase = fetch('data/servidores_consolidados.json')
-        .then(function(resp) {
-          if (!resp.ok) throw new Error('HTTP ' + resp.status);
-          return resp.json();
-        })
-        .then(function(lista) {
-          if (!Array.isArray(lista) || lista.length === 0) {
-            throw new Error('Formato inválido de servidores_consolidados.json');
-          }
-          var formatados = lista.map(function(item) {
-            var nome = String(item.n || item.nome || '').trim();
-            var mat = String(item.m || item.matricula || '').trim();
-            var ente = String(item.e || item.ente || 'Ente Federativo').trim();
-            var cargo = String(item.g || item.cargo || 'Cargo não informado').trim();
-            var ch = parseCargaHoraria(item.h || item.cargaHoraria);
-            var lot = String(item.l || item.lotacao || 'Lotação não informada').trim();
-            var cpf = String(item.c || item.cpf || '###.***.***-##').trim();
-            var situacao = String(item.s || item.situacao || 'ATIVO').trim();
+      var perf = (typeof root !== 'undefined' && root.OlymposPerfEngine) ? root.OlymposPerfEngine : null;
+      var checkIdb = perf && typeof perf.getCache === 'function'
+        ? perf.getCache('servidores_consolidados_v3_1')
+        : Promise.resolve(null);
 
-            var quadro = 'Administrativo';
-            var normG = normalizarTexto(cargo);
-            if (normG.indexOf('prof') !== -1 || normG.indexOf('docen') !== -1 || normG.indexOf('pedag') !== -1 || normG.indexOf('educad') !== -1 || normG.indexOf('magist') !== -1) {
-              quadro = 'Docente';
-            } else if (normG.indexOf('diretor') !== -1 || normG.indexOf('coordenad') !== -1 || normG.indexOf('gestao') !== -1) {
-              quadro = 'Gestão Escolar';
-            } else if (normG.indexOf('psicol') !== -1 || normG.indexOf('assistente social') !== -1 || normG.indexOf('especial') !== -1 || normG.indexOf('nutric') !== -1 || normG.indexOf('tecnic') !== -1) {
-              quadro = 'Técnico';
-            } else if (normG.indexOf('merend') !== -1 || normG.indexOf('motor') !== -1 || normG.indexOf('asg') !== -1 || normG.indexOf('vigia') !== -1 || normG.indexOf('guarda') !== -1 || normG.indexOf('servicos gerais') !== -1) {
-              quadro = 'Apoio';
+      promessaCarregamentoBase = checkIdb
+        .then(function(cachedList) {
+          if (Array.isArray(cachedList) && cachedList.length > 0) {
+            BASE_CONSOLIDADA_DINAMICA = cachedList;
+            OLYMPOS_SERVIDORES_UNIFICADOS = cachedList;
+            if (perf && typeof perf.buildSearchIndex === 'function') {
+              perf.buildSearchIndex(cachedList);
             }
+            return cachedList;
+          }
 
-            var enteId = normalizarTexto(ente).replace(/[^a-z0-9]/g, '_');
+          var fetchPromise = (perf && typeof perf.fetchCompressedOrJson === 'function')
+            ? perf.fetchCompressedOrJson('data/servidores_consolidados.json.gz', 'data/servidores_consolidados.json')
+            : fetch('data/servidores_consolidados.json').then(function(resp) {
+                if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                return resp.json();
+              });
 
-            return {
-              id: mat ? (enteId + '_' + mat) : ('serv_' + Math.random().toString(36).substr(2, 9)),
-              matricula: mat,
-              m: mat,
-              nome: nome,
-              n: nome,
-              cpfMascarado: cpf,
-              c: cpf,
-              ente: ente,
-              enteId: enteId,
-              orgao: lot || ente,
-              quadro: quadro,
-              cargo: cargo,
-              g: cargo,
-              funcao: cargo,
-              cargaHoraria: ch,
-              cargaHorariaTexto: (ch > 0 ? (ch + 'h') : '30h'),
-              h: (ch > 0 ? (ch + 'h') : '30h'),
-              lotacao: lot,
-              l: lot,
-              situacao: situacao,
-              status: situacao,
-              regime: 'Efetivo / Estatutário'
-            };
+          return fetchPromise.then(function(lista) {
+            if (!Array.isArray(lista) || lista.length === 0) {
+              throw new Error('Formato inválido de servidores_consolidados.json');
+            }
+            var formatados = lista.map(function(item) {
+              var nome = String(item.n || item.nome || '').trim();
+              var mat = String(item.m || item.matricula || '').trim();
+              var ente = String(item.e || item.ente || 'Ente Federativo').trim();
+              var cargo = String(item.g || item.cargo || 'Cargo não informado').trim();
+              var ch = parseCargaHoraria(item.h || item.cargaHoraria);
+              var lot = String(item.l || item.lotacao || 'Lotação não informada').trim();
+              var cpf = String(item.c || item.cpf || '###.***.***-##').trim();
+              var situacao = String(item.s || item.situacao || 'ATIVO').trim();
+
+              var quadro = 'Administrativo';
+              var normG = normalizarTexto(cargo);
+              if (normG.indexOf('prof') !== -1 || normG.indexOf('docen') !== -1 || normG.indexOf('pedag') !== -1 || normG.indexOf('educad') !== -1 || normG.indexOf('magist') !== -1) {
+                quadro = 'Docente';
+              } else if (normG.indexOf('diretor') !== -1 || normG.indexOf('coordenad') !== -1 || normG.indexOf('gestao') !== -1) {
+                quadro = 'Gestão Escolar';
+              } else if (normG.indexOf('psicol') !== -1 || normG.indexOf('assistente social') !== -1 || normG.indexOf('especial') !== -1 || normG.indexOf('nutric') !== -1 || normG.indexOf('tecnic') !== -1) {
+                quadro = 'Técnico';
+              } else if (normG.indexOf('merend') !== -1 || normG.indexOf('motor') !== -1 || normG.indexOf('asg') !== -1 || normG.indexOf('vigia') !== -1 || normG.indexOf('guarda') !== -1 || normG.indexOf('servicos gerais') !== -1) {
+                quadro = 'Apoio';
+              }
+
+              var enteId = normalizarTexto(ente).replace(/[^a-z0-9]/g, '_');
+
+              return {
+                id: mat ? (enteId + '_' + mat) : ('serv_' + Math.random().toString(36).substr(2, 9)),
+                matricula: mat,
+                m: mat,
+                nome: nome,
+                n: nome,
+                cpfMascarado: cpf,
+                c: cpf,
+                ente: ente,
+                enteId: enteId,
+                orgao: lot || ente,
+                quadro: quadro,
+                cargo: cargo,
+                g: cargo,
+                funcao: cargo,
+                cargaHoraria: ch,
+                cargaHorariaTexto: (ch > 0 ? (ch + 'h') : '30h'),
+                h: (ch > 0 ? (ch + 'h') : '30h'),
+                lotacao: lot,
+                l: lot,
+                situacao: situacao,
+                status: situacao,
+                regime: 'Efetivo / Estatutário'
+              };
+            });
+
+            BASE_CONSOLIDADA_DINAMICA = formatados;
+            OLYMPOS_SERVIDORES_UNIFICADOS = formatados;
+            if (perf && typeof perf.setCache === 'function') {
+              perf.setCache('servidores_consolidados_v3_1', formatados);
+            }
+            if (perf && typeof perf.buildSearchIndex === 'function') {
+              perf.buildSearchIndex(formatados);
+            }
+            console.info('[OlymposServidores] Base consolidada intermunicipal carregada: ' + formatados.length + ' servidores.');
+            return formatados;
           });
-
-          BASE_CONSOLIDADA_DINAMICA = formatados;
-          OLYMPOS_SERVIDORES_UNIFICADOS = formatados;
-          console.info('[OlymposServidores] Base consolidada intermunicipal carregada: ' + formatados.length + ' servidores.');
-          return formatados;
         })
         .catch(function(err) {
           console.warn('[OlymposServidores] Fallback para base semente local: ' + err.message);
@@ -1431,10 +1456,14 @@
      */
     buscar: function(termo, filtros) {
       filtros = filtros || {};
+      var todos = this.obterTodos();
+      if (typeof root !== 'undefined' && root.OlymposPerfEngine && typeof root.OlymposPerfEngine.fastSearchServidores === 'function') {
+        return root.OlymposPerfEngine.fastSearchServidores(todos, termo, filtros);
+      }
       var termoNorm = normalizarTexto(termo);
       var termoMat = normalizarMatricula(termo);
 
-      var lista = this.obterTodos().filter(function(s) {
+      var lista = todos.filter(function(s) {
         // Filtro por termo
         if (termoNorm) {
           var nomeNorm = normalizarTexto(s.nome);
