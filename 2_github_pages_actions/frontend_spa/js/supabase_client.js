@@ -716,6 +716,27 @@ window.OlymposSupabase = (function() {
     return false;
   }
 
+  async function excluirSecretariaParceira(id) {
+    if (!id) return false;
+    const client = getClient();
+    if (client) {
+      const sess = await getSession();
+      if (!sess) return false;
+      try {
+        const { error } = await client.from('secretarias_parceiras').delete().eq('id', id);
+        if (error) {
+          console.warn('[OlymposSupabase] Erro ao excluir secretaria parceira no Supabase:', error);
+          return false;
+        }
+        return true;
+      } catch (e) {
+        console.warn('[OlymposSupabase] Exceção ao excluir secretaria parceira:', e);
+        return false;
+      }
+    }
+    return false;
+  }
+
   // =========================================================================
   // PERSISTÊNCIA: AGENDA INTERSETORIAL DO CALENDÁRIO
   // =========================================================================
@@ -747,7 +768,9 @@ window.OlymposSupabase = (function() {
               letivo: false,
               cor: ev.cor || '#8B5CF6',
               icone: ev.icone || '🗓️',
-              isCustom: true
+              isCustom: true,
+              status: ev.status || 'PENDENTE',
+              concluidoEm: ev.concluido_em || null
             };
           });
           return adaptados;
@@ -782,7 +805,9 @@ window.OlymposSupabase = (function() {
         publico_alvo: evento.publicoAlvo || '',
         letivo: false,
         cor: evento.cor || '#8B5CF6',
-        icone: evento.icone || '🗓️'
+        icone: evento.icone || '🗓️',
+        status: evento.status || 'PENDENTE',
+        concluido_em: evento.concluidoEm || null
       };
       try {
         const { error } = await client.from('calendario_agenda').upsert(payload);
@@ -793,6 +818,31 @@ window.OlymposSupabase = (function() {
         return true;
       } catch (e) {
         console.warn('[OlymposSupabase] Exceção ao salvar evento de agenda:', e);
+        return false;
+      }
+    }
+    return false;
+  }
+
+  async function atualizarStatusEventoAgenda(eventoId, status) {
+    if (!eventoId) return false;
+    const client = getClient();
+    if (client) {
+      const sess = await getSession();
+      if (!sess) return false;
+      try {
+        const payload = {
+          status: status,
+          concluido_em: status === 'CONCLUIDO' ? new Date().toISOString() : null
+        };
+        const { error } = await client.from('calendario_agenda').update(payload).eq('id', eventoId);
+        if (error) {
+          console.warn('[OlymposSupabase] Erro ao atualizar status do evento na nuvem:', error);
+          return false;
+        }
+        return true;
+      } catch (e) {
+        console.warn('[OlymposSupabase] Exceção ao atualizar status do evento:', e);
         return false;
       }
     }
@@ -1050,6 +1100,84 @@ window.OlymposSupabase = (function() {
     return r === 'ADMIN_GABINETE' || r === 'JURIDICO';
   }
 
+  // =========================================================================
+  // GESTÃO DE USUÁRIOS E PERFIS RBAC (public.profiles)
+  // =========================================================================
+
+  async function listarPerfisUsuarios() {
+    const client = getClient();
+    if (client) {
+      try {
+        const { data, error } = await client
+          .from('profiles')
+          .select('*')
+          .order('full_name', { ascending: true });
+        if (!error && Array.isArray(data)) {
+          return data;
+        }
+        if (error) {
+          console.warn('[OlymposSupabase] Erro ao listar perfis:', error);
+        }
+      } catch (err) {
+        console.warn('[OlymposSupabase] Exceção ao listar perfis:', err);
+      }
+    }
+    // Fallback: se desconectado, recupera lista mock/cache local
+    try {
+      const cached = localStorage.getItem('olympos_usuarios_perfis_cache');
+      if (cached) return JSON.parse(cached);
+    } catch (eCache) {}
+    return null;
+  }
+
+  async function atualizarPerfilUsuario(id, dados) {
+    if (!id || !dados) return false;
+    const client = getClient();
+    if (client) {
+      const sess = await getSession();
+      if (!sess) return false;
+      try {
+        const payload = {
+          full_name: dados.full_name || dados.nome,
+          role: dados.role,
+          department: dados.department || dados.departamento,
+          updated_at: new Date().toISOString()
+        };
+        const { error } = await client.from('profiles').update(payload).eq('id', id);
+        if (error) {
+          console.warn('[OlymposSupabase] Erro ao atualizar perfil:', error);
+          return false;
+        }
+        return true;
+      } catch (err) {
+        console.warn('[OlymposSupabase] Exceção ao atualizar perfil:', err);
+        return false;
+      }
+    }
+    return false;
+  }
+
+  async function excluirPerfilUsuario(id) {
+    if (!id) return false;
+    const client = getClient();
+    if (client) {
+      const sess = await getSession();
+      if (!sess) return false;
+      try {
+        const { error } = await client.from('profiles').delete().eq('id', id);
+        if (error) {
+          console.warn('[OlymposSupabase] Erro ao excluir perfil:', error);
+          return false;
+        }
+        return true;
+      } catch (err) {
+        console.warn('[OlymposSupabase] Exceção ao excluir perfil:', err);
+        return false;
+      }
+    }
+    return false;
+  }
+
   return {
     DEFAULT_PUBLIC_SUPABASE_URL: DEFAULT_PUBLIC_SUPABASE_URL,
     extrairUrlSupabaseDaChave: extrairUrlSupabaseDaChave,
@@ -1075,12 +1203,17 @@ window.OlymposSupabase = (function() {
     excluirEscola: excluirEscola,
     carregarSecretariasParceiras: carregarSecretariasParceiras,
     sincronizarSecretariaParceira: sincronizarSecretariaParceira,
+    excluirSecretariaParceira: excluirSecretariaParceira,
     carregarAgendaEventos: carregarAgendaEventos,
     salvarAgendaEvento: salvarAgendaEvento,
     excluirAgendaEvento: excluirAgendaEvento,
+    atualizarStatusEventoAgenda: atualizarStatusEventoAgenda,
     carregarNumeracaoGabinete: carregarNumeracaoGabinete,
     sincronizarNumeracaoGabinete: sincronizarNumeracaoGabinete,
-    carregarPublicacoesDiario: carregarPublicacoesDiario
+    carregarPublicacoesDiario: carregarPublicacoesDiario,
+    listarPerfisUsuarios: listarPerfisUsuarios,
+    atualizarPerfilUsuario: atualizarPerfilUsuario,
+    excluirPerfilUsuario: excluirPerfilUsuario
   };
 })();
 

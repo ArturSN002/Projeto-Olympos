@@ -17,73 +17,8 @@ window.OlymposViews.chamados = (function() {
   let isInitialized = false;
   let unsubscribeSignals = null;
 
-  // Dados canônicos de contingência offline / demonstração local
-  const CANONICAL_MOCK_CHAMADOS = [
-    {
-      id: 'CH-2026-001',
-      created_at: '2026-11-14T08:15:00Z',
-      criado_em: '2026-11-14T08:15:00Z',
-      email_solicitante: 'maria.santos@cearamirim.rn.gov.br',
-      nome_completo: 'Maria dos Santos Oliveira',
-      setor: 'Pedagógico',
-      urgente_solicitado: 'Sim',
-      urgencia: 'Sim',
-      dia_entrega_solicitado: 'Segunda-feira',
-      descricao: 'Solicitação urgente de reposição de material didático para a EM Maria Alice.',
-      anexos: '',
-      status: 'ABERTO',
-      lido_em: null,
-      finalizado_em: null
-    },
-    {
-      id: 'CH-2026-002',
-      created_at: '2026-11-14T09:30:00Z',
-      criado_em: '2026-11-14T09:30:00Z',
-      email_solicitante: 'carlos.alberto@cearamirim.rn.gov.br',
-      nome_completo: 'Carlos Alberto de Souza',
-      setor: 'Recursos Humanos',
-      urgente_solicitado: 'Não',
-      urgencia: 'Não',
-      dia_entrega_solicitado: 'Terça-feira',
-      descricao: 'Declaração de tempo de serviço para averbação de aposentadoria de servidora.',
-      anexos: '',
-      status: 'EM_ATENDIMENTO',
-      lido_em: '2026-11-14T11:00:00Z',
-      finalizado_em: null
-    },
-    {
-      id: 'CH-2026-003',
-      created_at: '2026-11-14T13:45:00Z',
-      criado_em: '2026-11-14T13:45:00Z',
-      email_solicitante: 'francisca.lima@cearamirim.rn.gov.br',
-      nome_completo: 'Francisca Lima Bezerra',
-      setor: 'Transporte',
-      urgente_solicitado: 'Não',
-      urgencia: 'Não',
-      dia_entrega_solicitado: 'Quarta-feira',
-      descricao: 'Ajuste de rota escolar linha 04 (distrito de Gravatá).',
-      anexos: '',
-      status: 'ABERTO',
-      lido_em: null,
-      finalizado_em: null
-    },
-    {
-      id: 'CH-2026-004',
-      created_at: '2026-11-15T08:30:00Z',
-      criado_em: '2026-11-15T08:30:00Z',
-      email_solicitante: 'antonio.pereira@cearamirim.rn.gov.br',
-      nome_completo: 'Antônio Pereira dos Anjos',
-      setor: 'Alimentação Escolar',
-      urgente_solicitado: 'Sim',
-      urgencia: 'Sim',
-      dia_entrega_solicitado: 'Segunda-feira',
-      descricao: 'Laudo de inspeção da câmara fria na central de distribuição da merenda.',
-      anexos: '',
-      status: 'ABERTO',
-      lido_em: null,
-      finalizado_em: null
-    }
-  ];
+  // Dados canônicos de contingência offline / demonstração local (limpo para produção SSOT)
+  const CANONICAL_MOCK_CHAMADOS = [];
 
   function init() {
     bindDOMEvents();
@@ -273,7 +208,7 @@ window.OlymposViews.chamados = (function() {
 
     if (!tickets || tickets.length === 0) {
       container.innerHTML = `
-        <div class="empty-state-card" style="padding: 40px 20px; text-align: center; background: var(--bg-surface); border: 1px solid var(--border-hairline); border-radius: var(--radius-lg);">
+        <div id="emptyChamadosState" class="empty-state-card" style="padding: 40px 20px; text-align: center; background: var(--bg-surface); border: 1px solid var(--border-hairline); border-radius: var(--radius-lg);">
           <div class="empty-state-icon" style="font-size: 2.2rem; margin-bottom: 8px;">🎉</div>
           <h4 style="font-size: 1.15rem; color: var(--text-primary); margin: 0 0 6px;">Nenhuma pendência encontrada</h4>
           <p style="font-size: 0.88rem; color: var(--text-secondary); margin: 0;">Não há chamados com os filtros selecionados no momento.</p>

@@ -854,8 +854,18 @@ body.nav-drawer-open .sidebar-backdrop,
   flex-direction: column;
 }
 
-.mobile-menu-btn {
-  display: none;
+.mobile-menu-btn,
+#mobileMenuToggleBtn,
+.icon-capsule-btn.mobile-menu-btn {
+  display: none !important;
+}
+
+@media (min-width: 861px) {
+  .mobile-menu-btn,
+  #mobileMenuToggleBtn,
+  .icon-capsule-btn.mobile-menu-btn {
+    display: none !important;
+  }
 }
 
 /* ==========================================================================

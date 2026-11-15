@@ -14,6 +14,7 @@ window.OlymposViews.visaoGeral = (function() {
     bindSpotlightInteractions();
     renderizarConstelacao17Personas(lastOverviewData ? lastOverviewData.memorias : null);
     atualizarTelemetriaCientifica();
+    renderizarWidgetEventosAgenda();
     if (!isLoaded) {
       definirEstadoInicialNumeracao();
       carregarDados();
@@ -37,45 +38,83 @@ window.OlymposViews.visaoGeral = (function() {
   }
 
   function atualizarTelemetriaCientifica() {
-    // 1. Diário Oficial
-    const elDiario = document.getElementById('heroTelemetryDiario');
-    if (elDiario) {
-      if (window.OlymposSupabase && window.OlymposSupabase.client) {
-        window.OlymposSupabase.client
-          .from('publicacoes_diario')
-          .select('id', { count: 'exact', head: true })
-          .then(function(res) {
-            if (res.count !== null && res.count !== undefined) {
-              elDiario.textContent = res.count + ' atos';
-            } else {
-              elDiario.textContent = 'Ativo (SSOT)';
-            }
-          })
-          .catch(function() {
-            elDiario.textContent = 'Online (SSOT)';
-          });
-      } else {
-        elDiario.textContent = 'Ativo (SSOT)';
-      }
-    }
-
-    // 2. Lira de Orfeu
-    const elLira = document.getElementById('heroTelemetryLira');
-    if (elLira) {
-      const cota = document.getElementById('kpiCotaEmail');
-      elLira.textContent = (cota && cota.textContent && cota.textContent !== '--') ? cota.textContent : 'Ativo';
-    }
-
-    // 3. Chamados SMEB
+    // 1. Chamados SMEB
     const elChamados = document.getElementById('heroTelemetryChamados');
     if (elChamados) {
-      if (window.OlymposSignals) {
+      if (window.OlymposSignals && typeof window.OlymposSignals.getActiveQueue === 'function') {
         const fila = window.OlymposSignals.getActiveQueue();
         elChamados.textContent = fila.length + ' demandas';
       } else {
         elChamados.textContent = 'Fila Ativa';
       }
     }
+
+    // 2. Agenda Escolar • Eventos Externos
+    const elAgenda = document.getElementById('heroTelemetryAgenda');
+    if (elAgenda) {
+      let pendentesCount = 0;
+      if (window.OlymposViews && window.OlymposViews.calendario && typeof window.OlymposViews.calendario.obterEventosAgendaCustom === 'function') {
+        const evts = window.OlymposViews.calendario.obterEventosAgendaCustom();
+        pendentesCount = evts.filter(function(e) { return (e.status || 'PENDENTE').toUpperCase() !== 'CONCLUIDO'; }).length;
+      }
+      elAgenda.textContent = pendentesCount + ' pendente(s)';
+    }
+  }
+
+  function renderizarWidgetEventosAgenda() {
+    const container = document.getElementById('listaEventosExternosVisaoGeral');
+    const kpiPendentes = document.getElementById('kpiAgendaPendentes');
+    if (!container) return;
+
+    let eventos = [];
+    if (window.OlymposViews && window.OlymposViews.calendario && typeof window.OlymposViews.calendario.obterEventosAgendaCustom === 'function') {
+      eventos = window.OlymposViews.calendario.obterEventosAgendaCustom();
+    }
+
+    const pendentes = eventos.filter(function(ev) {
+      return (ev.status || 'PENDENTE').toUpperCase() !== 'CONCLUIDO';
+    });
+
+    if (kpiPendentes) {
+      kpiPendentes.textContent = pendentes.length + ' pendência(s)';
+    }
+
+    if (pendentes.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state-card" style="padding: 24px; text-align: center; background: var(--bg-surface); border-radius: var(--radius-md); border: 1px solid var(--border-hairline);">
+          <span style="font-size: 1.8rem; display: block; margin-bottom: 6px;">🎉</span>
+          <p style="margin: 0; color: var(--text-muted); font-size: 0.88rem;">Todos os eventos externos e compromissos da agenda estão concluídos.</p>
+        </div>
+      `;
+      return;
+    }
+
+    // Ordena por data mais próxima
+    pendentes.sort(function(a, b) {
+      return String(a.dataInicio || '').localeCompare(String(b.dataInicio || ''));
+    });
+
+    const html = pendentes.map(function(ev) {
+      const dataFmt = ev.dataInicio ? (ev.dataInicio.split('-').reverse().join('/')) : '--';
+      return `
+        <div class="evento-agenda-card" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: var(--bg-surface); border: 1px solid var(--border-hairline); border-radius: var(--radius-md); gap: 12px; margin-bottom: 8px;">
+          <div style="flex: 1; min-width: 0;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+              <span class="pill-badge pill-amber" style="font-size: 0.68rem;">⏳ Pendente</span>
+              <span style="font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono);">${dataFmt}${ev.horario ? ' • ' + ev.horario : ''}</span>
+              ${ev.setor ? `<span style="font-size: 0.72rem; color: var(--text-secondary); background: var(--bg-tonal); padding: 1px 6px; border-radius: 4px;">${ev.setor}</span>` : ''}
+            </div>
+            <h5 style="margin: 0 0 2px 0; font-size: 0.92rem; font-weight: 600; color: var(--text-primary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${window.OlymposApp ? window.OlymposApp.escapeHtml(ev.titulo) : ev.titulo}</h5>
+            ${ev.local ? `<p style="margin: 0; font-size: 0.78rem; color: var(--text-secondary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">📍 ${window.OlymposApp ? window.OlymposApp.escapeHtml(ev.local) : ev.local}</p>` : ''}
+          </div>
+          <button type="button" class="btn btn-primary btn-sm" style="font-size: 0.78rem; padding: 4px 10px; white-space: nowrap;" onclick="window.concluirEventoAgenda('${ev.id}')">
+            ✓ Concluir
+          </button>
+        </div>
+      `;
+    }).join('');
+
+    container.innerHTML = html;
   }
 
   function definirEstadoInicialNumeracao() {
@@ -308,6 +347,8 @@ window.OlymposViews.visaoGeral = (function() {
   return {
     init: init,
     recarregar: carregarDados,
+    renderizarWidgetEventosAgenda: renderizarWidgetEventosAgenda,
+    atualizarTelemetriaCientifica: atualizarTelemetriaCientifica,
     getLastOverviewData: function() { return lastOverviewData; }
   };
 })();

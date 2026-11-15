@@ -5,13 +5,14 @@
  * com suporte adicional a configuração local (localStorage 'olympos_carto_api_key').
  */
 window.OLYMPOS_CARTO_CONFIG = window.OLYMPOS_CARTO_CONFIG || {
-  apiKey: ''
+  apiKey: 'cb1_59be_1_e706175c142a6271abaac593'
 };
 
 window.OlymposCarto = (function() {
   'use strict';
 
   var STORAGE_KEY = 'olympos_carto_api_key';
+  var CANONICAL_FALLBACK_KEY = 'cb1_59be_1_e706175c142a6271abaac593';
 
   function getApiKey() {
     try {
@@ -29,7 +30,7 @@ window.OlymposCarto = (function() {
         return window.OLYMPOS_CARTO_CONFIG.apiKey.trim();
       }
     }
-    return '';
+    return CANONICAL_FALLBACK_KEY;
   }
 
   function setApiKey(key) {
@@ -44,9 +45,9 @@ window.OlymposCarto = (function() {
       }
     } catch (e) {}
     if (typeof window !== 'undefined' && window.OLYMPOS_CARTO_CONFIG) {
-      window.OLYMPOS_CARTO_CONFIG.apiKey = clean;
+      window.OLYMPOS_CARTO_CONFIG.apiKey = clean || CANONICAL_FALLBACK_KEY;
     }
-    return clean;
+    return clean || CANONICAL_FALLBACK_KEY;
   }
 
   function hasApiKey() {
@@ -56,6 +57,7 @@ window.OlymposCarto = (function() {
   function appendKeyParam(url) {
     var key = getApiKey();
     if (!key) return url;
+    if (url.indexOf('api_key=') !== -1 || url.indexOf('key=') !== -1) return url;
     var sep = url.indexOf('?') === -1 ? '?' : '&';
     return url + sep + 'api_key=' + encodeURIComponent(key);
   }
@@ -77,12 +79,11 @@ window.OlymposCarto = (function() {
   function transformRequest(url) {
     var key = getApiKey();
     if (key && typeof url === 'string' && (url.indexOf('cartocdn.com') !== -1 || url.indexOf('carto.com') !== -1)) {
-      var targetUrl = url.indexOf('api_key=') === -1 ? appendKeyParam(url) : url;
+      var targetUrl = (url.indexOf('api_key=') === -1 && url.indexOf('key=') === -1)
+        ? appendKeyParam(url)
+        : url;
       return {
-        url: targetUrl,
-        headers: {
-          Authorization: 'Bearer ' + key
-        }
+        url: targetUrl
       };
     }
     return { url: url };

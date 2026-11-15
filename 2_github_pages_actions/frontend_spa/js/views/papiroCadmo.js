@@ -832,7 +832,8 @@ window.OlymposViews.papiroCadmo = (function() {
     inicializarMapa();
     alternarAbaResultados('vigentes');
     observarVisibilidadePagina();
-    alternarColapsoHera(false);
+    alternarColapsoHera(true);
+    alternarColapsoMapa(true);
     sincronizarServidoresUnificados(false);
     const totalServidoresSincronizados = obterColecaoServidoresCadmo().length;
     console.log('[Olympos Permutas] Bases carregadas: ' + totalServidoresSincronizados + ' servidores sincronizados (5 Entes), ' + (VINCULOS_TRANSPARENCIA || []).length + ' cruzamentos de vínculos.');
@@ -1008,6 +1009,31 @@ window.OlymposViews.papiroCadmo = (function() {
       });
     }
 
+    // Trigger de alternância do container colapsável do Mapa
+    const mapHeader = document.getElementById('cadmoMapCollapsibleHeader');
+    if (mapHeader && !mapHeader._bound) {
+      mapHeader._bound = true;
+      mapHeader.addEventListener('click', function(e) {
+        if (e.target.closest('#btnGerenciarSecretarias') || e.target.closest('#btnToggleMapaCadmo')) return;
+        alternarColapsoMapa();
+      });
+      mapHeader.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          alternarColapsoMapa();
+        }
+      });
+    }
+
+    const btnToggleMapa = document.getElementById('btnToggleMapaCadmo');
+    if (btnToggleMapa && !btnToggleMapa._bound) {
+      btnToggleMapa._bound = true;
+      btnToggleMapa.addEventListener('click', function(e) {
+        e.stopPropagation();
+        alternarColapsoMapa();
+      });
+    }
+
     // Trigger de alternância do container colapsável Hera
     const heraHeader = document.getElementById('heraCollapsibleHeader');
     if (heraHeader && !heraHeader._bound) {
@@ -1038,6 +1064,22 @@ window.OlymposViews.papiroCadmo = (function() {
       btnGerenciarSec._bound = true;
       btnGerenciarSec.addEventListener('click', function() {
         abrirModalEdicaoSecretaria();
+      });
+    }
+
+    const btnNovaSec = document.getElementById('btnNovaSecretaria');
+    if (btnNovaSec && !btnNovaSec._bound) {
+      btnNovaSec._bound = true;
+      btnNovaSec.addEventListener('click', function() {
+        prepararNovaSecretaria();
+      });
+    }
+
+    const btnExcluirSec = document.getElementById('btnExcluirSecretaria');
+    if (btnExcluirSec && !btnExcluirSec._bound) {
+      btnExcluirSec._bound = true;
+      btnExcluirSec.addEventListener('click', function() {
+        excluirSecretariaSelecionada();
       });
     }
 
@@ -1248,7 +1290,16 @@ window.OlymposViews.papiroCadmo = (function() {
               if (carto && typeof carto.transformRequest === 'function') {
                 glOpts.transformRequest = carto.transformRequest;
               }
-              maplibreLayer = window.L.maplibreGL(glOpts).addTo(leafletMap);
+              const layer = window.L.maplibreGL(glOpts);
+              if (layer) {
+                layer.on('error', function(err) {
+                  console.warn('[PapiroCadmo] MapLibre GL error, fallback raster mantido:', err);
+                  if (maplibreLayer && leafletMap && leafletMap.hasLayer(maplibreLayer)) {
+                    try { leafletMap.removeLayer(maplibreLayer); } catch(e) {}
+                  }
+                });
+                maplibreLayer = layer.addTo(leafletMap);
+              }
             }
           } catch (eGl) {
             console.warn('[PapiroCadmo] Fallback Carto Raster ativo:', eGl);
@@ -1413,6 +1464,91 @@ window.OlymposViews.papiroCadmo = (function() {
     if (label) label.textContent = newStateCollapsed ? 'Expandir' : 'Recolher';
   }
 
+  function alternarColapsoMapa(forcado) {
+    const body = document.getElementById('cadmoMapCollapsibleBody');
+    const header = document.getElementById('cadmoMapCollapsibleHeader');
+    const btnToggle = document.getElementById('btnToggleMapaCadmo');
+    const label = document.getElementById('cadmoMapToggleLabel');
+    if (!body) return;
+
+    const isCurrentlyCollapsed = body.classList.contains('is-collapsed') || body.style.display === 'none';
+    const newStateCollapsed = typeof forcado === 'boolean' ? forcado : !isCurrentlyCollapsed;
+
+    body.classList.toggle('is-collapsed', newStateCollapsed);
+    if (newStateCollapsed) {
+      body.style.display = 'none';
+    } else {
+      body.style.display = 'block';
+      setTimeout(function() {
+        if (leafletMap && typeof leafletMap.invalidateSize === 'function') {
+          leafletMap.invalidateSize();
+        }
+      }, 150);
+    }
+    if (header) header.setAttribute('aria-expanded', String(!newStateCollapsed));
+    if (btnToggle) btnToggle.classList.toggle('hera-chevron-rotated', newStateCollapsed);
+    if (label) label.textContent = newStateCollapsed ? 'Expandir' : 'Recolher';
+  }
+
+  function prepararNovaSecretaria() {
+    const inputId = document.getElementById('editSecId');
+    const inputNome = document.getElementById('editSecNome');
+    const inputMun = document.getElementById('editSecMunicipio');
+    const inputContato = document.getElementById('editSecContato');
+    const inputLat = document.getElementById('editSecLat');
+    const inputLng = document.getElementById('editSecLng');
+
+    const newId = 'sec_' + Date.now();
+    if (inputId) inputId.value = newId;
+    if (inputNome) { inputNome.value = ''; inputNome.focus(); }
+    if (inputMun) inputMun.value = '';
+    if (inputContato) inputContato.value = '';
+    if (inputLat) inputLat.value = '-5.6344';
+    if (inputLng) inputLng.value = '-35.4245';
+
+    if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+      window.OlymposApp.showToast('Informe os dados do novo município e clique em Salvar.');
+    }
+  }
+
+  function excluirSecretariaSelecionada() {
+    const inputId = document.getElementById('editSecId');
+    if (!inputId || !inputId.value) return;
+    const pontoId = inputId.value;
+
+    if (pontoId === 'sme_ceara_mirim') {
+      if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+        window.OlymposApp.showToast('A sede SMEB Ceará-Mirim é canônica e não pode ser excluída.', 'error');
+      }
+      return;
+    }
+
+    if (!confirm('Deseja realmente excluir este município parceiro?')) return;
+
+    const secretarias = obterPontosSecretarias();
+    const novaLista = secretarias.filter(function(p) { return p.id !== pontoId; });
+
+    try {
+      localStorage.setItem(STORAGE_KEY_SECRETARIAS, JSON.stringify(novaLista));
+    } catch (err) {
+      console.warn('[PapiroCadmo] Erro ao salvar exclusão no localStorage:', err);
+    }
+
+    if (window.OlymposSupabase && typeof window.OlymposSupabase.excluirSecretariaParceira === 'function') {
+      window.OlymposSupabase.excluirSecretariaParceira(pontoId).catch(function(eSup) {
+        console.warn('[PapiroCadmo] Falha na exclusão da secretaria no Supabase:', eSup);
+      });
+    }
+
+    plotarMarcadores();
+    popularSelectsFormularioPermuta();
+    fecharModalEdicaoSecretaria();
+
+    if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+      window.OlymposApp.showToast('Município parceiro excluído com sucesso!', 'success');
+    }
+  }
+
   function abrirModalEdicaoSecretaria(pontoId) {
     const modal = document.getElementById('modalEdicaoSecretaria');
     if (!modal) return;
@@ -1501,19 +1637,28 @@ window.OlymposViews.papiroCadmo = (function() {
 
     const secretarias = obterPontosSecretarias();
     const idx = secretarias.findIndex(function(p) { return p.id === pontoId; });
+    let targetSec = null;
     if (idx === -1) {
-      if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
-        window.OlymposApp.showToast('Secretaria parceira não encontrada.', 'error');
+      targetSec = {
+        id: pontoId || ('sec_' + Date.now()),
+        nome: nome,
+        municipio: municipio,
+        contato: contato,
+        coords: [lat, lng],
+        tipo: 'Secretaria Municipal Parceira',
+        cor: '#10B981',
+        icone: '🏛️'
+      };
+      secretarias.push(targetSec);
+    } else {
+      secretarias[idx].nome = nome;
+      secretarias[idx].municipio = municipio;
+      secretarias[idx].contato = contato;
+      secretarias[idx].coords = [lat, lng];
+      if (pontoId === 'sme_ceara_mirim') {
+        secretarias[idx].nomeSimples = nome;
       }
-      return;
-    }
-
-    secretarias[idx].nome = nome;
-    secretarias[idx].municipio = municipio;
-    secretarias[idx].contato = contato;
-    secretarias[idx].coords = [lat, lng];
-    if (pontoId === 'sme_ceara_mirim') {
-      secretarias[idx].nomeSimples = nome;
+      targetSec = secretarias[idx];
     }
 
     try {
@@ -1523,7 +1668,7 @@ window.OlymposViews.papiroCadmo = (function() {
     }
 
     if (window.OlymposSupabase && typeof window.OlymposSupabase.sincronizarSecretariaParceira === 'function') {
-      window.OlymposSupabase.sincronizarSecretariaParceira(secretarias[idx]).catch(function(eSup) {
+      window.OlymposSupabase.sincronizarSecretariaParceira(targetSec).catch(function(eSup) {
         console.warn('[PapiroCadmo] Falha na sincronização assíncrona da secretaria com Supabase:', eSup);
       });
     }
@@ -3336,6 +3481,9 @@ window.OlymposViews.papiroCadmo = (function() {
     preencherFormComVinculo: preencherFormComVinculo,
     processarArquivoCsv: processarArquivoCsv,
     alternarColapsoHera: alternarColapsoHera,
+    alternarColapsoMapa: alternarColapsoMapa,
+    prepararNovaSecretaria: prepararNovaSecretaria,
+    excluirSecretariaSelecionada: excluirSecretariaSelecionada,
     obterEscolasDinamicasCadmo: obterEscolasDinamicasCadmo,
     obterTodosPontosMapa: obterTodosPontosMapa,
     popularSelectsFormularioPermuta: popularSelectsFormularioPermuta,

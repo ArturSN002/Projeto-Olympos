@@ -115,6 +115,13 @@ window.OlymposRouter = (function() {
     if (pageId === 'permutas') {
       pageId = 'papiro-cadmo';
     }
+    if (pageId === 'ajustes') {
+      pageId = 'configuracoes';
+    }
+    if (pageId === 'personas') {
+      pageId = 'configuracoes';
+      targetSubtab = 'personas';
+    }
     if (pageId === 'consulta-servidores') {
       pageId = 'servidores';
     }
@@ -142,6 +149,14 @@ window.OlymposRouter = (function() {
       view.classList.toggle('active', isTarget);
       view.classList.toggle('hidden', !isTarget);
     });
+
+    // ISOLAMENTO DA TELEMETRIA: Exibe a fita de telemetria EXCLUSIVAMENTE na Visão Geral
+    const telemetryStrip = document.getElementById('heroTelemetryStrip') || document.querySelector('.telemetry-strip');
+    if (telemetryStrip) {
+      const showTelemetry = (pageId === 'visao-geral');
+      telemetryStrip.classList.toggle('hidden', !showTelemetry);
+      telemetryStrip.style.display = showTelemetry ? '' : 'none';
+    }
 
     document.querySelectorAll('.nav-link').forEach(function(link) {
       const linkPage = link.getAttribute('data-page');
@@ -179,6 +194,12 @@ window.OlymposRouter = (function() {
     if (pageId === 'portarias') {
       if (window.OlymposViews && window.OlymposViews.portarias && typeof window.OlymposViews.portarias.alternarSubtab === 'function') {
         window.OlymposViews.portarias.alternarSubtab(targetSubtab || 'lote');
+      }
+    }
+
+    if (pageId === 'configuracoes') {
+      if (window.OlymposViews && window.OlymposViews.configuracoes && typeof window.OlymposViews.configuracoes.alternarSubtab === 'function') {
+        window.OlymposViews.configuracoes.alternarSubtab(targetSubtab || 'conexao');
       }
     }
 

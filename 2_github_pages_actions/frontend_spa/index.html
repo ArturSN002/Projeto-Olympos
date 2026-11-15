@@ -120,20 +120,12 @@
             <span class="kbd-hint">/</span>
           </div>
 
-          <div id="apiStatusPill" class="status-pill status-online" title="Conectividade com o Gateway Google Apps Script">
-            <span>Gateway Online</span>
-          </div>
-
           <button id="themeToggleBtn" class="icon-capsule-btn hidden" style="display: none !important;" title="Alternar Modo Claro / Modo Escuro" aria-label="Alternar Tema"></button>
 
           <button id="topGeminiBtn" class="btn btn-sm btn-gemini-companion" title="Abrir Assistente Gemini SMEB (Janela Lateral Desktop)" aria-label="Abrir Assistente Gemini">
             <span class="gemini-sparkle svg-icon-inline" data-icon="sparkles" aria-hidden="true"></span>
             <span class="sr-only">✨</span>
             <span>Gemini</span>
-          </button>
-
-          <button id="topNovoUsuarioBtn" class="btn btn-primary btn-sm hidden" title="Cadastrar Novo Usuário (Exclusivo Gabinete)" style="font-size: 0.76rem; padding: 6px 12px; display: inline-flex; align-items: center; gap: 4px;">
-            <span>+ Novo Usuário</span>
           </button>
 
           <button id="userSessionBtn" class="user-capsule-btn" title="Perfil RBAC Ativo (Clique para encerrar ou trocar sessão)">
@@ -171,7 +163,6 @@
           <a href="#servidores" class="nav-link" data-page="servidores">Servidores</a>
           <a href="#calendario" class="nav-link" data-page="calendario">Calendário</a>
           <a href="#escolas" class="nav-link" data-page="escolas">Escolas</a>
-          <a href="#personas" class="nav-link" data-page="personas">Personas</a>
           <a href="#busca" class="nav-link hidden" data-page="busca" style="display: none !important;">Busca no Acervo</a>
           <span class="nav-divider-dot" aria-hidden="true"></span>
           <a href="#configuracoes" class="nav-link" data-page="configuracoes">Ajustes</a>
@@ -212,7 +203,6 @@
         <a href="#servidores" class="nav-link" data-page="servidores">Servidores</a>
         <a href="#calendario" class="nav-link" data-page="calendario">Calendário</a>
         <a href="#escolas" class="nav-link" data-page="escolas">Escolas</a>
-        <a href="#personas" class="nav-link" data-page="personas">Personas</a>
         <a href="#busca" class="nav-link hidden" data-page="busca" style="display: none !important;">Busca no Acervo</a>
         <a href="#configuracoes" class="nav-link" data-page="configuracoes">Ajustes</a>
       </div>
@@ -298,34 +288,21 @@
           </a>
         </div>
 
-        <!-- Faixa de Telemetria Científica em 3 Colunas -->
-        <div class="telemetry-strip grid grid-cols-3" style="margin-top: 20px;">
+        <!-- Faixa de Telemetria Científica Exclusiva da Visão Geral -->
+        <div id="heroTelemetryStrip" class="telemetry-strip grid grid-cols-2" style="margin-top: 20px;">
           <div class="telemetry-card spotlight-card col-1">
-            <span class="telemetry-label">Diário Oficial • FEMURN</span>
-            <div class="telemetry-metric" id="heroTelemetryDiario">--</div>
-            <span class="telemetry-meta" id="heroTelemetryDiarioMeta">Matérias sincronizadas via Supabase SSOT</span>
-          </div>
-          <div class="telemetry-card spotlight-card col-2">
-            <span class="telemetry-label">Lira de Orfeu • Certificados</span>
-            <div class="telemetry-metric" id="heroTelemetryLira">--</div>
-            <span class="telemetry-meta" id="heroTelemetryLiraMeta">Cota de e-mail e emissões ativas</span>
-          </div>
-          <div class="telemetry-card spotlight-card col-3">
             <span class="telemetry-label">Chamados SMEB • Fila Ativa</span>
             <div class="telemetry-metric" id="heroTelemetryChamados">--</div>
             <span class="telemetry-meta" id="heroTelemetryChamadosMeta">Demandas ordenadas com SLA útil</span>
           </div>
+          <div class="telemetry-card spotlight-card col-2">
+            <span class="telemetry-label">Eventos Externos • Calendário SMEB</span>
+            <div class="telemetry-metric" id="heroTelemetryAgenda">--</div>
+            <span class="telemetry-meta" id="heroTelemetryAgendaMeta">Compromissos e audiências agendadas</span>
+          </div>
         </div>
 
-        <div class="hero-shortcuts-bar hide-mobile" style="margin-top: 16px;">
-          <a href="https://drive.google.com/drive/folders/1W9mGmQCrX8BRPsGcK_vqUwfXw1dRmSya" target="_blank" rel="noopener" class="folder-chip">Pasta Central Olympo ↗</a>
-          <a href="https://drive.google.com/drive/folders/1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu" target="_blank" rel="noopener" class="folder-chip">Memórias Operacionais (.md) ↗</a>
-          <a href="https://drive.google.com/drive/folders/1qGq5uqxOtN_V63itUheYatLIcj5R86O3" target="_blank" rel="noopener" class="folder-chip">Portarias 2026 ↗</a>
-          <a href="https://drive.google.com/drive/folders/1H4bJXClx66Mr5PmRmSQBQLHDpAaKwdab" target="_blank" rel="noopener" class="folder-chip">Ofícios 2026 ↗</a>
-          <a href="https://docs.google.com/spreadsheets/d/1tU6rvgB2jNGaGqHK1oecNMQX7-5QcB8Q-1fNgzWcZqs/edit" target="_blank" rel="noopener" class="folder-chip">Planilha Diário Oficial ↗</a>
-          <a href="https://drive.google.com/drive/folders/1aj514v29gytXH9j5LY_V76ap9XIblwHS" target="_blank" rel="noopener" class="folder-chip">Backup Diário Oficial ↗</a>
-          <a href="https://drive.google.com/drive/folders/1dcc_5GcNG0ciVE-i1J6iwtojATk-1utD" target="_blank" rel="noopener" class="folder-chip">Acervo Papiro de Cadmo ↗</a>
-        </div>
+        <div class="hero-shortcuts-bar hide-mobile" style="display: none !important;" aria-hidden="true"></div>
       </section>
 
       <!-- =========================================================================
@@ -373,13 +350,34 @@
 
             <div class="stat-card">
               <div class="stat-top">
-                <span class="stat-label">Lira de Orfeu &amp; Prometheus</span>
-                <span class="pill-badge pill-green" id="kpiSyncStatusBadge">2 Frentes Ativas</span>
+                <span class="stat-label">Agenda Escolar • Eventos Externos</span>
+                <span class="pill-badge pill-purple" id="kpiAgendaStatusBadge">Agenda SMEB</span>
               </div>
-              <div class="stat-value" id="kpiCotaEmail">--</div>
-              <div class="stat-meta" id="kpiPrometheusMeta">
-                Cota diária MailApp com trava automática de segurança (&le; 3 envios).
+              <div class="stat-value" id="kpiAgendaPendentes">--</div>
+              <div class="stat-meta" id="kpiAgendaMeta">
+                <span>Compromissos agendados no Calendário</span>
+                <a href="#calendario" class="folder-chip">Ver Agenda ↗</a>
               </div>
+              <span id="kpiCotaEmail" style="display: none !important;">--</span>
+            </div>
+          </div>
+
+          <!-- WIDGET DE EVENTOS EXTERNOS PENDENTES DA AGENDA ESCOLAR (VISÃO GERAL) -->
+          <div class="surface-card" id="widgetAgendaVisaoGeral" style="margin-bottom: 24px;">
+            <div class="card-header-row">
+              <div>
+                <span class="section-eyebrow">AGENDA ESCOLAR • COMPROMISSOS EXTERNOS</span>
+                <h3 class="section-title" style="font-size: 1.15rem;">Próximos Eventos &amp; Audiências Externas</h3>
+                <p class="section-desc">Monitore e conclua compromissos da agenda intersetorial diretamente pela Visão Geral.</p>
+              </div>
+              <div class="header-actions">
+                <a href="#calendario" class="btn btn-secondary btn-sm" style="font-size: 12px; display: inline-flex; align-items: center; gap: 4px;">
+                  <span>🗓️ Abrir Calendário Completo</span>
+                </a>
+              </div>
+            </div>
+            <div id="listaEventosExternosVisaoGeral" style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px;">
+              <div class="output-panel" style="font-size: 12.5px;">Carregando compromissos da agenda externa...</div>
             </div>
           </div>
 
@@ -390,6 +388,10 @@
                 <span class="section-eyebrow">OPERAÇÕES MODULARES</span>
                 <h2 class="section-title">Frentes de Automação Documental e Inteligência</h2>
                 <p class="section-desc">Cada fluxo opera em página dedicada, desacoplando a experiência visual (GitHub Pages), integrações rápidas (GAS) e pipelines pesados (GitHub Actions).</p>
+              </div>
+              <div class="header-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <a href="https://drive.google.com/drive/folders/1W9mGmQCrX8BRPsGcK_vqUwfXw1dRmSya" target="_blank" rel="noopener" class="folder-chip">📁 Pasta Central Olympo ↗</a>
+                <a href="https://drive.google.com/drive/folders/1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu" target="_blank" rel="noopener" class="folder-chip">📝 Memórias Operacionais ↗</a>
               </div>
             </div>
 
@@ -498,9 +500,14 @@
                 <h2 class="section-title">Novo Ofício Oficial (Manual da Presidência PR/2018)</h2>
                 <p class="section-desc">Preenche o modelo institucional no Google Docs, arquiva na pasta oficial de Ofícios 2026 e incrementa a memória de Apolo.</p>
               </div>
-              <a href="https://drive.google.com/drive/folders/1H4bJXClx66Mr5PmRmSQBQLHDpAaKwdab" target="_blank" rel="noopener" class="folder-chip">
-                Abrir Pasta Ofícios 2026 ↗
-              </a>
+              <div class="header-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <a href="https://drive.google.com/drive/folders/1H4bJXClx66Mr5PmRmSQBQLHDpAaKwdab" target="_blank" rel="noopener" class="folder-chip">
+                  📁 Pasta Ofícios 2026 ↗
+                </a>
+                <a href="https://drive.google.com/file/d/1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_/view" target="_blank" rel="noopener noreferrer" class="folder-chip">
+                  🏛️ Memória de Apolo ↗
+                </a>
+              </div>
             </div>
 
             <div class="controls-grid">
@@ -859,7 +866,10 @@
               </div>
               <div class="button-group">
                 <a id="promSheetLinkBtn" href="https://docs.google.com/spreadsheets/d/1tU6rvgB2jNGaGqHK1oecNMQX7-5QcB8Q-1fNgzWcZqs/edit" target="_blank" rel="noopener" class="folder-chip">
-                  Planilha Oficial de Publicações ↗
+                  📊 Planilha Diário Oficial ↗
+                </a>
+                <a href="https://drive.google.com/drive/folders/1aj514v29gytXH9j5LY_V76ap9XIblwHS" target="_blank" rel="noopener" class="folder-chip">
+                  💾 Backup Diário Oficial ↗
                 </a>
                 <button id="prometheusTriggerActionBtn" class="btn btn-accent btn-sm">Coletar Agora (GitHub Actions)</button>
                 <button id="prometheusChatSummaryBtn" class="btn btn-secondary btn-sm">Enviar Resumo ao Chat</button>
@@ -1049,23 +1059,28 @@
               </div>
             </div>
 
-            <!-- CONTÊINER DO MAPA INTERATIVO (LEAFLET.JS) -->
+            <!-- CONTÊINER DO MAPA INTERATIVO (LEAFLET.JS) - COLAPSÁVEL -->
             <div class="cadmo-map-outer" style="margin: 18px 0; border: 1px solid var(--border-hairline); border-radius: var(--radius-lg, 16px); overflow: hidden; background: var(--bg-surface); box-shadow: var(--shadow-subtle);">
-              <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: var(--bg-tonal); border-bottom: 1px solid var(--border-hairline); font-size: 12.5px;">
+              <div id="cadmoMapCollapsibleHeader" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: var(--bg-tonal); border-bottom: 1px solid var(--border-hairline); font-size: 12.5px; cursor: pointer; user-select: none;">
                 <span style="font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
                   <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10B981;"></span>
-                  Mapa Interativo de Polos &amp; Escolas Polo — Ceará-Mirim &amp; Grande Natal
+                  🗺️ Mapa Interativo de Polos &amp; Escolas Polo — Ceará-Mirim &amp; Grande Natal
                 </span>
                 <div style="display: flex; gap: 14px; font-size: 11.5px; color: var(--text-muted); align-items: center; flex-wrap: wrap;">
                   <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #D4AF37;"></span> SMEB Sede</span>
                   <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #38BDF8;"></span> Escolas Ceará-Mirim</span>
                   <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10B981;"></span> Polos Parceiros</span>
-                  <button type="button" id="btnGerenciarSecretarias" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 2px 8px; margin-left: 6px;" title="Editar secretarias municipais parceiras" onclick="window.OlymposViews.papiroCadmo.abrirModalEdicaoSecretaria()">
+                  <button type="button" id="btnGerenciarSecretarias" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 2px 8px; margin-left: 6px;" title="Gerenciar secretarias municipais parceiras" onclick="event.stopPropagation(); window.OlymposViews.papiroCadmo.abrirModalEdicaoSecretaria()">
                     <span>🏛️ Secretarias Parceiras</span>
+                  </button>
+                  <button type="button" id="btnToggleMapaCadmo" class="btn btn-ghost btn-sm" style="font-size: 11px; padding: 2px 8px;" onclick="event.stopPropagation(); window.OlymposViews.papiroCadmo.alternarColapsoMapa()">
+                    <span id="mapaCadmoToggleLabel">Expandir Mapa ▾</span>
                   </button>
                 </div>
               </div>
-              <div id="mapaPermutasCadmo" style="height: 420px; width: 100%; border-radius: var(--radius-lg); position: relative; z-index: 1;"></div>
+              <div id="cadmoMapCollapsibleBody" class="hera-collapsible-body is-collapsed" style="display: none;">
+                <div id="mapaPermutasCadmo" style="height: 420px; width: 100%; border-radius: 0; position: relative; z-index: 1;"></div>
+              </div>
             </div>
 
             <!-- SELETOR DE MODO OPERACIONAL: CONSULTA DE SERVIDOR (PADRÃO) OU INTENÇÃO DE PERMUTA -->
@@ -1221,15 +1236,15 @@
                 </div>
 
                 <div style="display: flex; align-items: center; gap: 10px;">
-                  <span id="heraToggleLabel" style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">Recolher</span>
+                  <span id="heraToggleLabel" style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">Expandir</span>
                   <button type="button" id="btnToggleHeraMatching" class="icon-capsule-btn" aria-label="Expandir ou recolher sugestões de matching" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 12px; transition: transform 0.25s ease;">
-                    <span id="heraChevronIcon">▲</span>
+                    <span id="heraChevronIcon">▼</span>
                   </button>
                 </div>
               </div>
 
-              <!-- CORPO ABERTO POR PADRÃO (COM SCROLL INTERNO ERGONÔMICO) -->
-              <div id="heraCollapsibleBody" class="hera-collapsible-body" style="padding: 18px 20px; transition: all 0.3s ease;">
+              <!-- CORPO RECOLHIDO POR PADRÃO (COM SCROLL INTERNO ERGONÔMICO) -->
+              <div id="heraCollapsibleBody" class="hera-collapsible-body is-collapsed" style="display: none; padding: 18px 20px; transition: all 0.3s ease;">
                 <!-- Toolbar de Busca de Servidores e Seleção de Abas Cadmo -->
                 <div class="cadmo-toolbar-filtros" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
                   <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
@@ -1288,9 +1303,14 @@
                       Edite as informações cadastrais e as coordenadas georreferenciadas dos polos parceiros da rede intermunicipal de permutas. Os dados são salvos localmente e podem ser restaurados a qualquer momento.
                     </p>
 
-                    <!-- Seleção rápida entre os 15 polos -->
+                    <!-- Seleção rápida entre os polos ou criar novo -->
                     <div class="field-group" style="margin-bottom: 14px;">
-                      <label for="editSecSelectPonto">Selecionar Secretaria / Polo para Edição</label>
+                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <label for="editSecSelectPonto" style="margin-bottom: 0;">Selecionar Município / Polo Parceiro</label>
+                        <button type="button" id="btnNovaSecretaria" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 2px 8px;">
+                          <span>+ Novo Município</span>
+                        </button>
+                      </div>
                       <select id="editSecSelectPonto" class="input-clean" style="font-weight: 600;"></select>
                     </div>
 
@@ -1333,10 +1353,15 @@
                     </div>
                   </div>
 
-                  <div class="modal-footer">
-                    <button type="button" id="btnRestaurarPadraoSecretarias" class="btn btn-ghost btn-sm" style="color: var(--accent-red, #EF4444); border-color: rgba(239,68,68,0.3);">
-                      ↺ Restaurar Padrões Originais
-                    </button>
+                  <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 24px;">
+                    <div style="display: flex; gap: 8px;">
+                      <button type="button" id="btnRestaurarPadraoSecretarias" class="btn btn-ghost btn-sm" style="color: var(--text-muted);">
+                        ↺ Restaurar Padrões
+                      </button>
+                      <button type="button" id="btnExcluirSecretaria" class="btn btn-ghost btn-sm" style="color: var(--accent-red, #EF4444); border-color: rgba(239,68,68,0.3);">
+                        🗑️ Excluir Município
+                      </button>
+                    </div>
                     <div style="display: flex; gap: 10px; align-items: center;">
                       <button type="button" id="btnCancelarEdicaoSecretaria" class="btn btn-secondary btn-sm">Cancelar</button>
                       <button type="submit" id="btnSalvarSecretaria" class="btn btn-primary btn-sm">Salvar Alterações</button>
@@ -1648,6 +1673,8 @@
                 <button type="button" class="cal-pill" data-category="sabado_letivo">Sábados Letivos (<span id="countFiltroSabados">0</span>)</button>
                 <button type="button" class="cal-pill" data-category="exame">Exames &amp; Avaliações (<span id="countFiltroExames">0</span>)</button>
                 <button type="button" class="cal-pill" data-category="agenda_intersetorial">Agenda Intersetorial (<span id="countFiltroAgenda">0</span>)</button>
+                <button type="button" class="cal-pill" data-category="pendentes">⏳ Apenas Pendentes (<span id="countFiltroPendentes">0</span>)</button>
+                <button type="button" class="cal-pill" data-category="concluidos">✓ Concluídos (<span id="countFiltroConcluidos">0</span>)</button>
               </div>
 
               <!-- Seletor de Filtro por Setor Homologado -->
@@ -2046,48 +2073,9 @@
         </section>
 
         <!-- =========================================================================
-             PÁGINA 8: PERSONAS & MEMÓRIAS OPERACIONAIS (.MD)
+             PÁGINA 8: PERSONAS & MEMÓRIAS (INTEGRADA COMO SEÇÃO DE AJUSTES)
              ========================================================================= -->
-        <section class="page-view hidden" id="page-personas">
-          <div class="surface-card">
-            <div class="card-header-row">
-              <div>
-                <span class="section-eyebrow">VEDAÇÃO DE DUPLICATAS • TETO DE 60 LINHAS</span>
-                <h2 class="section-title">As 17 Personas Olympos &amp; 11 Memórias Operacionais</h2>
-                <p class="section-desc">Todas as personas consultam e editam exclusivamente os arquivos canônicos já existentes na pasta de Memórias, sem jamais recriar arquivos <code>.md</code> duplicados.</p>
-              </div>
-              <div class="button-group">
-                <button id="snapshotDedaloBtn" class="btn btn-secondary btn-sm">Gerar Snapshot (Dédalo)</button>
-                <button id="copyGeminiContextBtn" class="btn btn-secondary btn-sm">Copiar Contexto p/ Gemini</button>
-                <button id="syncApoloBtn" class="btn btn-primary btn-sm">Sincronizar Drive + .md</button>
-              </div>
-            </div>
-
-            <div style="display: flex; gap: 10px; margin-bottom: 22px; flex-wrap: wrap; align-items: center;">
-              <input type="search" id="memoriaSearchInput" class="input-clean" style="max-width: 260px;" placeholder="Filtrar persona ou domínio..." autocomplete="off" />
-              <div class="quick-alert-bar quick-alert-bar-responsive" style="display: flex; gap: 8px; flex: 1; min-width: 0; width: 100%; flex-wrap: wrap;">
-                <select id="quickAlertTargetSelect" class="input-clean" style="max-width: 200px;" aria-label="Destinatário do Alerta">
-                  <option value="_memoria_helio.md">Hélio (Diário FEMURN)</option>
-                  <option value="_memoria_apolo.md">Apolo (Numeração 2026)</option>
-                  <option value="_memoria_hera.md">Hera (RH &amp; Permutas)</option>
-                  <option value="_memoria_nike.md">Nike (Seletivos PSS)</option>
-                  <option value="_memoria_temis.md">Têmis (Jurídico)</option>
-                  <option value="_memoria_orfeu.md">Orfeu (Certificados)</option>
-                  <option value="_memoria_homero.md">Homero (Portarias)</option>
-                  <option value="_memoria_hestia.md">Héstia (Gabinete)</option>
-                  <option value="_memoria_dedalo.md">Dédalo (Infra/Backups)</option>
-                  <option value="_memoria_atena.md">Atena (Pedagógico)</option>
-                  <option value="_memoria_hermes.md">Hermes (Transporte)</option>
-                </select>
-                <input type="text" id="quickAlertMessageInput" class="input-clean" style="flex: 1; min-width: min(100%, 180px);" placeholder="Despachar alerta oficial no Correio do Olimpo..." autocomplete="off" aria-label="Mensagem do Alerta" />
-                <button id="quickAlertSendBtn" class="btn btn-primary btn-sm">Registrar Recado</button>
-              </div>
-            </div>
-
-            <div id="memoriasGrid" class="memorias-grid">
-              <div class="output-panel">Carregando ecossistema de personas e memórias...</div>
-            </div>
-          </div>
+        <section class="page-view hidden" id="page-personas" style="display: none !important;">
         </section>
 
         <!-- =========================================================================
@@ -2160,111 +2148,211 @@
           <div class="surface-card">
             <div class="card-header-row">
               <div>
-                <span class="section-eyebrow">ARQUITETURA DESACOPLADA</span>
-                <h2 class="section-title">Conexão Dual-Front, Sessão RBAC e Aparência</h2>
-                <p class="section-desc">Configure o endpoint do Google Apps Script utilizado pelo GitHub Pages e personalize o modo visual 60-30-10.</p>
+                <span class="section-eyebrow">SISTEMA &amp; GOVERNANÇA</span>
+                <h2 class="section-title">Ajustes &amp; Configurações do Hub Olympos</h2>
+                <p class="section-desc">Gerencie conectividade, aparência visual 60-30-10, operadores e perfis RBAC, ecossistema de personas e automações diárias.</p>
+              </div>
+              <div class="header-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <a href="https://drive.google.com/drive/folders/1W9mGmQCrX8BRPsGcK_vqUwfXw1dRmSya" target="_blank" rel="noopener" class="folder-chip">📁 Pasta Central Olympo ↗</a>
+                <a href="https://drive.google.com/drive/folders/1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu" target="_blank" rel="noopener" class="folder-chip">📝 Memórias Operacionais ↗</a>
               </div>
             </div>
 
-            <div class="controls-grid config-grid-responsive" style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 24px;">
-              <div>
-                <h3 style="font-size: 1.05rem; margin-bottom: 12px;">Endpoint do Gateway Google Apps Script</h3>
-                <div class="field-group" style="margin-bottom: 14px;">
-                  <label for="configGasUrlInput">URL de Implantação Web App (<code>/exec</code>)</label>
-                  <input type="url" id="configGasUrlInput" class="input-clean" style="font-family: var(--font-mono); font-size: 12px;" placeholder="https://script.google.com/macros/s/.../exec" />
+            <!-- SELETOR DE SUB-ABAS DE AJUSTES TIPO PÍLULA -->
+            <div class="subnav-tabs-bar" role="tablist" aria-label="Navegação interna de Ajustes">
+              <button type="button" class="subnav-tab active" id="subtabBtnAjustesConexao" data-subtab="conexao">
+                <span>⚙️ Conectividade &amp; Gateway</span>
+              </button>
+              <button type="button" class="subnav-tab" id="subtabBtnAjustesAparencia" data-subtab="aparencia">
+                <span>🎨 Aparência &amp; Tema</span>
+              </button>
+              <button type="button" class="subnav-tab" id="subtabBtnAjustesUsuarios" data-subtab="usuarios">
+                <span>👥 Usuários &amp; RBAC</span>
+              </button>
+              <button type="button" class="subnav-tab" id="subtabBtnAjustesPersonas" data-subtab="personas">
+                <span>🏛️ Personas &amp; Memórias</span>
+              </button>
+              <button type="button" class="subnav-tab" id="subtabBtnAjustesAutomacoes" data-subtab="automacoes">
+                <span>📧 Automações &amp; Notificações</span>
+              </button>
+            </div>
+
+            <!-- SUB-ABA 1: CONECTIVIDADE & GATEWAY -->
+            <div id="subpaneAjustesConexao" class="subtab-pane">
+              <div class="controls-grid config-grid-responsive" style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 24px;">
+                <div class="surface-card" style="border: 1px solid var(--border-hairline);">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                    <h3 style="font-size: 1.05rem; margin: 0;">Endpoint do Gateway Google Apps Script</h3>
+                    <div id="apiStatusPill" class="status-pill status-online" title="Conectividade com o Gateway Google Apps Script">
+                      <span>Gateway Online</span>
+                    </div>
+                  </div>
+                  <div class="field-group" style="margin-bottom: 14px;">
+                    <label for="configGasUrlInput">URL de Implantação Web App (<code>/exec</code>)</label>
+                    <input type="url" id="configGasUrlInput" class="input-clean" style="font-family: var(--font-mono); font-size: 12px;" placeholder="https://script.google.com/macros/s/.../exec" />
+                  </div>
+                  <div class="button-group" style="margin-bottom: 14px;">
+                    <button id="configTestarApiBtn" class="btn btn-secondary btn-sm">Testar Latência</button>
+                    <button id="configSalvarApiBtn" class="btn btn-primary btn-sm">Salvar Endpoint</button>
+                    <button id="configResetApiBtn" class="btn btn-ghost btn-sm">Restaurar Padrão</button>
+                  </div>
+                  <div id="configTestResult" class="output-panel" style="font-size: 12.5px;">
+                    Pronto para verificar conectividade com o Gateway GAS.
+                  </div>
                 </div>
-                <div class="button-group" style="margin-bottom: 14px;">
-                  <button id="configTestarApiBtn" class="btn btn-secondary btn-sm">Testar Latência</button>
-                  <button id="configSalvarApiBtn" class="btn btn-primary btn-sm">Salvar Endpoint</button>
-                  <button id="configResetApiBtn" class="btn btn-ghost btn-sm">Restaurar Padrão</button>
+
+                <!-- Painel CARTO integrado em Conexão -->
+                <div class="surface-card" style="border: 1px solid var(--border-hairline);">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                    <div>
+                      <span class="section-eyebrow" style="font-size: 10px;">GEORREFERENCIAMENTO VETORIAL</span>
+                      <h3 style="font-size: 1.05rem; margin: 0;">Chave de API CARTO</h3>
+                    </div>
+                    <span id="configCartoKeyStatusBadge" class="pill-badge pill-blue">CARTO Ativo</span>
+                  </div>
+                  <div class="field-group" style="margin-bottom: 14px;">
+                    <label for="configCartoApiKeyInput">Token / Chave Pública CARTO (<code>CARTO_API_KEY</code>)</label>
+                    <input type="text" id="configCartoApiKeyInput" class="input-clean" style="font-family: var(--font-mono); font-size: 12px;" placeholder="cb1_59be_1_e706175c142a6271abaac593" />
+                  </div>
+                  <div class="button-group">
+                    <button type="button" id="configSalvarCartoKeyBtn" class="btn btn-primary btn-sm">Salvar Chave</button>
+                    <button type="button" id="configLimparCartoKeyBtn" class="btn btn-ghost btn-sm">Restaurar Padrão</button>
+                  </div>
                 </div>
-                <div id="configTestResult" class="output-panel" style="font-size: 12.5px;">
-                  Pronto para verificar conectividade com o Gateway GAS.
+              </div>
+            </div>
+
+            <!-- SUB-ABA 2: APARÊNCIA & TEMA -->
+            <div id="subpaneAjustesAparencia" class="subtab-pane hidden" style="display: none;">
+              <div class="controls-grid" style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 24px;">
+                <div>
+                  <h3 style="font-size: 1.05rem; margin-bottom: 12px;">Identidade RBAC &amp; Tema Visual</h3>
+                  <div class="output-panel" style="margin-bottom: 16px;">
+                    <div style="margin-bottom: 6px;">Operador Autenticado: <strong id="configUserLabel">Gabinete SMEB</strong></div>
+                    <div style="margin-bottom: 6px;">Perfil de Acesso: <strong id="configUserRole">Governança Total</strong></div>
+                    <div style="margin-bottom: 12px; font-size: 12px; color: var(--text-muted);">Páginas Habilitadas: <span id="configUserTabs">Todas</span></div>
+                    <button id="configLogoutBtn" class="btn btn-secondary btn-sm">Trocar Usuário / Encerrar Sessão</button>
+                  </div>
+
+                  <div class="field-group">
+                    <label for="configTemaSelect">Esquema Cromático Editorial (Proporção 60-30-10)</label>
+                    <select id="configTemaSelect" class="input-clean">
+                      <option value="light">Modo Claro — Editorial Paper (60% Branco/Gelo, 30% Obsidiana, 10% Ouro Solar)</option>
+                      <option value="dark">Modo Escuro — DeepMind Midnight (60% Obsidiana, 30% Alabastro, 10% Ouro Luminoso)</option>
+                    </select>
+                  </div>
+
+                  <!-- Widget de Inspeção Cromática 60-30-10 -->
+                  <div id="inspectorWidget" class="fixed bottom-4 right-4 inspector-settings-embedded" style="margin-top: 14px;">
+                    <div class="inspect-60" title="60% Base Dominante (Obsidian Void / Scientific Daylight)">60% Base</div>
+                    <div class="inspect-30" title="30% Superfícies &amp; Tipografia (Surface Hairline)">30% Surface</div>
+                    <div class="inspect-10" title="10% Acento &amp; Foco (Azul Elétrico DeepMind)">10% Accent</div>
+                    <button id="themeToggleBtnInspector" type="button" class="btn-theme-toggle" onclick="window.OlymposApp &amp;&amp; window.OlymposApp.alternarTema()" aria-label="Alternar Tema">Alternar Tema</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SUB-ABA 3: USUÁRIOS & RBAC (GESTÃO COMPLETA MODERADOR) -->
+            <div id="subpaneAjustesUsuarios" class="subtab-pane hidden" style="display: none;">
+              <div id="blocoGestaoUsuarios" class="surface-card" style="border: 1px solid var(--border-hairline); background: var(--surface-secondary, rgba(255,255,255,0.02));">
+                <div class="card-header-row" style="margin-bottom: 16px;">
+                  <div>
+                    <span class="section-eyebrow">MODERAÇÃO DE ACESSOS • GABINETE</span>
+                    <h3 class="section-title" style="font-size: 1.15rem;">Gestão de Operadores &amp; Papéis RBAC</h3>
+                    <p class="section-desc" style="margin-bottom: 0;">Consulte, cadastre, edite perfis e remova operadores do Hub Olympos sincronizados com o Supabase Auth.</p>
+                  </div>
+                  <div style="display: flex; gap: 8px;">
+                    <button type="button" id="btnRecarregarUsuarios" class="btn btn-secondary btn-sm" onclick="window.OlymposViews.configuracoes.carregarUsuarios()">
+                      <span>🔄 Atualizar Lista</span>
+                    </button>
+                    <button type="button" id="btnAbrirModalNovoUsuario" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;">
+                      <span>+ Novo Usuário</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div id="tabelaUsuariosContainer" class="table-wrapper">
+                  <table class="clean-table" id="tabelaUsuarios">
+                    <thead>
+                      <tr>
+                        <th>Operador / Nome</th>
+                        <th>Email</th>
+                        <th>Papel RBAC</th>
+                        <th>Departamento</th>
+                        <th class="text-right" style="width: 140px;">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody id="tabelaUsuariosBody">
+                      <tr><td colspan="5" class="text-muted text-center" style="padding: 24px;">Carregando operadores do Supabase...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- SUB-ABA 4: PERSONAS & MEMÓRIAS OPERACIONAIS -->
+            <div id="subpaneAjustesPersonas" class="subtab-pane hidden" style="display: none;">
+              <div class="card-header-row" style="margin-bottom: 14px;">
+                <div>
+                  <span class="section-eyebrow">ECOSSISTEMA DE INTELIGÊNCIA • TETO DE 60 LINHAS</span>
+                  <h3 class="section-title" style="font-size: 1.15rem;">As 17 Personas Olympos &amp; 11 Memórias Operacionais</h3>
+                  <p class="section-desc" style="margin-bottom: 0;">Consulte personas setoriais e memórias canônicas sincronizadas no Google Drive.</p>
+                </div>
+                <div class="button-group">
+                  <button id="snapshotDedaloBtn" class="btn btn-secondary btn-sm">Snapshot (Dédalo)</button>
+                  <button id="copyGeminiContextBtn" class="btn btn-secondary btn-sm">Copiar p/ Gemini</button>
+                  <button id="syncApoloBtn" class="btn btn-primary btn-sm">Sincronizar Drive + .md</button>
                 </div>
               </div>
 
-              <div>
-                <h3 style="font-size: 1.05rem; margin-bottom: 12px;">Identidade RBAC &amp; Tema Visual</h3>
-                <div class="output-panel" style="margin-bottom: 16px;">
-                  <div style="margin-bottom: 6px;">Operador Autenticado: <strong id="configUserLabel">Gabinete SMEB</strong></div>
-                  <div style="margin-bottom: 6px;">Perfil de Acesso: <strong id="configUserRole">Governança Total</strong></div>
-                  <div style="margin-bottom: 12px; font-size: 12px; color: var(--text-muted);">Páginas Habilitadas: <span id="configUserTabs">Todas</span></div>
-                  <button id="configLogoutBtn" class="btn btn-secondary btn-sm">Trocar Usuário / Encerrar Sessão</button>
-                </div>
-
-                <div class="field-group">
-                  <label for="configTemaSelect">Esquema Cromático Editorial (Proporção 60-30-10)</label>
-                  <select id="configTemaSelect" class="input-clean">
-                    <option value="light">Modo Claro — Editorial Paper (60% Branco/Gelo, 30% Obsidiana, 10% Ouro Solar)</option>
-                    <option value="dark">Modo Escuro — DeepMind Midnight (60% Obsidiana, 30% Alabastro, 10% Ouro Luminoso)</option>
+              <div style="display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; align-items: center;">
+                <input type="search" id="memoriaSearchInput" class="input-clean" style="max-width: 260px;" placeholder="Filtrar persona ou domínio..." autocomplete="off" />
+                <div class="quick-alert-bar quick-alert-bar-responsive" style="display: flex; gap: 8px; flex: 1; min-width: 0; width: 100%; flex-wrap: wrap;">
+                  <select id="quickAlertTargetSelect" class="input-clean" style="max-width: 200px;" aria-label="Destinatário do Alerta">
+                    <option value="_memoria_helio.md">Hélio (Diário FEMURN)</option>
+                    <option value="_memoria_apolo.md">Apolo (Numeração 2026)</option>
+                    <option value="_memoria_hera.md">Hera (RH &amp; Permutas)</option>
+                    <option value="_memoria_nike.md">Nike (Seletivos PSS)</option>
+                    <option value="_memoria_temis.md">Têmis (Jurídico)</option>
+                    <option value="_memoria_orfeu.md">Orfeu (Certificados)</option>
+                    <option value="_memoria_homero.md">Homero (Portarias)</option>
+                    <option value="_memoria_hestia.md">Héstia (Gabinete)</option>
+                    <option value="_memoria_dedalo.md">Dédalo (Infra/Backups)</option>
+                    <option value="_memoria_atena.md">Atena (Pedagógico)</option>
+                    <option value="_memoria_hermes.md">Hermes (Transporte)</option>
                   </select>
+                  <input type="text" id="quickAlertMessageInput" class="input-clean" style="flex: 1; min-width: min(100%, 180px);" placeholder="Despachar alerta oficial no Correio do Olimpo..." autocomplete="off" aria-label="Mensagem do Alerta" />
+                  <button id="quickAlertSendBtn" class="btn btn-primary btn-sm">Registrar Recado</button>
                 </div>
+              </div>
 
-                <!-- Widget de Inspeção Cromática 60-30-10 e Alternância de Tema (Exclusivo em Ajustes) -->
-                <div id="inspectorWidget" class="fixed bottom-4 right-4 inspector-settings-embedded" style="margin-top: 14px;">
-                  <div class="inspect-60" title="60% Base Dominante (Obsidian Void / Scientific Daylight)">60% Base</div>
-                  <div class="inspect-30" title="30% Superfícies &amp; Tipografia (Surface Hairline)">30% Surface</div>
-                  <div class="inspect-10" title="10% Acento &amp; Foco (Azul Elétrico DeepMind)">10% Accent</div>
-                  <button id="themeToggleBtnInspector" type="button" class="btn-theme-toggle" onclick="window.OlymposApp &amp;&amp; window.OlymposApp.alternarTema()" aria-label="Alternar Tema">Alternar Tema</button>
-                </div>
+              <div id="memoriasGrid" class="memorias-grid">
+                <div class="output-panel">Carregando ecossistema de personas e memórias...</div>
               </div>
             </div>
 
-            <!-- PAINEL DE GESTÃO DE USUÁRIOS RBAC (EXCLUSIVO ADMIN_GABINETE) -->
-            <div id="blocoGestaoUsuarios" class="surface-card hidden" style="margin-top: 24px; border: 1px solid var(--border-hairline); background: var(--surface-secondary, rgba(255,255,255,0.02));">
-              <div class="card-header-row" style="margin-bottom: 8px;">
-                <div>
-                  <span class="section-eyebrow">MODERAÇÃO DE ACESSOS • GABINETE</span>
-                  <h3 class="section-title" style="font-size: 1.15rem;">Gestão de Operadores &amp; Papéis RBAC</h3>
-                  <p class="section-desc" style="margin-bottom: 0;">Cadastre novos operadores institucionais com papéis e permissões segmentadas no Supabase Auth.</p>
+            <!-- SUB-ABA 5: AUTOMAÇÕES & NOTIFICAÇÕES -->
+            <div id="subpaneAjustesAutomacoes" class="subtab-pane hidden" style="display: none;">
+              <div class="surface-card" style="border: 1px solid var(--border-hairline);">
+                <div class="card-header-row" style="margin-bottom: 12px;">
+                  <div>
+                    <span class="section-eyebrow">BOLETIM DIÁRIO FEMURN • FOGO DE PROMETHEUS</span>
+                    <h3 class="section-title" style="font-size: 1.15rem;">Destinatários do Resumo Executivo por E-mail</h3>
+                    <p class="section-desc" style="margin-bottom: 0;">E-mails institucionais que recebem o briefing matinal às 00:10 BRT com atos da FEMURN e links do Drive (<code>BOLETIM_DESTINATARIOS_EMAIL</code>).</p>
+                  </div>
                 </div>
-                <button type="button" id="btnAbrirModalNovoUsuario" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;">
-                  <span>+ Novo Usuário</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- PAINEL DE CONFIGURAÇÃO DO BOLETIM DIÁRIO FEMURN (FOGO DE PROMETHEUS) -->
-            <div class="surface-card" style="margin-top: 24px; border: 1px solid var(--border-hairline);">
-              <div class="card-header-row" style="margin-bottom: 12px;">
-                <div>
-                  <span class="section-eyebrow">BOLETIM DIÁRIO FEMURN • FOGO DE PROMETHEUS</span>
-                  <h3 class="section-title" style="font-size: 1.15rem;">Destinatários do Resumo Executivo por E-mail</h3>
-                  <p class="section-desc" style="margin-bottom: 0;">E-mails institucionais que recebem o briefing matinal às 00:10 BRT com atos da FEMURN e links do Drive (<code>BOLETIM_DESTINATARIOS_EMAIL</code>).</p>
+                <div class="controls-grid" style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 12px; align-items: end;">
+                  <div class="field-group">
+                    <label for="configBoletimEmailInput">Lista de E-mails (separados por vírgula)</label>
+                    <input type="text" id="configBoletimEmailInput" class="input-clean" placeholder="gabinete@smeb.cearamirim.rn.gov.br, assessoria@smeb.cearamirim.rn.gov.br" />
+                  </div>
+                  <div class="button-group">
+                    <button type="button" id="configSalvarBoletimEmailBtn" class="btn btn-primary btn-sm">Salvar Destinatários</button>
+                    <button type="button" id="configTestarBoletimEmailBtn" class="btn btn-secondary btn-sm">Enviar Teste</button>
+                  </div>
                 </div>
-              </div>
-              <div class="controls-grid" style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 12px; align-items: end;">
-                <div class="field-group">
-                  <label for="configBoletimEmailInput">Lista de E-mails (separados por vírgula)</label>
-                  <input type="text" id="configBoletimEmailInput" class="input-clean" placeholder="gabinete@smeb.cearamirim.rn.gov.br, assessoria@smeb.cearamirim.rn.gov.br" />
-                </div>
-                <div class="button-group">
-                  <button type="button" id="configSalvarBoletimEmailBtn" class="btn btn-primary btn-sm">Salvar Destinatários</button>
-                  <button type="button" id="configTestarBoletimEmailBtn" class="btn btn-secondary btn-sm">Enviar Teste</button>
-                </div>
-              </div>
-              <div id="configBoletimEmailFeedback" class="stat-label" style="margin-top: 8px; font-size: 12px;"></div>
-            </div>
-
-            <!-- PAINEL DE INTEGRAÇÃO CARTOGRÁFICA CARTO (CARTO_API_KEY) -->
-            <div class="surface-card" style="margin-top: 24px; border: 1px solid var(--border-hairline);">
-              <div class="card-header-row" style="margin-bottom: 12px;">
-                <div>
-                  <span class="section-eyebrow">GEORREFERENCIAMENTO VETORIAL • MAPLIBRE GL JS + CARTO</span>
-                  <h3 class="section-title" style="font-size: 1.15rem;">Chave de API CARTO (<code>CARTO_API_KEY</code>)</h3>
-                  <p class="section-desc" style="margin-bottom: 0;">Injetada automaticamente via GitHub Actions Secrets (<code>secrets.CARTO_API_KEY</code>) no deploy do GitHub Pages ou configurável localmente abaixo.</p>
-                </div>
-                <span id="configCartoKeyStatusBadge" class="pill-badge pill-blue">CARTO Ativo</span>
-              </div>
-              <div class="controls-grid" style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 12px; align-items: end;">
-                <div class="field-group">
-                  <label for="configCartoApiKeyInput">Token / Chave Pública CARTO (<code>CARTO_API_KEY</code>)</label>
-                  <input type="text" id="configCartoApiKeyInput" class="input-clean" style="font-family: var(--font-mono); font-size: 12px;" placeholder="Injetada via GitHub Secret CARTO_API_KEY (ou insira manualmente)" />
-                </div>
-                <div class="button-group">
-                  <button type="button" id="configSalvarCartoKeyBtn" class="btn btn-primary btn-sm">Salvar CARTO_API_KEY</button>
-                  <button type="button" id="configLimparCartoKeyBtn" class="btn btn-ghost btn-sm">Usar Padrão do GitHub</button>
-                </div>
+                <div id="configBoletimEmailFeedback" class="stat-label" style="margin-top: 8px; font-size: 12px;"></div>
               </div>
             </div>
           </div>
@@ -2553,6 +2641,76 @@
           <div class="modal-footer" style="padding: 14px 24px; border-top: 1px solid var(--border-hairline); display: flex; justify-content: flex-end; gap: 10px;">
             <button type="button" id="btnCancelarNovoUsuario" class="btn btn-secondary btn-sm">Cancelar</button>
             <button type="submit" id="btnSalvarNovoUsuario" class="btn btn-primary btn-sm">Criar Usuário</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- =========================================================================
+         MODAL DE EDIÇÃO DE USUÁRIO (#modalEditarUsuario - ADMIN_GABINETE)
+         ========================================================================= -->
+    <div id="modalEditarUsuario" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalEditarUsuarioTitulo">
+      <div class="modal-card" style="max-width: 560px; width: 92%;">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <span class="badge badge-purple" style="font-size: 0.72rem; margin-bottom: 4px;">Moderação de Acessos • Perfis</span>
+            <h3 id="modalEditarUsuarioTitulo" style="margin: 0; font-size: 1.22rem; font-weight: 700;">Editar Usuário</h3>
+          </div>
+          <button id="closeModalEditarUsuarioBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal">&times;</button>
+        </div>
+
+        <form id="formEditarUsuario">
+          <input type="hidden" id="editarUsuarioId" />
+          <div class="modal-body" style="padding: 20px 24px;">
+            <p class="section-desc" style="margin-top: 0; margin-bottom: 16px;">
+              Atualize as permissões e dados cadastrais do operador no Supabase.
+            </p>
+
+            <!-- Campo: Nome Completo -->
+            <div class="field-group" style="margin-bottom: 14px;">
+              <label for="editarUsuarioNome">Nome Completo *</label>
+              <input type="text" id="editarUsuarioNome" class="input-clean" required autocomplete="name" />
+            </div>
+
+            <!-- Campo: Email Institucional -->
+            <div class="field-group" style="margin-bottom: 14px;">
+              <label for="editarUsuarioEmail">Email Institucional</label>
+              <input type="email" id="editarUsuarioEmail" class="input-clean" readonly disabled style="opacity: 0.7; cursor: not-allowed;" autocomplete="username" />
+            </div>
+
+            <!-- Campo: Papel (select) -->
+            <div class="field-group" style="margin-bottom: 14px;">
+              <label for="editarUsuarioRole">Papel (Perfil RBAC) *</label>
+              <select id="editarUsuarioRole" class="input-clean" required>
+                <option value="RH_COMISSAO">RH_COMISSAO (RH &amp; Comissão de Portarias)</option>
+                <option value="PEDAGOGICO_EVENTOS">PEDAGOGICO_EVENTOS (Pedagógico &amp; Eventos)</option>
+                <option value="JURIDICO">JURIDICO (Assessoria Jurídica)</option>
+                <option value="ADMIN_GABINETE">ADMIN_GABINETE (Gabinete &amp; Governança Total - Moderador)</option>
+              </select>
+            </div>
+
+            <!-- Campo: Departamento -->
+            <div class="field-group" style="margin-bottom: 14px;">
+              <label for="editarUsuarioDepartamento">Departamento / Lotação</label>
+              <input type="text" id="editarUsuarioDepartamento" class="input-clean" autocomplete="organization" />
+            </div>
+
+            <!-- Campo: Status Ativo -->
+            <div class="field-group" style="margin-bottom: 16px;">
+              <label for="editarUsuarioAtivo">Status da Conta</label>
+              <select id="editarUsuarioAtivo" class="input-clean">
+                <option value="true">Ativo (Acesso Liberado)</option>
+                <option value="false">Inativo (Acesso Suspenso)</option>
+              </select>
+            </div>
+
+            <!-- Área de feedback / Mensagem -->
+            <div id="editarUsuarioFeedback" class="output-panel hidden" style="margin-bottom: 14px; font-size: 12.5px;"></div>
+          </div>
+
+          <div class="modal-footer" style="padding: 14px 24px; border-top: 1px solid var(--border-hairline); display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" id="btnCancelarEditarUsuario" class="btn btn-secondary btn-sm">Cancelar</button>
+            <button type="submit" id="btnSalvarEdicaoUsuario" class="btn btn-primary btn-sm">Salvar Alterações</button>
           </div>
         </form>
       </div>
@@ -2972,6 +3130,7 @@
     <script src="js/views/personas.js"></script>
     <script src="js/views/busca.js"></script>
     <script src="js/views/configuracoes.js"></script>
+    <script src="js/views/ajustes.js"></script>
     <script src="js/app.js"></script>
 
     <!-- Registro Oficial do Service Worker PWA Olympos SMEB -->

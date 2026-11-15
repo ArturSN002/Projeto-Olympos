@@ -206,7 +206,7 @@ window.OlymposViews.diarioOficial = (function() {
       window.OlymposApp.renderSkeletonTable(tbody, 5, 4, ['15%', '20%', '50%', '15%']);
     }
 
-    // 1. Carrega imediatamente do Supabase (publicacoes_diario e catalogos_json) — Prioridade SSOT Zero-Latency (~45ms)
+    // 1. Carrega imediatamente do Supabase (publicacoes_diario) — Prioridade SSOT Zero-Latency (~45ms)
     if (window.OlymposSupabase && typeof window.OlymposSupabase.carregarPublicacoesDiario === 'function') {
       window.OlymposSupabase.carregarPublicacoesDiario().then(function(listaSupabase) {
         if (Array.isArray(listaSupabase) && listaSupabase.length > 0) {
@@ -214,22 +214,22 @@ window.OlymposViews.diarioOficial = (function() {
           integrarPublicacoesSupabase(listaSupabase);
           const stElem = document.getElementById('promWebhookStatus');
           const lrElem = document.getElementById('promLastRun');
-          if (stElem) stElem.textContent = 'Acervo Oficial FEMURN Conectado • Base Supabase & Drive Ativa';
-          if (lrElem) lrElem.textContent = 'Última recepção: Edição 3452 FEMURN (06/11/2026)';
+          if (stElem) stElem.textContent = 'Acervo Oficial FEMURN Conectado • Base Supabase SSOT Ativa';
+          if (lrElem) lrElem.textContent = 'Última recepção: Sincronização Contínua Supabase SSOT';
         }
       }).catch(function(eSup) {
         console.warn('[DiarioOficial] Consulta Supabase em fallback:', eSup);
       });
     }
 
-    // 2. Consulta Gateway GAS para obter publicações em tempo real do Drive
+    // 2. Consulta Gateway GAS para obter status do webhook (escaneamento de pastas Drive desativado em prol do SSOT)
     window.OlymposApi.chamar('prometheus_status', {}, function(res) {
       const data = (res && res.data) ? res.data : res;
       const stElem = document.getElementById('promWebhookStatus');
       const lrElem = document.getElementById('promLastRun');
       const sheetBtn = document.getElementById('promSheetLinkBtn');
 
-      if (!data || data.status === 'ERRO' || (!data.statusWebhook && !data.arquivosDrive)) {
+      if (!data || data.status === 'ERRO' || !data.statusWebhook) {
         isLoaded = true;
         if (stElem && publicacoesUnificadas.length === 0) {
           stElem.textContent = 'Receptor GAS Pronto • Base de atos oficiais pronta para consulta';
@@ -247,22 +247,22 @@ window.OlymposViews.diarioOficial = (function() {
       if (stElem) {
         stElem.textContent = sw.webhookAtivo
           ? 'Webhook Autenticado & Cron Diário Ativo (00:10 BRT)'
-          : 'Acervo Oficial FEMURN Conectado • Base Supabase & Drive Ativa';
+          : 'Acervo Oficial FEMURN Conectado • Base Supabase SSOT Ativa';
       }
       if (lrElem) {
-        lrElem.textContent = 'Última recepção: ' + (sw.ultimaExecucao || 'Edição 3452 FEMURN (06/11/2026)') +
+        lrElem.textContent = 'Última recepção: ' + (sw.ultimaExecucao || 'Base SSOT Atualizada') +
           (sw.totalSalvos !== undefined ? (' • ' + sw.totalSalvos + ' ato(s) na última edição') : '');
       }
       if (sheetBtn) {
         sheetBtn.href = data.planilhaOficialUrl || 'https://docs.google.com/spreadsheets/d/1tU6rvgB2jNGaGqHK1oecNMQX7-5QcB8Q-1fNgzWcZqs/edit';
       }
 
-      // 3. Extrai linhas das planilhas diárias recebidas do receptor GAS
+      // Extrai linhas das planilhas diárias se houver
       if (Array.isArray(data.linhasPlanilhas) && data.linhasPlanilhas.length > 0) {
         integrarLinhasPlanilhas(data.linhasPlanilhas);
       }
 
-      // Mescla publicações ricas com NER do último webhook + arquivos reais das pastas 2026
+      // Mescla publicações ricas com NER do último webhook
       const urlsVistas = new Set(publicacoesUnificadas.map(function(x) { return x.url; }));
 
       (sw.publicacoes || []).forEach(function(p) {
@@ -285,20 +285,8 @@ window.OlymposViews.diarioOficial = (function() {
         });
       });
 
-      (data.arquivosDrive || []).forEach(function(arq) {
-        if (arq.url && urlsVistas.has(arq.url)) return;
-        if (arq.url) urlsVistas.add(arq.url);
-        publicacoesUnificadas.push({
-          data: arq.dataCriacao || '--',
-          setor: arq.setor || 'Gabinete 2026',
-          categoria: arq.setor && arq.setor.includes('Portarias') ? 'PORTARIA' : 'ARQUIVO_DRIVE',
-          titulo: arq.nome || 'Documento PDF',
-          codigo: '',
-          servidores: [],
-          matriculas: [],
-          url: arq.url || ''
-        });
-      });
+      // NOTA: Escaneamento de pastas do Drive desativado conforme especificação SSOT.
+      // Atos oficiais são consumidos exclusivamente de public.publicacoes_diario.
 
       renderizarTabela();
     }, function(err) {

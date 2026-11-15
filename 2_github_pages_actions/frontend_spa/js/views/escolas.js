@@ -312,7 +312,16 @@ window.OlymposViews.escolas = (function() {
           if (typeof cfg.transformRequest === 'function') {
             glOpts.transformRequest = cfg.transformRequest;
           }
-          maplibreLayer = window.L.maplibreGL(glOpts).addTo(leafletMap);
+          var layer = window.L.maplibreGL(glOpts);
+          if (layer) {
+            layer.on('error', function(err) {
+              console.warn('[EscolasView] MapLibre GL error, fallback raster mantido:', err);
+              if (maplibreLayer && leafletMap && leafletMap.hasLayer(maplibreLayer)) {
+                try { leafletMap.removeLayer(maplibreLayer); } catch(e) {}
+              }
+            });
+            maplibreLayer = layer.addTo(leafletMap);
+          }
         }
       } catch (eGl) {
         console.warn('[EscolasView] Fallback Carto Raster ativo (WebGL indisponível):', eGl);
