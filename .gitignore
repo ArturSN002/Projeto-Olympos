@@ -66,9 +66,9 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # Bloqueio de Repositorios Git Aninhados (Submodulos orfaos)
-**/fogo-de-prometheus/**/.git/
-**/papiro-de-cadmo/**/.git/
-**/.git_nested/
+#**/fogo-de-prometheus/**/.git/
+#**/papiro-de-cadmo/**/.git/
+#**/.git_nested/
 
 # Arquivos Temporarios de Execucao e Backups
 tmp/
