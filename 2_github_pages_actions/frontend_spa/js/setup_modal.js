@@ -74,18 +74,18 @@ window.OlymposSetupModal = (function() {
     if (!el.detectedBadge) return;
 
     if (!keyTrim) {
-      el.detectedBadge.textContent = '🔒 Endpoint Supabase e Gateway GAS serão detectados automaticamente a partir da chave pública.';
+      el.detectedBadge.innerHTML = (window.OlymposIcons ? window.OlymposIcons.ui('lock') : '') + ' Endpoint Supabase e Gateway GAS serão detectados automaticamente a partir da chave pública.';
       return;
     }
 
     if (derived) {
       const host = derived.replace(/^https:\/\//i, '');
-      el.detectedBadge.textContent = '✅ Projeto detectado automaticamente no token JWT: ' + host + ' • Gateway GAS vinculado automaticamente.';
+      el.detectedBadge.innerHTML = (window.OlymposIcons ? window.OlymposIcons.ui('check') : '') + ' Projeto detectado automaticamente no token JWT: ' + host + ' • Gateway GAS vinculado automaticamente.';
     } else if (keyTrim.startsWith('sb_publishable_') && keyTrim.length > 20) {
       const hostFallback = resolved.replace(/^https:\/\//i, '');
-      el.detectedBadge.textContent = '✅ Chave publicável reconhecida • Endpoint canônico ativo (' + hostFallback + ') • Gateway GAS automático.';
+      el.detectedBadge.innerHTML = (window.OlymposIcons ? window.OlymposIcons.ui('check') : '') + ' Chave publicável reconhecida • Endpoint canônico ativo (' + hostFallback + ') • Gateway GAS automático.';
     } else {
-      el.detectedBadge.textContent = '⚠️ Informe uma chave pública JWT (eyJ...) ou sb_publishable_* válida do Supabase.';
+      el.detectedBadge.innerHTML = (window.OlymposIcons ? window.OlymposIcons.ui('alertTriangle') : '') + ' Informe uma chave pública JWT (eyJ...) ou sb_publishable_* válida do Supabase.';
     }
   }
 

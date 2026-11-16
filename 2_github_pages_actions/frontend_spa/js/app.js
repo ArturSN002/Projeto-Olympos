@@ -3,6 +3,7 @@
  * Estética Editorial (Google DeepMind + The Keyword), RBAC, Tema 60-30-10 e Modais.
  */
 window.OlymposApp = (function() {
+  const PUBLIC_PAGES = ['visao-geral', 'diario-oficial', 'escolas'];
   let currentUserSession = null;
   let activeMemoriaEditando = null;
 
@@ -114,11 +115,19 @@ window.OlymposApp = (function() {
           }
         } catch (eStore) {}
         aplicarSessaoNaInterface(currentUserSession);
+        return;
       } catch (e) {
         localStorage.removeItem('olympos_session');
-        solicitarLogin();
       }
-    } else {
+    }
+
+    // 3. Sem sessão ativa: inicia diretamente no Modo Visitante (Acesso Público)
+    currentUserSession = null;
+    aplicarModoVisitanteNaInterface();
+
+    const initialHash = window.location.hash.replace('#', '').trim();
+    if (initialHash && !PUBLIC_PAGES.includes(initialHash)) {
+      window.location.hash = '#visao-geral';
       solicitarLogin();
     }
   }
@@ -526,12 +535,57 @@ window.OlymposApp = (function() {
       sessionStorage.removeItem('olympos_rbac_profile_cache');
     } catch (e) {}
     currentUserSession = null;
-    const blocoGestao = document.getElementById('blocoGestaoUsuarios');
-    if (blocoGestao) blocoGestao.classList.add('hidden');
-    const avisoRestrito = document.getElementById('avisoAcessoUsuariosRestrito');
-    if (avisoRestrito) avisoRestrito.classList.remove('hidden');
+    aplicarModoVisitanteNaInterface();
+    const modalLogin = document.getElementById('loginScreen');
+    if (modalLogin) modalLogin.classList.add('hidden');
     showToast('Sessão encerrada.');
-    solicitarLogin();
+    if (window.OlymposRouter && typeof window.OlymposRouter.navegarPara === 'function') {
+      window.OlymposRouter.navegarPara('visao-geral');
+    }
+  }
+
+  function aplicarModoVisitanteNaInterface() {
+    const userBadgeName = document.getElementById('userBadgeName');
+    const userBadgeRole = document.getElementById('userBadgeRole');
+    const avatarInitials = document.getElementById('userAvatarInitials');
+
+    if (userBadgeName) userBadgeName.textContent = 'Entrar';
+    if (userBadgeRole) userBadgeRole.textContent = 'Acesso Público';
+    if (avatarInitials) avatarInitials.textContent = 'VS';
+
+    document.querySelectorAll('.nav-link').forEach(function(link) {
+      const pageTarget = link.getAttribute('data-page');
+      if (!pageTarget) return;
+      if (PUBLIC_PAGES.includes(pageTarget)) {
+        link.classList.remove('hidden');
+      } else {
+        link.classList.add('hidden');
+      }
+    });
+
+    document.querySelectorAll('.nav-dropdown').forEach(function(dd) {
+      const items = dd.querySelectorAll('.dropdown-item');
+      if (items.length > 0) {
+        const hasVisible = Array.from(items).some(function(item) {
+          return !item.classList.contains('hidden');
+        });
+        dd.classList.toggle('hidden', !hasVisible);
+      } else {
+        dd.classList.add('hidden');
+      }
+    });
+
+    const blocoGestao = document.getElementById('blocoGestaoUsuarios');
+    const avisoRestrito = document.getElementById('avisoAcessoUsuariosRestrito');
+    if (blocoGestao) blocoGestao.classList.add('hidden');
+    if (avisoRestrito) avisoRestrito.classList.remove('hidden');
+
+    const modalLogin = document.getElementById('loginScreen');
+    if (modalLogin) modalLogin.classList.add('hidden');
+
+    if (window.OlymposIcons && typeof window.OlymposIcons.hydrateAll === 'function') {
+      window.OlymposIcons.hydrateAll();
+    }
   }
 
   function normalizarPermissoesRbac(listaBruta) {
@@ -762,12 +816,12 @@ window.OlymposApp = (function() {
     if (window.OlymposApi && typeof window.OlymposApi.chamar === 'function') {
       window.OlymposApi.chamar('prometheus_config_emails', { destinatarios: clean }, function(res) {
         const msg = (res && res.mensagem) || 'Destinatários do boletim gravados com sucesso!';
-        if (fbCfg) fbCfg.textContent = '✅ ' + msg;
-        if (fbDiario) fbDiario.textContent = '✅ ' + msg;
+        if (fbCfg) fbCfg.innerHTML = (window.OlymposIcons ? window.OlymposIcons.ui('check') : '') + ' ' + escapeHtml(msg);
+        if (fbDiario) fbDiario.innerHTML = (window.OlymposIcons ? window.OlymposIcons.ui('check') : '') + ' ' + escapeHtml(msg);
         showToast(msg);
       }, function(err) {
-        if (fbCfg) fbCfg.textContent = '⚠️ Salvo localmente no navegador (pendente sync com servidor).';
-        if (fbDiario) fbDiario.textContent = '⚠️ Salvo localmente no navegador.';
+        if (fbCfg) fbCfg.innerHTML = (window.OlymposIcons ? window.OlymposIcons.ui('alertTriangle') : '') + ' Salvo localmente no navegador (pendente sync com servidor).';
+        if (fbDiario) fbDiario.innerHTML = (window.OlymposIcons ? window.OlymposIcons.ui('alertTriangle') : '') + ' Salvo localmente no navegador.';
         showToast('Destinatários salvos localmente.');
       });
     } else {
@@ -829,8 +883,26 @@ window.OlymposApp = (function() {
     const btnUser = document.getElementById('userSessionBtn');
     if (btnUser) {
       btnUser.addEventListener('click', function() {
-        if (confirm('Deseja encerrar a sessão atual ou trocar de perfil setorial?')) {
-          fazerLogout();
+        if (!currentUserSession) {
+          solicitarLogin();
+        } else {
+          if (confirm('Deseja encerrar a sessão atual ou trocar de perfil setorial?')) {
+            fazerLogout();
+          }
+        }
+      });
+    }
+
+    const btnCloseLogin = document.getElementById('closeLoginModalBtn');
+    if (btnCloseLogin) {
+      btnCloseLogin.addEventListener('click', function() {
+        const modal = document.getElementById('loginScreen');
+        if (modal) modal.classList.add('hidden');
+        if (window.OlymposRouter) {
+          const cur = window.OlymposRouter.getPaginaAtual ? window.OlymposRouter.getPaginaAtual() : 'visao-geral';
+          if (!PUBLIC_PAGES.includes(cur)) {
+            window.OlymposRouter.navegarPara('visao-geral');
+          }
         }
       });
     }
@@ -841,6 +913,28 @@ window.OlymposApp = (function() {
         document.body.classList.toggle('nav-drawer-open');
       });
     }
+
+    const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+    if (sidebarBackdrop) {
+      sidebarBackdrop.addEventListener('click', function() {
+        document.body.classList.remove('nav-drawer-open');
+      });
+    }
+
+    document.querySelectorAll('.drawer-close-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.body.classList.remove('nav-drawer-open');
+      });
+    });
+
+    document.querySelectorAll('.mobile-nav-inner .nav-link').forEach(function(link) {
+      link.addEventListener('click', function() {
+        if (link.classList.contains('nav-dropdown-trigger') || !link.getAttribute('data-page')) {
+          return;
+        }
+        document.body.classList.remove('nav-drawer-open');
+      });
+    });
 
     const btnMobileReset = document.getElementById('mobileResetSiteBtn');
     if (btnMobileReset) {
@@ -896,6 +990,7 @@ window.OlymposApp = (function() {
     });
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') {
+        document.body.classList.remove('nav-drawer-open');
         fecharDropdowns();
       }
     });
@@ -1306,7 +1401,7 @@ window.OlymposApp = (function() {
       inSenha.value = gerarSenhaSeguraAleatoria();
       inSenha.type = 'text';
       const btnToggle = document.getElementById('btnToggleVisibilidadeSenha');
-      if (btnToggle) btnToggle.textContent = '🔒';
+      if (btnToggle) btnToggle.innerHTML = window.OlymposIcons ? window.OlymposIcons.ui('lock') : '';
       showToast('Senha segura gerada com sucesso!');
     }
   }
@@ -1317,10 +1412,10 @@ window.OlymposApp = (function() {
     if (!inSenha) return;
     if (inSenha.type === 'password') {
       inSenha.type = 'text';
-      if (btnToggle) btnToggle.textContent = '🔒';
+      if (btnToggle) btnToggle.innerHTML = window.OlymposIcons ? window.OlymposIcons.ui('lock') : '';
     } else {
       inSenha.type = 'password';
-      if (btnToggle) btnToggle.textContent = '👁️';
+      if (btnToggle) btnToggle.innerHTML = window.OlymposIcons ? window.OlymposIcons.ui('eye') : '';
     }
   }
 
@@ -1487,6 +1582,8 @@ window.OlymposApp = (function() {
     fecharDropdowns: fecharDropdowns,
     resetMobileApp: resetMobileApp,
     escapeHtml: escapeHtml,
-    hydrateVectorIcons: hydrateVectorIcons
+    hydrateVectorIcons: hydrateVectorIcons,
+    PUBLIC_PAGES: PUBLIC_PAGES,
+    aplicarModoVisitanteNaInterface: aplicarModoVisitanteNaInterface
   };
 })();

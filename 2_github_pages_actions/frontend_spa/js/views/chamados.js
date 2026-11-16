@@ -117,7 +117,7 @@ window.OlymposViews.chamados = (function() {
   function carregarChamados(forcarRecarregamento) {
     const container = document.getElementById('chamadosListaContainer');
     if (container && (!window.OlymposSignals || window.OlymposSignals.tickets.peek().length === 0 || forcarRecarregamento)) {
-      container.innerHTML = '<div class="empty-state-card" style="padding: 36px; text-align: center;"><div class="empty-state-icon">⏳</div><p>Carregando solicitações em aberto...</p></div>';
+      container.innerHTML = '<div class="empty-state-card" style="padding: 36px; text-align: center;"><div class="empty-state-icon">' + (window.OlymposIcons ? window.OlymposIcons.ui('hourglass') : '') + '</div><p>Carregando solicitações em aberto...</p></div>';
     }
 
     // 1. Tenta carregar do Supabase SSOT
@@ -209,7 +209,7 @@ window.OlymposViews.chamados = (function() {
     if (!tickets || tickets.length === 0) {
       container.innerHTML = `
         <div id="emptyChamadosState" class="empty-state-card" style="padding: 40px 20px; text-align: center; background: var(--bg-surface); border: 1px solid var(--border-hairline); border-radius: var(--radius-lg);">
-          <div class="empty-state-icon" style="font-size: 2.2rem; margin-bottom: 8px;">🎉</div>
+          <div class="empty-state-icon" style="font-size: 2.2rem; margin-bottom: 8px;">${window.OlymposIcons ? window.OlymposIcons.ui('party') : ''}</div>
           <h4 style="font-size: 1.15rem; color: var(--text-primary); margin: 0 0 6px;">Nenhuma pendência encontrada</h4>
           <p style="font-size: 0.88rem; color: var(--text-secondary); margin: 0;">Não há chamados com os filtros selecionados no momento.</p>
         </div>
@@ -226,7 +226,7 @@ window.OlymposViews.chamados = (function() {
       const status = (t.status || 'ABERTO').toUpperCase();
 
       const badgeUrgente = isUrgent
-        ? `<span class="badge-urgente badge badge-urgent animate-pulse">${isEscalated ? '🚨 ESCALONADO 24H' : 'URGENTE'}</span>`
+        ? `<span class="badge-urgente badge badge-urgent animate-pulse">${window.OlymposIcons ? window.OlymposIcons.ui('siren') : ''} ${isEscalated ? 'ESCALONADO 24H' : 'URGENTE'}</span>`
         : '';
 
       const actionsHtml = buildCardActions(t, status);
@@ -253,7 +253,7 @@ window.OlymposViews.chamados = (function() {
             <div class="chamado-descricao">
               ${window.OlymposApp ? window.OlymposApp.escapeHtml(t.descricao || 'Sem descrição informada.') : (t.descricao || 'Sem descrição informada.')}
             </div>
-            ${t.anexos ? `<div style="margin-top: 6px; font-size: 0.82rem;"><a href="${window.OlymposApp ? window.OlymposApp.escapeHtml(t.anexos) : t.anexos}" target="_blank" rel="noopener" style="color: var(--accent-primary);">📎 Ver Documento Anexo ↗</a></div>` : ''}
+            ${t.anexos ? `<div style="margin-top: 6px; font-size: 0.82rem;"><a href="${window.OlymposApp ? window.OlymposApp.escapeHtml(t.anexos) : t.anexos}" target="_blank" rel="noopener" style="color: var(--accent-primary);">${window.OlymposIcons ? window.OlymposIcons.ui('paperclip') : ''} Ver Documento Anexo ↗</a></div>` : ''}
           </div>
 
           <div class="chamado-actions">
@@ -271,7 +271,7 @@ window.OlymposViews.chamados = (function() {
   function buildCardActions(ticket, status) {
     const idSafe = window.OlymposApp ? window.OlymposApp.escapeHtml(ticket.id) : ticket.id;
     if (status === 'RESOLVIDO' || status === 'CONCLUIDO') {
-      return `<span class="text-success" style="font-weight: 600; font-size: 0.82rem;">✅ Demanda concluída com sucesso</span>`;
+      return `<span class="text-success" style="font-weight: 600; font-size: 0.82rem;">${window.OlymposIcons ? window.OlymposIcons.ui('check') : ''} Demanda concluída com sucesso</span>`;
     }
 
     const parts = [];
@@ -281,7 +281,7 @@ window.OlymposViews.chamados = (function() {
                 onclick="window.marcarAtendimentoChamado('${idSafe}')"
                 data-action="chamados_marcar_atendimento"
                 title="Marcar chamado como em atendimento">
-          👁️ Em Atendimento
+          ${window.OlymposIcons ? window.OlymposIcons.ui('eye') : ''} Em Atendimento
         </button>
       `);
     }
@@ -350,7 +350,7 @@ window.OlymposViews.chamados = (function() {
     if (elTotal) elTotal.textContent = String(totalAbertos);
     if (elFila) elFila.textContent = totalAbertos + ' na fila';
     if (elUrg) elUrg.textContent = String(urgentes);
-    if (elUrgBadge) elUrgBadge.textContent = '🚨 ' + urgentes + ' Urgentes';
+    if (elUrgBadge) elUrgBadge.innerHTML = (window.OlymposIcons ? window.OlymposIcons.ui('siren') : '') + ' ' + urgentes + ' Urgentes';
     if (elRes) elRes.textContent = String(resolvidos);
 
     if (elSlaMedio) {
@@ -411,7 +411,7 @@ window.OlymposViews.chamados = (function() {
     if (!id) return;
     const nowIso = new Date().toISOString();
 
-    // 🔒 RESTRIÇÃO ESTRITA: ZERO DISPARO DE E-MAIL AO FINALIZAR
+    // [SEGURANCA] RESTRIÇÃO ESTRITA: ZERO DISPARO DE E-MAIL AO FINALIZAR
     if (window.OlymposSignals) {
       window.OlymposSignals.updateTicket(id, {
         status: 'RESOLVIDO',

@@ -82,7 +82,7 @@ window.OlymposViews.visaoGeral = (function() {
     if (pendentes.length === 0) {
       container.innerHTML = `
         <div class="empty-state-card" style="padding: 24px; text-align: center; background: var(--bg-surface); border-radius: var(--radius-md); border: 1px solid var(--border-hairline);">
-          <span style="font-size: 1.8rem; display: block; margin-bottom: 6px;">🎉</span>
+          <span class="svg-icon-inline" style="width: 2rem; height: 2rem; margin-bottom: 6px;">${window.OlymposIcons ? window.OlymposIcons.ui('party') : ''}</span>
           <p style="margin: 0; color: var(--text-muted); font-size: 0.88rem;">Todos os eventos externos e compromissos da agenda estão concluídos.</p>
         </div>
       `;
@@ -100,15 +100,15 @@ window.OlymposViews.visaoGeral = (function() {
         <div class="evento-agenda-card" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: var(--bg-surface); border: 1px solid var(--border-hairline); border-radius: var(--radius-md); gap: 12px; margin-bottom: 8px;">
           <div style="flex: 1; min-width: 0;">
             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-              <span class="pill-badge pill-amber" style="font-size: 0.68rem;">⏳ Pendente</span>
+              <span class="pill-badge pill-amber" style="font-size: 0.68rem;">${window.OlymposIcons ? window.OlymposIcons.ui('hourglass') : ''} Pendente</span>
               <span style="font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono);">${dataFmt}${ev.horario ? ' • ' + ev.horario : ''}</span>
               ${ev.setor ? `<span style="font-size: 0.72rem; color: var(--text-secondary); background: var(--bg-tonal); padding: 1px 6px; border-radius: 4px;">${ev.setor}</span>` : ''}
             </div>
             <h5 style="margin: 0 0 2px 0; font-size: 0.92rem; font-weight: 600; color: var(--text-primary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${window.OlymposApp ? window.OlymposApp.escapeHtml(ev.titulo) : ev.titulo}</h5>
-            ${ev.local ? `<p style="margin: 0; font-size: 0.78rem; color: var(--text-secondary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">📍 ${window.OlymposApp ? window.OlymposApp.escapeHtml(ev.local) : ev.local}</p>` : ''}
+            ${ev.local ? `<p style="margin: 0; font-size: 0.78rem; color: var(--text-secondary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${window.OlymposIcons ? window.OlymposIcons.ui('mapPin') : ''} ${window.OlymposApp ? window.OlymposApp.escapeHtml(ev.local) : ev.local}</p>` : ''}
           </div>
           <button type="button" class="btn btn-primary btn-sm" style="font-size: 0.78rem; padding: 4px 10px; white-space: nowrap;" onclick="window.concluirEventoAgenda('${ev.id}')">
-            ✓ Concluir
+            ${window.OlymposIcons ? window.OlymposIcons.ui('check') : ''} Concluir
           </button>
         </div>
       `;

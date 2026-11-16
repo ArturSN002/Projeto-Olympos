@@ -88,6 +88,9 @@
             <button type="submit" id="loginSubmitBtn" class="btn btn-primary" style="width: 100%; padding: 12px 20px;">
               Acessar Ambiente Olympos
             </button>
+            <button type="button" id="closeLoginModalBtn" class="btn btn-secondary" style="width: 100%; margin-top: 10px; padding: 11px 18px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+              Continuar no Acesso Público
+            </button>
           </form>
 
           <div style="margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--border-hairline); text-align: center;">
@@ -180,7 +183,7 @@
         <div style="display: flex; align-items: center; gap: 8px;">
           <span class="drawer-title">Navegação Olympos</span>
         </div>
-        <button class="drawer-close-btn" onclick="document.body.classList.remove('nav-drawer-open')" aria-label="Fechar menu">✕</button>
+        <button class="drawer-close-btn" onclick="document.body.classList.remove('nav-drawer-open')" aria-label="Fechar menu"><span class="svg-icon-inline" data-icon="close"></span></button>
       </div>
       <div class="nav-rail-inner mobile-nav-inner">
         <a href="#visao-geral" class="nav-link active" data-page="visao-geral">Visão Geral</a>
@@ -372,7 +375,7 @@
               </div>
               <div class="header-actions">
                 <a href="#calendario" class="btn btn-secondary btn-sm" style="font-size: 12px; display: inline-flex; align-items: center; gap: 4px;">
-                  <span>🗓️ Abrir Calendário Completo</span>
+                  <span class="svg-icon-inline" data-icon="calendar"></span> <span>Abrir Calendário Completo</span>
                 </a>
               </div>
             </div>
@@ -390,8 +393,8 @@
                 <p class="section-desc">Cada módulo opera em página dedicada para redação oficial, gestão funcional e acompanhamento documental da SMEB.</p>
               </div>
               <div class="header-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <a href="https://drive.google.com/drive/folders/1W9mGmQCrX8BRPsGcK_vqUwfXw1dRmSya" target="_blank" rel="noopener" class="folder-chip">📁 Pasta Central Olympo ↗</a>
-                <a href="https://drive.google.com/drive/folders/1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu" target="_blank" rel="noopener" class="folder-chip">📝 Memórias Operacionais ↗</a>
+                <a href="https://drive.google.com/drive/folders/1W9mGmQCrX8BRPsGcK_vqUwfXw1dRmSya" target="_blank" rel="noopener" class="folder-chip"><span class="svg-icon-inline" data-icon="folderDrive"></span> Pasta Central Olympo <span class="external-arrow">↗</span></a>
+                <a href="https://drive.google.com/drive/folders/1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu" target="_blank" rel="noopener" class="folder-chip"><span class="svg-icon-inline" data-icon="edit"></span> Memórias Operacionais <span class="external-arrow">↗</span></a>
               </div>
             </div>
 
@@ -502,10 +505,10 @@
               </div>
               <div class="header-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
                 <a href="https://drive.google.com/drive/folders/1H4bJXClx66Mr5PmRmSQBQLHDpAaKwdab" target="_blank" rel="noopener" class="folder-chip">
-                  📁 Pasta Ofícios 2026 ↗
+                  <span class="svg-icon-inline" data-icon="folderDrive"></span> Pasta Ofícios 2026 <span class="external-arrow">↗</span>
                 </a>
                 <a href="https://drive.google.com/file/d/1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_/view" target="_blank" rel="noopener noreferrer" class="folder-chip">
-                  🏛️ Memória de Apolo ↗
+                  <span class="svg-icon-inline" data-icon="olymposLogo"></span> Memória de Apolo <span class="external-arrow">↗</span>
                 </a>
               </div>
             </div>
@@ -555,10 +558,10 @@
             <!-- SELETOR DE SUB-ABAS TIPO PÍLULA -->
             <div class="subnav-tabs-bar" role="tablist" aria-label="Navegação interna de Portarias">
               <button type="button" class="subnav-tab active" id="subtabBtnPortariasLote" data-subtab="lote">
-                <span>⚡ Portarias em Lote</span>
+                <span class="svg-icon-inline" data-icon="boltZeus"></span> <span>Portarias em Lote</span>
               </button>
               <button type="button" class="subnav-tab" id="subtabBtnPortariasLicencas" data-subtab="licencas">
-                <span>📋 Cadastro de Licenças</span>
+                <span class="svg-icon-inline" data-icon="clipboard"></span> <span>Cadastro de Licenças</span>
               </button>
             </div>
 
@@ -804,8 +807,8 @@
                   <span id="liraParticipantesContagem" style="font-size: 12.5px; color: var(--text-muted);">Nenhuma aba carregada</span>
                 </div>
                 <div class="button-group" style="display: flex; gap: 8px;">
-                  <button type="button" id="liraColarLoteBtn" class="btn btn-secondary btn-sm">📋 Colar em Lote</button>
-                  <button type="button" id="liraRecarregarParticipantesBtn" class="btn btn-secondary btn-sm">🔄 Atualizar Lista</button>
+                  <button type="button" id="liraColarLoteBtn" class="btn btn-secondary btn-sm"><span class="svg-icon-inline" data-icon="clipboard"></span> Colar em Lote</button>
+                  <button type="button" id="liraRecarregarParticipantesBtn" class="btn btn-secondary btn-sm"><span class="svg-icon-inline" data-icon="refresh"></span> Atualizar Lista</button>
                 </div>
               </div>
 
@@ -866,10 +869,10 @@
               </div>
               <div class="button-group">
                 <a id="promSheetLinkBtn" href="https://docs.google.com/spreadsheets/d/1tU6rvgB2jNGaGqHK1oecNMQX7-5QcB8Q-1fNgzWcZqs/edit" target="_blank" rel="noopener" class="folder-chip">
-                  📊 Planilha Diário Oficial ↗
+                  <span class="svg-icon-inline" data-icon="chart"></span> Planilha Diário Oficial <span class="external-arrow">↗</span>
                 </a>
                 <a href="https://drive.google.com/drive/folders/1aj514v29gytXH9j5LY_V76ap9XIblwHS" target="_blank" rel="noopener" class="folder-chip">
-                  💾 Backup Diário Oficial ↗
+                  <span class="svg-icon-inline" data-icon="disk"></span> Backup Diário Oficial <span class="external-arrow">↗</span>
                 </a>
                 <button id="prometheusTriggerActionBtn" class="btn btn-accent btn-sm">Atualizar Publicações Agora</button>
                 <button id="prometheusChatSummaryBtn" class="btn btn-secondary btn-sm">Enviar Resumo ao Chat</button>
@@ -895,7 +898,7 @@
             <div class="surface-card" style="margin-bottom: 18px; padding: 14px 18px; border: 1px solid var(--border-hairline); background: var(--bg-surface);">
               <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
                 <div>
-                  <div style="font-weight: 600; font-size: 13.5px; color: var(--text-main);">📧 Destinatários do Informativo Diário</div>
+                  <div style="font-weight: 600; font-size: 13.5px; color: var(--text-main);"><span class="svg-icon-inline" data-icon="mail"></span> Destinatários do Informativo Diário</div>
                   <div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">Lista de e-mails para envio automático do resumo diário da FEMURN às 00:10.</div>
                 </div>
                 <div class="diario-boletim-controls" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
@@ -916,11 +919,11 @@
               </div>
               <div class="diario-controls-toolbar">
                 <select id="prometheusPeriodFilter" class="input-clean filter-select-modern" title="Filtro de período de publicação">
-                  <option value="SEMANA" selected>📅 Esta Semana (Padrão)</option>
-                  <option value="15DIAS">📅 Últimos 15 Dias</option>
-                  <option value="MES">📅 Este Mês</option>
-                  <option value="30DIAS">📅 Últimos 30 Dias</option>
-                  <option value="TODOS">📚 Todo o Acervo</option>
+                  <option value="SEMANA" selected>Esta Semana (Padrão)</option>
+                  <option value="15DIAS">Últimos 15 Dias</option>
+                  <option value="MES">Este Mês</option>
+                  <option value="30DIAS">Últimos 30 Dias</option>
+                  <option value="TODOS">Todo o Acervo</option>
                 </select>
                 <select id="prometheusSectorFilter" class="input-clean filter-select-modern" title="Filtro de setor">
                   <option value="TODOS" selected>Todos os Setores</option>
@@ -929,10 +932,10 @@
                   <option value="Assessoria Jurídica 2026">Assessoria Jurídica 2026</option>
                 </select>
                 <select id="prometheusSortFilter" class="input-clean filter-select-modern" title="Critério de ordenação das publicações">
-                  <option value="DATA_DESC" selected>📅 Data (Mais recente primeiro)</option>
-                  <option value="DATA_ASC">📅 Data (Mais antiga primeiro)</option>
-                  <option value="NOME_AZ">🔤 Título da Publicação / Ato (A–Z)</option>
-                  <option value="NOME_ZA">🔤 Título da Publicação / Ato (Z–A)</option>
+                  <option value="DATA_DESC" selected>Data (Mais recente primeiro)</option>
+                  <option value="DATA_ASC">Data (Mais antiga primeiro)</option>
+                  <option value="NOME_AZ">Título da Publicação / Ato (A–Z)</option>
+                  <option value="NOME_ZA">Título da Publicação / Ato (Z–A)</option>
                 </select>
                 <input type="search" id="prometheusSearchInput" class="input-clean" placeholder="Filtrar ato, servidor ou código..." />
               </div>
@@ -942,8 +945,8 @@
               <table class="clean-table table-responsive-cards">
                 <thead>
                   <tr>
-                    <th id="thDiarioData" class="col-diario-data" style="cursor: pointer; user-select: none;" title="Clique para ordenar por data (Mais recente / Mais antiga)">Data <span id="sortIndicatorData">🔽</span></th>
-                    <th id="thDiarioSetor" class="col-diario-setor" style="cursor: pointer; user-select: none;" title="Clique para ordenar por município / secretaria / setor">Setor / Categoria <span id="sortIndicatorNome">↕</span></th>
+                    <th id="thDiarioData" class="col-diario-data" style="cursor: pointer; user-select: none;" title="Clique para ordenar por data (Mais recente / Mais antiga)">Data <span id="sortIndicatorData" class="svg-icon-inline" data-icon="chevronDown"></span></th>
+                    <th id="thDiarioSetor" class="col-diario-setor" style="cursor: pointer; user-select: none;" title="Clique para ordenar por município / secretaria / setor">Setor / Categoria <span id="sortIndicatorNome" class="svg-icon-inline" data-icon="arrowUpDown"></span></th>
                     <th>Ato Oficial &amp; Servidores Identificados</th>
                     <th class="text-right col-diario-doc">Documento</th>
                   </tr>
@@ -975,7 +978,7 @@
                   Matriz Oficial de Permutas ↗
                 </a>
                 <a href="https://drive.google.com/drive/folders/1SDBCXU3LjI0Qnf6E6O6SLqRjctHz70k0" target="_blank" rel="noopener" class="folder-chip" style="border-color: rgba(99, 102, 241, 0.4); color: #818cf8;">
-                  📂 Pasta de Permutas (Drive) ↗
+                  <span class="svg-icon-inline" data-icon="folderDrive"></span> Pasta de Permutas (Drive) <span class="external-arrow">↗</span>
                 </a>
                 <button id="cadmoTriggerEtlBtn" class="btn btn-primary btn-sm">Atualizar Dados de Servidores</button>
               </div>
@@ -1008,12 +1011,12 @@
               <div id="cadmoCsvFilesList" class="output-panel">Consultando pasta do Setor Pessoal...</div>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;">
-              <strong style="font-family: var(--font-display); font-size: 15px;">Portais da Transparência Monitorados</strong>
-              <input type="search" id="cadmoPortalFilterInput" class="input-clean" style="flex: 1 1 200px; max-width: 100%; padding: 7px 12px; font-size: 13px;" placeholder="Filtrar município ou tecnologia..." />
+            <div class="cadmo-portais-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;">
+              <strong style="font-family: var(--font-display); font-size: 15px; color: var(--text-main);">Portais da Transparência Monitorados</strong>
+              <input type="search" id="cadmoPortalFilterInput" class="input-clean" style="flex: 1 1 200px; max-width: 100%; padding: 7px 12px; font-size: 13px;" placeholder="Filtrar município ou tecnologia..." aria-label="Filtrar município ou tecnologia" />
             </div>
 
-            <div id="cadmoPortaisGrid" class="controls-grid" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px;"></div>
+            <div id="cadmoPortaisGrid" class="controls-grid cadmo-portais-grid" style="grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px;"></div>
           </div>
 
           <!-- =========================================================================
@@ -1024,21 +1027,21 @@
               <div>
                 <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
                   <span class="section-eyebrow">INTELIGÊNCIA GEORREFERENCIADA • PERSONA HERA</span>
-                  <span class="selo-hera-badge" title="Algoritmo de Matching e Parecer Funcional Hera">⚡ Selo Hera</span>
+                  <span class="selo-hera-badge" title="Algoritmo de Matching e Parecer Funcional Hera"><span class="svg-icon-inline" data-icon="boltZeus"></span> Selo Hera</span>
                 </div>
                 <h3 class="section-title" style="font-size: 1.28rem; margin: 0 0 6px 0;">Painel de Permutas Docentes Intermunicipais</h3>
                 <p class="section-desc" style="margin: 0;">Mapeamento georreferenciado interativo das unidades escolares da SMEB de Ceará-Mirim e polos metropolitanos parceiros (Natal ZN/ZS, Extremoz, São Gonçalo do Amarante e Macaíba) com motor de compatibilidade automática da persona Hera.</p>
               </div>
               <div class="button-group">
                 <button type="button" id="btnAlternarFormPermuta" class="btn btn-secondary btn-sm" aria-expanded="false">
-                  <span>📝 Intenção de Permuta</span>
+                  <span class="svg-icon-inline" data-icon="edit"></span> <span>Intenção de Permuta</span>
                 </button>
                 <button type="button" id="btnCarregarCsvTransparencia" class="btn btn-secondary btn-sm" title="Carregar planilha CSV de servidores da transparência">
-                  <span>📂 Carregar Planilha CSV</span>
+                  <span class="svg-icon-inline" data-icon="folderDrive"></span> <span>Carregar Planilha CSV</span>
                 </button>
                 <input type="file" id="cadmoUploadCsvInput" accept=".csv" style="display: none;" />
                 <button type="button" id="btnRecalcularMatchesHera" class="btn btn-primary btn-sm">
-                  <span>⚡ Recalcular Matching (Hera)</span>
+                  <span class="svg-icon-inline" data-icon="boltZeus"></span> <span>Recalcular Matching (Hera)</span>
                 </button>
               </div>
             </div>
@@ -1051,10 +1054,10 @@
                 <span id="cadmoBadgeBaseRef" style="color: var(--text-secondary);">Ceará-Mirim (4.182 servidores • 890 docentes ativos com matrícula de 7 dígitos)</span>
               </div>
               <div style="display: flex; align-items: center; gap: 12px; font-size: 11.5px; color: var(--text-muted); flex-wrap: wrap;">
-                <span>🏛️ Cruzamento CF/88 Art. 37, XVI Ativo</span>
-                <span>⚖️ Teto Máx: 60h</span>
+                <span><span class="svg-icon-inline" data-icon="olymposLogo"></span> Cruzamento CF/88 Art. 37, XVI Ativo</span>
+                <span><span class="svg-icon-inline" data-icon="shieldOfThemis"></span> Teto Máx: 60h</span>
                 <button type="button" id="btnSincronizarCadmoServidores" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 3px 10px; margin-left: 8px;" title="Sincronizar base de servidores com o catálogo unificado Olympos" onclick="window.OlymposViews.papiroCadmo.sincronizarServidores(true)">
-                  <span>🔄 Sincronizar Servidores</span>
+                  <span class="svg-icon-inline" data-icon="refresh"></span> <span>Sincronizar Servidores</span>
                 </button>
               </div>
             </div>
@@ -1064,17 +1067,17 @@
               <div id="cadmoMapCollapsibleHeader" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: var(--bg-tonal); border-bottom: 1px solid var(--border-hairline); font-size: 12.5px; cursor: pointer; user-select: none;">
                 <span style="font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
                   <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10B981;"></span>
-                  🗺️ Mapa Interativo de Polos &amp; Escolas Polo — Ceará-Mirim &amp; Grande Natal
+                  <span class="svg-icon-inline" data-icon="compass"></span> Mapa Interativo de Polos &amp; Escolas Polo — Ceará-Mirim &amp; Grande Natal
                 </span>
                 <div style="display: flex; gap: 14px; font-size: 11.5px; color: var(--text-muted); align-items: center; flex-wrap: wrap;">
                   <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #D4AF37;"></span> SMEB Sede</span>
                   <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #38BDF8;"></span> Escolas Ceará-Mirim</span>
                   <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10B981;"></span> Polos Parceiros</span>
                   <button type="button" id="btnGerenciarSecretarias" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 2px 8px; margin-left: 6px;" title="Gerenciar secretarias municipais parceiras" onclick="event.stopPropagation(); window.OlymposViews.papiroCadmo.abrirModalEdicaoSecretaria()">
-                    <span>🏛️ Secretarias Parceiras</span>
+                    <span class="svg-icon-inline" data-icon="olymposLogo"></span> <span>Secretarias Parceiras</span>
                   </button>
                   <button type="button" id="btnToggleMapaCadmo" class="btn btn-ghost btn-sm" style="font-size: 11px; padding: 2px 8px;" onclick="event.stopPropagation(); window.OlymposViews.papiroCadmo.alternarColapsoMapa()">
-                    <span id="mapaCadmoToggleLabel">Expandir Mapa ▾</span>
+                    <span id="mapaCadmoToggleLabel">Expandir Mapa <span class="svg-icon-inline" data-icon="chevronDown"></span></span>
                   </button>
                 </div>
               </div>
@@ -1086,10 +1089,10 @@
             <!-- SELETOR DE MODO OPERACIONAL: CONSULTA DE SERVIDOR (PADRÃO) OU INTENÇÃO DE PERMUTA -->
             <div class="permuta-mode-switcher" id="permutaModoSwitcher" role="tablist" aria-label="Modo de operação em Permutas">
               <button type="button" id="btnModoConsultaServidor" class="permuta-mode-tab active" role="tab" aria-selected="true" aria-controls="painelConsultaServidorCadmo">
-                🔍 Consultar Servidor (Nome ou Matrícula)
+                <span class="svg-icon-inline" data-icon="search"></span> Consultar Servidor (Nome ou Matrícula)
               </button>
               <button type="button" id="btnModoIntencaoPermuta" class="permuta-mode-tab" role="tab" aria-selected="false" aria-controls="wrapperFormPermuta">
-                📝 Registrar Intenção de Permuta
+                <span class="svg-icon-inline" data-icon="edit"></span> Registrar Intenção de Permuta
               </button>
             </div>
 
@@ -1111,7 +1114,7 @@
                 </div>
                 <div class="button-group">
                   <button type="submit" id="btnExecutarConsultaServidor" class="btn btn-primary btn-sm">
-                    <span>🔍 Buscar Servidor</span>
+                    <span class="svg-icon-inline" data-icon="search"></span> <span>Buscar Servidor</span>
                   </button>
                   <button type="button" id="btnLimparConsultaServidor" class="btn btn-secondary btn-sm hidden">
                     <span>Limpar</span>
@@ -1121,7 +1124,7 @@
 
               <div id="resultadoConsultaServidorCadmo" class="servidor-lookup-results">
                 <div class="servidor-lookup-empty">
-                  <span>💡 Informe o <strong>nome</strong> (completo ou parcial) ou a <strong>matrícula funcional</strong> acima para exibir a ficha consolidada de vínculos, carga horária acumulada, lotação escolar e compatibilidade de permuta.</span>
+                  <span class="svg-icon-inline" data-icon="lightbulb"></span> <span>Informe o <strong>nome</strong> (completo ou parcial) ou a <strong>matrícula funcional</strong> acima para exibir a ficha consolidada de vínculos, carga horária acumulada, lotação escolar e compatibilidade de permuta.</span>
                 </div>
               </div>
             </div>
@@ -1221,66 +1224,109 @@
               </form>
             </div>
 
-            <!-- COMPONENTE ERGONÔMICO COLAPSÁVEL DE MATCHING DA PERSONA HERA -->
+            <!-- =========================================================================
+                 SEÇÃO DEDICADA E SEMPRE VISÍVEL: FUNCIONÁRIOS EM PERMUTAS ATIVAS (SMEB)
+                 ========================================================================= -->
+            <div id="secaoPermutasAtivasCadmo" class="surface-card permutas-vigentes-card" style="margin-top: 24px; border: 1px solid var(--border-hairline);">
+              <div class="card-header-row">
+                <div>
+                  <span class="section-eyebrow">CONTROLE MUNICIPAL • 160 SERVIDORES EM PERMUTA</span>
+                  <h3 class="section-title" style="font-size: 1.28rem; margin: 0 0 6px 0;">Funcionários em Permutas Ativas — Controle Municipal (SMEB)</h3>
+                  <p class="section-desc" style="margin: 0;">Levantamento oficial consolidado dos servidores cedidos por Ceará-Mirim e recebidos na rede municipal em cooperação técnica com 14 entes parceiros (SEEC/RN e 13 municípios).</p>
+                </div>
+                <div class="button-group">
+                  <span id="badgeTotalMatches" class="pill-badge pill-gold" style="font-size: 11px;">160 servidores em permuta ativa</span>
+                  <span id="heraMatchPreviewPill" class="pill-badge pill-green hidden" style="font-size: 10.5px;"></span>
+                  <a href="https://drive.google.com/drive/folders/1SDBCXU3LjI0Qnf6E6O6SLqRjctHz70k0" target="_blank" rel="noopener" class="folder-chip" style="border-color: rgba(99, 102, 241, 0.4); color: #818cf8;">
+                    <span class="svg-icon-inline" data-icon="folderDrive"></span> <span>Pasta de Permutas (Drive)</span> <span class="external-arrow">↗</span>
+                  </a>
+                  <button type="button" id="btnExportarPermutasVigentesTopo" class="btn btn-secondary btn-sm" onclick="window.OlymposViews.papiroCadmo.exportarPermutasVigentesCsv()">
+                    <span class="svg-icon-inline" data-icon="download"></span> <span>Exportar CSV</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Toolbar de Busca e Abas (Preservando 100% dos IDs exigidos por testes) -->
+              <div class="cadmo-toolbar-filtros" style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px; margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                  <!-- Campo de Busca em Tempo Real -->
+                  <div class="cadmo-search-wrap" style="position: relative; flex: 1; min-width: 240px; max-width: 520px;">
+                    <span class="svg-icon-inline" data-icon="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--text-muted); pointer-events: none;" aria-hidden="true"></span>
+                    <input type="search" id="cadmoBuscaServidorInput" class="input-clean" style="padding-left: 34px; padding-right: 32px; font-size: 13px; width: 100%; border-radius: var(--radius-md, 8px);" placeholder="Buscar servidor por nome, matrícula funcional (ex: 2405221-1 ou 184920-1), cargo ou município..." autocomplete="off" aria-label="Buscar servidor por nome, matrícula, cargo, escola ou município" />
+                    <button type="button" id="btnLimparBuscaServidor" class="icon-capsule-btn hidden" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; font-size: 12px; border: none; background: transparent; cursor: pointer; color: var(--text-muted);" title="Limpar busca">&times;</button>
+                  </div>
+
+                  <!-- Abas de Visualização (Permutas Recíprocas, Acúmulos CF/88 e Base Geral) -->
+                  <div class="cadmo-tabs-group">
+                    <button type="button" id="tabAbaPermutasVigentes" class="btn btn-secondary btn-sm active" style="font-size: 12px; font-weight: 600;">
+                      <span class="svg-icon-inline" data-icon="refresh"></span> <span>Em Permuta Ativa (160)</span>
+                    </button>
+                    <button type="button" id="tabAbaPermutas" class="btn btn-secondary btn-sm" style="font-size: 12px; font-weight: 600;">
+                      <span class="svg-icon-inline" data-icon="users"></span> <span>Permutas Recíprocas (Hera)</span>
+                    </button>
+                    <button type="button" id="tabAbaVinculos" class="btn btn-secondary btn-sm" style="font-size: 12px; font-weight: 600;">
+                      <span class="svg-icon-inline" data-icon="olymposLogo"></span> <span>Cruzamento de Vínculos (CF Art. 37)</span>
+                    </button>
+                    <button type="button" id="tabAbaDocentesGeral" class="btn btn-secondary btn-sm" style="font-size: 12px; font-weight: 600;">
+                      <span class="svg-icon-inline" data-icon="clipboard"></span> <span>Base 890 Docentes</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Resumo da Pesquisa Ativa -->
+                <div id="cadmoResumoBuscaRow" class="hidden" style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding: 6px 12px; background: var(--bg-tonal); border-radius: var(--radius-sm, 6px); border: 1px solid var(--border-hairline);">
+                  <span id="cadmoResumoBuscaTexto" style="color: var(--text-secondary);">Exibindo resultados filtrados</span>
+                  <button type="button" id="btnRemoverFiltroPesquisa" class="btn btn-ghost btn-sm" style="font-size: 11px; padding: 2px 8px; color: var(--brand-gold);">Restaurar todos</button>
+                </div>
+              </div>
+
+              <!-- CONTÊINER PRINCIPAL DE RESULTADOS: SEMPRE VISÍVEL -->
+              <div id="resultadoMatchingHera" class="resultado-matching-container" style="min-height: 200px; padding-right: 4px;">
+                <!-- Tabela ou Cards de Matching Injetados via JS -->
+              </div>
+            </div>
+
+            <!-- PAINEL AUXILIAR COLAPSÁVEL: AUDITORIA FUNCIONAL & ALGORITMO HERA -->
             <div id="heraMatchingCollapsibleCard" class="surface-card hera-collapsible-card" style="margin-top: 20px; border: 1px solid var(--border-hairline); border-radius: var(--radius-lg, 16px); overflow: hidden; background: var(--bg-surface); box-shadow: var(--shadow-subtle);">
               <!-- CABEÇALHO / TRIGGER DO DROPDOWN COLAPSÁVEL -->
               <div id="heraCollapsibleHeader" class="hera-collapsible-header" role="button" tabindex="0" aria-expanded="false" aria-controls="heraCollapsibleBody" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; background: var(--bg-tonal); cursor: pointer; user-select: none; border-bottom: 1px solid var(--border-hairline); transition: background 0.2s ease;">
                 <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
                   <div style="display: flex; align-items: center; gap: 8px;">
-                    <span style="font-size: 1.2rem;" aria-hidden="true">🤝</span>
-                    <strong style="font-size: 14px; font-weight: 700; color: var(--text-main);">Sugestões de Permutas &amp; Pareceres Hera</strong>
-                    <span class="selo-hera-badge" title="Algoritmo de Matching e Parecer Funcional Hera">⚡ Selo Hera</span>
+                    <span class="svg-icon-inline" data-icon="boltZeus" aria-hidden="true"></span>
+                    <strong style="font-size: 14px; font-weight: 700; color: var(--text-main);">Auditoria da Persona Hera &bull; Algoritmo de Compatibilidade (40/30/30)</strong>
+                    <span class="selo-hera-badge" title="Algoritmo de Matching e Parecer Funcional Hera"><span class="svg-icon-inline" data-icon="boltZeus"></span> Selo Hera</span>
                   </div>
-                  <span id="badgeTotalMatches" class="pill-badge pill-gold" style="font-size: 11px;">0 cruzamentos</span>
-                  <span id="heraMatchPreviewPill" class="pill-badge pill-green hidden" style="font-size: 10.5px;"></span>
                 </div>
 
                 <div style="display: flex; align-items: center; gap: 10px;">
-                  <span id="heraToggleLabel" style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">Expandir</span>
-                  <button type="button" id="btnToggleHeraMatching" class="icon-capsule-btn" aria-label="Expandir ou recolher sugestões de matching" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 12px; transition: transform 0.25s ease;">
-                    <span id="heraChevronIcon">▼</span>
+                  <span id="heraToggleLabel" style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">Expandir Diretrizes</span>
+                  <button type="button" id="btnToggleHeraMatching" class="icon-capsule-btn" aria-label="Expandir ou recolher diretrizes de matching" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 12px; transition: transform 0.25s ease;">
+                    <span id="heraChevronIcon" class="svg-icon-inline" data-icon="chevronDown"></span>
                   </button>
                 </div>
               </div>
 
-              <!-- CORPO RECOLHIDO POR PADRÃO (COM SCROLL INTERNO ERGONÔMICO) -->
+              <!-- CORPO RECOLHIDO POR PADRÃO -->
               <div id="heraCollapsibleBody" class="hera-collapsible-body is-collapsed" style="display: none; padding: 18px 20px; transition: all 0.3s ease;">
-                <!-- Toolbar de Busca de Servidores e Seleção de Abas Cadmo -->
-                <div class="cadmo-toolbar-filtros" style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px;">
-                  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                    <!-- Campo de Busca em Tempo Real -->
-                    <div class="cadmo-search-wrap" style="position: relative; flex: 1; min-width: 240px; max-width: 520px;">
-                      <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--text-muted); pointer-events: none;" aria-hidden="true">🔍</span>
-                      <input type="search" id="cadmoBuscaServidorInput" class="input-clean" style="padding-left: 34px; padding-right: 32px; font-size: 13px; width: 100%; border-radius: var(--radius-md, 8px);" placeholder="Buscar servidor por nome, matrícula funcional (ex: 2405221-1 ou 184920-1), cargo ou município..." autocomplete="off" aria-label="Buscar servidor por nome, matrícula, cargo, escola ou município" />
-                      <button type="button" id="btnLimparBuscaServidor" class="icon-capsule-btn hidden" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; font-size: 12px; border: none; background: transparent; cursor: pointer; color: var(--text-muted);" title="Limpar busca">&times;</button>
-                    </div>
-
-                    <!-- Abas de Visualização (Permutas Recíprocas, Acúmulos CF/88 e Base Geral) -->
-                    <div class="cadmo-tabs-group">
-                      <button type="button" id="tabAbaPermutasVigentes" class="btn btn-secondary btn-sm active" style="font-size: 12px; font-weight: 600;">
-                        <span>🔄 Em Permuta Ativa (160)</span>
-                      </button>
-                      <button type="button" id="tabAbaPermutas" class="btn btn-secondary btn-sm" style="font-size: 12px; font-weight: 600;">
-                        <span>🤝 Permutas Recíprocas (Hera)</span>
-                      </button>
-                      <button type="button" id="tabAbaVinculos" class="btn btn-secondary btn-sm" style="font-size: 12px; font-weight: 600;">
-                        <span>🏛️ Cruzamento de Vínculos (CF Art. 37)</span>
-                      </button>
-                      <button type="button" id="tabAbaDocentesGeral" class="btn btn-secondary btn-sm" style="font-size: 12px; font-weight: 600;">
-                        <span>📋 Base 890 Docentes</span>
-                      </button>
-                    </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;">
+                  <div class="output-panel" style="padding: 12px 14px;">
+                    <strong style="color: var(--brand-gold); font-size: 12.5px; display: flex; align-items: center; gap: 6px;">
+                      <span class="svg-icon-inline" data-icon="compass"></span> 40% Proximidade Territorial
+                    </strong>
+                    <p style="font-size: 12px; color: var(--text-secondary); margin: 6px 0 0 0;">Cálculo geodésico Haversine entre as unidades escolares e polos conveniados na Grande Natal e Litoral Norte.</p>
                   </div>
-
-                  <!-- Resumo da Pesquisa Ativa -->
-                  <div id="cadmoResumoBuscaRow" class="hidden" style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding: 6px 12px; background: var(--bg-tonal); border-radius: var(--radius-sm, 6px); border: 1px solid var(--border-hairline);">
-                    <span id="cadmoResumoBuscaTexto" style="color: var(--text-secondary);">Exibindo resultados filtrados</span>
-                    <button type="button" id="btnRemoverFiltroPesquisa" class="btn btn-ghost btn-sm" style="font-size: 11px; padding: 2px 8px; color: var(--brand-gold);">Restaurar todos</button>
+                  <div class="output-panel" style="padding: 12px 14px;">
+                    <strong style="color: #60a5fa; font-size: 12.5px; display: flex; align-items: center; gap: 6px;">
+                      <span class="svg-icon-inline" data-icon="clipboard"></span> 30% Habilitação Curricular
+                    </strong>
+                    <p style="font-size: 12px; color: var(--text-secondary); margin: 6px 0 0 0;">Convergência estrita de cargo, disciplina e segmento de ensino (Anos Iniciais, Finais, Ed. Infantil ou Especialista).</p>
                   </div>
-                </div>
-
-                <div id="resultadoMatchingHera" class="resultado-matching-container" style="max-height: 520px; overflow-y: auto; padding-right: 4px;">
-                  <!-- Tabela ou Cards de Matching Injetados via JS -->
+                  <div class="output-panel" style="padding: 12px 14px;">
+                    <strong style="color: #34d399; font-size: 12.5px; display: flex; align-items: center; gap: 6px;">
+                      <span class="svg-icon-inline" data-icon="clock"></span> 30% Turno e Carga Horária
+                    </strong>
+                    <p style="font-size: 12px; color: var(--text-secondary); margin: 6px 0 0 0;">Equivalência de regime funcional (30h padrão SMEB) e compatibilidade de turno sem sobreposição constitucional.</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1290,7 +1336,7 @@
               <div class="modal-card" style="max-width: 580px; width: 92%;">
                 <div class="modal-header">
                   <div class="modal-title-wrap">
-                    <span class="sec-edit-header-badge">🏛️ Inteligência Cartográfica &bull; Polos Parceiros</span>
+                    <span class="sec-edit-header-badge"><span class="svg-icon-inline" data-icon="olymposLogo"></span> Inteligência Cartográfica &bull; Polos Parceiros</span>
                     <h3 id="modalEdicaoSecretariaTitulo" style="margin: 0; font-size: 1.18rem; font-weight: 700; color: var(--text-main);">Editar Secretaria Municipal Parceira</h3>
                   </div>
                   <button id="closeModalEdicaoSecretariaBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal">&times;</button>
@@ -1336,7 +1382,7 @@
                     <div class="sec-edit-coords-box">
                       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                         <strong style="font-size: 12.5px; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
-                          <span>📍</span> Coordenadas Cartográficas (Graus Decimais WGS84)
+                          <span class="svg-icon-inline" data-icon="mapPin"></span> Coordenadas Cartográficas (Graus Decimais WGS84)
                         </strong>
                         <span style="font-size: 11px; color: var(--text-muted);">Precisão GPS</span>
                       </div>
@@ -1356,10 +1402,10 @@
                   <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 24px;">
                     <div style="display: flex; gap: 8px;">
                       <button type="button" id="btnRestaurarPadraoSecretarias" class="btn btn-ghost btn-sm" style="color: var(--text-muted);">
-                        ↺ Restaurar Padrões
+                        <span class="svg-icon-inline" data-icon="refresh"></span> Restaurar Padrões
                       </button>
                       <button type="button" id="btnExcluirSecretaria" class="btn btn-ghost btn-sm" style="color: var(--accent-red, #EF4444); border-color: rgba(239,68,68,0.3);">
-                        🗑️ Excluir Município
+                        <span class="svg-icon-inline" data-icon="trash"></span> Excluir Município
                       </button>
                     </div>
                     <div style="display: flex; gap: 10px; align-items: center;">
@@ -1387,13 +1433,13 @@
               </div>
               <div class="button-group">
                 <button type="button" id="btnExportarServidoresCsv" class="btn btn-secondary btn-sm" title="Exportar resultado filtrado em CSV">
-                  <span>📥 Exportar CSV</span>
+                  <span class="svg-icon-inline" data-icon="download"></span> <span>Exportar CSV</span>
                 </button>
                 <button type="button" id="btnExportarServidoresJson" class="btn btn-secondary btn-sm" title="Exportar catálogo em JSON">
-                  <span>📥 Exportar JSON</span>
+                  <span class="svg-icon-inline" data-icon="download"></span> <span>Exportar JSON</span>
                 </button>
                 <button type="button" id="btnImprimirServidores" class="btn btn-ghost btn-sm" title="Imprimir listagem filtrada">
-                  <span>🖨️ Imprimir</span>
+                  <span class="svg-icon-inline" data-icon="printer"></span> <span>Imprimir</span>
                 </button>
               </div>
             </div>
@@ -1443,14 +1489,14 @@
               <div class="servidores-search-row" style="display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap;">
                 <div style="flex: 1 1 300px; position: relative;">
                   <input type="search" id="servidorBuscaInput" class="input-clean" placeholder="Digite nome, matrícula, cargo ou escola..." style="width: 100%; padding-left: 36px;" />
-                  <span style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 15px; color: var(--text-muted); pointer-events: none;">🔍</span>
+                  <span class="svg-icon-inline" data-icon="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 15px; color: var(--text-muted); pointer-events: none;"></span>
                 </div>
                 <div class="button-group" style="align-items: center;">
-                  <button type="button" id="btnLimparBuscaServidores" class="btn btn-secondary btn-sm hidden">✕ Limpar</button>
+                  <button type="button" id="btnLimparBuscaServidores" class="btn btn-secondary btn-sm hidden"><span class="svg-icon-inline" data-icon="close"></span> Limpar</button>
                   <!-- Alternador de Visualização (Cards vs Tabela) -->
                   <div class="filter-pills-inline" role="group" aria-label="Modo de Visualização">
-                    <button type="button" id="btnModoViewCards" class="btn-mini active" title="Visualização em Cards Dossiê">🗂️ Cards</button>
-                    <button type="button" id="btnModoViewTabela" class="btn-mini" title="Visualização em Tabela Sintética">📋 Tabela</button>
+                    <button type="button" id="btnModoViewCards" class="btn-mini active" title="Visualização em Cards Dossiê"><span class="svg-icon-inline" data-icon="folderDrive"></span> Cards</button>
+                    <button type="button" id="btnModoViewTabela" class="btn-mini" title="Visualização em Tabela Sintética"><span class="svg-icon-inline" data-icon="clipboard"></span> Tabela</button>
                   </div>
                 </div>
               </div>
@@ -1458,7 +1504,7 @@
               <!-- LINHA 2: GRID RESPONSIVO DE FILTROS EM DROPDOWNS MODERNOS -->
               <div class="servidor-selects-grid">
                 <div class="filter-select-field">
-                  <label for="filtroEnteSelect" class="filter-select-label">🏛️ Ente Federativo</label>
+                  <label for="filtroEnteSelect" class="filter-select-label"><span class="svg-icon-inline" data-icon="olymposLogo"></span> Ente Federativo</label>
                   <select id="filtroEnteSelect" class="input-clean filter-select-modern" data-filtro-select="ente" title="Filtrar por Ente Público">
                     <option value="todos" data-filtro-ente="todos" selected>Todos os Entes (16 Entes Federativos)</option>
                     <option value="ceara-mirim" data-filtro-ente="ceara-mirim">Ceará-Mirim (SMEB)</option>
@@ -1481,7 +1527,7 @@
                 </div>
 
                 <div class="filter-select-field">
-                  <label for="filtroQuadroSelect" class="filter-select-label">📋 Quadro Funcional</label>
+                  <label for="filtroQuadroSelect" class="filter-select-label"><span class="svg-icon-inline" data-icon="clipboard"></span> Quadro Funcional</label>
                   <select id="filtroQuadroSelect" class="input-clean filter-select-modern" data-filtro-select="cargo" title="Filtrar por Quadro Funcional">
                     <option value="todos" data-filtro-cargo="todos" selected>Todos os Quadros</option>
                     <option value="docente" data-filtro-cargo="docente">Docente / Professor</option>
@@ -1493,7 +1539,7 @@
                 </div>
 
                 <div class="filter-select-field">
-                  <label for="filtroRegimeSelect" class="filter-select-label">📜 Regime Jurídico</label>
+                  <label for="filtroRegimeSelect" class="filter-select-label"><span class="svg-icon-inline" data-icon="papyrusOfCadmus"></span> Regime Jurídico</label>
                   <select id="filtroRegimeSelect" class="input-clean filter-select-modern" data-filtro-select="regime" title="Filtrar por Regime Jurídico">
                     <option value="todos" data-filtro-regime="todos" selected>Todos os Regimes</option>
                     <option value="efetivo" data-filtro-regime="efetivo">Efetivo / Estatutário</option>
@@ -1503,7 +1549,7 @@
                 </div>
 
                 <div class="filter-select-field">
-                  <label for="filtroVinculosSelect" class="filter-select-label">⚖️ Vínculos / CF/88</label>
+                  <label for="filtroVinculosSelect" class="filter-select-label"><span class="svg-icon-inline" data-icon="shieldOfThemis"></span> Vínculos / CF/88</label>
                   <select id="filtroVinculosSelect" class="input-clean filter-select-modern" data-filtro-select="vinculos" title="Filtrar por Auditoria CF/88">
                     <option value="todos" data-filtro-vinculos="todos" selected>Todos os Vínculos</option>
                     <option value="unico" data-filtro-vinculos="unico">Vínculo Único</option>
@@ -1673,8 +1719,8 @@
                 <button type="button" class="cal-pill" data-category="sabado_letivo">Sábados Letivos (<span id="countFiltroSabados">0</span>)</button>
                 <button type="button" class="cal-pill" data-category="exame">Exames &amp; Avaliações (<span id="countFiltroExames">0</span>)</button>
                 <button type="button" class="cal-pill" data-category="agenda_intersetorial">Agenda Intersetorial (<span id="countFiltroAgenda">0</span>)</button>
-                <button type="button" class="cal-pill" data-category="pendentes">⏳ Apenas Pendentes (<span id="countFiltroPendentes">0</span>)</button>
-                <button type="button" class="cal-pill" data-category="concluidos">✓ Concluídos (<span id="countFiltroConcluidos">0</span>)</button>
+                <button type="button" class="cal-pill" data-category="pendentes"><span class="svg-icon-inline" data-icon="hourglass"></span> Apenas Pendentes (<span id="countFiltroPendentes">0</span>)</button>
+                <button type="button" class="cal-pill" data-category="concluidos"><span class="svg-icon-inline" data-icon="check"></span> Concluídos (<span id="countFiltroConcluidos">0</span>)</button>
               </div>
 
               <!-- Seletor de Filtro por Setor Homologado -->
@@ -1782,7 +1828,7 @@
               <div class="modal-card" style="max-width: 580px; width: 92%;">
                 <div class="modal-header">
                   <div class="modal-title-wrap">
-                    <span class="cal-modal-badge" id="modalDetalhesDiaBadge">📅 Agenda Escolar</span>
+                    <span class="cal-modal-badge" id="modalDetalhesDiaBadge"><span class="svg-icon-inline" data-icon="calendar"></span> Agenda Escolar</span>
                     <h3 id="modalDetalhesDiaTitulo" style="margin: 0; font-size: 1.18rem; font-weight: 700; color: var(--text-main);">Detalhes do Dia</h3>
                   </div>
                   <button id="closeModalDetalhesDiaBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal">&times;</button>
@@ -1801,7 +1847,7 @@
               <div class="modal-card" style="max-width: 580px; width: 92%;">
                 <div class="modal-header">
                   <div class="modal-title-wrap">
-                    <span class="cal-modal-badge" style="background: rgba(139,92,246,0.15); color: #8B5CF6;">🗓️ Agenda Intersetorial</span>
+                    <span class="cal-modal-badge" style="background: rgba(139,92,246,0.15); color: #8B5CF6;"><span class="svg-icon-inline" data-icon="calendar"></span> Agenda Intersetorial</span>
                     <h3 id="modalFormAgendaTitulo" style="margin: 0; font-size: 1.18rem; font-weight: 700; color: var(--text-main);">Novo Evento da Agenda</h3>
                   </div>
                   <button id="closeModalFormAgendaBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal">&times;</button>
@@ -1873,7 +1919,7 @@
 
                   <div class="modal-footer" style="padding: 14px 24px; display: flex; justify-content: space-between; align-items: center;">
                     <button type="button" id="btnExcluirEventoAgenda" class="btn btn-ghost btn-sm hidden" style="color: var(--accent-red, #EF4444); border-color: rgba(239,68,68,0.3);">
-                      🗑️ Excluir Evento
+                      <span class="svg-icon-inline" data-icon="trash"></span> Excluir Evento
                     </button>
                     <div style="display: flex; gap: 10px; margin-left: auto;">
                       <button type="button" id="btnCancelarFormAgenda" class="btn btn-secondary btn-sm">Cancelar</button>
@@ -1902,17 +1948,17 @@
                   <span>+ Nova Unidade Escolar</span>
                 </button>
                 <button type="button" id="btnRecentralizarMapaEscolas" class="btn btn-secondary btn-sm" title="Centralizar mapa em Ceará-Mirim">
-                  <span>🎯 Recentralizar</span>
+                  <span class="svg-icon-inline" data-icon="target"></span> <span>Recentralizar</span>
                 </button>
                 <button type="button" id="btnExportarEscolasJson" class="btn btn-secondary btn-sm" title="Exportar catálogo em arquivo JSON">
-                  <span>📥 Exportar JSON</span>
+                  <span class="svg-icon-inline" data-icon="download"></span> <span>Exportar JSON</span>
                 </button>
                 <button type="button" id="btnImportarEscolasJson" class="btn btn-secondary btn-sm" title="Importar catálogo a partir de arquivo JSON">
-                  <span>📤 Importar JSON</span>
+                  <span class="svg-icon-inline" data-icon="upload"></span> <span>Importar JSON</span>
                 </button>
                 <input type="file" id="escolasImportFileInput" accept=".json" style="display: none;" />
                 <button type="button" id="btnRestaurarEscolasPadrao" class="btn btn-ghost btn-sm" title="Restaurar catálogo inicial oficial com 20 escolas">
-                  <span>↺ Restaurar Padrão</span>
+                  <span class="svg-icon-inline" data-icon="refresh"></span> <span>Restaurar Padrão</span>
                 </button>
               </div>
             </div>
@@ -1990,7 +2036,7 @@
                   <span><strong>II</strong> = Ens. Fundamental II</span>
                   <span><strong>M</strong> = Ensino Médio / Técnico</span>
                   <span><strong>X</strong> = Mais de um Segmento</span>
-                  <span><strong>★</strong> = Sede / CEMAI</span>
+                  <span><span class="svg-icon-inline" data-icon="star"></span> = Sede / CEMAI</span>
                 </div>
               </div>
               <div id="mapaEscolasCearaMirim" style="height: 480px; width: 100%; border-radius: var(--radius-lg); position: relative; z-index: 1;"></div>
@@ -2008,7 +2054,7 @@
               <!-- GRID RESPONSIVO DE FILTROS EM DROPDOWNS MODERNOS -->
               <div class="escolas-selects-grid">
                 <div class="filter-select-field">
-                  <label for="escolaFiltroCategoriaSelect" class="filter-select-label">🏫 Categoria</label>
+                  <label for="escolaFiltroCategoriaSelect" class="filter-select-label"><span class="svg-icon-inline" data-icon="school"></span> Categoria</label>
                   <select id="escolaFiltroCategoriaSelect" class="input-clean filter-select-modern" data-filtro-select="categoria" title="Filtrar por Categoria Institucional">
                     <option value="todas" data-filtro-categoria="todas" selected>Todas as Categorias</option>
                     <option value="escola" data-filtro-categoria="escola">Escolas</option>
@@ -2018,7 +2064,7 @@
                 </div>
 
                 <div class="filter-select-field">
-                  <label for="escolaFiltroRedeSelect" class="filter-select-label">🌐 Rede de Ensino</label>
+                  <label for="escolaFiltroRedeSelect" class="filter-select-label"><span class="svg-icon-inline" data-icon="globe"></span> Rede de Ensino</label>
                   <select id="escolaFiltroRedeSelect" class="input-clean filter-select-modern" data-filtro-select="rede" title="Filtrar por Rede de Ensino">
                     <option value="todas" data-filtro-rede="todas" selected>Todas as Redes</option>
                     <option value="Municipal" data-filtro-rede="Municipal">Municipal</option>
@@ -2029,7 +2075,7 @@
                 </div>
 
                 <div class="filter-select-field">
-                  <label for="escolaFiltroSegmentoSelect" class="filter-select-label">📚 Segmento</label>
+                  <label for="escolaFiltroSegmentoSelect" class="filter-select-label"><span class="svg-icon-inline" data-icon="book"></span> Segmento</label>
                   <select id="escolaFiltroSegmentoSelect" class="input-clean filter-select-modern" data-filtro-select="segmento" title="Filtrar por Segmento de Ensino">
                     <option value="todos" data-filtro-segmento="todos" selected>Todos os Segmentos</option>
                     <option value="Ed. Infantil" data-filtro-segmento="Ed. Infantil">Ed. Infantil</option>
@@ -2040,7 +2086,7 @@
                 </div>
 
                 <div class="filter-select-field">
-                  <label for="escolaFiltroZonaSelect" class="filter-select-label">📍 Localização / Zona</label>
+                  <label for="escolaFiltroZonaSelect" class="filter-select-label"><span class="svg-icon-inline" data-icon="mapPin"></span> Localização / Zona</label>
                   <select id="escolaFiltroZonaSelect" class="input-clean filter-select-modern" data-filtro-select="zona" title="Filtrar por Zona Urbana ou Rural">
                     <option value="todas" data-filtro-zona="todas" selected>Todas as Zonas</option>
                     <option value="Urbana" data-filtro-zona="Urbana">Zona Urbana</option>
@@ -2380,7 +2426,7 @@
               <div class="stat-card spotlight-card">
                 <div class="stat-top">
                   <span class="stat-label">Prioridade Máxima • Urgências</span>
-                  <span class="pill-badge pill-red" id="kpiChamadosUrgentesBadge">🚨 0 Urgentes</span>
+                  <span class="pill-badge pill-red" id="kpiChamadosUrgentesBadge"><span class="svg-icon-inline" data-icon="siren"></span> 0 Urgentes</span>
                 </div>
                 <div class="stat-value text-danger" id="kpiChamadosUrgentes">0</div>
                 <div class="stat-meta">
@@ -2414,7 +2460,7 @@
             <!-- Barra de Filtros e Busca Reativa (Preact Signals) -->
             <div class="chamados-toolbar">
               <div class="chamados-search-row">
-                <input type="search" id="chamadosBuscaInput" class="chamados-search-input" placeholder="🔍 Buscar por nome, e-mail, setor, dia ou descrição..." autocomplete="off" />
+                <input type="search" id="chamadosBuscaInput" class="chamados-search-input" placeholder="Buscar por nome, e-mail, setor, dia ou descrição..." autocomplete="off" />
                 
                 <div class="field-group" style="margin: 0; min-width: 180px;">
                   <select id="chamadosSetorSelect" class="input-clean" style="height: 42px; border-radius: 9999px;">
@@ -2432,7 +2478,7 @@
                 </div>
 
                 <button type="button" id="chamadosAtualizarBtn" class="btn btn-secondary btn-sm" style="border-radius: 9999px; height: 42px; padding: 0 16px;">
-                  🔄 Atualizar Fila
+                  <span class="svg-icon-inline" data-icon="refresh"></span> Atualizar Fila
                 </button>
               </div>
 
@@ -2448,7 +2494,7 @@
                 <div class="filter-pills-group" id="filterUrgenciaGroup">
                   <span style="font-size: 0.76rem; font-family: var(--font-mono); color: var(--text-muted); margin-right: 4px;">PRIORIDADE:</span>
                   <button type="button" class="filter-pill active" data-urgencia="TODOS">Todos</button>
-                  <button type="button" class="filter-pill" data-urgencia="URGENTE">🚨 Urgentes</button>
+                  <button type="button" class="filter-pill" data-urgencia="URGENTE"><span class="svg-icon-inline" data-icon="siren"></span> Urgentes</button>
                   <button type="button" class="filter-pill" data-urgencia="PADRAO">Padrão</button>
                 </div>
               </div>
@@ -2457,7 +2503,7 @@
             <!-- Contêiner da Grade de Chamados (Reatividade via Signals) -->
             <div id="chamadosListaContainer" class="chamados-grid">
               <div class="empty-state-card" style="padding: 40px; text-align: center;">
-                <div class="empty-state-icon">⏳</div>
+                <div class="empty-state-icon"><span class="svg-icon-inline" data-icon="hourglass" style="font-size:2.2rem;"></span></div>
                 <p>Carregando fila de chamados...</p>
               </div>
             </div>
@@ -2560,7 +2606,7 @@
             </div>
 
             <div id="setupModalDetectedInfo" style="padding: 9px 12px; border-radius: 8px; margin-bottom: 14px; font-size: 0.79rem; background: var(--bg-tonal); border: 1px solid var(--border-hairline); color: var(--text-secondary);">
-              🔒 Endpoint Supabase e Gateway GAS serão detectados automaticamente a partir da chave pública.
+              <span class="svg-icon-inline" data-icon="lock"></span> Endpoint Supabase e Gateway GAS serão detectados automaticamente a partir da chave pública.
             </div>
 
             <div id="setupModalFeedback" style="display: none; padding: 10px; border-radius: 8px; margin-bottom: 14px; font-size: 0.85rem;"></div>
@@ -2838,7 +2884,7 @@
             <div style="background: var(--bg-tonal); padding: 14px; border-radius: var(--radius-md, 12px); border: 1px solid var(--border-hairline); margin-bottom: 14px;">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
                 <strong style="font-size: 13px; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
-                  <span>📍</span> Coordenadas Geográficas (Graus Decimais)
+                  <span class="svg-icon-inline" data-icon="mapPin"></span> Coordenadas Geográficas (Graus Decimais)
                 </strong>
                 <span style="font-size: 11px; color: var(--text-muted);">Precisão 6 casas decimais</span>
               </div>
@@ -2853,10 +2899,10 @@
                 </div>
               </div>
               <div id="escolaCoordValidacaoBadge" class="pill-badge pill-green" style="font-size: 11px; display: inline-block;">
-                ✓ Coordenadas dentro da delimitação territorial de Ceará-Mirim/RN
+                <span class="svg-icon-inline" data-icon="check"></span> Coordenadas dentro da delimitação territorial de Ceará-Mirim/RN
               </div>
               <p style="margin: 6px 0 0 0; font-size: 11.5px; color: var(--text-muted); line-height: 1.4;">
-                💡 <em>Dica: Com este modal aberto, você pode clicar diretamente em qualquer ponto do mapa para capturar e preencher as coordenadas automaticamente.</em>
+                <span class="svg-icon-inline" data-icon="lightbulb"></span> <em>Dica: Com este modal aberto, você pode clicar diretamente em qualquer ponto do mapa para capturar e preencher as coordenadas automaticamente.</em>
               </p>
             </div>
           </div>
@@ -2958,8 +3004,8 @@
           <!-- Preenchido dinamicamente via JS -->
         </div>
         <div class="modal-footer" style="padding: 14px 24px; border-top: 1px solid var(--border-hairline); display: flex; justify-content: flex-end; gap: 10px;">
-          <button type="button" id="btnCopiarFichaDossie" class="btn btn-secondary btn-sm">📋 Copiar Ficha</button>
-          <button type="button" id="btnImprimirFichaDossie" class="btn btn-secondary btn-sm">🖨️ Imprimir Dossiê</button>
+          <button type="button" id="btnCopiarFichaDossie" class="btn btn-secondary btn-sm"><span class="svg-icon-inline" data-icon="clipboard"></span> Copiar Ficha</button>
+          <button type="button" id="btnImprimirFichaDossie" class="btn btn-secondary btn-sm"><span class="svg-icon-inline" data-icon="printer"></span> Imprimir Dossiê</button>
           <button type="button" id="btnFecharModalDossie" class="btn btn-primary btn-sm">Fechar</button>
         </div>
       </div>

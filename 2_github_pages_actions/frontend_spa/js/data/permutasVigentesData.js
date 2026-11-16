@@ -3934,6 +3934,7 @@
 };
 
   if (typeof root !== 'undefined') {
+    root.DADOS_PERMUTAS_VIGENTES = DADOS_PERMUTAS_VIGENTES;
     root.OLYMPOS_PERMUTAS_VIGENTES = DADOS_PERMUTAS_VIGENTES;
   }
   if (typeof module !== 'undefined' && module.exports) {

@@ -219,7 +219,7 @@ window.OlymposViews.configuracoes = (function() {
           <td style="padding: 12px 14px; font-size: 0.85rem; color: var(--text-secondary);">${deptSafe}</td>
           <td style="padding: 12px 14px;">
             <span class="pill-badge ${isAtivo ? 'pill-green' : 'pill-red'}" style="font-size: 0.7rem;">
-              ${isAtivo ? '✓ Ativo' : '✕ Suspenso'}
+              ${isAtivo ? (window.OlymposIcons ? window.OlymposIcons.ui('check') : '') + ' Ativo' : (window.OlymposIcons ? window.OlymposIcons.ui('close') : '') + ' Suspenso'}
             </span>
           </td>
           <td style="padding: 12px 14px; text-align: right; white-space: nowrap;">

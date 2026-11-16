@@ -138,7 +138,7 @@ window.OlymposViews.portarias = (function() {
     '</div>';
 
     html += '<div style="margin-bottom:10px; font-size:12px; padding:6px 12px; border-radius:8px; background:var(--bg-tonal); border:1px solid var(--border-hairline); color:var(--text-secondary);">' +
-      'ℹ️ Exibindo estrutura canônica da planilha oficial. Para sincronização direta no Google Drive via Google Apps Script, utilize autenticação institucional.' +
+      (window.OlymposIcons ? window.OlymposIcons.ui('info') : '') + ' Exibindo estrutura canônica da planilha oficial. Para sincronização direta no Google Drive via Google Apps Script, utilize autenticação institucional.' +
     '</div>';
 
     html += '<div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:12px;">' +

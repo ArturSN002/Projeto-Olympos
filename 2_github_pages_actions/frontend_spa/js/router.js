@@ -3,6 +3,8 @@
  * Cada bloco funcional opera em sua própria página independente e navegável.
  */
 window.OlymposRouter = (function() {
+  const PUBLIC_PAGES = ['visao-geral', 'diario-oficial', 'escolas'];
+
   const PAGES = {
     'visao-geral': {
       eyebrow: 'GOVERNANÇA EXECUTIVA • SMEB 2026',
@@ -134,6 +136,21 @@ window.OlymposRouter = (function() {
       pageId = 'visao-geral';
     }
 
+    const sessaoAtiva = window.OlymposApp && typeof window.OlymposApp.getSession === 'function'
+      ? window.OlymposApp.getSession()
+      : null;
+
+    if (!sessaoAtiva && !PUBLIC_PAGES.includes(pageId)) {
+      if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+        window.OlymposApp.showToast('Faça login para acessar este módulo restrito.', true);
+      }
+      if (window.OlymposApp && typeof window.OlymposApp.solicitarLogin === 'function') {
+        window.OlymposApp.solicitarLogin();
+      }
+      pageId = 'visao-geral';
+      targetSubtab = null;
+    }
+
     activePage = pageId;
     if (window.location.hash !== '#' + pageId) {
       if (replaceState) {
@@ -242,6 +259,7 @@ window.OlymposRouter = (function() {
     init: init,
     navegarPara: navegarPara,
     getPaginaAtual: getPaginaAtual,
-    PAGES: PAGES
+    PAGES: PAGES,
+    PUBLIC_PAGES: PUBLIC_PAGES
   };
 })();

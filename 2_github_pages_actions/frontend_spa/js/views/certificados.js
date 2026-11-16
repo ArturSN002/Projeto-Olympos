@@ -66,7 +66,7 @@ window.OlymposViews.certificados = (function() {
     if (resultado && resultado.valido) {
       const c = resultado.certificado || {};
       badge.className = 'pill-badge pill-green';
-      badge.innerHTML = '<strong>✓ Certificado Autêntico Verificado</strong><br>' +
+      badge.innerHTML = '<strong>' + (window.OlymposIcons ? window.OlymposIcons.ui('check') : '') + ' Certificado Autêntico Verificado</strong><br>' +
         'Titular: <strong>' + (window.OlymposApp ? window.OlymposApp.escapeHtml(c.recipient_name || '--') : (c.recipient_name || '--')) + '</strong> • ' +
         'Evento: <strong>' + (window.OlymposApp ? window.OlymposApp.escapeHtml(c.event_name || '--') : (c.event_name || '--')) + '</strong> • ' +
         'Carga Horária: <strong>' + (c.hours || '--') + 'h</strong> • ' +
@@ -74,7 +74,7 @@ window.OlymposViews.certificados = (function() {
         '<span style="font-size:11px;opacity:0.8;">(validado offline em ' + (resultado.tempoMs || '<2') + 'ms)</span>';
     } else {
       badge.className = 'pill-badge pill-amber';
-      badge.innerHTML = '<strong>⚠️ Assinatura Inválida ou Não Reconhecida</strong><br>' +
+      badge.innerHTML = '<strong>' + (window.OlymposIcons ? window.OlymposIcons.ui('alertTriangle') : '') + ' Assinatura Inválida ou Não Reconhecida</strong><br>' +
         'O token fornecido não pôde ser autenticado pela chave pública institucional da SMEB Ceará-Mirim/RN.';
     }
   }
@@ -316,9 +316,9 @@ window.OlymposViews.certificados = (function() {
 
       let statusCell = '<span class="text-muted">Não enviado</span>';
       if (p.emailStatus === 'Enviado') {
-        statusCell = '<span class="pill-badge pill-green" style="font-size:11px;">✓ Enviado</span>';
+        statusCell = '<span class="pill-badge pill-green" style="font-size:11px;">' + (window.OlymposIcons ? window.OlymposIcons.ui('check') : '') + ' Enviado</span>';
       } else if (p.emailStatus && p.emailStatus.startsWith('Erro')) {
-        statusCell = '<span class="pill-badge pill-amber" style="font-size:11px;" title="' + escape(p.emailStatus) + '">⚠️ Erro Envio</span>';
+        statusCell = '<span class="pill-badge pill-amber" style="font-size:11px;" title="' + escape(p.emailStatus) + '">' + (window.OlymposIcons ? window.OlymposIcons.ui('alertTriangle') : '') + ' Erro Envio</span>';
       } else if (p.emailStatus) {
         statusCell = '<span class="pill-badge pill-gold" style="font-size:11px;" title="' + escape(p.emailStatus) + '">' + escape(p.emailStatus.substring(0, 18)) + '...</span>';
       }
@@ -747,7 +747,7 @@ window.OlymposViews.certificados = (function() {
       if (res && res.ok) {
         const pdfs = res.pdfsGerados !== undefined ? res.pdfsGerados : 0;
         const arquivos = res.arquivosGerados || [];
-        const checkSvg = window.OlymposIcons ? window.OlymposIcons.ui('check') : '✓';
+        const checkSvg = window.OlymposIcons ? window.OlymposIcons.ui('check') : '';
         const escape = window.OlymposApp && window.OlymposApp.escapeHtml ? window.OlymposApp.escapeHtml : function(s) { return s || ''; };
 
         if (doneBox) {
@@ -841,7 +841,7 @@ window.OlymposViews.certificados = (function() {
 
       if (res && res.ok) {
         const emails = res.emailsEnviados !== undefined ? res.emailsEnviados : 0;
-        const checkSvg = window.OlymposIcons ? window.OlymposIcons.ui('check') : '✓';
+        const checkSvg = window.OlymposIcons ? window.OlymposIcons.ui('check') : '';
         const escape = window.OlymposApp && window.OlymposApp.escapeHtml ? window.OlymposApp.escapeHtml : function(s) { return s || ''; };
 
         if (res.cotaRestante !== undefined) {
@@ -919,7 +919,7 @@ window.OlymposViews.certificados = (function() {
         const pdfs = res.pdfsGerados !== undefined ? res.pdfsGerados : (res.gerados || 0);
         const emails = res.emailsEnviados !== undefined ? res.emailsEnviados : (res.enviados || 0);
         const arquivos = res.arquivosGerados || [];
-        const checkSvg = window.OlymposIcons ? window.OlymposIcons.ui('check') : '✓';
+        const checkSvg = window.OlymposIcons ? window.OlymposIcons.ui('check') : '';
         const escape = window.OlymposApp && window.OlymposApp.escapeHtml ? window.OlymposApp.escapeHtml : function(s) { return s || ''; };
 
         if (res.cotaRestante !== undefined) {

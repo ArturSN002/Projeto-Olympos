@@ -863,7 +863,10 @@ body.nav-drawer-open .sidebar-backdrop,
 @media (min-width: 861px) {
   .mobile-menu-btn,
   #mobileMenuToggleBtn,
-  .icon-capsule-btn.mobile-menu-btn {
+  .icon-capsule-btn.mobile-menu-btn,
+  #mobileSidebar,
+  .mobile-drawer,
+  .sidebar-backdrop {
     display: none !important;
   }
 }
@@ -2160,14 +2163,60 @@ body.nav-drawer-open .sidebar-backdrop,
   .status-pill span {
     display: none;
   }
-  .mobile-menu-btn {
+  .mobile-menu-btn,
+  #mobileMenuToggleBtn,
+  .icon-capsule-btn.mobile-menu-btn {
     display: inline-flex !important;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
   }
   .masthead-nav-rail {
-    display: none;
+    display: none !important;
+  }
+
+  /* Ativação do Drawer Móvel em 860px para eliminar a zona cega 769px-860px */
+  .sidebar,
+  .mobile-drawer {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    width: min(300px, 84vw) !important;
+    max-width: 320px !important;
+    z-index: 1000 !important;
+    background: var(--bg-elevated) !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5) !important;
+    transform: translateX(-100%) !important;
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+    display: flex !important;
+    flex-direction: column !important;
+    border-right: 1px solid var(--border-hairline) !important;
+    border-top: none !important;
+  }
+
+  body.nav-drawer-open {
+    overflow: hidden;
+  }
+
+  body.nav-drawer-open .sidebar,
+  body.nav-drawer-open .mobile-drawer,
+  .sidebar.open,
+  .sidebar.active {
+    transform: translateX(0) !important;
+  }
+
+  .drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px 12px;
+    border-bottom: 1px solid var(--border-hairline);
+    margin-bottom: 8px;
   }
 }
 
@@ -5910,6 +5959,40 @@ body.nav-drawer-open .sidebar-backdrop,
   }
 }
 
+/* Portais da Transparência Monitorados (Cadmo) */
+.cadmo-portais-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.cadmo-portais-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.portal-card-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.portal-card-item:hover {
+  border-color: var(--border-focus, #6366f1);
+  box-shadow: var(--shadow-sm, 0 4px 12px rgba(0, 0, 0, 0.15));
+}
+
+.permutas-vigentes-card {
+  transition: box-shadow 0.2s ease;
+}
+
 /* Permutas (Papiro / Cadmo) */
 .cadmo-search-wrap {
   flex: 1 1 260px;
@@ -6018,6 +6101,10 @@ body.nav-drawer-open .sidebar-backdrop,
 }
 
 @media (max-width: 768px) {
+  .cadmo-portais-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
   #cadmoMapCollapsibleHeader {
     flex-wrap: wrap;
     gap: 8px;
@@ -6060,6 +6147,15 @@ body.nav-drawer-open .sidebar-backdrop,
 }
 
 @media (max-width: 480px) {
+  .cadmo-portais-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .cadmo-portais-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
   .cadmo-tabs-group {
     grid-template-columns: 1fr;
   }

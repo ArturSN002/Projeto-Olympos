@@ -25,22 +25,22 @@ window.OlymposViews.papiroCadmo = (function() {
 
   // Catálogo Georreferenciado Oficial das 15 Secretarias Municipais de Educação Parceiras (RN)
   const PONTOS_GEORREFERENCIADOS = [
-    { id: 'sme_ceara_mirim', nome: 'SMEB Sede (Ceará-Mirim)', municipio: 'Ceará-Mirim', regiao: 'Grande Natal', tipo: 'Sede Administrativa SMEB', coords: [-5.6344, -35.4245], cor: '#D4AF37', icone: '★', endereco: 'Rua General João Varela, 120, Centro', contato: '(84) 3274-5900' },
-    { id: 'sme_natal', nome: 'SME Natal (Polo Natal)', municipio: 'Natal', regiao: 'Grande Natal / Metrópole', tipo: 'Secretaria Municipal Parceira', coords: [-5.7890, -35.2020], cor: '#10B981', icone: '🏛️', endereco: 'Rua Fabrício Pedroza, 915, Petrópolis', contato: '(84) 3232-4700' },
-    { id: 'sme_extremoz', nome: 'SME Extremoz (Polo Extremoz)', municipio: 'Extremoz', regiao: 'Grande Natal', tipo: 'Secretaria Municipal Parceira', coords: [-5.7067, -35.3069], cor: '#8B5CF6', icone: '🏛️', endereco: 'Rua Capitão José da Penha, s/n, Centro', contato: '(84) 3279-4910' },
-    { id: 'sme_sga', nome: 'SME São Gonçalo do Amarante (Polo SGA)', municipio: 'São Gonçalo do Amarante', regiao: 'Grande Natal', tipo: 'Secretaria Municipal Parceira', coords: [-5.7928, -35.3300], cor: '#F59E0B', icone: '🏛️', endereco: 'Rua Coronel Estevam, s/n, Centro', contato: '(84) 3278-4850' },
-    { id: 'sme_macaiba', nome: 'SME Macaíba (Polo Macaíba)', municipio: 'Macaíba', regiao: 'Grande Natal', tipo: 'Secretaria Municipal Parceira', coords: [-5.8569, -35.3531], cor: '#EC4899', icone: '🏛️', endereco: 'Rua Doutor Pedro Velho, s/n, Centro', contato: '(84) 3271-6510' },
-    { id: 'sme_parnamirim', nome: 'SEMEC Parnamirim (Polo Parnamirim)', municipio: 'Parnamirim', regiao: 'Grande Natal', tipo: 'Secretaria Municipal Parceira', coords: [-5.9156, -35.2628], cor: '#06B6D4', icone: '🏛️', endereco: 'Rua Tenente Medeiros, 105, Cohabinal', contato: '(84) 3645-1234' },
-    { id: 'sme_nisia_floresta', nome: 'SME Nísia Floresta', municipio: 'Nísia Floresta', regiao: 'Litoral Sul / Agreste', tipo: 'Secretaria Municipal Parceira', coords: [-6.0169, -35.2089], cor: '#14B8A6', icone: '🏛️', endereco: 'Rua Cônego Calazans, Centro', contato: '(84) 3277-2200' },
-    { id: 'sme_monte_alegre', nome: 'SME Monte Alegre', municipio: 'Monte Alegre', regiao: 'Agreste Potiguar', tipo: 'Secretaria Municipal Parceira', coords: [-6.0644, -35.3325], cor: '#6366F1', icone: '🏛️', endereco: 'Rua Pedro Alves, Centro', contato: '(84) 3276-2215' },
-    { id: 'sme_ielmo_marinho', nome: 'SME Ielmo Marinho', municipio: 'Ielmo Marinho', regiao: 'Região Potengi', tipo: 'Secretaria Municipal Parceira', coords: [-5.8211, -35.5314], cor: '#A855F7', icone: '🏛️', endereco: 'Rua Manoel Camilo, Centro', contato: '(84) 3269-0120' },
-    { id: 'sme_spp', nome: 'SME São Paulo do Potengi', municipio: 'São Paulo do Potengi', regiao: 'Região Potengi', tipo: 'Secretaria Municipal Parceira', coords: [-5.8947, -35.7628], cor: '#E11D48', icone: '🏛️', endereco: 'Rua Bento Urbano, Centro', contato: '(84) 3251-2250' },
-    { id: 'sme_joao_camara', nome: 'SME João Câmara', municipio: 'João Câmara', regiao: 'Região Mato Grande', tipo: 'Secretaria Municipal Parceira', coords: [-5.5375, -35.8197], cor: '#D97706', icone: '🏛️', endereco: 'Rua Vereador José Severiano, Centro', contato: '(84) 3262-2510' },
-    { id: 'sme_poco_branco', nome: 'SME Poço Branco', municipio: 'Poço Branco', regiao: 'Região Mato Grande', tipo: 'Secretaria Municipal Parceira', coords: [-5.6239, -35.6606], cor: '#0284C7', icone: '🏛️', endereco: 'Rua Francisco de Assis, Centro', contato: '(84) 3264-0130' },
-    { id: 'sme_taipu', nome: 'SME Taipú', municipio: 'Taipú', regiao: 'Região Mato Grande', tipo: 'Secretaria Municipal Parceira', coords: [-5.6217, -35.5358], cor: '#0D9488', icone: '🏛️', endereco: 'Praça 10 de Março, Centro', contato: '(84) 3265-0105' },
-    { id: 'sme_touros', nome: 'SME Touros', municipio: 'Touros', regiao: 'Litoral Norte', tipo: 'Secretaria Municipal Parceira', coords: [-5.1989, -35.4608], cor: '#2563EB', icone: '🏛️', endereco: 'Av. 27 de Março, Centro', contato: '(84) 3263-2210' },
-    { id: 'sme_rio_do_fogo', nome: 'SME Rio do Fogo', municipio: 'Rio do Fogo', regiao: 'Litoral Norte', tipo: 'Secretaria Municipal Parceira', coords: [-5.2750, -35.3814], cor: '#059669', icone: '🏛️', endereco: 'Rua José Severiano, Centro', contato: '(84) 3694-0112' },
-    { id: 'seec_rn', nome: 'SEEC / Governo do Estado do RN', municipio: 'Governo do Estado do RN (SEEC)', regiao: 'Estadual', tipo: 'Secretaria de Estado da Educação (SEEC/RN)', coords: [-5.8278, -35.2156], cor: '#3B82F6', icone: '🌐', endereco: 'Centro Administrativo do Estado, Bloco I, BR-101, Natal/RN', contato: '(84) 3232-1300 / seec@rn.gov.br' }
+    { id: 'sme_ceara_mirim', nome: 'SMEB Sede (Ceará-Mirim)', municipio: 'Ceará-Mirim', regiao: 'Grande Natal', tipo: 'Sede Administrativa SMEB', coords: [-5.6344, -35.4245], cor: '#D4AF37', icone: 'star', endereco: 'Rua General João Varela, 120, Centro', contato: '(84) 3274-5900' },
+    { id: 'sme_natal', nome: 'SME Natal (Polo Natal)', municipio: 'Natal', regiao: 'Grande Natal / Metrópole', tipo: 'Secretaria Municipal Parceira', coords: [-5.7890, -35.2020], cor: '#10B981', icone: 'olymposLogo', endereco: 'Rua Fabrício Pedroza, 915, Petrópolis', contato: '(84) 3232-4700' },
+    { id: 'sme_extremoz', nome: 'SME Extremoz (Polo Extremoz)', municipio: 'Extremoz', regiao: 'Grande Natal', tipo: 'Secretaria Municipal Parceira', coords: [-5.7067, -35.3069], cor: '#8B5CF6', icone: 'olymposLogo', endereco: 'Rua Capitão José da Penha, s/n, Centro', contato: '(84) 3279-4910' },
+    { id: 'sme_sga', nome: 'SME São Gonçalo do Amarante (Polo SGA)', municipio: 'São Gonçalo do Amarante', regiao: 'Grande Natal', tipo: 'Secretaria Municipal Parceira', coords: [-5.7928, -35.3300], cor: '#F59E0B', icone: 'olymposLogo', endereco: 'Rua Coronel Estevam, s/n, Centro', contato: '(84) 3278-4850' },
+    { id: 'sme_macaiba', nome: 'SME Macaíba (Polo Macaíba)', municipio: 'Macaíba', regiao: 'Grande Natal', tipo: 'Secretaria Municipal Parceira', coords: [-5.8569, -35.3531], cor: '#EC4899', icone: 'olymposLogo', endereco: 'Rua Doutor Pedro Velho, s/n, Centro', contato: '(84) 3271-6510' },
+    { id: 'sme_parnamirim', nome: 'SEMEC Parnamirim (Polo Parnamirim)', municipio: 'Parnamirim', regiao: 'Grande Natal', tipo: 'Secretaria Municipal Parceira', coords: [-5.9156, -35.2628], cor: '#06B6D4', icone: 'olymposLogo', endereco: 'Rua Tenente Medeiros, 105, Cohabinal', contato: '(84) 3645-1234' },
+    { id: 'sme_nisia_floresta', nome: 'SME Nísia Floresta', municipio: 'Nísia Floresta', regiao: 'Litoral Sul / Agreste', tipo: 'Secretaria Municipal Parceira', coords: [-6.0169, -35.2089], cor: '#14B8A6', icone: 'olymposLogo', endereco: 'Rua Cônego Calazans, Centro', contato: '(84) 3277-2200' },
+    { id: 'sme_monte_alegre', nome: 'SME Monte Alegre', municipio: 'Monte Alegre', regiao: 'Agreste Potiguar', tipo: 'Secretaria Municipal Parceira', coords: [-6.0644, -35.3325], cor: '#6366F1', icone: 'olymposLogo', endereco: 'Rua Pedro Alves, Centro', contato: '(84) 3276-2215' },
+    { id: 'sme_ielmo_marinho', nome: 'SME Ielmo Marinho', municipio: 'Ielmo Marinho', regiao: 'Região Potengi', tipo: 'Secretaria Municipal Parceira', coords: [-5.8211, -35.5314], cor: '#A855F7', icone: 'olymposLogo', endereco: 'Rua Manoel Camilo, Centro', contato: '(84) 3269-0120' },
+    { id: 'sme_spp', nome: 'SME São Paulo do Potengi', municipio: 'São Paulo do Potengi', regiao: 'Região Potengi', tipo: 'Secretaria Municipal Parceira', coords: [-5.8947, -35.7628], cor: '#E11D48', icone: 'olymposLogo', endereco: 'Rua Bento Urbano, Centro', contato: '(84) 3251-2250' },
+    { id: 'sme_joao_camara', nome: 'SME João Câmara', municipio: 'João Câmara', regiao: 'Região Mato Grande', tipo: 'Secretaria Municipal Parceira', coords: [-5.5375, -35.8197], cor: '#D97706', icone: 'olymposLogo', endereco: 'Rua Vereador José Severiano, Centro', contato: '(84) 3262-2510' },
+    { id: 'sme_poco_branco', nome: 'SME Poço Branco', municipio: 'Poço Branco', regiao: 'Região Mato Grande', tipo: 'Secretaria Municipal Parceira', coords: [-5.6239, -35.6606], cor: '#0284C7', icone: 'olymposLogo', endereco: 'Rua Francisco de Assis, Centro', contato: '(84) 3264-0130' },
+    { id: 'sme_taipu', nome: 'SME Taipú', municipio: 'Taipú', regiao: 'Região Mato Grande', tipo: 'Secretaria Municipal Parceira', coords: [-5.6217, -35.5358], cor: '#0D9488', icone: 'olymposLogo', endereco: 'Praça 10 de Março, Centro', contato: '(84) 3265-0105' },
+    { id: 'sme_touros', nome: 'SME Touros', municipio: 'Touros', regiao: 'Litoral Norte', tipo: 'Secretaria Municipal Parceira', coords: [-5.1989, -35.4608], cor: '#2563EB', icone: 'olymposLogo', endereco: 'Av. 27 de Março, Centro', contato: '(84) 3263-2210' },
+    { id: 'sme_rio_do_fogo', nome: 'SME Rio do Fogo', municipio: 'Rio do Fogo', regiao: 'Litoral Norte', tipo: 'Secretaria Municipal Parceira', coords: [-5.2750, -35.3814], cor: '#059669', icone: 'olymposLogo', endereco: 'Rua José Severiano, Centro', contato: '(84) 3694-0112' },
+    { id: 'seec_rn', nome: 'SEEC / Governo do Estado do RN', municipio: 'Governo do Estado do RN (SEEC)', regiao: 'Estadual', tipo: 'Secretaria de Estado da Educação (SEEC/RN)', coords: [-5.8278, -35.2156], cor: '#3B82F6', icone: 'globe', endereco: 'Centro Administrativo do Estado, Bloco I, BR-101, Natal/RN', contato: '(84) 3232-1300 / seec@rn.gov.br' }
   ];
 
   const STORAGE_KEY_SECRETARIAS = 'olympos_secretarias_parceiras';
@@ -1339,7 +1339,7 @@ window.OlymposViews.papiroCadmo = (function() {
     todosPontos.forEach(function(ponto) {
       const isSede = ponto.tipo.includes('Sede');
       const isSecretaria = ponto.tipo.includes('Secretaria Municipal') || (ponto.id && ponto.id.startsWith('sme_'));
-      const iconeDisplay = ponto.icone || (isSede ? '★' : (isSecretaria ? '🏛️' : 'E'));
+      const iconeDisplay = (window.OlymposIcons ? window.OlymposIcons.fromEmojiOrKey(ponto.icone || (isSede ? 'star' : (isSecretaria ? 'olymposLogo' : 'school'))) : (isSede ? 'S' : 'E'));
 
       const markerHtml =
         '<div style="background:' + ponto.cor + '; width: 24px; height: 24px; border-radius: 50%; border: 2.5px solid #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; font-size: ' + (isSecretaria && !isSede ? '11px' : '10px') + '; color: #fff; font-weight: bold;">' +
@@ -1355,13 +1355,13 @@ window.OlymposViews.papiroCadmo = (function() {
       });
 
       const badgeTipo = isSede
-        ? '<span class="pill-badge pill-gold" style="font-size:10px;">★ Sede SMEB</span>'
+        ? '<span class="pill-badge pill-gold" style="font-size:10px;">' + (window.OlymposIcons ? window.OlymposIcons.ui('star', 11) : '') + ' Sede SMEB</span>'
         : (isSecretaria
-          ? '<span class="pill-badge pill-green" style="font-size:10px;">🏛️ Secretaria Parceira</span>'
-          : '<span class="pill-badge pill-blue" style="font-size:10px;">🏫 Rede Municipal</span>');
+          ? '<span class="pill-badge pill-green" style="font-size:10px;">' + (window.OlymposIcons ? window.OlymposIcons.ui('olymposLogo', 11) : '') + ' Secretaria Parceira</span>'
+          : '<span class="pill-badge pill-blue" style="font-size:10px;">' + (window.OlymposIcons ? window.OlymposIcons.ui('school', 11) : '') + ' Rede Municipal</span>');
 
       const btnEditarSec = (isSecretaria || isSede)
-        ? '<button type="button" class="btn btn-secondary btn-sm" style="font-size:10.5px; padding:3px 8px; border-color: var(--brand-gold, #D4AF37); color: var(--brand-gold, #D4AF37);" onclick="window.OlymposViews.papiroCadmo.abrirModalEdicaoSecretaria(\'' + window.OlymposApp.escapeHtml(ponto.id) + '\')">✏️ Editar Polo</button>'
+        ? '<button type="button" class="btn btn-secondary btn-sm" style="font-size:10.5px; padding:3px 8px; border-color: var(--brand-gold, #D4AF37); color: var(--brand-gold, #D4AF37);" onclick="window.OlymposViews.papiroCadmo.abrirModalEdicaoSecretaria(\'' + window.OlymposApp.escapeHtml(ponto.id) + '\')">' + (window.OlymposIcons ? window.OlymposIcons.ui('edit', 11) : '') + ' Editar Polo</button>'
         : '';
 
       const popupContent =
@@ -1647,7 +1647,7 @@ window.OlymposViews.papiroCadmo = (function() {
         coords: [lat, lng],
         tipo: 'Secretaria Municipal Parceira',
         cor: '#10B981',
-        icone: '🏛️'
+        icone: 'olymposLogo'
       };
       secretarias.push(targetSec);
     } else {
@@ -1983,7 +1983,7 @@ window.OlymposViews.papiroCadmo = (function() {
       if (termoBuscaServidor) {
         container.innerHTML =
           '<div class="output-panel text-center" style="padding: 32px 20px;">' +
-            '<div style="font-size: 1.8rem; margin-bottom: 8px;">🔍</div>' +
+            '<div style="font-size: 1.8rem; margin-bottom: 8px;">' + (window.OlymposIcons ? window.OlymposIcons.ui('search', 28) : '') + '</div>' +
             '<strong style="display:block; font-size:15px; margin-bottom:6px; color:var(--text-main);">Nenhum servidor ou oportunidade de permuta localizada</strong>' +
             '<p style="font-size:13px; color:var(--text-muted); max-width:480px; margin:0 auto 14px;">Não foram identificadas permutas para o termo "<strong>' + window.OlymposApp.escapeHtml(termoBuscaServidor) + '</strong>". Tente buscar por matrícula funcional de 7 dígitos, nome, escola de lotação ou município.</p>' +
             '<button type="button" class="btn btn-secondary btn-sm" onclick="window.OlymposViews.papiroCadmo.limparBuscaServidor()">Limpar Busca</button>' +
@@ -1991,7 +1991,7 @@ window.OlymposViews.papiroCadmo = (function() {
       } else {
         container.innerHTML =
           '<div class="output-panel text-center" style="padding: 32px 20px;">' +
-            '<div style="font-size: 1.8rem; margin-bottom: 8px;">🤝</div>' +
+            '<div style="font-size: 1.8rem; margin-bottom: 8px;">' + (window.OlymposIcons ? window.OlymposIcons.ui('users', 28) : '') + '</div>' +
             '<strong style="display:block; font-size:15px; margin-bottom:6px; color:var(--text-main);">Nenhuma intenção de permuta cadastrada no momento</strong>' +
             '<p style="font-size:13px; color:var(--text-muted); max-width:480px; margin:0 auto 16px;">Nenhuma intenção de permuta cadastrada no momento. Clique em \'+ Nova Intenção de Permuta\' para cadastrar.</p>' +
           '</div>';
@@ -2010,11 +2010,11 @@ window.OlymposViews.papiroCadmo = (function() {
           '<div class="match-card-header">' +
             '<div style="display: flex; align-items: center; gap: 8px;">' +
               '<span class="badge-compatibilidade ' + res.badgeClass + '">' + res.score + '% • ' + res.nivel + '</span>' +
-              '<span class="selo-hera-badge" title="Instrução validada pela Persona Hera">⚡ Selo Hera</span>' +
+              '<span class="selo-hera-badge" title="Instrução validada pela Persona Hera">' + (window.OlymposIcons ? window.OlymposIcons.ui('boltZeus', 12) : '') + ' Selo Hera</span>' +
             '</div>' +
             '<button type="button" class="btn btn-secondary btn-sm btn-tracar-rota" ' +
               'onclick="window.OlymposViews.papiroCadmo.tracarRotaPermuta(\'' + window.OlymposApp.escapeHtml(cA.origem) + '\', \'' + window.OlymposApp.escapeHtml(cB.origem) + '\', ' + res.score + ')">' +
-              '🗺️ Ver Rota no Mapa' +
+              (window.OlymposIcons ? window.OlymposIcons.ui('map', 13) : '') + ' Ver Rota no Mapa' +
             '</button>' +
           '</div>' +
 
@@ -2026,13 +2026,13 @@ window.OlymposViews.papiroCadmo = (function() {
               '<div class="candidato-cargo">' + window.OlymposApp.escapeHtml(cA.cargo) + ' — ' + window.OlymposApp.escapeHtml(cA.disciplina) + '</div>' +
               '<div class="rota-chip-container">' +
                 '<span class="rota-chip-origem">' + window.OlymposApp.escapeHtml(cA.origem) + '</span>' +
-                '<span class="rota-arrow">➔</span>' +
+                '<span class="rota-arrow">' + (window.OlymposIcons ? window.OlymposIcons.ui('arrowRight', 12) : '') + '</span>' +
                 '<span class="rota-chip-destino">' + window.OlymposApp.escapeHtml(cA.destino) + '</span>' +
               '</div>' +
             '</div>' +
 
             '<div class="match-connector-icon">' +
-              '<div class="connector-circle">⇄</div>' +
+              '<div class="connector-circle">' + (window.OlymposIcons ? window.OlymposIcons.ui('repeat', 12) : '') + '</div>' +
             '</div>' +
 
             '<div class="candidato-box">' +
@@ -2042,7 +2042,7 @@ window.OlymposViews.papiroCadmo = (function() {
               '<div class="candidato-cargo">' + window.OlymposApp.escapeHtml(cB.cargo) + ' — ' + window.OlymposApp.escapeHtml(cB.disciplina) + '</div>' +
               '<div class="rota-chip-container">' +
                 '<span class="rota-chip-origem">' + window.OlymposApp.escapeHtml(cB.origem) + '</span>' +
-                '<span class="rota-arrow">➔</span>' +
+                '<span class="rota-arrow">' + (window.OlymposIcons ? window.OlymposIcons.ui('arrowRight', 12) : '') + '</span>' +
                 '<span class="rota-chip-destino">' + window.OlymposApp.escapeHtml(cB.destino) + '</span>' +
               '</div>' +
             '</div>' +
@@ -2064,7 +2064,7 @@ window.OlymposViews.papiroCadmo = (function() {
           '</div>' +
 
           '<div class="parecer-hera-box">' +
-            '<span class="parecer-hera-icon">⚖️</span>' +
+            '<span class="parecer-hera-icon">' + (window.OlymposIcons ? window.OlymposIcons.ui('shieldOfThemis', 14) : '') + '</span>' +
             '<p class="parecer-hera-text">' + window.OlymposApp.escapeHtml(res.parecerHera) + '</p>' +
           '</div>' +
         '</div>';
@@ -2102,7 +2102,7 @@ window.OlymposViews.papiroCadmo = (function() {
       if (termoBuscaServidor) {
         container.innerHTML =
           '<div class="output-panel text-center" style="padding: 32px 20px;">' +
-            '<div style="font-size: 1.8rem; margin-bottom: 8px;">🔍</div>' +
+            '<div style="font-size: 1.8rem; margin-bottom: 8px;">' + (window.OlymposIcons ? window.OlymposIcons.ui('search', 28) : '') + '</div>' +
             '<strong style="display:block; font-size:15px; margin-bottom:6px; color:var(--text-main);">Nenhum vínculo externo localizado</strong>' +
             '<p style="font-size:13px; color:var(--text-muted); max-width:480px; margin:0 auto 14px;">Não foram identificados vínculos externos para o termo "<strong>' + window.OlymposApp.escapeHtml(termoBuscaServidor) + '</strong>". Tente buscar por matrícula funcional, nome do servidor ou ente parceiro.</p>' +
             '<button type="button" class="btn btn-secondary btn-sm" onclick="window.OlymposViews.papiroCadmo.limparBuscaServidor()">Limpar Busca</button>' +
@@ -2110,7 +2110,7 @@ window.OlymposViews.papiroCadmo = (function() {
       } else {
         container.innerHTML =
           '<div class="output-panel text-center" style="padding: 32px 20px;">' +
-            '<div style="font-size: 1.8rem; margin-bottom: 8px;">🏛️</div>' +
+            '<div style="font-size: 1.8rem; margin-bottom: 8px;">' + (window.OlymposIcons ? window.OlymposIcons.ui('olymposLogo', 28) : '') + '</div>' +
             '<strong style="display:block; font-size:15px; margin-bottom:6px; color:var(--text-main);">Nenhum vínculo externo localizado</strong>' +
             '<p style="font-size:13px; color:var(--text-muted); max-width:480px; margin:0 auto 16px;">Carregue arquivos CSV adicionais de outros entes federativos (SEEC/RN, Natal, Extremoz, etc.) para auditar acúmulos de cargo.</p>' +
           '</div>';
@@ -2127,8 +2127,8 @@ window.OlymposViews.papiroCadmo = (function() {
 
       const isLegal = ac.acumulacao_legal;
       const badgeConformidade = isLegal
-        ? '<span class="pill-badge pill-green" style="font-size:11.5px;">⚖️ Em Conformidade (60h)</span>'
-        : '<span class="pill-badge pill-red" style="font-size:11.5px;">⚠️ Alerta Inconformidade</span>';
+        ? '<span class="pill-badge pill-green" style="font-size:11.5px;">' + (window.OlymposIcons ? window.OlymposIcons.ui('shieldOfThemis', 13) : '') + ' Em Conformidade (60h)</span>'
+        : '<span class="pill-badge pill-red" style="font-size:11.5px;">' + (window.OlymposIcons ? window.OlymposIcons.ui('alertTriangle', 13) : '') + ' Alerta Inconformidade</span>';
 
       html +=
         '<div class="match-card-hera" id="vinculoCard_' + idx + '">' +
@@ -2140,13 +2140,13 @@ window.OlymposViews.papiroCadmo = (function() {
             '</div>' +
             '<button type="button" class="btn btn-primary btn-sm" ' +
               'onclick="window.OlymposViews.papiroCadmo.preencherFormComVinculo(\'' + window.OlymposApp.escapeHtml(sr.nome_completo) + '\', \'' + window.OlymposApp.escapeHtml(sr.matricula) + '\', \'' + window.OlymposApp.escapeHtml(sr.cargo) + '\', \'' + sr.carga_horaria + 'h\', \'' + window.OlymposApp.escapeHtml(ve.ente_origem) + '\')">' +
-              '⚡ Criar Intenção de Permuta' +
+              (window.OlymposIcons ? window.OlymposIcons.ui('boltZeus', 12) : '') + ' Criar Intenção de Permuta' +
             '</button>' +
           '</div>' +
 
           '<div class="match-candidatos-row">' +
             '<div class="candidato-box">' +
-              '<div class="candidato-badge-tag" style="background: var(--brand-gold-glow, rgba(212,175,55,0.15)); color: var(--brand-gold);">🏛️ Ceará-Mirim (Âncora Cadastral)</div>' +
+              '<div class="candidato-badge-tag" style="background: var(--brand-gold-glow, rgba(212,175,55,0.15)); color: var(--brand-gold);">' + (window.OlymposIcons ? window.OlymposIcons.ui('olymposLogo', 12) : '') + ' Ceará-Mirim (Âncora Cadastral)</div>' +
               '<strong class="candidato-nome">' + window.OlymposApp.escapeHtml(sr.nome_completo) + '</strong>' +
               '<div class="candidato-meta">Matrícula: <strong>' + window.OlymposApp.escapeHtml(sr.matricula) + '</strong> • ' + sr.carga_horaria + 'h semanais (CPF: ' + window.OlymposApp.escapeHtml(sr.cpf_mascarado) + ')</div>' +
               '<div class="candidato-cargo">' + window.OlymposApp.escapeHtml(sr.cargo) + '</div>' +
@@ -2154,11 +2154,11 @@ window.OlymposViews.papiroCadmo = (function() {
             '</div>' +
 
             '<div class="match-connector-icon">' +
-              '<div class="connector-circle" style="background: ' + (isLegal ? 'rgba(16,185,129,0.15); color: #10B981;' : 'rgba(239,68,68,0.15); color: #EF4444;') + '">' + (isLegal ? '⚖️' : '⚠️') + '</div>' +
+              '<div class="connector-circle" style="background: ' + (isLegal ? 'rgba(16,185,129,0.15); color: #10B981;' : 'rgba(239,68,68,0.15); color: #EF4444;') + '">' + (window.OlymposIcons ? window.OlymposIcons.ui(isLegal ? 'shieldOfThemis' : 'alertTriangle', 14) : '') + '</div>' +
             '</div>' +
 
             '<div class="candidato-box">' +
-              '<div class="candidato-badge-tag" style="background: rgba(56,189,248,0.15); color: #38BDF8;">🌐 ' + window.OlymposApp.escapeHtml(ve.ente_origem) + '</div>' +
+              '<div class="candidato-badge-tag" style="background: rgba(56,189,248,0.15); color: #38BDF8;">' + (window.OlymposIcons ? window.OlymposIcons.ui('globe', 12) : '') + ' ' + window.OlymposApp.escapeHtml(ve.ente_origem) + '</div>' +
               '<strong class="candidato-nome">' + window.OlymposApp.escapeHtml(sr.nome_completo) + '</strong>' +
               '<div class="candidato-meta">Matrícula: <strong>' + window.OlymposApp.escapeHtml(ve.matricula) + '</strong> • ' + ve.carga_horaria + 'h semanais • ' + window.OlymposApp.escapeHtml(ve.situacao_vinculo) + '</div>' +
               '<div class="candidato-cargo">' + window.OlymposApp.escapeHtml(ve.cargo) + '</div>' +
@@ -2167,12 +2167,12 @@ window.OlymposViews.papiroCadmo = (function() {
           '</div>' +
 
           '<div class="parecer-hera-box" style="border-left-color: ' + (isLegal ? '#10B981' : '#EF4444') + ';">' +
-            '<span class="parecer-hera-icon">' + (isLegal ? '⚖️' : '⚠️') + '</span>' +
+            '<span class="parecer-hera-icon">' + (window.OlymposIcons ? window.OlymposIcons.ui(isLegal ? 'shieldOfThemis' : 'alertTriangle', 14) : '') + '</span>' +
             '<div>' +
               '<strong style="display:block; font-size:12px; margin-bottom:2px; color:var(--text-main);">' + window.OlymposApp.escapeHtml(ac.enquadramento) + '</strong>' +
               '<p class="parecer-hera-text" style="margin:0;">' + window.OlymposApp.escapeHtml(ac.parecer_hera) + '</p>' +
               '<div style="margin-top:6px; font-size:11.5px; color:var(--brand-gold); display:flex; align-items:center; gap:4px;">' +
-                '<span>🚀 <strong>Potencial de Permuta:</strong> ' + window.OlymposApp.escapeHtml(pp.polo_parceiro) + ' — ' + window.OlymposApp.escapeHtml(pp.otimizacao_logistica) + '</span>' +
+                '<span>' + (window.OlymposIcons ? window.OlymposIcons.ui('target', 13) : '') + ' <strong>Potencial de Permuta:</strong> ' + window.OlymposApp.escapeHtml(pp.polo_parceiro) + ' — ' + window.OlymposApp.escapeHtml(pp.otimizacao_logistica) + '</span>' +
               '</div>' +
             '</div>' +
           '</div>' +
@@ -2295,7 +2295,9 @@ window.OlymposViews.papiroCadmo = (function() {
     }
     if (btnHeaderToggle) {
       btnHeaderToggle.setAttribute('aria-expanded', String(isIntencao));
-      btnHeaderToggle.innerHTML = isIntencao ? '<span>🔍 Consultar Servidor</span>' : '<span>📝 Intenção de Permuta</span>';
+      btnHeaderToggle.innerHTML = isIntencao
+        ? '<span>' + (window.OlymposIcons ? window.OlymposIcons.ui('search', 14) : '') + ' Consultar Servidor</span>'
+        : '<span>' + (window.OlymposIcons ? window.OlymposIcons.ui('edit', 14) : '') + ' Intenção de Permuta</span>';
     }
   }
 
@@ -2622,7 +2624,7 @@ window.OlymposViews.papiroCadmo = (function() {
     if (box) {
       box.innerHTML =
         '<div class="servidor-lookup-empty">' +
-          '<span>💡 Informe o <strong>nome</strong> (completo ou parcial) ou a <strong>matrícula funcional</strong> acima para exibir a ficha consolidada de vínculos, carga horária acumulada, lotação escolar e compatibilidade de permuta.</span>' +
+          '<span>' + (window.OlymposIcons ? window.OlymposIcons.ui('lightbulb', 14) : '') + ' Informe o <strong>nome</strong> (completo ou parcial) ou a <strong>matrícula funcional</strong> acima para exibir a ficha consolidada de vínculos, carga horária acumulada, lotação escolar e compatibilidade de permuta.</span>' +
         '</div>';
     }
   }
@@ -2655,7 +2657,7 @@ window.OlymposViews.papiroCadmo = (function() {
       }
       box.innerHTML =
         '<div class="servidor-lookup-empty">' +
-          '🔍 Nenhum servidor encontrado para <strong>"' + window.OlymposApp.escapeHtml(termo) + '"</strong>. Verifique a grafia do nome ou o número da matrícula.' +
+          (window.OlymposIcons ? window.OlymposIcons.ui('search', 14) : '') + ' Nenhum servidor encontrado para <strong>"' + window.OlymposApp.escapeHtml(termo) + '"</strong>. Verifique a grafia do nome ou o número da matrícula.' +
         '</div>';
       return [];
     }
@@ -2675,8 +2677,8 @@ window.OlymposViews.papiroCadmo = (function() {
     exibidos.forEach(function(srv) {
       const aud = srv.auditoriaConstitucional || { regular: true, enquadramento: '', parecer: '' };
       const badgeLegal = aud.regular
-        ? '<span class="pill-badge pill-green" style="font-size:11px;">⚖️ Regular (' + srv.cargaHorariaTotal + 'h semanais)</span>'
-        : '<span class="pill-badge pill-red" style="font-size:11px;">⚠️ Alerta CF/88 (' + srv.cargaHorariaTotal + 'h semanais)</span>';
+        ? '<span class="pill-badge pill-green" style="font-size:11px;">' + (window.OlymposIcons ? window.OlymposIcons.ui('shieldOfThemis', 12) : '') + ' Regular (' + srv.cargaHorariaTotal + 'h semanais)</span>'
+        : '<span class="pill-badge pill-red" style="font-size:11px;">' + (window.OlymposIcons ? window.OlymposIcons.ui('alertTriangle', 12) : '') + ' Alerta CF/88 (' + srv.cargaHorariaTotal + 'h semanais)</span>';
 
       const primeiroVinculo = srv.vinculos[0] || {};
       const cpfTag = srv.cpfMascarado
@@ -2698,7 +2700,7 @@ window.OlymposViews.papiroCadmo = (function() {
               badgeLegal +
               '<button type="button" class="btn btn-primary btn-sm" style="font-size:11.5px; padding:4px 10px;" ' +
                 'onclick="window.OlymposViews.papiroCadmo.preencherFormComDocente(\'' + window.OlymposApp.escapeHtml(srv.nome) + '\', \'' + window.OlymposApp.escapeHtml(primeiroVinculo.matricula || '') + '\', \'' + window.OlymposApp.escapeHtml(primeiroVinculo.cargo || '') + '\', \'' + window.OlymposApp.escapeHtml(primeiroVinculo.cargaHorariaTexto || '30h') + '\', \'' + window.OlymposApp.escapeHtml(primeiroVinculo.lotacao || '') + '\')">' +
-                '⚡ Iniciar Permuta' +
+                (window.OlymposIcons ? window.OlymposIcons.ui('boltZeus', 12) : '') + ' Iniciar Permuta' +
               '</button>' +
             '</div>' +
           '</div>' +
@@ -2713,13 +2715,13 @@ window.OlymposViews.papiroCadmo = (function() {
         html +=
           '<div class="servidor-vinculo-item">' +
             '<div style="display:flex; justify-content:space-between; align-items:center; gap:6px; flex-wrap:wrap;">' +
-              '<span class="pill-badge ' + pillClass + '" style="font-size:10.5px;">🏛️ ' + window.OlymposApp.escapeHtml(v.ente) + '</span>' +
+              '<span class="pill-badge ' + pillClass + '" style="font-size:10.5px;">' + (window.OlymposIcons ? window.OlymposIcons.ui(isEstadual ? 'globe' : 'olymposLogo', 12) : '') + ' ' + window.OlymposApp.escapeHtml(v.ente) + '</span>' +
               '<span style="font-family:var(--font-mono); font-size:11.5px; font-weight:700; color:var(--text-main);">Mat. ' + window.OlymposApp.escapeHtml(v.matricula) + '</span>' +
             '</div>' +
             '<strong style="font-size:12.5px; color:var(--text-main);">' + window.OlymposApp.escapeHtml(v.cargo) + '</strong>' +
             '<div class="servidor-vinculo-meta">Carga Horária: <strong>' + window.OlymposApp.escapeHtml(v.cargaHorariaTexto) + '</strong> • ' + window.OlymposApp.escapeHtml(v.situacao) + '</div>' +
             '<div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:2px;">' +
-              '<span class="servidor-vinculo-meta">📍 ' + window.OlymposApp.escapeHtml(v.lotacao) + '</span>' +
+              '<span class="servidor-vinculo-meta">' + (window.OlymposIcons ? window.OlymposIcons.ui('mapPin', 12) : '') + ' ' + window.OlymposApp.escapeHtml(v.lotacao) + '</span>' +
               '<button type="button" class="btn-mini" onclick="window.OlymposViews.papiroCadmo.focarLotacaoServidorNoMapa(\'' + window.OlymposApp.escapeHtml(v.lotacao) + '\')">Mapa</button>' +
             '</div>' +
           '</div>';
@@ -2730,7 +2732,7 @@ window.OlymposViews.papiroCadmo = (function() {
       if (aud.parecer) {
         html +=
           '<div class="parecer-hera-box" style="margin-top:10px; border-left-color:' + (aud.regular ? '#10B981' : '#EF4444') + ';">' +
-            '<span class="parecer-hera-icon">' + (aud.regular ? '⚖️' : '⚠️') + '</span>' +
+            '<span class="parecer-hera-icon">' + (window.OlymposIcons ? window.OlymposIcons.ui(aud.regular ? 'shieldOfThemis' : 'alertTriangle', 13) : '') + '</span>' +
             '<div>' +
               '<strong style="display:block; font-size:11.5px; color:var(--text-main);">' + window.OlymposApp.escapeHtml(aud.enquadramento) + '</strong>' +
               '<p class="parecer-hera-text" style="margin:2px 0 0 0; font-size:12px;">' + window.OlymposApp.escapeHtml(aud.parecer) + '</p>' +
@@ -2742,7 +2744,7 @@ window.OlymposViews.papiroCadmo = (function() {
         const ip = srv.intencoesPermuta[0];
         html +=
           '<div style="margin-top:8px; padding:8px 12px; border-radius:8px; background:rgba(16,185,129,0.1); border:1px solid rgba(16,185,129,0.25); font-size:12px; color:var(--text-main);">' +
-            '🤝 <strong>Intenção de Permuta Ativa:</strong> Origem em <em>' + window.OlymposApp.escapeHtml(ip.origem) + '</em> → Destino desejado: <strong>' + window.OlymposApp.escapeHtml(ip.destino) + '</strong> (' + window.OlymposApp.escapeHtml(ip.turno || 'Turno flexível') + ').' +
+            (window.OlymposIcons ? window.OlymposIcons.ui('users', 14) : '') + ' <strong>Intenção de Permuta Ativa:</strong> Origem em <em>' + window.OlymposApp.escapeHtml(ip.origem) + '</em> → Destino desejado: <strong>' + window.OlymposApp.escapeHtml(ip.destino) + '</strong> (' + window.OlymposApp.escapeHtml(ip.turno || 'Turno flexível') + ').' +
           '</div>';
       }
 
@@ -2781,7 +2783,7 @@ window.OlymposViews.papiroCadmo = (function() {
     if (docentesFiltrados.length === 0) {
       container.innerHTML =
         '<div class="output-panel text-center" style="padding: 32px 20px;">' +
-          '<div style="font-size: 1.8rem; margin-bottom: 8px;">🔍</div>' +
+          '<div style="font-size: 1.8rem; margin-bottom: 8px;">' + (window.OlymposIcons ? window.OlymposIcons.ui('search', 28) : '') + '</div>' +
           '<strong style="display:block; font-size:15px; margin-bottom:6px; color:var(--text-main);">Nenhum servidor localizado na base oficial</strong>' +
           '<p style="font-size:13px; color:var(--text-muted); max-width:480px; margin:0 auto 14px;">Não foram identificados servidores para o termo "<strong>' + window.OlymposApp.escapeHtml(termoBuscaServidor) + '</strong>". Busque por matrícula funcional, nome, lotação, cargo ou ente (SMEB, Governo do Estado, Natal, Parnamirim, SGA).</p>' +
           '<button type="button" class="btn btn-secondary btn-sm" onclick="window.OlymposViews.papiroCadmo.limparBuscaServidor()">Limpar Busca</button>' +
@@ -2823,15 +2825,15 @@ window.OlymposViews.papiroCadmo = (function() {
       const isNatal = String(d.ente || '').includes('Natal');
       const isParnamirim = String(d.ente || '').includes('Parnamirim');
       const isSGA = String(d.ente || '').includes('São Gonçalo') || String(d.ente || '').includes('SGA');
-      let enteBadge = '<span class="pill-badge pill-gold" style="font-size:10.5px;">🏛️ SMEB Ceará-Mirim</span>';
+      let enteBadge = '<span class="pill-badge pill-gold" style="font-size:10.5px;">' + (window.OlymposIcons ? window.OlymposIcons.ui('olymposLogo', 12) : '') + ' SMEB Ceará-Mirim</span>';
       if (isEstado) {
-        enteBadge = '<span class="pill-badge pill-blue" style="font-size:10.5px;">🌐 Governo do Estado (SEEC)</span>';
+        enteBadge = '<span class="pill-badge pill-blue" style="font-size:10.5px;">' + (window.OlymposIcons ? window.OlymposIcons.ui('globe', 12) : '') + ' Governo do Estado (SEEC)</span>';
       } else if (isNatal) {
-        enteBadge = '<span class="pill-badge pill-purple" style="font-size:10.5px;">🏛️ SME Natal</span>';
+        enteBadge = '<span class="pill-badge pill-purple" style="font-size:10.5px;">' + (window.OlymposIcons ? window.OlymposIcons.ui('olymposLogo', 12) : '') + ' SME Natal</span>';
       } else if (isParnamirim) {
-        enteBadge = '<span class="pill-badge pill-teal" style="font-size:10.5px;">🏛️ SME Parnamirim</span>';
+        enteBadge = '<span class="pill-badge pill-teal" style="font-size:10.5px;">' + (window.OlymposIcons ? window.OlymposIcons.ui('olymposLogo', 12) : '') + ' SME Parnamirim</span>';
       } else if (isSGA) {
-        enteBadge = '<span class="pill-badge pill-green" style="font-size:10.5px;">🏛️ SME São Gonçalo</span>';
+        enteBadge = '<span class="pill-badge pill-green" style="font-size:10.5px;">' + (window.OlymposIcons ? window.OlymposIcons.ui('olymposLogo', 12) : '') + ' SME São Gonçalo</span>';
       }
 
       html +=
@@ -2845,7 +2847,7 @@ window.OlymposViews.papiroCadmo = (function() {
           '<td data-label="Ação" style="text-align:right;">' +
             '<button type="button" class="btn btn-secondary btn-sm" style="font-size:11px; padding:3px 8px;" ' +
               'onclick="window.OlymposViews.papiroCadmo.preencherFormComDocente(\'' + window.OlymposApp.escapeHtml(nomeSrv) + '\', \'' + window.OlymposApp.escapeHtml(matSrv) + '\', \'' + window.OlymposApp.escapeHtml(cargoSrv) + '\', \'' + window.OlymposApp.escapeHtml(chSrv) + '\', \'' + window.OlymposApp.escapeHtml(lotSrv) + '\')">' +
-              '⚡ Permuta' +
+              (window.OlymposIcons ? window.OlymposIcons.ui('boltZeus', 11) : '') + ' Permuta' +
             '</button>' +
           '</td>' +
         '</tr>';
@@ -3024,11 +3026,26 @@ window.OlymposViews.papiroCadmo = (function() {
       if (filtroEnteVigente !== 'TODOS' && s.ente_parceiro !== filtroEnteVigente) {
         return false;
       }
-      if (filtroFluxoVigente !== 'TODOS' && s.fluxo !== filtroFluxoVigente) {
-        return false;
+      if (filtroFluxoVigente !== 'TODOS') {
+        const f = String(filtroFluxoVigente).toUpperCase();
+        if (f.includes('CEDIDO') && s.fluxo !== 'CEDIDO_POR_CM') {
+          return false;
+        }
+        if (f.includes('RECEBIDO') && s.fluxo !== 'RECEBIDO_EM_CM') {
+          return false;
+        }
       }
-      if (filtroStatusVigente !== 'TODOS' && s.status_vigencia !== filtroStatusVigente) {
-        return false;
+      if (filtroStatusVigente !== 'TODOS') {
+        const st = String(filtroStatusVigente).toUpperCase();
+        if (st === 'VIGENTE' && s.status_vigencia !== 'VIGENTE') {
+          return false;
+        }
+        if ((st === 'VENCIDA' || st === 'CONCLUIDO') && s.status_vigencia !== 'CONCLUIDO') {
+          return false;
+        }
+        if ((st === 'INDETERMINADA' || st === 'A_RENOVAR') && s.status_vigencia !== 'A_RENOVAR') {
+          return false;
+        }
       }
       if (termoBuscaServidor) {
         const q = normalizarBusca(termoBuscaServidor);
@@ -3041,6 +3058,8 @@ window.OlymposViews.papiroCadmo = (function() {
           s.cargo_funcao_exercida,
           s.local_trabalho,
           s.ente_parceiro,
+          s.origem,
+          s.destino,
           s.termo,
           s.aditivo,
           s.fluxo_rotulo
@@ -3088,7 +3107,7 @@ window.OlymposViews.papiroCadmo = (function() {
       '<div style="background: var(--bg-surface, #1e293b); border: 1px solid var(--border-hairline, rgba(255,255,255,0.08)); border-radius: var(--radius-md, 8px); padding: 14px 16px;">' +
         '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">' +
           '<span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted, #94a3b8); font-weight: 600;">Cedidos por Ceará-Mirim</span>' +
-          '<span class="pill-badge pill-purple" style="font-size: 10px;">↗ Origem SMEB</span>' +
+          '<span class="pill-badge pill-purple" style="font-size: 10px;">' + (window.OlymposIcons ? window.OlymposIcons.ui('external', 10) : '') + ' Origem SMEB</span>' +
         '</div>' +
         '<div style="font-size: 26px; font-weight: 700; color: #a78bfa; line-height: 1.1;">' + totais.cedidos_por_cm + '</div>' +
         '<div style="font-size: 11.5px; color: var(--text-secondary, #cbd5e1); margin-top: 4px;">Servidores SMEB cedidos a outros entes</div>' +
@@ -3099,26 +3118,27 @@ window.OlymposViews.papiroCadmo = (function() {
       '<div style="background: var(--bg-surface, #1e293b); border: 1px solid var(--border-hairline, rgba(255,255,255,0.08)); border-radius: var(--radius-md, 8px); padding: 14px 16px;">' +
         '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">' +
           '<span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted, #94a3b8); font-weight: 600;">Recebidos em Ceará-Mirim</span>' +
-          '<span class="pill-badge pill-green" style="font-size: 10px;">↙ Acolhidos na Rede</span>' +
+          '<span class="pill-badge pill-green" style="font-size: 10px;">' + (window.OlymposIcons ? window.OlymposIcons.ui('arrowDownLeft', 10) : '') + ' Acolhidos na Rede</span>' +
         '</div>' +
         '<div style="font-size: 26px; font-weight: 700; color: #34d399; line-height: 1.1;">' + totais.recebidos_em_cm + '</div>' +
         '<div style="font-size: 11.5px; color: var(--text-secondary, #cbd5e1); margin-top: 4px;">Servidores de fora alocados nas escolas SMEB</div>' +
       '</div>';
 
-    // Card 4: Pasta no Google Drive
+    // Card 4: 14 Municípios / Entes Parceiros
+    const totalEntes = totais.total_entes_parceiros || Object.keys(porEnte).length || 14;
     html +=
       '<div style="background: var(--bg-surface, #1e293b); border: 1px solid rgba(99, 102, 241, 0.35); border-radius: var(--radius-md, 8px); padding: 14px 16px; display: flex; flex-direction: column; justify-content: space-between;">' +
         '<div>' +
           '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">' +
-            '<span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #818cf8; font-weight: 600;">Google Drive Oficial</span>' +
-            '<span class="pill-badge pill-blue" style="font-size: 10px;">Nuvem</span>' +
+            '<span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #818cf8; font-weight: 600;">Municípios / Entes</span>' +
+            '<span class="pill-badge pill-blue" style="font-size: 10px;">Cooperação</span>' +
           '</div>' +
-          '<div style="font-size: 13.5px; font-weight: 600; color: var(--text-main, #f8fafc); line-height: 1.2;">Pasta das Permutas</div>' +
-          '<div style="font-size: 11px; font-family: var(--font-mono); color: var(--text-muted, #94a3b8); margin-top: 2px;">1SDBCXU3LjI0Qnf6E6O6SLqRjctHz70k0</div>' +
+          '<div style="font-size: 26px; font-weight: 700; color: #818cf8; line-height: 1.1;">' + totalEntes + '</div>' +
+          '<div style="font-size: 11.5px; color: var(--text-secondary, #cbd5e1); margin-top: 4px;">Entes parceiros conveniados (SEEC/RN e 13 municípios)</div>' +
         '</div>' +
         '<div style="margin-top: 8px;">' +
           '<a href="' + driveUrl + '" target="_blank" rel="noopener" class="btn btn-secondary btn-sm" style="font-size: 11px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 4px 8px; color: #818cf8; border-color: rgba(99, 102, 241, 0.4); text-decoration: none;">' +
-            '<span>📂 Abrir Pasta no Drive ↗</span>' +
+            '<span>' + (window.OlymposIcons ? window.OlymposIcons.ui('folderDrive', 12) : '') + ' Pasta das Permutas (Drive) ' + (window.OlymposIcons ? window.OlymposIcons.ui('external', 10) : '') + '</span>' +
           '</a>' +
         '</div>' +
       '</div>';
@@ -3133,7 +3153,7 @@ window.OlymposViews.papiroCadmo = (function() {
 
     // Dropdown Ente
     html += '<div style="display: flex; align-items: center; gap: 6px;">' +
-      '<span style="font-size: 11.5px; color: var(--text-muted);">Ente:</span>' +
+      '<span style="font-size: 11.5px; color: var(--text-muted);">Ente Parceiro:</span>' +
       '<select class="input-clean" style="font-size: 12px; padding: 4px 8px; border-radius: 6px; background: var(--bg-surface, #1e293b); color: var(--text-main); border: 1px solid var(--border-hairline);" onchange="window.OlymposViews.papiroCadmo.definirFiltroEnteVigente(this.value)">' +
         '<option value="TODOS"' + (filtroEnteVigente === 'TODOS' ? ' selected' : '') + '>Todos os Entes (' + todos.length + ')</option>';
 
@@ -3152,18 +3172,19 @@ window.OlymposViews.papiroCadmo = (function() {
     html += '<div style="display: flex; align-items: center; gap: 6px;">' +
       '<span style="font-size: 11.5px; color: var(--text-muted);">Fluxo:</span>' +
       '<select class="input-clean" style="font-size: 12px; padding: 4px 8px; border-radius: 6px; background: var(--bg-surface, #1e293b); color: var(--text-main); border: 1px solid var(--border-hairline);" onchange="window.OlymposViews.papiroCadmo.definirFiltroFluxoVigente(this.value)">' +
-        '<option value="TODOS"' + (filtroFluxoVigente === 'TODOS' ? ' selected' : '') + '>Todos os Fluxos</option>' +
-        '<option value="CEDIDO_POR_CM"' + (filtroFluxoVigente === 'CEDIDO_POR_CM' ? ' selected' : '') + '>↗ Cedidos por CM (' + totais.cedidos_por_cm + ')</option>' +
-        '<option value="RECEBIDO_EM_CM"' + (filtroFluxoVigente === 'RECEBIDO_EM_CM' ? ' selected' : '') + '>↙ Recebidos em CM (' + totais.recebidos_em_cm + ')</option>' +
+        '<option value="TODOS"' + (filtroFluxoVigente === 'TODOS' ? ' selected' : '') + '>Todos os Fluxos (160)</option>' +
+        '<option value="CEDIDO POR CEARÁ-MIRIM"' + (filtroFluxoVigente === 'CEDIDO POR CEARÁ-MIRIM' || filtroFluxoVigente === 'CEDIDO_POR_CM' ? ' selected' : '') + '>CEDIDO POR CEARÁ-MIRIM (' + totais.cedidos_por_cm + ')</option>' +
+        '<option value="RECEBIDO EM CEARÁ-MIRIM"' + (filtroFluxoVigente === 'RECEBIDO EM CEARÁ-MIRIM' || filtroFluxoVigente === 'RECEBIDO_EM_CM' ? ' selected' : '') + '>RECEBIDO EM CEARÁ-MIRIM (' + totais.recebidos_em_cm + ')</option>' +
       '</select></div>';
 
     // Dropdown Status
     html += '<div style="display: flex; align-items: center; gap: 6px;">' +
-      '<span style="font-size: 11.5px; color: var(--text-muted);">Status:</span>' +
+      '<span style="font-size: 11.5px; color: var(--text-muted);">Situação / Vigência:</span>' +
       '<select class="input-clean" style="font-size: 12px; padding: 4px 8px; border-radius: 6px; background: var(--bg-surface, #1e293b); color: var(--text-main); border: 1px solid var(--border-hairline);" onchange="window.OlymposViews.papiroCadmo.definirFiltroStatusVigente(this.value)">' +
-        '<option value="TODOS"' + (filtroStatusVigente === 'TODOS' ? ' selected' : '') + '>Todos os Status</option>' +
-        '<option value="VIGENTE"' + (filtroStatusVigente === 'VIGENTE' ? ' selected' : '') + '>🟢 Vigente</option>' +
-        '<option value="A_RENOVAR"' + (filtroStatusVigente === 'A_RENOVAR' ? ' selected' : '') + '>🟡 A Renovar (53 dias)</option>' +
+        '<option value="TODOS"' + (filtroStatusVigente === 'TODOS' ? ' selected' : '') + '>Todas as Situações (160)</option>' +
+        '<option value="VIGENTE"' + (filtroStatusVigente === 'VIGENTE' ? ' selected' : '') + '>VIGENTE (53)</option>' +
+        '<option value="INDETERMINADA"' + (filtroStatusVigente === 'INDETERMINADA' || filtroStatusVigente === 'A_RENOVAR' ? ' selected' : '') + '>INDETERMINADA / A RENOVAR (95)</option>' +
+        '<option value="VENCIDA"' + (filtroStatusVigente === 'VENCIDA' || filtroStatusVigente === 'CONCLUIDO' ? ' selected' : '') + '>VENCIDA / CONCLUÍDA (12)</option>' +
       '</select></div>';
 
     html += '</div>';
@@ -3171,10 +3192,10 @@ window.OlymposViews.papiroCadmo = (function() {
     // Botões de Ação à direita
     html += '<div class="permuta-vigente-actions">';
     html += '<button type="button" class="btn btn-secondary btn-sm" style="font-size: 11.5px; display: flex; align-items: center; gap: 6px;" onclick="window.OlymposViews.papiroCadmo.exportarPermutasVigentesCsv()">' +
-      '<span>📥 Exportar CSV</span>' +
+      '<span>' + (window.OlymposIcons ? window.OlymposIcons.ui('download', 12) : '') + ' Exportar CSV</span>' +
     '</button>';
     html += '<a href="' + driveUrl + '" target="_blank" rel="noopener" class="btn btn-primary btn-sm" style="font-size: 11.5px; display: flex; align-items: center; gap: 6px; text-decoration: none;">' +
-      '<span>📂 Pasta Drive ↗</span>' +
+      '<span>' + (window.OlymposIcons ? window.OlymposIcons.ui('folderDrive', 12) : '') + ' Pasta Drive ' + (window.OlymposIcons ? window.OlymposIcons.ui('external', 10) : '') + '</span>' +
     '</a>';
     html += '</div>';
 
@@ -3184,7 +3205,7 @@ window.OlymposViews.papiroCadmo = (function() {
     if (filtrados.length === 0) {
       html +=
         '<div class="output-panel text-center" style="padding: 36px 20px;">' +
-          '<div style="font-size: 2rem; margin-bottom: 8px;">🔍</div>' +
+          '<div style="font-size: 2rem; margin-bottom: 8px;">' + (window.OlymposIcons ? window.OlymposIcons.ui('search', 28) : '') + '</div>' +
           '<strong style="display:block; font-size:15px; margin-bottom:6px; color:var(--text-main);">Nenhum servidor em permuta encontrado com os filtros selecionados</strong>' +
           '<p style="font-size:13px; color:var(--text-muted); max-width:480px; margin:0 auto 14px;">Ajuste o filtro de ente parceiro, fluxo ou termo de busca.</p>' +
           '<button type="button" class="btn btn-secondary btn-sm" onclick="window.OlymposViews.papiroCadmo.limparFiltrosVigentes()">Limpar Filtros</button>' +
@@ -3218,13 +3239,16 @@ window.OlymposViews.papiroCadmo = (function() {
     filtrados.forEach(function(s) {
       const isCedido = s.fluxo === 'CEDIDO_POR_CM';
       const fluxoPill = isCedido
-        ? '<span class="pill-badge pill-purple" style="font-size:10.5px; white-space:nowrap;">↗ Cedido p/ CM</span>'
-        : '<span class="pill-badge pill-green" style="font-size:10.5px; white-space:nowrap;">↙ Recebido em CM</span>';
+        ? '<span class="pill-badge pill-purple" style="font-size:10.5px; white-space:nowrap;">' + (window.OlymposIcons ? window.OlymposIcons.ui('external', 10) : '') + ' Cedido p/ CM</span>'
+        : '<span class="pill-badge pill-green" style="font-size:10.5px; white-space:nowrap;">' + (window.OlymposIcons ? window.OlymposIcons.ui('arrowDownLeft', 10) : '') + ' Recebido em CM</span>';
 
       const isRenovar = s.status_vigencia === 'A_RENOVAR';
+      const isConcluido = s.status_vigencia === 'CONCLUIDO';
       const statusPill = isRenovar
-        ? '<span class="pill-badge pill-gold" style="font-size:10px; display:inline-block; margin-bottom:2px;" title="Vencimento próximo em 01/01/2027">🟡 A Renovar</span>'
-        : '<span class="pill-badge pill-teal" style="font-size:10px; display:inline-block; margin-bottom:2px;">🟢 Vigente</span>';
+        ? '<span class="pill-badge pill-gold" style="font-size:10px; display:inline-block; margin-bottom:2px;" title="Vencimento próximo em 01/01/2027">' + (window.OlymposIcons ? window.OlymposIcons.ui('clock', 10) : '') + ' A Renovar</span>'
+        : (isConcluido
+            ? '<span class="pill-badge pill-gray" style="font-size:10px; display:inline-block; margin-bottom:2px;" title="Termo Concluído / Encerrado">' + (window.OlymposIcons ? window.OlymposIcons.ui('close', 10) : '') + ' Concluído</span>'
+            : '<span class="pill-badge pill-teal" style="font-size:10px; display:inline-block; margin-bottom:2px;">' + (window.OlymposIcons ? window.OlymposIcons.ui('check', 10) : '') + ' Vigente</span>');
 
       html +=
         '<tr>' +
@@ -3256,7 +3280,7 @@ window.OlymposViews.papiroCadmo = (function() {
           '</td>' +
           '<td data-label="Ações" style="text-align:center;">' +
             '<button type="button" class="btn btn-secondary btn-sm" style="font-size:10.5px; padding:3px 6px;" title="Copiar ficha funcional da permuta" onclick="window.OlymposViews.papiroCadmo.copiarDadosServidorPermuta(\'' + s.id + '\')">' +
-              '📋 Copiar' +
+              (window.OlymposIcons ? window.OlymposIcons.ui('copy', 11) : '') + ' Copiar' +
             '</button>' +
           '</td>' +
         '</tr>';
@@ -3423,27 +3447,37 @@ window.OlymposViews.papiroCadmo = (function() {
     grid.innerHTML = '';
     filtrados.forEach(function(p) {
       const card = document.createElement('div');
-      card.className = 'output-panel';
+      card.className = 'output-panel portal-card-item';
       card.style.display = 'flex';
       card.style.flexDirection = 'column';
       card.style.justifyContent = 'space-between';
       card.style.gap = '10px';
 
+      const isEstadual = (p.regiao && p.regiao.toLowerCase().includes('estadual')) || (p.nome && p.nome.toLowerCase().includes('estado'));
+      const enteIcon = isEstadual
+        ? (window.OlymposIcons ? window.OlymposIcons.ui('globe', 14) : '')
+        : (window.OlymposIcons ? window.OlymposIcons.ui('olymposLogo', 14) : '');
+
       const dataCsv = p.dataUltimoCsv || '12/10/2026';
       card.innerHTML =
         '<div>' +
           '<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:6px;">' +
-            '<strong style="font-family:var(--font-display); font-size:13.5px; color:var(--text-main);">' + window.OlymposApp.escapeHtml(p.nome) + '</strong>' +
-            '<span class="pill-badge pill-green">Dia 12</span>' +
+            '<strong style="font-family:var(--font-display); font-size:13.5px; color:var(--text-main); display:inline-flex; align-items:center; gap:6px;">' +
+              '<span class="svg-icon-inline" aria-hidden="true" style="color:var(--brand-gold);">' + enteIcon + '</span>' +
+              '<span>' + window.OlymposApp.escapeHtml(p.nome) + '</span>' +
+            '</strong>' +
+            '<span class="pill-badge pill-green" style="font-size:10px; white-space:nowrap;">Dia 12</span>' +
           '</div>' +
           '<div style="font-size:12px; color:var(--text-muted);">' + window.OlymposApp.escapeHtml(p.regiao) + ' • ' + window.OlymposApp.escapeHtml(p.tecnologia) + '</div>' +
           '<div class="portal-csv-date-box" style="display:flex; align-items:center; gap:5px; font-size:11.5px; color:var(--text-secondary); margin-top:6px; background:var(--bg-tonal); padding:3px 8px; border-radius:var(--radius-sm,6px); border:1px solid var(--border-hairline);">' +
-            '<span aria-hidden="true">📥</span> <span>Último CSV:</span> <strong class="portal-csv-date" style="color:var(--brand-gold); font-family:var(--font-mono); font-size:11px;">' + window.OlymposApp.escapeHtml(dataCsv) + '</strong>' +
+            '<span aria-hidden="true">' + (window.OlymposIcons ? window.OlymposIcons.ui('download', 11) : '') + '</span> <span>Último CSV:</span> <strong class="portal-csv-date" style="color:var(--brand-gold); font-family:var(--font-mono); font-size:11px;">' + window.OlymposApp.escapeHtml(dataCsv) + '</strong>' +
           '</div>' +
         '</div>' +
         '<div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">' +
           '<span style="font-family:var(--font-mono); font-size:10.5px; color:var(--text-muted);">Fallback SIAI/TCE-RN</span>' +
-          '<a href="' + window.OlymposApp.escapeHtml(p.url) + '" target="_blank" rel="noopener" class="folder-chip" style="padding:3px 10px; font-size:11px;">Portal ↗</a>' +
+          '<a href="' + window.OlymposApp.escapeHtml(p.url) + '" target="_blank" rel="noopener" class="folder-chip" style="padding:3px 10px; font-size:11px; display:inline-flex; align-items:center; gap:4px;">' +
+            '<span>Portal</span> ' + (window.OlymposIcons ? window.OlymposIcons.ui('external', 10) : '↗') +
+          '</a>' +
         '</div>';
 
       grid.appendChild(card);

@@ -2197,8 +2197,8 @@ window.OlymposViews.calendario = (function() {
         var st = (ev.status || 'PENDENTE').toUpperCase();
         var isConcluido = st === 'CONCLUIDO';
         var statusBadge = isConcluido
-          ? '<span class="pill-badge pill-green" style="font-size:10px; margin-left:6px;">✓ Concluído</span>'
-          : '<span class="pill-badge pill-amber" style="font-size:10px; margin-left:6px;">⏳ Pendente</span>';
+          ? '<span class="pill-badge pill-green" style="font-size:10px; margin-left:6px;">' + (window.OlymposIcons ? window.OlymposIcons.ui('check') : '') + ' Concluído</span>'
+          : '<span class="pill-badge pill-amber" style="font-size:10px; margin-left:6px;">' + (window.OlymposIcons ? window.OlymposIcons.ui('hourglass') : '') + ' Pendente</span>';
         var evIconSvg = window.OlymposIcons ? window.OlymposIcons.fromEmojiOrKey(ev.icone, ev.categoria || 'agenda_intersetorial') : '';
         var editSvg = window.OlymposIcons ? window.OlymposIcons.fromEmojiOrKey('edit') : '';
         html += '<div class="cal-modal-event-card ' + ev.categoria + '">';
@@ -2209,9 +2209,9 @@ window.OlymposViews.calendario = (function() {
         html += '        <div><span class="cal-pill-badge ' + ev.categoria + '">' + formatarCategoriaLabel(ev.categoria) + '</span>' + statusBadge + '</div>';
         html += '        <div style="display:flex; gap:6px;">';
         if (isConcluido) {
-          html += '          <button type="button" class="btn btn-secondary btn-sm" style="font-size:11px; padding:2px 8px;" onclick="window.OlymposViews.calendario.reabrirEventoAgenda(\'' + escapeAttr(ev.id) + '\')">↺ Reabrir</button>';
+          html += '          <button type="button" class="btn btn-secondary btn-sm" style="font-size:11px; padding:2px 8px;" onclick="window.OlymposViews.calendario.reabrirEventoAgenda(\'' + escapeAttr(ev.id) + '\')">' + (window.OlymposIcons ? window.OlymposIcons.ui('refresh') : '') + ' Reabrir</button>';
         } else {
-          html += '          <button type="button" class="btn btn-primary btn-sm" style="font-size:11px; padding:2px 8px;" onclick="window.OlymposViews.calendario.concluirEventoAgenda(\'' + escapeAttr(ev.id) + '\')">✓ Concluir</button>';
+          html += '          <button type="button" class="btn btn-primary btn-sm" style="font-size:11px; padding:2px 8px;" onclick="window.OlymposViews.calendario.concluirEventoAgenda(\'' + escapeAttr(ev.id) + '\')">' + (window.OlymposIcons ? window.OlymposIcons.ui('check') : '') + ' Concluir</button>';
         }
         if (isCustom) {
           html += '          <button type="button" class="btn btn-ghost btn-sm" style="font-size:11px; padding:2px 8px; color:var(--brand-gold); display:inline-flex; align-items:center; gap:4px;" onclick="window.OlymposViews.calendario.abrirModalFormAgenda(\'' + escapeAttr(ev.id) + '\')">' + editSvg + ' Editar</button>';

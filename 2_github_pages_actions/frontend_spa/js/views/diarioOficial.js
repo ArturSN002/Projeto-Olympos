@@ -318,8 +318,8 @@ window.OlymposViews.diarioOficial = (function() {
 
     const indData = document.getElementById('sortIndicatorData');
     const indNome = document.getElementById('sortIndicatorNome');
-    if (indData) indData.textContent = (sortFilter === 'DATA_DESC') ? '🔽' : (sortFilter === 'DATA_ASC' ? '🔼' : '↕');
-    if (indNome) indNome.textContent = (sortFilter === 'NOME_AZ') ? '🔽' : (sortFilter === 'NOME_ZA' ? '🔼' : '↕');
+    if (indData) indData.innerHTML = window.OlymposIcons ? window.OlymposIcons.ui(sortFilter === 'DATA_DESC' ? 'chevronDown' : (sortFilter === 'DATA_ASC' ? 'chevronUp' : 'arrowUpDown')) : '';
+    if (indNome) indNome.innerHTML = window.OlymposIcons ? window.OlymposIcons.ui(sortFilter === 'NOME_AZ' ? 'chevronDown' : (sortFilter === 'NOME_ZA' ? 'chevronUp' : 'arrowUpDown')) : '';
 
     filtered.sort(function(a, b) {
       if (sortFilter === 'DATA_DESC') {
@@ -363,7 +363,7 @@ window.OlymposViews.diarioOficial = (function() {
         '<tr>' +
           '<td colspan="4" style="padding: 28px 12px; border: none;">' +
             '<div class="empty-state-card">' +
-              '<div class="empty-state-icon">📰</div>' +
+              '<div class="empty-state-icon">' + (window.OlymposIcons ? window.OlymposIcons.ui('newspaper') : '') + '</div>' +
               '<div class="empty-state-title">Nenhuma publicação localizada no período</div>' +
               '<div class="empty-state-desc">' + mensagemVazia + '</div>' +
               '<div class="empty-state-actions">' +
@@ -410,7 +410,7 @@ window.OlymposViews.diarioOficial = (function() {
       if (item.codigo) nerBadges.push('Cód. ' + item.codigo);
       if (item.servidores && item.servidores.length) nerBadges.push('Servidor(es): ' + item.servidores.join(', '));
       if (item.matriculas && item.matriculas.length) nerBadges.push('Mat.: ' + item.matriculas.join(', '));
-      if (item.planilhaNome) nerBadges.push('📄 ' + item.planilhaNome);
+      if (item.planilhaNome) nerBadges.push((window.OlymposIcons ? window.OlymposIcons.ui('fileText') : '') + ' ' + item.planilhaNome);
 
       tr.innerHTML =
         '<td data-label="Data" style="font-family:var(--font-mono); font-size:12px;">' + window.OlymposApp.escapeHtml(item.data) + '</td>' +

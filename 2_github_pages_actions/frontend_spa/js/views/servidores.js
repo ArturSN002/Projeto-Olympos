@@ -485,11 +485,11 @@ window.OlymposViews.servidores = (function() {
           '</div>' +
           '<div style="font-weight: 700; font-size: 13px; color: var(--text-main);">' + escapeHtml(v.cargo) + '</div>' +
           '<div class="servidor-vinculo-meta">' +
-            '<div>🏛️ ' + escapeHtml(v.lotacao) + '</div>' +
+            '<div>' + (window.OlymposIcons ? window.OlymposIcons.ui('olymposLogo') : '') + ' ' + escapeHtml(v.lotacao) + '</div>' +
             '<div style="display: flex; gap: 8px; margin-top: 2px;">' +
-              '<span>⏱️ ' + escapeHtml(v.cargaHorariaTexto) + ' (' + escapeHtml(v.turno) + ')</span>' +
+              '<span>' + (window.OlymposIcons ? window.OlymposIcons.ui('clock') : '') + ' ' + escapeHtml(v.cargaHorariaTexto) + ' (' + escapeHtml(v.turno) + ')</span>' +
               '<span>•</span>' +
-              '<span>📋 ' + escapeHtml(v.quadro) + '</span>' +
+              '<span>' + (window.OlymposIcons ? window.OlymposIcons.ui('clipboard') : '') + ' ' + escapeHtml(v.quadro) + '</span>' +
             '</div>' +
           '</div>' +
         '</div>';
@@ -512,7 +512,7 @@ window.OlymposViews.servidores = (function() {
           '</div>' +
           '<div style="display: flex; gap: 8px; align-items: center;">' +
             '<span class="pill-badge ' + auditoria.badgeClass + '">' + escapeHtml(auditoria.badgeTexto) + '</span>' +
-            '<button type="button" class="btn btn-secondary btn-sm btn-abrir-dossie" data-nome="' + escapeHtml(d.nome) + '" title="Abrir Dossiê Detalhado">🔍 Dossiê</button>' +
+            '<button type="button" class="btn btn-secondary btn-sm btn-abrir-dossie" data-nome="' + escapeHtml(d.nome) + '" title="Abrir Dossiê Detalhado">' + (window.OlymposIcons ? window.OlymposIcons.ui('search') : '') + ' Dossiê</button>' +
           '</div>' +
         '</div>' +
 
@@ -615,7 +615,7 @@ window.OlymposViews.servidores = (function() {
     }
 
     var botoesHtml = '';
-    botoesHtml += '<button type="button" class="btn-mini' + (paginaAtual === 1 ? ' disabled' : '') + '" data-ir-pag="ant" title="Página Anterior">◀ Ant</button>';
+    botoesHtml += '<button type="button" class="btn-mini' + (paginaAtual === 1 ? ' disabled' : '') + '" data-ir-pag="ant" title="Página Anterior">' + (window.OlymposIcons ? window.OlymposIcons.ui('arrowLeft') : '&laquo;') + ' Ant</button>';
 
     var maxBotoes = 5;
     var startPage = Math.max(1, paginaAtual - 2);
@@ -628,7 +628,7 @@ window.OlymposViews.servidores = (function() {
       botoesHtml += '<button type="button" class="btn-mini' + (p === paginaAtual ? ' active' : '') + '" data-ir-pag="' + p + '">' + p + '</button>';
     }
 
-    botoesHtml += '<button type="button" class="btn-mini' + (paginaAtual === totalPaginas ? ' disabled' : '') + '" data-ir-pag="prox" title="Próxima Página">Próx ▶</button>';
+    botoesHtml += '<button type="button" class="btn-mini' + (paginaAtual === totalPaginas ? ' disabled' : '') + '" data-ir-pag="prox" title="Próxima Página">Próx ' + (window.OlymposIcons ? window.OlymposIcons.ui('arrowRight') : '&raquo;') + '</button>';
 
     if (topoEl) topoEl.innerHTML = botoesHtml;
     if (rodapeEl) rodapeEl.innerHTML = botoesHtml;
@@ -778,10 +778,10 @@ window.OlymposViews.servidores = (function() {
         '</div>' +
         '<div style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">' + escapeHtml(v.cargo) + (v.funcao ? (' (' + escapeHtml(v.funcao) + ')') : '') + '</div>' +
         '<div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">' +
-          '<div>🏛️ <strong>Lotação:</strong> ' + escapeHtml(v.lotacao) + '</div>' +
-          '<div>⏱️ <strong>Jornada:</strong> ' + escapeHtml(v.cargaHorariaTexto) + ' • Turno: ' + escapeHtml(v.turno) + '</div>' +
-          '<div>📜 <strong>Regime / Quadro:</strong> ' + escapeHtml(v.regime) + ' (' + escapeHtml(v.quadro) + ') • Situação: ' + escapeHtml(v.situacao) + '</div>' +
-          (v.dataAdmissao ? ('<div>📅 <strong>Admissão:</strong> ' + escapeHtml(v.dataAdmissao) + '</div>') : '') +
+          '<div>' + (window.OlymposIcons ? window.OlymposIcons.ui('olymposLogo') : '') + ' <strong>Lotação:</strong> ' + escapeHtml(v.lotacao) + '</div>' +
+          '<div>' + (window.OlymposIcons ? window.OlymposIcons.ui('clock') : '') + ' <strong>Jornada:</strong> ' + escapeHtml(v.cargaHorariaTexto) + ' • Turno: ' + escapeHtml(v.turno) + '</div>' +
+          '<div>' + (window.OlymposIcons ? window.OlymposIcons.ui('papyrusOfCadmus') : '') + ' <strong>Regime / Quadro:</strong> ' + escapeHtml(v.regime) + ' (' + escapeHtml(v.quadro) + ') • Situação: ' + escapeHtml(v.situacao) + '</div>' +
+          (v.dataAdmissao ? ('<div>' + (window.OlymposIcons ? window.OlymposIcons.ui('calendar') : '') + ' <strong>Admissão:</strong> ' + escapeHtml(v.dataAdmissao) + '</div>') : '') +
         '</div>' +
       '</div>';
     }).join('');

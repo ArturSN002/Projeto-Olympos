@@ -395,7 +395,7 @@ window.OlymposViews.escolas = (function() {
       }
 
       if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
-        window.OlymposApp.showToast('📍 Coordenadas capturadas do clique no mapa!');
+        window.OlymposApp.showToast('Coordenadas capturadas do clique no mapa!');
       }
     }
 
@@ -455,10 +455,10 @@ window.OlymposViews.escolas = (function() {
 
     if (estaEmCearaMirim(lat, lng)) {
       badge.className = 'pill-badge pill-green';
-      badge.innerHTML = '✓ Coordenadas dentro da delimitação territorial de Ceará-Mirim/RN';
+      badge.innerHTML = (window.OlymposIcons ? window.OlymposIcons.ui('check') : '') + ' Coordenadas dentro da delimitação territorial de Ceará-Mirim/RN';
     } else {
       badge.className = 'pill-badge pill-amber';
-      badge.innerHTML = '⚠️ Atenção: Ponto fora dos limites territoriais típicos de Ceará-Mirim';
+      badge.innerHTML = (window.OlymposIcons ? window.OlymposIcons.ui('alertTriangle') : '') + ' Atenção: Ponto fora dos limites territoriais típicos de Ceará-Mirim';
     }
   }
 
