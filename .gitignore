@@ -110,6 +110,6 @@ Readaptações/
 /5_manuais_instalacao/
 /tests/
 /sync_mirrors.py
-/2_github_pages_actions/engines/
+#/2_github_pages_actions/engines/
 /2_github_pages_actions/supabase/
-/2_github_pages_actions/workflows_mirror/
+#/2_github_pages_actions/workflows_mirror/
