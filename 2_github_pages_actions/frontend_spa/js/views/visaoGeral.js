@@ -126,12 +126,15 @@ window.OlymposViews.visaoGeral = (function() {
     if (elOf) elOf.textContent = '--';
     if (elUltOf) {
       elUltOf.innerHTML = '<span>Último emitido: --</span>' +
-        '<a href="' + APOLO_MEMORIA_URL + '" target="_blank" rel="noopener noreferrer" class="folder-chip">Memória de Apolo ↗</a>';
+        '<a href="' + APOLO_MEMORIA_URL + '" target="_blank" rel="noopener noreferrer" class="folder-chip" data-requires-auth="true" data-access-roles="ADMIN_GABINETE,RH_COMISSAO,PEDAGOGICO_EVENTOS,JURIDICO">Memória de Apolo ↗</a>';
     }
     if (elPt) elPt.textContent = '--';
     if (elUltPt) {
       elUltPt.innerHTML = '<span>Última emitida: --</span>' +
-        '<a href="' + APOLO_MEMORIA_URL + '" target="_blank" rel="noopener noreferrer" class="folder-chip">Memória de Apolo ↗</a>';
+        '<a href="' + APOLO_MEMORIA_URL + '" target="_blank" rel="noopener noreferrer" class="folder-chip" data-requires-auth="true" data-access-roles="ADMIN_GABINETE,RH_COMISSAO,PEDAGOGICO_EVENTOS,JURIDICO">Memória de Apolo ↗</a>';
+    }
+    if (window.OlymposApp && typeof window.OlymposApp.aplicarControleAcessoModularEDrive === 'function') {
+      window.OlymposApp.aplicarControleAcessoModularEDrive();
     }
 
     const inOf = document.getElementById('inputProximoOficioMd');
@@ -241,13 +244,17 @@ window.OlymposViews.visaoGeral = (function() {
       if (elOf) elOf.textContent = ofVal !== null ? ('Nº ' + ofVal) : '--';
       if (elUltOf) {
         elUltOf.innerHTML = '<span>Último emitido: ' + (ultOf !== null ? ('Nº ' + ultOf) : '--') + '</span>' +
-          '<a href="' + window.OlymposApp.escapeHtml(memUrl) + '" target="_blank" rel="noopener" class="folder-chip">Memória de Apolo ↗</a>';
+          '<a href="' + window.OlymposApp.escapeHtml(memUrl) + '" target="_blank" rel="noopener" class="folder-chip" data-requires-auth="true" data-access-roles="ADMIN_GABINETE,RH_COMISSAO,PEDAGOGICO_EVENTOS,JURIDICO">Memória de Apolo ↗</a>';
       }
 
       if (elPt) elPt.textContent = ptVal !== null ? ('Nº ' + ptVal) : '--';
       if (elUltPt) {
         elUltPt.innerHTML = '<span>Última emitida: ' + (ultPt !== null ? ('Nº ' + ultPt) : '--') + '</span>' +
-          '<a href="' + window.OlymposApp.escapeHtml(memUrl) + '" target="_blank" rel="noopener" class="folder-chip">Memória de Apolo ↗</a>';
+          '<a href="' + window.OlymposApp.escapeHtml(memUrl) + '" target="_blank" rel="noopener" class="folder-chip" data-requires-auth="true" data-access-roles="ADMIN_GABINETE,RH_COMISSAO,PEDAGOGICO_EVENTOS,JURIDICO">Memória de Apolo ↗</a>';
+      }
+
+      if (window.OlymposApp && typeof window.OlymposApp.aplicarControleAcessoModularEDrive === 'function') {
+        window.OlymposApp.aplicarControleAcessoModularEDrive();
       }
 
       const inOf = document.getElementById('inputProximoOficioMd');

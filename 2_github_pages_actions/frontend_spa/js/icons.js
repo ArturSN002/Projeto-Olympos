@@ -155,7 +155,9 @@ window.OlymposIcons = (function() {
     chevronUp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>',
     arrowUpDown: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5M7 9l5-5 5 5"/></svg>',
     arrowLeft: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>',
-    arrowDownLeft: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 7 7 17M17 17H7V7"/></svg>'
+    arrowDownLeft: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 7 7 17M17 17H7V7"/></svg>',
+    map: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>',
+    repeat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 2 21 6 17 10"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><polyline points="7 22 3 18 7 14"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>'
   };
 
   const emojiToIconKey = {
@@ -254,6 +256,36 @@ window.OlymposIcons = (function() {
     audiencia: 'shieldOfThemis'
   };
 
+  function normalizeSize(size) {
+    if (size === undefined || size === null || size === '') return null;
+    if (typeof size === 'number') {
+      if (!Number.isFinite(size) || size <= 0) return null;
+      return String(size) + 'px';
+    }
+    if (typeof size === 'string') {
+      const trimmed = size.trim();
+      if (!trimmed) return null;
+      if (/^\d+(?:\.\d+)?$/.test(trimmed)) {
+        return parseFloat(trimmed) > 0 ? (trimmed + 'px') : null;
+      }
+      if (/^\d+(?:\.\d+)?(px|em|rem|%|vh|vw|ch|ex|vmin|vmax)$/i.test(trimmed)) {
+        return parseFloat(trimmed) > 0 ? trimmed.toLowerCase() : null;
+      }
+    }
+    return null;
+  }
+
+  function applySvgAttrs(rawSvg, size) {
+    if (!rawSvg) return '';
+    const dim = normalizeSize(size) || '1em';
+    return rawSvg.replace(/^<svg\b([^>]*)>/i, function(_match, attrs) {
+      const cleaned = attrs
+        .replace(/\s+(?:width|height|aria-hidden)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+        .trim();
+      return '<svg width="' + dim + '" height="' + dim + '" aria-hidden="true"' + (cleaned ? ' ' + cleaned : '') + '>';
+    });
+  }
+
   function normalizarChave(key) {
     if (!key) return 'hestia';
     const limpa = String(key)
@@ -266,35 +298,48 @@ window.OlymposIcons = (function() {
     return 'hestia';
   }
 
-  function get(iconOrName) {
+  function get(iconOrName, size) {
     if (iconOrName && UI_SVGS[iconOrName]) {
-      return UI_SVGS[iconOrName];
+      return applySvgAttrs(UI_SVGS[iconOrName], size);
     }
     const k = normalizarChave(iconOrName);
-    return PERSONA_SVGS[k] || PERSONA_SVGS.hestia;
+    return applySvgAttrs(PERSONA_SVGS[k] || PERSONA_SVGS.hestia, size);
   }
 
-  function ui(name) {
-    return UI_SVGS[name] || PERSONA_SVGS[name] || '';
+  function ui(name, size) {
+    const raw = UI_SVGS[name] || PERSONA_SVGS[name] || '';
+    return raw ? applySvgAttrs(raw, size) : '';
   }
 
-  function fromEmojiOrKey(rawIconOrEmoji, categoryFallback) {
+  function inline(name, size) {
+    const raw = UI_SVGS[name] || PERSONA_SVGS[name] || '';
+    if (!raw) return '';
+    const dim = normalizeSize(size);
+    const styleAttr = dim ? ' style="width:' + dim + ';height:' + dim + ';"' : '';
+    return '<span class="svg-icon-inline" aria-hidden="true"' + styleAttr + '>' + applySvgAttrs(raw, dim) + '</span>';
+  }
+
+  function fromEmojiOrKey(rawIconOrEmoji, categoryFallback, size) {
+    let resolvedSvg = '';
     if (rawIconOrEmoji && UI_SVGS[rawIconOrEmoji]) {
-      return '<span class="svg-icon-inline" aria-hidden="true">' + UI_SVGS[rawIconOrEmoji] + '</span>';
+      resolvedSvg = applySvgAttrs(UI_SVGS[rawIconOrEmoji], size);
+    } else if (rawIconOrEmoji && PERSONA_SVGS[rawIconOrEmoji]) {
+      resolvedSvg = applySvgAttrs(PERSONA_SVGS[rawIconOrEmoji], size);
+    } else {
+      const trimmed = String(rawIconOrEmoji || '').trim();
+      if (trimmed && emojiToIconKey[trimmed]) {
+        const k = emojiToIconKey[trimmed];
+        resolvedSvg = UI_SVGS[k] ? applySvgAttrs(UI_SVGS[k], size) : get(k, size);
+      } else if (categoryFallback && categoryToIconKey[categoryFallback]) {
+        const ck = categoryToIconKey[categoryFallback];
+        resolvedSvg = UI_SVGS[ck] ? applySvgAttrs(UI_SVGS[ck], size) : get(ck, size);
+      } else {
+        resolvedSvg = applySvgAttrs(UI_SVGS.calendar, size);
+      }
     }
-    if (rawIconOrEmoji && PERSONA_SVGS[rawIconOrEmoji]) {
-      return '<span class="svg-icon-inline" aria-hidden="true">' + PERSONA_SVGS[rawIconOrEmoji] + '</span>';
-    }
-    const trimmed = String(rawIconOrEmoji || '').trim();
-    if (trimmed && emojiToIconKey[trimmed]) {
-      const k = emojiToIconKey[trimmed];
-      return '<span class="svg-icon-inline" aria-hidden="true">' + (UI_SVGS[k] || get(k)) + '</span>';
-    }
-    if (categoryFallback && categoryToIconKey[categoryFallback]) {
-      const ck = categoryToIconKey[categoryFallback];
-      return '<span class="svg-icon-inline" aria-hidden="true">' + (UI_SVGS[ck] || get(ck)) + '</span>';
-    }
-    return '<span class="svg-icon-inline" aria-hidden="true">' + UI_SVGS.calendar + '</span>';
+    const dim = normalizeSize(size);
+    const styleAttr = dim ? ' style="width:' + dim + ';height:' + dim + ';"' : '';
+    return '<span class="svg-icon-inline" aria-hidden="true"' + styleAttr + '>' + resolvedSvg + '</span>';
   }
 
   function hydrateAll() {
@@ -302,9 +347,10 @@ window.OlymposIcons = (function() {
     const nodes = document.querySelectorAll('[data-icon]');
     nodes.forEach(function(el) {
       const name = el.getAttribute('data-icon');
-      const svg = UI_SVGS[name] || PERSONA_SVGS[name];
-      if (svg) {
-        el.innerHTML = svg;
+      const raw = UI_SVGS[name] || PERSONA_SVGS[name];
+      if (raw) {
+        const size = el.getAttribute ? el.getAttribute('data-icon-size') : null;
+        el.innerHTML = applySvgAttrs(raw, size);
       }
     });
   }
@@ -336,6 +382,7 @@ window.OlymposIcons = (function() {
     getPersonaSvg: get,
     getForPersona: get,
     ui: ui,
+    inline: inline,
     normalizarChave: normalizarChave,
     getCatalogo17Personas: getCatalogo17Personas,
     fromEmojiOrKey: fromEmojiOrKey,

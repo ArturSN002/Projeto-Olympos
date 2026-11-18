@@ -41,6 +41,7 @@ window.OlymposApp = (function() {
       setHtml('mobileMenuToggleBtn', uiFn('menu'));
       setHtml('closeModalBtn', uiFn('close'));
       setHtml('closeContadoresModalBtn', uiFn('close'));
+      setHtml('closeLoginScreenXBtn', uiFn('close'));
       setHtml('pincelDoneCheckSvg', uiFn('check'));
     }
 
@@ -135,6 +136,41 @@ window.OlymposApp = (function() {
   function solicitarLogin() {
     const modal = document.getElementById('loginScreen');
     if (modal) modal.classList.remove('hidden');
+  }
+
+  function fecharModalLogin(opcoes) {
+    const opts = opcoes || {};
+    const modal = document.getElementById('loginScreen');
+    if (modal) {
+      modal.classList.add('hidden');
+    }
+
+    const submitBtn = document.getElementById('loginSubmitBtn');
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Acessar Ambiente Olympos';
+    }
+
+    if (opts.forcarVisitante || !currentUserSession || !currentUserSession.perfil) {
+      currentUserSession = null;
+      try {
+        sessionStorage.removeItem('olympos_session_rbac');
+        sessionStorage.removeItem('olympos_rbac_profile_cache');
+        localStorage.removeItem('olympos_session');
+      } catch (e) {}
+      aplicarModoVisitanteNaInterface();
+    } else {
+      aplicarControleAcessoModularEDrive(currentUserSession);
+    }
+
+    if (window.OlymposRouter && typeof window.OlymposRouter.navegarPara === 'function') {
+      const cur = typeof window.OlymposRouter.getPaginaAtual === 'function'
+        ? window.OlymposRouter.getPaginaAtual()
+        : (window.location.hash.replace('#', '').trim() || 'visao-geral');
+      if (!podeAcessarPagina(cur)) {
+        window.OlymposRouter.navegarPara('visao-geral');
+      }
+    }
   }
 
   const RBAC_TAB_PERMISSIONS = {
@@ -583,21 +619,151 @@ window.OlymposApp = (function() {
     const modalLogin = document.getElementById('loginScreen');
     if (modalLogin) modalLogin.classList.add('hidden');
 
+    aplicarControleAcessoModularEDrive(null, PUBLIC_PAGES);
+
     if (window.OlymposIcons && typeof window.OlymposIcons.hydrateAll === 'function') {
       window.OlymposIcons.hydrateAll();
     }
   }
 
-  function normalizarPermissoesRbac(listaBruta) {
-    const set = new Set(['visao-geral', 'configuracoes', 'personas', 'busca', 'escolas', 'calendario', 'papiro-cadmo', 'servidores', 'chamados', 'pendencias']);
-    (listaBruta || []).forEach(function(item) {
-      if (LEGACY_TAB_MAP[item]) {
+  function normalizarPermissoesRbac(listaBruta, roleId) {
+    const set = new Set(['visao-geral', 'escolas', 'calendario', 'configuracoes', 'personas', 'busca', 'servidores', 'chamados', 'pendencias']);
+    const roleKey = String(roleId || '').trim().toUpperCase();
+    const fonteLista = (Array.isArray(listaBruta) && listaBruta.length > 0)
+      ? listaBruta
+      : (RBAC_TAB_PERMISSIONS[roleKey] || []);
+
+    (fonteLista || []).forEach(function(item) {
+      if (item === 'TODOS') {
+        Object.keys(RBAC_TAB_PERMISSIONS).forEach(function(k) {
+          RBAC_TAB_PERMISSIONS[k].forEach(function(p) { set.add(p); });
+        });
+        set.add('TODOS');
+      } else if (LEGACY_TAB_MAP[item]) {
         LEGACY_TAB_MAP[item].forEach(function(p) { set.add(p); });
       } else {
         set.add(item);
       }
     });
     return Array.from(set);
+  }
+
+  function obterRoleIdSessao(sessao) {
+    const s = sessao !== undefined ? sessao : currentUserSession;
+    if (!s || !s.perfil) return null;
+    const rawId = String(s.perfil.id || s.perfil.role || s.perfil.nome || '').trim().toUpperCase();
+    if (RBAC_TAB_PERMISSIONS[rawId]) return rawId;
+    if (rawId.indexOf('ADMIN') !== -1 || rawId.indexOf('GABINETE') !== -1) return 'ADMIN_GABINETE';
+    if (rawId.indexOf('RH') !== -1 || rawId.indexOf('COMISSAO') !== -1) return 'RH_COMISSAO';
+    if (rawId.indexOf('PEDAGOG') !== -1 || rawId.indexOf('EVENTO') !== -1) return 'PEDAGOGICO_EVENTOS';
+    if (rawId.indexOf('JURID') !== -1) return 'JURIDICO';
+    return rawId || 'AUTENTICADO';
+  }
+
+  function getPermitidasSessao(sessao) {
+    const s = sessao !== undefined ? sessao : currentUserSession;
+    if (!s || !s.perfil) {
+      return PUBLIC_PAGES.slice();
+    }
+    const roleId = obterRoleIdSessao(s);
+    const abasBrutas = Array.isArray(s.perfil.abasPermitidas) && s.perfil.abasPermitidas.length > 0
+      ? s.perfil.abasPermitidas
+      : (RBAC_TAB_PERMISSIONS[roleId] || []);
+    return normalizarPermissoesRbac(abasBrutas, roleId);
+  }
+
+  function podeAcessarPagina(pageId, sessao) {
+    const s = sessao !== undefined ? sessao : currentUserSession;
+    const target = String(pageId || 'visao-geral').trim();
+    if (!s || !s.perfil) {
+      return PUBLIC_PAGES.includes(target);
+    }
+    const permitidas = getPermitidasSessao(s);
+    return permitidas.includes('TODOS') || permitidas.includes(target);
+  }
+
+  function aplicarControleAcessoModularEDrive(sessaoArg, permitidasArg) {
+    const sessao = sessaoArg !== undefined ? sessaoArg : currentUserSession;
+    const isAuth = Boolean(sessao && sessao.perfil);
+    const roleId = obterRoleIdSessao(sessao);
+    const permitidas = Array.isArray(permitidasArg)
+      ? permitidasArg
+      : getPermitidasSessao(sessao);
+    const temTodos = permitidas.includes('TODOS') || roleId === 'ADMIN_GABINETE';
+
+    // 1. Filtrar cards da seção OPERAÇÕES MODULARES (.quick-module-card[data-nav-target])
+    let cardsVisiveis = 0;
+    document.querySelectorAll('.quick-module-card[data-nav-target]').forEach(function(card) {
+      const target = card.getAttribute('data-nav-target');
+      if (!target) return;
+      const permitido = isAuth
+        ? (temTodos || permitidas.includes(target))
+        : PUBLIC_PAGES.includes(target);
+      card.classList.toggle('hidden', !permitido);
+      card.style.display = permitido ? '' : 'none';
+      card.setAttribute('aria-hidden', permitido ? 'false' : 'true');
+      if (permitido) cardsVisiveis++;
+    });
+
+    const secModular = document.getElementById('operacoesModularesSection');
+    if (secModular) {
+      secModular.classList.toggle('hidden', cardsVisiveis === 0);
+    }
+
+    // 2. Filtrar Atalhos para o Drive e elementos com data-requires-auth / data-access-roles / data-access-page
+    const avaliarElementoAcesso = function(el) {
+      const reqAuth = el.getAttribute('data-requires-auth') === 'true';
+      const rolesAttr = el.getAttribute('data-access-roles');
+      const pageAttr = el.getAttribute('data-access-page');
+
+      if (reqAuth && !isAuth) {
+        return false;
+      }
+      if (rolesAttr) {
+        if (!isAuth) return false;
+        const allowedRoles = rolesAttr.split(',').map(function(r) { return r.trim().toUpperCase(); }).filter(Boolean);
+        if (allowedRoles.length > 0 && !temTodos && !allowedRoles.includes(roleId)) {
+          return false;
+        }
+      }
+      if (pageAttr) {
+        if (isAuth) {
+          if (!temTodos && !permitidas.includes(pageAttr)) return false;
+        } else {
+          if (!PUBLIC_PAGES.includes(pageAttr)) return false;
+        }
+      }
+      return true;
+    };
+
+    document.querySelectorAll('[data-requires-auth], [data-access-roles], [data-access-page]').forEach(function(el) {
+      if (el.classList.contains('quick-module-card')) return;
+      const visivel = avaliarElementoAcesso(el);
+      el.classList.toggle('hidden', !visivel);
+      el.style.display = visivel ? '' : 'none';
+      el.setAttribute('aria-hidden', visivel ? 'false' : 'true');
+    });
+
+    // 3. Ocultar contêineres de Atalhos Drive quando nenhum atalho filho estiver visível
+    const drawerDriveSec = document.getElementById('mobileDrawerDriveSection') || document.querySelector('.mobile-drawer-drive-section');
+    if (drawerDriveSec) {
+      const driveItems = drawerDriveSec.querySelectorAll('.drawer-drive-item');
+      const hasVisibleDriveItem = Array.from(driveItems).some(function(item) {
+        return !item.classList.contains('hidden');
+      });
+      drawerDriveSec.classList.toggle('hidden', !hasVisibleDriveItem);
+      drawerDriveSec.style.display = hasVisibleDriveItem ? '' : 'none';
+    }
+
+    const headerDriveActions = document.getElementById('operacoesModularesDriveActions');
+    if (headerDriveActions) {
+      const chips = headerDriveActions.querySelectorAll('.folder-chip');
+      const hasVisibleChip = Array.from(chips).some(function(chip) {
+        return !chip.classList.contains('hidden');
+      });
+      headerDriveActions.classList.toggle('hidden', !hasVisibleChip);
+      headerDriveActions.style.display = hasVisibleChip ? 'flex' : 'none';
+    }
   }
 
   function aplicarSessaoNaInterface(sessao) {
@@ -618,7 +784,8 @@ window.OlymposApp = (function() {
       avatarInitials.textContent = iniciais;
     }
 
-    const permitidas = normalizarPermissoesRbac(sessao.perfil.abasPermitidas);
+    const roleId = obterRoleIdSessao(sessao);
+    const permitidas = normalizarPermissoesRbac(sessao.perfil.abasPermitidas, roleId);
     document.querySelectorAll('.nav-link').forEach(function(link) {
       const pageTarget = link.getAttribute('data-page');
       if (!pageTarget) return;
@@ -640,11 +807,13 @@ window.OlymposApp = (function() {
     });
 
     // Controle de Visibilidade RBAC para Moderador (ADMIN_GABINETE)
-    const isAdmin = Boolean(sessao.perfil && (sessao.perfil.id === 'ADMIN_GABINETE' || sessao.perfil.nome === 'ADMIN_GABINETE'));
+    const isAdmin = Boolean(roleId === 'ADMIN_GABINETE' || (sessao.perfil && (sessao.perfil.id === 'ADMIN_GABINETE' || sessao.perfil.nome === 'ADMIN_GABINETE')));
     const blocoGestao = document.getElementById('blocoGestaoUsuarios');
     const avisoRestrito = document.getElementById('avisoAcessoUsuariosRestrito');
     if (blocoGestao) blocoGestao.classList.toggle('hidden', !isAdmin);
     if (avisoRestrito) avisoRestrito.classList.toggle('hidden', isAdmin);
+
+    aplicarControleAcessoModularEDrive(sessao, permitidas);
 
     if (window.OlymposIcons && typeof window.OlymposIcons.hydrateAll === 'function') {
       window.OlymposIcons.hydrateAll();
@@ -816,12 +985,14 @@ window.OlymposApp = (function() {
     if (window.OlymposApi && typeof window.OlymposApi.chamar === 'function') {
       window.OlymposApi.chamar('prometheus_config_emails', { destinatarios: clean }, function(res) {
         const msg = (res && res.mensagem) || 'Destinatários do boletim gravados com sucesso!';
-        if (fbCfg) fbCfg.innerHTML = (window.OlymposIcons ? window.OlymposIcons.ui('check') : '') + ' ' + escapeHtml(msg);
-        if (fbDiario) fbDiario.innerHTML = (window.OlymposIcons ? window.OlymposIcons.ui('check') : '') + ' ' + escapeHtml(msg);
+        const okIcon = window.OlymposIcons ? (window.OlymposIcons.inline ? window.OlymposIcons.inline('check') : '<span class="svg-icon-inline">' + window.OlymposIcons.ui('check') + '</span>') : '';
+        if (fbCfg) fbCfg.innerHTML = okIcon + ' ' + escapeHtml(msg);
+        if (fbDiario) fbDiario.innerHTML = okIcon + ' ' + escapeHtml(msg);
         showToast(msg);
       }, function(err) {
-        if (fbCfg) fbCfg.innerHTML = (window.OlymposIcons ? window.OlymposIcons.ui('alertTriangle') : '') + ' Salvo localmente no navegador (pendente sync com servidor).';
-        if (fbDiario) fbDiario.innerHTML = (window.OlymposIcons ? window.OlymposIcons.ui('alertTriangle') : '') + ' Salvo localmente no navegador.';
+        const warnIcon = window.OlymposIcons ? (window.OlymposIcons.inline ? window.OlymposIcons.inline('alertTriangle') : '<span class="svg-icon-inline">' + window.OlymposIcons.ui('alertTriangle') + '</span>') : '';
+        if (fbCfg) fbCfg.innerHTML = warnIcon + ' Salvo localmente no navegador (pendente sync com servidor).';
+        if (fbDiario) fbDiario.innerHTML = warnIcon + ' Salvo localmente no navegador.';
         showToast('Destinatários salvos localmente.');
       });
     } else {
@@ -896,13 +1067,22 @@ window.OlymposApp = (function() {
     const btnCloseLogin = document.getElementById('closeLoginModalBtn');
     if (btnCloseLogin) {
       btnCloseLogin.addEventListener('click', function() {
-        const modal = document.getElementById('loginScreen');
-        if (modal) modal.classList.add('hidden');
-        if (window.OlymposRouter) {
-          const cur = window.OlymposRouter.getPaginaAtual ? window.OlymposRouter.getPaginaAtual() : 'visao-geral';
-          if (!PUBLIC_PAGES.includes(cur)) {
-            window.OlymposRouter.navegarPara('visao-geral');
-          }
+        fecharModalLogin();
+      });
+    }
+
+    const btnCloseLoginX = document.getElementById('closeLoginScreenXBtn');
+    if (btnCloseLoginX) {
+      btnCloseLoginX.addEventListener('click', function() {
+        fecharModalLogin();
+      });
+    }
+
+    const loginModalBackdrop = document.getElementById('loginScreen');
+    if (loginModalBackdrop) {
+      loginModalBackdrop.addEventListener('click', function(e) {
+        if (e.target === loginModalBackdrop) {
+          fecharModalLogin();
         }
       });
     }
@@ -992,6 +1172,10 @@ window.OlymposApp = (function() {
       if (e.key === 'Escape') {
         document.body.classList.remove('nav-drawer-open');
         fecharDropdowns();
+        const modalLogin = document.getElementById('loginScreen');
+        if (modalLogin && !modalLogin.classList.contains('hidden')) {
+          fecharModalLogin();
+        }
       }
     });
 
@@ -1584,6 +1768,12 @@ window.OlymposApp = (function() {
     escapeHtml: escapeHtml,
     hydrateVectorIcons: hydrateVectorIcons,
     PUBLIC_PAGES: PUBLIC_PAGES,
-    aplicarModoVisitanteNaInterface: aplicarModoVisitanteNaInterface
+    RBAC_TAB_PERMISSIONS: RBAC_TAB_PERMISSIONS,
+    aplicarModoVisitanteNaInterface: aplicarModoVisitanteNaInterface,
+    aplicarSessaoNaInterface: aplicarSessaoNaInterface,
+    aplicarControleAcessoModularEDrive: aplicarControleAcessoModularEDrive,
+    fecharModalLogin: fecharModalLogin,
+    podeAcessarPagina: podeAcessarPagina,
+    getPermitidasSessao: getPermitidasSessao
   };
 })();

@@ -23,8 +23,11 @@ const SHELL_ASSETS = [
   './js/setup_modal.js',
   './js/memorias_catalogo.js',
   './js/olympos_password_guard.js',
+  './js/signals.js',
+  './js/sla_engine.js',
   './js/data/escolasCearaMirim.js',
   './js/data/servidoresData.js',
+  './js/data/permutasVigentesData.js',
   './js/views/visaoGeral.js',
   './js/views/oficios.js',
   './js/views/portarias.js',
@@ -38,7 +41,10 @@ const SHELL_ASSETS = [
   './js/views/calendario.js',
   './js/views/personas.js',
   './js/views/busca.js',
-  './js/views/configuracoes.js'
+  './js/views/configuracoes.js',
+  './js/views/ajustes.js',
+  './js/views/liraOrfeu.js',
+  './js/views/chamados.js'
 ];
 
 self.addEventListener('install', function(event) {

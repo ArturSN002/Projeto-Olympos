@@ -149,6 +149,15 @@ window.OlymposRouter = (function() {
       }
       pageId = 'visao-geral';
       targetSubtab = null;
+    } else if (sessaoAtiva && window.OlymposApp && typeof window.OlymposApp.podeAcessarPagina === 'function') {
+      const checkPage = targetSubtab === 'licencas' ? 'licencas' : pageId;
+      if (!window.OlymposApp.podeAcessarPagina(checkPage)) {
+        if (typeof window.OlymposApp.showToast === 'function') {
+          window.OlymposApp.showToast('Seu nível de acesso atual não possui permissão para este módulo.', true);
+        }
+        pageId = 'visao-geral';
+        targetSubtab = null;
+      }
     }
 
     activePage = pageId;
@@ -166,6 +175,15 @@ window.OlymposRouter = (function() {
       view.classList.toggle('active', isTarget);
       view.classList.toggle('hidden', !isTarget);
     });
+
+    // ISOLAMENTO DOS GATILHOS DO HERO: Exibe "Abrir Central de Chamados" e "Consultar Diário Oficial" EXCLUSIVAMENTE na Visão Geral
+    const heroDualActions = document.getElementById('heroDualActions') || document.querySelector('.hero-dual-actions');
+    if (heroDualActions) {
+      const showHeroActions = (pageId === 'visao-geral');
+      heroDualActions.classList.toggle('hidden', !showHeroActions);
+      heroDualActions.style.display = showHeroActions ? 'flex' : 'none';
+      heroDualActions.setAttribute('aria-hidden', showHeroActions ? 'false' : 'true');
+    }
 
     // ISOLAMENTO DA TELEMETRIA: Exibe a fita de telemetria EXCLUSIVAMENTE na Visão Geral
     const telemetryStrip = document.getElementById('heroTelemetryStrip') || document.querySelector('.telemetry-strip');

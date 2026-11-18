@@ -67,12 +67,17 @@
     <!-- =========================================================================
          TELA DE LOGIN EDITORIAL (IDENTIFICAÇÃO DE USUÁRIO E ACESSO SEGURO)
          ========================================================================= -->
-    <div id="loginScreen" class="modal-backdrop hidden">
-      <div class="modal-card" style="max-width: 450px;">
+    <div id="loginScreen" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
+      <div class="modal-card" style="max-width: 450px; position: relative;">
         <div class="modal-body" style="padding: 34px 32px 28px;">
-          <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 10px; margin-bottom: 22px;">
-            <span class="eyebrow-pill" style="margin-bottom: 2px;">ACESSO INSTITUCIONAL • SMEB</span>
-            <h2 style="font-size: 1.65rem; font-weight: 700; letter-spacing: -0.03em; margin: 0;">Entrar no Hub Olympos</h2>
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 22px;">
+            <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 10px;">
+              <span class="eyebrow-pill" style="margin-bottom: 2px;">ACESSO INSTITUCIONAL • SMEB</span>
+              <h2 id="loginModalTitle" style="font-size: 1.65rem; font-weight: 700; letter-spacing: -0.03em; margin: 0;">Entrar no Hub Olympos</h2>
+            </div>
+            <button type="button" id="closeLoginScreenXBtn" class="icon-capsule-btn" aria-label="Fechar janela de login e continuar como visitante" title="Fechar e continuar como visitante">
+              <span class="svg-icon-inline" data-icon="close"></span>
+            </button>
           </div>
 
           <form id="loginForm">
@@ -89,7 +94,7 @@
               Acessar Ambiente Olympos
             </button>
             <button type="button" id="closeLoginModalBtn" class="btn btn-secondary" style="width: 100%; margin-top: 10px; padding: 11px 18px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
-              Continuar no Acesso Público
+              Continuar como Visitante
             </button>
           </form>
 
@@ -211,39 +216,39 @@
       </div>
 
       <!-- ATALHOS DRIVE NO MENU LATERAL MOBILE -->
-      <div class="mobile-drawer-drive-section">
+      <div class="mobile-drawer-drive-section" id="mobileDrawerDriveSection">
         <span class="drawer-section-title">Atalhos Drive</span>
-        <a href="https://drive.google.com/drive/folders/1W9mGmQCrX8BRPsGcK_vqUwfXw1dRmSya" target="_blank" rel="noopener" class="drawer-drive-item">
+        <a href="https://drive.google.com/drive/folders/1W9mGmQCrX8BRPsGcK_vqUwfXw1dRmSya" target="_blank" rel="noopener" class="drawer-drive-item" data-requires-auth="true" data-access-roles="ADMIN_GABINETE">
           <span class="drive-icon svg-icon-inline" data-icon="folderDrive"></span>
           <span>Pasta Central Olympo</span>
           <span class="drive-arrow">↗</span>
         </a>
-        <a href="https://drive.google.com/drive/folders/1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu" target="_blank" rel="noopener" class="drawer-drive-item">
+        <a href="https://drive.google.com/drive/folders/1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu" target="_blank" rel="noopener" class="drawer-drive-item" data-requires-auth="true" data-access-roles="ADMIN_GABINETE">
           <span class="drive-icon svg-icon-inline" data-icon="edit"></span>
           <span>Memórias Operacionais</span>
           <span class="drive-arrow">↗</span>
         </a>
-        <a href="https://drive.google.com/drive/folders/1qGq5uqxOtN_V63itUheYatLIcj5R86O3" target="_blank" rel="noopener" class="drawer-drive-item">
+        <a href="https://drive.google.com/drive/folders/1qGq5uqxOtN_V63itUheYatLIcj5R86O3" target="_blank" rel="noopener" class="drawer-drive-item" data-requires-auth="true" data-access-page="portarias">
           <span class="drive-icon svg-icon-inline" data-icon="papyrusOfCadmus"></span>
           <span>Portarias 2026</span>
           <span class="drive-arrow">↗</span>
         </a>
-        <a href="https://drive.google.com/drive/folders/1H4bJXClx66Mr5PmRmSQBQLHDpAaKwdab" target="_blank" rel="noopener" class="drawer-drive-item">
+        <a href="https://drive.google.com/drive/folders/1H4bJXClx66Mr5PmRmSQBQLHDpAaKwdab" target="_blank" rel="noopener" class="drawer-drive-item" data-requires-auth="true" data-access-page="oficios">
           <span class="drive-icon svg-icon-inline" data-icon="mail"></span>
           <span>Ofícios 2026</span>
           <span class="drive-arrow">↗</span>
         </a>
-        <a href="https://docs.google.com/spreadsheets/d/1tU6rvgB2jNGaGqHK1oecNMQX7-5QcB8Q-1fNgzWcZqs/edit" target="_blank" rel="noopener" class="drawer-drive-item">
+        <a href="https://docs.google.com/spreadsheets/d/1tU6rvgB2jNGaGqHK1oecNMQX7-5QcB8Q-1fNgzWcZqs/edit" target="_blank" rel="noopener" class="drawer-drive-item" data-requires-auth="true" data-access-page="diario-oficial">
           <span class="drive-icon svg-icon-inline" data-icon="clipboard"></span>
           <span>Planilha Diário Oficial</span>
           <span class="drive-arrow">↗</span>
         </a>
-        <a href="https://drive.google.com/drive/folders/1aj514v29gytXH9j5LY_V76ap9XIblwHS" target="_blank" rel="noopener" class="drawer-drive-item">
+        <a href="https://drive.google.com/drive/folders/1aj514v29gytXH9j5LY_V76ap9XIblwHS" target="_blank" rel="noopener" class="drawer-drive-item" data-requires-auth="true" data-access-roles="ADMIN_GABINETE,RH_COMISSAO,JURIDICO">
           <span class="drive-icon svg-icon-inline" data-icon="chart"></span>
           <span>Backup Diário Oficial</span>
           <span class="drive-arrow">↗</span>
         </a>
-        <a href="https://drive.google.com/drive/folders/1dcc_5GcNG0ciVE-i1J6iwtojATk-1utD" target="_blank" rel="noopener" class="drawer-drive-item">
+        <a href="https://drive.google.com/drive/folders/1dcc_5GcNG0ciVE-i1J6iwtojATk-1utD" target="_blank" rel="noopener" class="drawer-drive-item" data-requires-auth="true" data-access-page="papiro-cadmo">
           <span class="drive-icon svg-icon-inline" data-icon="refreshSync"></span>
           <span>Acervo Papiro de Cadmo</span>
           <span class="drive-arrow">↗</span>
@@ -280,7 +285,7 @@
         </p>
 
         <!-- Dual Pill Actions -->
-        <div class="hero-dual-actions" style="display: flex; gap: 12px; align-items: center; margin: 18px 0 20px; flex-wrap: wrap;">
+        <div id="heroDualActions" class="hero-dual-actions" style="display: flex; gap: 12px; align-items: center; margin: 18px 0 20px; flex-wrap: wrap;">
           <a href="#chamados" class="btn btn-primary" style="border-radius: 9999px; padding: 10px 22px; display: inline-flex; align-items: center; gap: 8px;">
             <span>Abrir Central de Chamados</span>
             <span class="arrow-shift">↗</span>
@@ -324,14 +329,14 @@
                 <span class="stat-label">Olho de Apolo • Próximo Ofício</span>
                 <div class="stat-actions">
                   <button id="copyOficioBtn" class="btn-mini" title="Copiar número">Copiar</button>
-                  <button id="reserveOficioBtn" class="btn-mini btn-mini-accent" title="Reservar número atual e avançar +1">+1 Reservar</button>
-                  <button id="editOficioBtn" class="btn-mini" title="Ajustar contador oficial">Ajustar</button>
+                  <button id="reserveOficioBtn" class="btn-mini btn-mini-accent" title="Reservar número atual e avançar +1" data-requires-auth="true" data-access-page="oficios">+1 Reservar</button>
+                  <button id="editOficioBtn" class="btn-mini" title="Ajustar contador oficial" data-requires-auth="true" data-access-roles="ADMIN_GABINETE">Ajustar</button>
                 </div>
               </div>
               <div class="stat-value" id="kpiProximoOficio">--</div>
               <div class="stat-meta" id="kpiUltimoOficio">
                 <span>Último emitido: --</span>
-                <a href="https://drive.google.com/file/d/1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_/view" target="_blank" rel="noopener noreferrer" class="folder-chip">Memória de Apolo ↗</a>
+                <a href="https://drive.google.com/file/d/1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_/view" target="_blank" rel="noopener noreferrer" class="folder-chip" data-requires-auth="true" data-access-roles="ADMIN_GABINETE,RH_COMISSAO,PEDAGOGICO_EVENTOS,JURIDICO">Memória de Apolo ↗</a>
               </div>
             </div>
 
@@ -340,14 +345,14 @@
                 <span class="stat-label">Olho de Apolo • Próxima Portaria</span>
                 <div class="stat-actions">
                   <button id="copyPortariaBtn" class="btn-mini" title="Copiar número">Copiar</button>
-                  <button id="reservePortariaBtn" class="btn-mini btn-mini-accent" title="Reservar número atual e avançar +1">+1 Reservar</button>
-                  <button id="editPortariaBtn" class="btn-mini" title="Ajustar contador oficial">Ajustar</button>
+                  <button id="reservePortariaBtn" class="btn-mini btn-mini-accent" title="Reservar número atual e avançar +1" data-requires-auth="true" data-access-page="portarias">+1 Reservar</button>
+                  <button id="editPortariaBtn" class="btn-mini" title="Ajustar contador oficial" data-requires-auth="true" data-access-roles="ADMIN_GABINETE">Ajustar</button>
                 </div>
               </div>
               <div class="stat-value" id="kpiProximaPortaria">--</div>
               <div class="stat-meta" id="kpiUltimaPortaria">
                 <span>Última emitida: --</span>
-                <a href="https://drive.google.com/file/d/1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_/view" target="_blank" rel="noopener noreferrer" class="folder-chip">Memória de Apolo ↗</a>
+                <a href="https://drive.google.com/file/d/1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_/view" target="_blank" rel="noopener noreferrer" class="folder-chip" data-requires-auth="true" data-access-roles="ADMIN_GABINETE,RH_COMISSAO,PEDAGOGICO_EVENTOS,JURIDICO">Memória de Apolo ↗</a>
               </div>
             </div>
 
@@ -385,16 +390,16 @@
           </div>
 
           <!-- FRENTES OPERACIONAIS EM DESTAQUE -->
-          <div class="surface-card">
+          <div class="surface-card" id="operacoesModularesSection">
             <div class="card-header-row">
               <div>
                 <span class="section-eyebrow">OPERAÇÕES MODULARES</span>
                 <h2 class="section-title">Frentes de Automação Documental e Inteligência</h2>
                 <p class="section-desc">Cada módulo opera em página dedicada para redação oficial, gestão funcional e acompanhamento documental da SMEB.</p>
               </div>
-              <div class="header-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <a href="https://drive.google.com/drive/folders/1W9mGmQCrX8BRPsGcK_vqUwfXw1dRmSya" target="_blank" rel="noopener" class="folder-chip"><span class="svg-icon-inline" data-icon="folderDrive"></span> Pasta Central Olympo <span class="external-arrow">↗</span></a>
-                <a href="https://drive.google.com/drive/folders/1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu" target="_blank" rel="noopener" class="folder-chip"><span class="svg-icon-inline" data-icon="edit"></span> Memórias Operacionais <span class="external-arrow">↗</span></a>
+              <div class="header-actions" id="operacoesModularesDriveActions" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <a href="https://drive.google.com/drive/folders/1W9mGmQCrX8BRPsGcK_vqUwfXw1dRmSya" target="_blank" rel="noopener" class="folder-chip" data-requires-auth="true" data-access-roles="ADMIN_GABINETE"><span class="svg-icon-inline" data-icon="folderDrive"></span> Pasta Central Olympo <span class="external-arrow">↗</span></a>
+                <a href="https://drive.google.com/drive/folders/1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu" target="_blank" rel="noopener" class="folder-chip" data-requires-auth="true" data-access-roles="ADMIN_GABINETE"><span class="svg-icon-inline" data-icon="edit"></span> Memórias Operacionais <span class="external-arrow">↗</span></a>
               </div>
             </div>
 
@@ -785,7 +790,7 @@
             </div>
 
             <!-- OS 3 GATILHOS INDEPENDENTES + ATALHO COMPOSTO -->
-            <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 14px; margin-bottom: 20px; padding: 14px; background: var(--bg-surface-hover, rgba(255,255,255,0.02)); border-radius: 10px; border: 1px solid var(--border-hairline);">
+            <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 14px; margin-bottom: 20px; padding: 14px; background: var(--bg-surface-hover); border-radius: 10px; border: 1px solid var(--border-hairline);">
               <button id="liraHigienizarBtn" class="btn btn-secondary" title="Limpa espaços, corrige domínios @gmail e padroniza em Title Case">1. Higienizar Lista</button>
               <button id="liraGerarPdfsBtn" class="btn btn-secondary" title="Gera PDFs e QR Codes sem envio de e-mails">2. Somente Gerar Certificados (PDF)</button>
               <button id="liraEnviarEmailsBtn" class="btn btn-secondary" title="Envia e-mails exclusivamente para participantes com PDF gerado">3. Somente Enviar E-mails</button>
@@ -813,7 +818,7 @@
               </div>
 
               <!-- Formulário Rápido de Adição -->
-              <form id="liraFormQuickAdd" style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 16px; padding: 12px 14px; background: var(--bg-surface-hover, rgba(255,255,255,0.03)); border-radius: 8px; border: 1px solid var(--border-hairline);">
+              <form id="liraFormQuickAdd" style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 16px; padding: 12px 14px; background: var(--bg-surface-hover); border-radius: 8px; border: 1px solid var(--border-hairline);">
                 <div class="field-group" style="flex: 2; min-width: 180px;">
                   <label for="liraQuickNome" style="font-size: 11.5px; font-weight: 600;">Nome Completo *</label>
                   <input type="text" id="liraQuickNome" class="input-clean" placeholder="Ex: Maria da Silva" required />
@@ -977,7 +982,7 @@
                 <a href="https://docs.google.com/spreadsheets/d/1fOZHe871yxu6UdF0vsRzjSzQBc7AVFRZZtx3JSCdwCY/edit" target="_blank" rel="noopener" class="folder-chip">
                   Matriz Oficial de Permutas ↗
                 </a>
-                <a href="https://drive.google.com/drive/folders/1SDBCXU3LjI0Qnf6E6O6SLqRjctHz70k0" target="_blank" rel="noopener" class="folder-chip" style="border-color: rgba(99, 102, 241, 0.4); color: #818cf8;">
+                <a href="https://drive.google.com/drive/folders/1SDBCXU3LjI0Qnf6E6O6SLqRjctHz70k0" target="_blank" rel="noopener" class="folder-chip folder-chip-indigo">
                   <span class="svg-icon-inline" data-icon="folderDrive"></span> Pasta de Permutas (Drive) <span class="external-arrow">↗</span>
                 </a>
                 <button id="cadmoTriggerEtlBtn" class="btn btn-primary btn-sm">Atualizar Dados de Servidores</button>
@@ -1237,7 +1242,7 @@
                 <div class="button-group">
                   <span id="badgeTotalMatches" class="pill-badge pill-gold" style="font-size: 11px;">160 servidores em permuta ativa</span>
                   <span id="heraMatchPreviewPill" class="pill-badge pill-green hidden" style="font-size: 10.5px;"></span>
-                  <a href="https://drive.google.com/drive/folders/1SDBCXU3LjI0Qnf6E6O6SLqRjctHz70k0" target="_blank" rel="noopener" class="folder-chip" style="border-color: rgba(99, 102, 241, 0.4); color: #818cf8;">
+                  <a href="https://drive.google.com/drive/folders/1SDBCXU3LjI0Qnf6E6O6SLqRjctHz70k0" target="_blank" rel="noopener" class="folder-chip folder-chip-indigo">
                     <span class="svg-icon-inline" data-icon="folderDrive"></span> <span>Pasta de Permutas (Drive)</span> <span class="external-arrow">↗</span>
                   </a>
                   <button type="button" id="btnExportarPermutasVigentesTopo" class="btn btn-secondary btn-sm" onclick="window.OlymposViews.papiroCadmo.exportarPermutasVigentesCsv()">
@@ -1253,7 +1258,7 @@
                   <div class="cadmo-search-wrap" style="position: relative; flex: 1; min-width: 240px; max-width: 520px;">
                     <span class="svg-icon-inline" data-icon="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--text-muted); pointer-events: none;" aria-hidden="true"></span>
                     <input type="search" id="cadmoBuscaServidorInput" class="input-clean" style="padding-left: 34px; padding-right: 32px; font-size: 13px; width: 100%; border-radius: var(--radius-md, 8px);" placeholder="Buscar servidor por nome, matrícula funcional (ex: 2405221-1 ou 184920-1), cargo ou município..." autocomplete="off" aria-label="Buscar servidor por nome, matrícula, cargo, escola ou município" />
-                    <button type="button" id="btnLimparBuscaServidor" class="icon-capsule-btn hidden" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 22px; height: 22px; font-size: 12px; border: none; background: transparent; cursor: pointer; color: var(--text-muted);" title="Limpar busca">&times;</button>
+                    <button type="button" id="btnLimparBuscaServidor" class="icon-btn-sm hidden" title="Limpar busca" aria-label="Limpar busca"><span class="svg-icon-inline" data-icon="close"></span></button>
                   </div>
 
                   <!-- Abas de Visualização (Permutas Recíprocas, Acúmulos CF/88 e Base Geral) -->
@@ -1276,7 +1281,7 @@
                 <!-- Resumo da Pesquisa Ativa -->
                 <div id="cadmoResumoBuscaRow" class="hidden" style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding: 6px 12px; background: var(--bg-tonal); border-radius: var(--radius-sm, 6px); border: 1px solid var(--border-hairline);">
                   <span id="cadmoResumoBuscaTexto" style="color: var(--text-secondary);">Exibindo resultados filtrados</span>
-                  <button type="button" id="btnRemoverFiltroPesquisa" class="btn btn-ghost btn-sm" style="font-size: 11px; padding: 2px 8px; color: var(--brand-gold);">Restaurar todos</button>
+                  <button type="button" id="btnRemoverFiltroPesquisa" class="btn btn-ghost btn-sm" style="font-size: 11px; padding: 2px 8px; color: var(--accent-gold);">Restaurar todos</button>
                 </div>
               </div>
 
@@ -1300,7 +1305,7 @@
 
                 <div style="display: flex; align-items: center; gap: 10px;">
                   <span id="heraToggleLabel" style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">Expandir Diretrizes</span>
-                  <button type="button" id="btnToggleHeraMatching" class="icon-capsule-btn" aria-label="Expandir ou recolher diretrizes de matching" style="width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 12px; transition: transform 0.25s ease;">
+                  <button type="button" id="btnToggleHeraMatching" class="icon-btn-sm" aria-label="Expandir ou recolher diretrizes de matching">
                     <span id="heraChevronIcon" class="svg-icon-inline" data-icon="chevronDown"></span>
                   </button>
                 </div>
@@ -1310,19 +1315,19 @@
               <div id="heraCollapsibleBody" class="hera-collapsible-body is-collapsed" style="display: none; padding: 18px 20px; transition: all 0.3s ease;">
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;">
                   <div class="output-panel" style="padding: 12px 14px;">
-                    <strong style="color: var(--brand-gold); font-size: 12.5px; display: flex; align-items: center; gap: 6px;">
+                    <strong style="color: var(--accent-gold); font-size: 12.5px; display: flex; align-items: center; gap: 6px;">
                       <span class="svg-icon-inline" data-icon="compass"></span> 40% Proximidade Territorial
                     </strong>
                     <p style="font-size: 12px; color: var(--text-secondary); margin: 6px 0 0 0;">Cálculo geodésico Haversine entre as unidades escolares e polos conveniados na Grande Natal e Litoral Norte.</p>
                   </div>
                   <div class="output-panel" style="padding: 12px 14px;">
-                    <strong style="color: #60a5fa; font-size: 12.5px; display: flex; align-items: center; gap: 6px;">
+                    <strong style="color: var(--accent-link); font-size: 12.5px; display: flex; align-items: center; gap: 6px;">
                       <span class="svg-icon-inline" data-icon="clipboard"></span> 30% Habilitação Curricular
                     </strong>
                     <p style="font-size: 12px; color: var(--text-secondary); margin: 6px 0 0 0;">Convergência estrita de cargo, disciplina e segmento de ensino (Anos Iniciais, Finais, Ed. Infantil ou Especialista).</p>
                   </div>
                   <div class="output-panel" style="padding: 12px 14px;">
-                    <strong style="color: #34d399; font-size: 12.5px; display: flex; align-items: center; gap: 6px;">
+                    <strong style="color: var(--success); font-size: 12.5px; display: flex; align-items: center; gap: 6px;">
                       <span class="svg-icon-inline" data-icon="clock"></span> 30% Turno e Carga Horária
                     </strong>
                     <p style="font-size: 12px; color: var(--text-secondary); margin: 6px 0 0 0;">Equivalência de regime funcional (30h padrão SMEB) e compatibilidade de turno sem sobreposição constitucional.</p>
@@ -1339,7 +1344,7 @@
                     <span class="sec-edit-header-badge"><span class="svg-icon-inline" data-icon="olymposLogo"></span> Inteligência Cartográfica &bull; Polos Parceiros</span>
                     <h3 id="modalEdicaoSecretariaTitulo" style="margin: 0; font-size: 1.18rem; font-weight: 700; color: var(--text-main);">Editar Secretaria Municipal Parceira</h3>
                   </div>
-                  <button id="closeModalEdicaoSecretariaBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal">&times;</button>
+                  <button id="closeModalEdicaoSecretariaBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal"><span class="svg-icon-inline" data-icon="close"></span></button>
                 </div>
 
                 <form id="formEdicaoSecretaria">
@@ -1404,7 +1409,7 @@
                       <button type="button" id="btnRestaurarPadraoSecretarias" class="btn btn-ghost btn-sm" style="color: var(--text-muted);">
                         <span class="svg-icon-inline" data-icon="refresh"></span> Restaurar Padrões
                       </button>
-                      <button type="button" id="btnExcluirSecretaria" class="btn btn-ghost btn-sm" style="color: var(--accent-red, #EF4444); border-color: rgba(239,68,68,0.3);">
+                      <button type="button" id="btnExcluirSecretaria" class="btn btn-ghost btn-sm" style="color: var(--danger); border-color: var(--danger-soft);">
                         <span class="svg-icon-inline" data-icon="trash"></span> Excluir Município
                       </button>
                     </div>
@@ -1831,7 +1836,7 @@
                     <span class="cal-modal-badge" id="modalDetalhesDiaBadge"><span class="svg-icon-inline" data-icon="calendar"></span> Agenda Escolar</span>
                     <h3 id="modalDetalhesDiaTitulo" style="margin: 0; font-size: 1.18rem; font-weight: 700; color: var(--text-main);">Detalhes do Dia</h3>
                   </div>
-                  <button id="closeModalDetalhesDiaBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal">&times;</button>
+                  <button id="closeModalDetalhesDiaBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal"><span class="svg-icon-inline" data-icon="close"></span></button>
                 </div>
                 <div class="modal-body" id="modalDetalhesDiaBody" style="padding: 20px 24px; max-height: 75vh; overflow-y: auto;">
                   <!-- Conteúdo dinâmico injetado via JS -->
@@ -1847,10 +1852,10 @@
               <div class="modal-card" style="max-width: 580px; width: 92%;">
                 <div class="modal-header">
                   <div class="modal-title-wrap">
-                    <span class="cal-modal-badge" style="background: rgba(139,92,246,0.15); color: #8B5CF6;"><span class="svg-icon-inline" data-icon="calendar"></span> Agenda Intersetorial</span>
+                    <span class="cal-modal-badge cal-badge-purple"><span class="svg-icon-inline" data-icon="calendar"></span> Agenda Intersetorial</span>
                     <h3 id="modalFormAgendaTitulo" style="margin: 0; font-size: 1.18rem; font-weight: 700; color: var(--text-main);">Novo Evento da Agenda</h3>
                   </div>
-                  <button id="closeModalFormAgendaBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal">&times;</button>
+                  <button id="closeModalFormAgendaBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal"><span class="svg-icon-inline" data-icon="close"></span></button>
                 </div>
 
                 <form id="formAgendaEventoCalendario">
@@ -1918,7 +1923,7 @@
                   </div>
 
                   <div class="modal-footer" style="padding: 14px 24px; display: flex; justify-content: space-between; align-items: center;">
-                    <button type="button" id="btnExcluirEventoAgenda" class="btn btn-ghost btn-sm hidden" style="color: var(--accent-red, #EF4444); border-color: rgba(239,68,68,0.3);">
+                    <button type="button" id="btnExcluirEventoAgenda" class="btn btn-ghost btn-sm hidden" style="color: var(--danger); border-color: var(--danger-soft);">
                       <span class="svg-icon-inline" data-icon="trash"></span> Excluir Evento
                     </button>
                     <div style="display: flex; gap: 10px; margin-left: auto;">
@@ -2001,7 +2006,7 @@
               <div class="stat-card">
                 <div class="stat-top">
                   <span class="stat-label">Instituições Privadas</span>
-                  <span class="pill-badge" style="background: rgba(168,85,247,0.15); color: #A855F7; border: 1px solid rgba(168,85,247,0.3);">Rede Privada</span>
+                  <span class="pill-badge pill-purple">Rede Privada</span>
                 </div>
                 <div class="stat-value" id="kpiEscolasPrivadas">--</div>
                 <div class="stat-meta">Educação Básica Particular</div>
@@ -2302,7 +2307,7 @@
                 <p class="section-desc" style="max-width: 480px; margin: 0 auto; color: var(--text-secondary);">Apenas administradores do Gabinete possuem permissão para gerenciar operadores e perfis de acesso do Hub Olympos.</p>
               </div>
 
-              <div id="blocoGestaoUsuarios" class="surface-card" style="border: 1px solid var(--border-hairline); background: var(--surface-secondary, rgba(255,255,255,0.02));">
+              <div id="blocoGestaoUsuarios" class="surface-card" style="border: 1px solid var(--border-hairline); background: var(--bg-surface);">
                 <div class="card-header-row" style="margin-bottom: 16px;">
                   <div>
                     <span class="section-eyebrow">MODERAÇÃO DE ACESSOS • GABINETE</span>
@@ -2520,7 +2525,7 @@
       <div class="modal-card">
         <div class="modal-header">
           <h3 id="modalMemoriaTitle" style="font-size: 1.08rem;">Memória Operacional</h3>
-          <button id="closeModalBtn" class="icon-capsule-btn" aria-label="Fechar"></button>
+          <button id="closeModalBtn" class="icon-capsule-btn" type="button" aria-label="Fechar"><span class="svg-icon-inline" data-icon="close"></span></button>
         </div>
         <div class="modal-body">
           <textarea id="modalMemoriaTextarea" rows="16" class="input-clean" style="font-family: var(--font-mono); font-size: 12.5px; line-height: 1.55;"></textarea>
@@ -2541,7 +2546,7 @@
       <div class="modal-card" style="max-width: 560px;">
         <div class="modal-header">
           <h3 style="font-size: 1.08rem;">Ajuste de Numeração Sequencial 2026 (Apolo)</h3>
-          <button id="closeContadoresModalBtn" class="icon-capsule-btn" aria-label="Fechar"></button>
+          <button id="closeContadoresModalBtn" class="icon-capsule-btn" type="button" aria-label="Fechar"><span class="svg-icon-inline" data-icon="close"></span></button>
         </div>
         <div class="modal-body">
           <p class="section-desc" style="margin-bottom: 16px;">
@@ -2585,7 +2590,7 @@
             <span class="badge badge-purple" style="font-size: 0.72rem; margin-bottom: 4px;">Ambiente Seguro Olympos</span>
             <h3 id="setupModalTitle" style="margin: 0; font-size: 1.25rem;">Configuração da Instância Supabase</h3>
           </div>
-          <button id="closeSetupModalBtn" class="modal-close-btn" aria-label="Fechar modal">&times;</button>
+          <button id="closeSetupModalBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal"><span class="svg-icon-inline" data-icon="close"></span></button>
         </div>
         <div class="modal-body" style="padding: 20px;">
           <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin-top: 0;">
@@ -2630,7 +2635,7 @@
             <span class="badge badge-purple" style="font-size: 0.72rem; margin-bottom: 4px;">Moderação de Acessos • Gabinete</span>
             <h3 id="modalNovoUsuarioTitulo" style="margin: 0; font-size: 1.22rem; font-weight: 700;">Adicionar Novo Usuário</h3>
           </div>
-          <button id="closeModalNovoUsuarioBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal">&times;</button>
+          <button id="closeModalNovoUsuarioBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal"><span class="svg-icon-inline" data-icon="close"></span></button>
         </div>
 
         <form id="formNovoUsuario">
@@ -2703,7 +2708,7 @@
             <span class="badge badge-purple" style="font-size: 0.72rem; margin-bottom: 4px;">Moderação de Acessos • Perfis</span>
             <h3 id="modalEditarUsuarioTitulo" style="margin: 0; font-size: 1.22rem; font-weight: 700;">Editar Usuário</h3>
           </div>
-          <button id="closeModalEditarUsuarioBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal">&times;</button>
+          <button id="closeModalEditarUsuarioBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal"><span class="svg-icon-inline" data-icon="close"></span></button>
         </div>
 
         <form id="formEditarUsuario">
@@ -2773,7 +2778,7 @@
             <span class="badge badge-purple" style="font-size: 0.72rem; margin-bottom: 4px;">Georreferenciamento Municipal SMEB</span>
             <h3 id="modalCadastroEscolaTitulo" style="margin: 0; font-size: 1.22rem; font-weight: 700;">Cadastrar Nova Unidade Escolar</h3>
           </div>
-          <button id="closeModalCadastroEscolaBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal">&times;</button>
+          <button id="closeModalCadastroEscolaBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal"><span class="svg-icon-inline" data-icon="close"></span></button>
         </div>
 
         <form id="formCadastroEscola">
@@ -2925,7 +2930,7 @@
             <span class="badge badge-amber" style="font-size: 0.72rem; margin-bottom: 4px;">Segurança Reforçada GoTrue</span>
             <h3 id="modalMfaDesafioTitulo" style="margin: 0; font-size: 1.18rem; font-weight: 700;">Autenticação em Duas Etapas (TOTP)</h3>
           </div>
-          <button id="closeModalMfaDesafioBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal">&times;</button>
+          <button id="closeModalMfaDesafioBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal"><span class="svg-icon-inline" data-icon="close"></span></button>
         </div>
         <form id="formMfaDesafio">
           <div class="modal-body" style="padding: 20px 24px;">
@@ -2956,7 +2961,7 @@
             <span class="badge badge-purple" style="font-size: 0.72rem; margin-bottom: 4px;">Proteção de Gabinete & Jurídico</span>
             <h3 id="modalMfaEnrollTitulo" style="margin: 0; font-size: 1.18rem; font-weight: 700;">Configurar Autenticação em Duas Etapas (TOTP)</h3>
           </div>
-          <button id="closeModalMfaEnrollBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal">&times;</button>
+          <button id="closeModalMfaEnrollBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal"><span class="svg-icon-inline" data-icon="close"></span></button>
         </div>
         <form id="formMfaEnroll">
           <div class="modal-body" style="padding: 20px 24px; max-height: 75vh; overflow-y: auto;">
@@ -2974,7 +2979,7 @@
                 <strong>Passo 2: Ou digite a chave secreta</strong>
                 <button type="button" id="btnCopiarMfaSecret" class="btn btn-secondary btn-xs" style="font-size: 11px; padding: 2px 8px;">Copiar Chave</button>
               </div>
-              <code id="mfaSecretKeyText" style="display: block; margin-top: 8px; font-size: 13px; font-family: monospace; word-break: break-all; color: var(--accent);"></code>
+              <code id="mfaSecretKeyText" style="display: block; margin-top: 8px; font-size: 13px; font-family: monospace; word-break: break-all; color: var(--accent-primary);"></code>
             </div>
             <div style="margin-bottom: 10px;">
               <label for="mfaEnrollCode" style="display: block; margin-bottom: 6px; font-weight: 600;">Passo 3: Digite o código de 6 dígitos gerado no app *</label>
@@ -2998,7 +3003,7 @@
             <span class="badge badge-amber" style="font-size: 0.72rem; margin-bottom: 4px;">Dossiê Funcional Consolidado</span>
             <h3 id="modalDossieServidorNome" style="margin: 0; font-size: 1.25rem; font-weight: 700;">Nome do Servidor</h3>
           </div>
-          <button id="closeModalDossieServidorBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal">&times;</button>
+          <button id="closeModalDossieServidorBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal"><span class="svg-icon-inline" data-icon="close"></span></button>
         </div>
         <div class="modal-body" id="modalDossieServidorConteudo" style="padding: 20px 24px; max-height: 75vh; overflow-y: auto;">
           <!-- Preenchido dinamicamente via JS -->
@@ -3021,7 +3026,7 @@
             <span class="badge badge-purple" style="font-size: 0.72rem; margin-bottom: 4px;">Formação Continuada • A Lira de Orfeu</span>
             <h3 id="modalLiraNovaAbaTitulo" style="margin: 0; font-size: 1.25rem; font-weight: 700;">Criar Nova Aba de Evento</h3>
           </div>
-          <button id="closeModalLiraNovaAbaBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal">&times;</button>
+          <button id="closeModalLiraNovaAbaBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal"><span class="svg-icon-inline" data-icon="close"></span></button>
         </div>
 
         <form id="formLiraNovaAba">
@@ -3108,7 +3113,7 @@
             <span class="badge badge-blue" style="font-size: 0.72rem; margin-bottom: 4px;">Importação Rápida • A Lira de Orfeu</span>
             <h3 id="modalLiraColarLoteTitulo" style="margin: 0; font-size: 1.25rem; font-weight: 700;">Colar Participantes em Lote</h3>
           </div>
-          <button id="closeModalLiraColarLoteBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal">&times;</button>
+          <button id="closeModalLiraColarLoteBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal"><span class="svg-icon-inline" data-icon="close"></span></button>
         </div>
 
         <div class="modal-body" style="padding: 20px 24px; max-height: 75vh; overflow-y: auto;">

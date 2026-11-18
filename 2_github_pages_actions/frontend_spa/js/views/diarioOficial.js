@@ -407,10 +407,15 @@ window.OlymposViews.diarioOficial = (function() {
     filtered.forEach(function(item) {
       const tr = document.createElement('tr');
       const nerBadges = [];
-      if (item.codigo) nerBadges.push('Cód. ' + item.codigo);
-      if (item.servidores && item.servidores.length) nerBadges.push('Servidor(es): ' + item.servidores.join(', '));
-      if (item.matriculas && item.matriculas.length) nerBadges.push('Mat.: ' + item.matriculas.join(', '));
-      if (item.planilhaNome) nerBadges.push((window.OlymposIcons ? window.OlymposIcons.ui('fileText') : '') + ' ' + item.planilhaNome);
+      if (item.codigo) nerBadges.push('Cód. ' + window.OlymposApp.escapeHtml(item.codigo));
+      if (item.servidores && item.servidores.length) nerBadges.push('Servidor(es): ' + window.OlymposApp.escapeHtml(item.servidores.join(', ')));
+      if (item.matriculas && item.matriculas.length) nerBadges.push('Mat.: ' + window.OlymposApp.escapeHtml(item.matriculas.join(', ')));
+      if (item.planilhaNome) {
+        const iconHtml = window.OlymposIcons
+          ? (typeof window.OlymposIcons.inline === 'function' ? window.OlymposIcons.inline('fileText', 12) : window.OlymposIcons.ui('fileText', 12))
+          : '';
+        nerBadges.push(iconHtml + ' ' + window.OlymposApp.escapeHtml(item.planilhaNome));
+      }
 
       tr.innerHTML =
         '<td data-label="Data" style="font-family:var(--font-mono); font-size:12px;">' + window.OlymposApp.escapeHtml(item.data) + '</td>' +
@@ -419,7 +424,7 @@ window.OlymposViews.diarioOficial = (function() {
         '</td>' +
         '<td data-label="Ato Oficial">' +
           '<div style="font-weight:600; color:var(--text-main);">' + window.OlymposApp.escapeHtml(item.titulo) + '</div>' +
-          (nerBadges.length ? '<div style="font-size:11.5px; color:var(--text-muted); margin-top:3px;">' + window.OlymposApp.escapeHtml(nerBadges.join(' • ')) + '</div>' : '') +
+          (nerBadges.length ? '<div style="font-size:11.5px; color:var(--text-muted); margin-top:3px;">' + nerBadges.join(' • ') + '</div>' : '') +
         '</td>' +
         '<td data-label="Documento" class="text-right">' +
           (item.url
