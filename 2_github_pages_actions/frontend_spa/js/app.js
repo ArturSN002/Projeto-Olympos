@@ -26,12 +26,6 @@ window.OlymposApp = (function() {
     verificarStatusConexaoInicial();
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', bootOlymposApp);
-  } else {
-    bootOlymposApp();
-  }
-
   function hydrateVectorIcons() {
     if (!window.OlymposIcons) return;
     const uiFn = typeof window.OlymposIcons.ui === 'function' ? window.OlymposIcons.ui : window.OlymposIcons.get;
@@ -2362,6 +2356,19 @@ window.OlymposApp = (function() {
     aplicarControleAcessoModularEDrive: aplicarControleAcessoModularEDrive,
     fecharModalLogin: fecharModalLogin,
     podeAcessarPagina: podeAcessarPagina,
-    getPermitidasSessao: getPermitidasSessao
+    getPermitidasSessao: getPermitidasSessao,
+    boot: bootOlymposApp
   };
 })();
+
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      if (window.OlymposApp && typeof window.OlymposApp.boot === 'function') {
+        window.OlymposApp.boot();
+      }
+    });
+  } else if (window.OlymposApp && typeof window.OlymposApp.boot === 'function') {
+    window.OlymposApp.boot();
+  }
+}

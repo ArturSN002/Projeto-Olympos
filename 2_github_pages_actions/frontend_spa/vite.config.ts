@@ -36,6 +36,13 @@ function copyStaticAssetsPlugin(): Plugin {
           fs.copyFileSync(src, dst);
         }
       }
+
+      const distIndexPath = path.resolve(outDir, 'index.html');
+      if (fs.existsSync(distIndexPath)) {
+        const html = fs.readFileSync(distIndexPath, 'utf8')
+          .replace(/href=["']\.\/assets\/manifest-[^"']+\.json["']/gi, 'href="./manifest.json"');
+        fs.writeFileSync(distIndexPath, html, 'utf8');
+      }
     }
   };
 }
@@ -43,12 +50,16 @@ function copyStaticAssetsPlugin(): Plugin {
 function minifyHtmlShellPlugin(): Plugin {
   return {
     name: 'olympos-minify-html-shell',
-    transformIndexHtml(html: string) {
-      return html
-        .replace(/<!--(?!\[)[\s\S]*?-->/g, '')
-        .replace(/\r?\n\s+/g, '\n')
-        .replace(/\n{2,}/g, '\n')
-        .trim();
+    transformIndexHtml: {
+      order: 'post',
+      handler(html: string) {
+        return html
+          .replace(/href=["']\.\/assets\/manifest-[^"']+\.json["']/i, 'href="./manifest.json"')
+          .replace(/<!--(?!\[)[\s\S]*?-->/g, '')
+          .replace(/\r?\n\s+/g, '\n')
+          .replace(/\n{2,}/g, '\n')
+          .trim();
+      }
     }
   };
 }
