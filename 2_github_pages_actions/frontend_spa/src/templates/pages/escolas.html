@@ -1,0 +1,188 @@
+        <section class="page-view hidden" id="page-escolas">
+          <div class="surface-card">
+            <div class="card-header-row">
+              <div>
+                <span class="section-eyebrow">GEORREFERENCIAMENTO MUNICIPAL • REDE ESCOLAR SMEB</span>
+                <h2 class="section-title">Mapa e Gestão das Escolas Municipais</h2>
+                <p class="section-desc">Mapeamento cartográfico interativo (Leaflet.js), catálogo georreferenciado com latitude e longitude, cadastro, edição e exclusão de unidades diretamente no mapa com persistência local e backup JSON.</p>
+              </div>
+              <div class="button-group">
+                <button type="button" id="btnNovaEscola" class="btn btn-primary btn-sm" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE">
+                  <span>+ Nova Unidade Escolar</span>
+                </button>
+                <button type="button" id="btnRecentralizarMapaEscolas" class="btn btn-secondary btn-sm" title="Centralizar mapa em Ceará-Mirim">
+                  <span class="svg-icon-inline" data-icon="target"></span> <span>Recentralizar</span>
+                </button>
+                <button type="button" id="btnExportarEscolasJson" class="btn btn-secondary btn-sm" title="Exportar catálogo em arquivo JSON">
+                  <span class="svg-icon-inline" data-icon="download"></span> <span>Exportar JSON</span>
+                </button>
+                <button type="button" id="btnImportarEscolasJson" class="btn btn-secondary btn-sm" title="Importar catálogo a partir de arquivo JSON" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE">
+                  <span class="svg-icon-inline" data-icon="upload"></span> <span>Importar JSON</span>
+                </button>
+                <input type="file" id="escolasImportFileInput" accept=".json" style="display: none;" />
+                <button type="button" id="btnRestaurarEscolasPadrao" class="btn btn-ghost btn-sm" title="Restaurar catálogo inicial oficial com 20 escolas" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE">
+                  <span class="svg-icon-inline" data-icon="refresh"></span> <span>Restaurar Padrão</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- CARDS DE CONTADORES / KPIS -->
+            <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; margin: 16px 0 20px 0;">
+              <!-- Card 1: Rede Municipal com sub-quantitativos -->
+              <div class="stat-card">
+                <div class="stat-top">
+                  <span class="stat-label">Rede Municipal</span>
+                  <span class="pill-badge pill-gold">SMEB</span>
+                </div>
+                <div class="stat-value" id="kpiEscolasTotal">--</div>
+                <div class="stat-meta" style="font-size: 11.5px; line-height: 1.45;">
+                  <span id="kpiEscolasUrbanas">--</span> urbanas • <span id="kpiEscolasRurais">--</span> rurais • <span id="kpiEscolasCeis">--</span> CEIs
+                </div>
+              </div>
+
+              <!-- Card 2: Rede Estadual -->
+              <div class="stat-card">
+                <div class="stat-top">
+                  <span class="stat-label">Rede Estadual</span>
+                  <span class="pill-badge pill-blue">SEEC / RN</span>
+                </div>
+                <div class="stat-value" id="kpiEscolasEstaduais">--</div>
+                <div class="stat-meta">Ensino Fundamental e Médio</div>
+              </div>
+
+              <!-- Card 3: Rede Federal -->
+              <div class="stat-card">
+                <div class="stat-top">
+                  <span class="stat-label">Rede Federal</span>
+                  <span class="pill-badge pill-green">MEC / IFRN</span>
+                </div>
+                <div class="stat-value" id="kpiEscolasFederais">--</div>
+                <div class="stat-meta">Ensino Técnico e Superior</div>
+              </div>
+
+              <!-- Card 4: Instituições Privadas -->
+              <div class="stat-card">
+                <div class="stat-top">
+                  <span class="stat-label">Instituições Privadas</span>
+                  <span class="pill-badge pill-purple">Rede Privada</span>
+                </div>
+                <div class="stat-value" id="kpiEscolasPrivadas">--</div>
+                <div class="stat-meta">Educação Básica Particular</div>
+              </div>
+            </div>
+
+            <!-- CONTÊINER DO MAPA INTERATIVO (LEAFLET.JS) -->
+            <div class="cadmo-map-outer escola-map-outer" style="margin: 18px 0; border: 1px solid var(--border-hairline); border-radius: var(--radius-lg, 16px); overflow: hidden; background: var(--bg-surface); box-shadow: var(--shadow-subtle);">
+              <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: var(--bg-tonal); border-bottom: 1px solid var(--border-hairline); font-size: 12.5px; flex-wrap: wrap; gap: 8px;">
+                <span style="font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
+                  <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10B981;"></span>
+                  Mapa Georreferenciado das Unidades Escolares — Ceará-Mirim/RN
+                </span>
+                <span id="escolasCoordLiveDisplay" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE" style="font-family: var(--font-mono); font-size: 11.5px; color: var(--text-muted);">
+                  Clique no mapa para capturar latitude e longitude
+                </span>
+                <div style="display: flex; gap: 12px; font-size: 11.5px; color: var(--text-secondary); flex-wrap: wrap; align-items: center;">
+                  <span style="font-weight: 700; color: var(--text-main);">Legenda das Cores:</span>
+                  <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #22C55E;"></span> Mun. Urbana</span>
+                  <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #166534;"></span> Mun. Rural</span>
+                  <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #FACC15;"></span> Est. Urbana</span>
+                  <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #EA580C;"></span> Est. Rural</span>
+                  <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #38BDF8;"></span> Fed. Urbana</span>
+                  <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #1E40AF;"></span> Fed. Rural</span>
+                  <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #EF4444;"></span> Priv. Urbana</span>
+                  <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #EC4899;"></span> Priv. Rural</span>
+                </div>
+                <div style="width: 100%; display: flex; gap: 14px; font-size: 11px; color: var(--text-muted); padding-top: 6px; border-top: 1px dashed var(--border-hairline); flex-wrap: wrap; align-items: center;">
+                  <span style="font-weight: 700; color: var(--text-main);">Ícones por Categoria &amp; Combinação:</span>
+                  <span><span class="svg-icon-inline" data-icon="schoolCei"></span> CEI (Creche)</span>
+                  <span><span class="svg-icon-inline" data-icon="school"></span> Escola / Fund. I–II</span>
+                  <span><span class="svg-icon-inline" data-icon="graduationCap"></span> Ensino Médio</span>
+                  <span><span class="svg-icon-inline" data-icon="schoolTecnico"></span> Técnico / IFRN</span>
+                  <span><span class="svg-icon-inline" data-icon="schoolEspecial"></span> Inclusão / CEMAI</span>
+                  <span><span class="svg-icon-inline" data-icon="schoolMulti"></span> Múltiplos Segmentos</span>
+                  <span><span class="svg-icon-inline" data-icon="olymposLogo"></span> SMEB Sede</span>
+                  <span>• Borda sólida = Urbana | Borda tracejada = Rural</span>
+                </div>
+              </div>
+              <div id="mapaEscolasCearaMirim" style="height: 480px; width: 100%; border-radius: var(--radius-lg); position: relative; z-index: 1;"></div>
+            </div>
+
+            <!-- BARRA DE FILTROS E BUSCA INTEGRADA (CATEGORIA INSTITUCIONAL, REDE, SEGMENTOS & ZONA) -->
+            <div class="escolas-filter-toolbar">
+              <div class="escolas-filter-top-row">
+                <div class="escolas-search-and-rede" style="width: 100%;">
+                  <input type="search" id="escolaBuscaInput" class="input-clean escolas-search-input" placeholder="Buscar por escola, bairro ou INEP..." />
+                </div>
+                <span id="escolasContagemExibida" class="escolas-count-label">Carregando unidades...</span>
+              </div>
+
+              <!-- GRID RESPONSIVO DE FILTROS EM DROPDOWNS MODERNOS -->
+              <div class="escolas-selects-grid">
+                <div class="filter-select-field">
+                  <label for="escolaFiltroCategoriaSelect" class="filter-select-label"><span class="svg-icon-inline" data-icon="school"></span> Categoria</label>
+                  <select id="escolaFiltroCategoriaSelect" class="input-clean filter-select-modern" data-filtro-select="categoria" title="Filtrar por Categoria Institucional">
+                    <option value="todas" data-filtro-categoria="todas" selected>Todas as Categorias</option>
+                    <option value="escola" data-filtro-categoria="escola">Escolas</option>
+                    <option value="cei" data-filtro-categoria="cei">Centros de Ed. Infantil (CEI)</option>
+                    <option value="instituicao" data-filtro-categoria="instituicao">Instituições / Sede</option>
+                  </select>
+                </div>
+
+                <div class="filter-select-field">
+                  <label for="escolaFiltroRedeSelect" class="filter-select-label"><span class="svg-icon-inline" data-icon="globe"></span> Rede de Ensino</label>
+                  <select id="escolaFiltroRedeSelect" class="input-clean filter-select-modern" data-filtro-select="rede" title="Filtrar por Rede de Ensino">
+                    <option value="todas" data-filtro-rede="todas" selected>Todas as Redes</option>
+                    <option value="Municipal" data-filtro-rede="Municipal">Municipal</option>
+                    <option value="Estadual" data-filtro-rede="Estadual">Estadual</option>
+                    <option value="Federal" data-filtro-rede="Federal">Federal</option>
+                    <option value="Privada" data-filtro-rede="Privada">Privada</option>
+                  </select>
+                </div>
+
+                <div class="filter-select-field">
+                  <label for="escolaFiltroSegmentoSelect" class="filter-select-label"><span class="svg-icon-inline" data-icon="book"></span> Segmento</label>
+                  <select id="escolaFiltroSegmentoSelect" class="input-clean filter-select-modern" data-filtro-select="segmento" title="Filtrar por Segmento de Ensino">
+                    <option value="todos" data-filtro-segmento="todos" selected>Todos os Segmentos</option>
+                    <option value="Ed. Infantil" data-filtro-segmento="Ed. Infantil">Ed. Infantil</option>
+                    <option value="Ens. Fundamental I" data-filtro-segmento="Ens. Fundamental I">Ens. Fundamental I</option>
+                    <option value="Ens. Fundamental II" data-filtro-segmento="Ens. Fundamental II">Ens. Fundamental II</option>
+                    <option value="Ensino Médio" data-filtro-segmento="Ensino Médio">Ensino Médio</option>
+                  </select>
+                </div>
+
+                <div class="filter-select-field">
+                  <label for="escolaFiltroZonaSelect" class="filter-select-label"><span class="svg-icon-inline" data-icon="mapPin"></span> Localização / Zona</label>
+                  <select id="escolaFiltroZonaSelect" class="input-clean filter-select-modern" data-filtro-select="zona" title="Filtrar por Zona Urbana ou Rural">
+                    <option value="todas" data-filtro-zona="todas" selected>Todas as Zonas</option>
+                    <option value="Urbana" data-filtro-zona="Urbana">Zona Urbana</option>
+                    <option value="Rural" data-filtro-zona="Rural">Zona Rural</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- TABELA DE UNIDADES ESCOLARES -->
+            <div class="table-wrapper">
+              <table class="clean-table table-responsive-cards" id="tabelaEscolas">
+                <thead>
+                  <tr>
+                    <th>Unidade Escolar</th>
+                    <th style="width: 110px;">Rede</th>
+                    <th style="width: 200px;">Segmentos Atendidos</th>
+                    <th style="width: 90px;">Zona</th>
+                    <th style="width: 140px;">Bairro / Distrito</th>
+                    <th style="width: 160px;">Coordenadas</th>
+                    <th class="text-right" style="width: 150px;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="tabelaEscolasBody">
+                  <tr><td colspan="7" class="text-muted text-center" style="padding: 24px;">Carregando escolas...</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div id="escolasPaginacaoBar" class="olympos-pagination-bar hidden">
+              <span id="escolasPaginacaoInfo" class="olympos-pagination-info"></span>
+              <div id="escolasPaginacaoControles" class="olympos-pagination-controls"></div>
+            </div>
+          </div>
+        </section>

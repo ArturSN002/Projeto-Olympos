@@ -1,0 +1,148 @@
+    <div id="modalCadastroEscola" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalCadastroEscolaTitulo">
+      <div class="modal-card" style="max-width: 620px; width: 92%;">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <span class="badge badge-purple" style="font-size: 0.72rem; margin-bottom: 4px;">Georreferenciamento Municipal SMEB</span>
+            <h3 id="modalCadastroEscolaTitulo" style="margin: 0; font-size: 1.22rem; font-weight: 700;">Cadastrar Nova Unidade Escolar</h3>
+          </div>
+          <button id="closeModalCadastroEscolaBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal"><span class="svg-icon-inline" data-icon="close"></span></button>
+        </div>
+
+        <form id="formCadastroEscola">
+          <input type="hidden" id="escolaId" name="escolaId" />
+          <div class="modal-body" style="padding: 20px 24px; max-height: 75vh; overflow-y: auto;">
+            <p class="section-desc" style="margin-top: 0; margin-bottom: 14px;">
+              Preencha os dados da escola ou clique no mapa para capturar a latitude e longitude exatas.
+            </p>
+
+            <!-- Campo: Nome -->
+            <div class="field-group" style="margin-bottom: 12px;">
+              <label for="escolaNome">Nome da Unidade Escolar *</label>
+              <input type="text" id="escolaNome" name="escolaNome" class="input-clean" placeholder="Nome da unidade escolar" required />
+            </div>
+
+            <!-- Linha: INEP, Rede e Categoria Institucional -->
+            <div class="controls-grid modal-grid-3col" style="grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+              <div class="field-group">
+                <label for="escolaInep">Código INEP (8 dígitos)</label>
+                <input type="text" id="escolaInep" name="escolaInep" class="input-clean" placeholder="Ex: 24021001" maxlength="8" />
+              </div>
+              <div class="field-group">
+                <label for="escolaRede">Rede de Ensino *</label>
+                <select id="escolaRede" name="escolaRede" class="input-clean" required>
+                  <option value="Municipal" selected>Municipal</option>
+                  <option value="Estadual">Estadual</option>
+                  <option value="Federal">Federal</option>
+                  <option value="Privada">Privada</option>
+                </select>
+              </div>
+              <div class="field-group">
+                <label for="escolaCategoria">Categoria Institucional *</label>
+                <select id="escolaCategoria" name="escolaCategoria" class="input-clean" required>
+                  <option value="Escola" selected>Escolas</option>
+                  <option value="Centro de Educação Infantil">Centro de Educação Infantil</option>
+                  <option value="Instituição">Instituição</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Grupo de Múltiplos Segmentos Simultâneos -->
+            <div class="field-group" style="margin-bottom: 14px;">
+              <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px;">
+                Segmentos de Atendimento * <span style="font-size: 11.5px; font-weight: normal; color: var(--text-muted);">(selecione todos os atendidos simultaneamente)</span>
+              </label>
+              <div class="escola-segmentos-grid" id="escolaSegmentosCheckboxes">
+                <label class="checkbox-pill">
+                  <input type="checkbox" name="escolaSegmentos" value="Ed. Infantil" />
+                  <span>Ed. Infantil</span>
+                </label>
+                <label class="checkbox-pill">
+                  <input type="checkbox" name="escolaSegmentos" value="Ens. Fundamental I" />
+                  <span>Ens. Fundamental I</span>
+                </label>
+                <label class="checkbox-pill">
+                  <input type="checkbox" name="escolaSegmentos" value="Ens. Fundamental II" />
+                  <span>Ens. Fundamental II</span>
+                </label>
+                <label class="checkbox-pill">
+                  <input type="checkbox" name="escolaSegmentos" value="Ensino Médio" />
+                  <span>Ensino Médio</span>
+                </label>
+                <label class="checkbox-pill">
+                  <input type="checkbox" name="escolaSegmentos" value="EJA" />
+                  <span>EJA</span>
+                </label>
+                <label class="checkbox-pill">
+                  <input type="checkbox" name="escolaSegmentos" value="Educação Especial" />
+                  <span>Educação Especial</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Linha: Zona e Bairro/Distrito -->
+            <div class="controls-grid modal-grid-2col" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+              <div class="field-group">
+                <label for="escolaZona">Zona *</label>
+                <select id="escolaZona" name="escolaZona" class="input-clean" required>
+                  <option value="Urbana">Urbana</option>
+                  <option value="Rural">Rural</option>
+                </select>
+              </div>
+              <div class="field-group">
+                <label for="escolaBairroDistrito">Bairro / Distrito / Comunidade *</label>
+                <input type="text" id="escolaBairroDistrito" name="escolaBairroDistrito" class="input-clean" placeholder="Ex: Centro, Gravatá, Massangana..." required />
+              </div>
+            </div>
+
+            <!-- Campo: Endereço -->
+            <div class="field-group" style="margin-bottom: 12px;">
+              <label for="escolaEndereco">Endereço Completo / Referência</label>
+              <input type="text" id="escolaEndereco" name="escolaEndereco" class="input-clean" placeholder="Ex: Rua Presidente Vargas, s/n" />
+            </div>
+
+            <!-- Linha: Telefone e Diretor -->
+            <div class="controls-grid modal-grid-2col" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+              <div class="field-group">
+                <label for="escolaTelefone">Telefone / Contato</label>
+                <input type="text" id="escolaTelefone" name="escolaTelefone" class="input-clean" placeholder="(84) 3274-5900" />
+              </div>
+              <div class="field-group">
+                <label for="escolaDiretor">Diretor(a) / Gestor(a)</label>
+                <input type="text" id="escolaDiretor" name="escolaDiretor" class="input-clean" placeholder="Nome do(a) gestor(a)" />
+              </div>
+            </div>
+
+            <!-- Bloco de Coordenadas Geográficas (Latitude e Longitude) -->
+            <div style="background: var(--bg-tonal); padding: 14px; border-radius: var(--radius-md, 12px); border: 1px solid var(--border-hairline); margin-bottom: 14px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+                <strong style="font-size: 13px; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
+                  <span class="svg-icon-inline" data-icon="mapPin"></span> Coordenadas Geográficas (Graus Decimais)
+                </strong>
+                <span style="font-size: 11px; color: var(--text-muted);">Precisão 6 casas decimais</span>
+              </div>
+              <div class="controls-grid modal-grid-2col" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px;">
+                <div class="field-group">
+                  <label for="escolaLatitude">Latitude (Decimal) *</label>
+                  <input type="number" id="escolaLatitude" name="escolaLatitude" class="input-clean" step="0.000001" placeholder="-5.634000" required />
+                </div>
+                <div class="field-group">
+                  <label for="escolaLongitude">Longitude (Decimal) *</label>
+                  <input type="number" id="escolaLongitude" name="escolaLongitude" class="input-clean" step="0.000001" placeholder="-35.428000" required />
+                </div>
+              </div>
+              <div id="escolaCoordValidacaoBadge" class="pill-badge pill-green" style="font-size: 11px; display: inline-block;">
+                <span class="svg-icon-inline" data-icon="check"></span> Coordenadas dentro da delimitação territorial de Ceará-Mirim/RN
+              </div>
+              <p style="margin: 6px 0 0 0; font-size: 11.5px; color: var(--text-muted); line-height: 1.4;">
+                <span class="svg-icon-inline" data-icon="lightbulb"></span> <em>Dica: Com este modal aberto, você pode clicar diretamente em qualquer ponto do mapa para capturar e preencher as coordenadas automaticamente.</em>
+              </p>
+            </div>
+          </div>
+
+          <div class="modal-footer" style="padding: 14px 24px; border-top: 1px solid var(--border-hairline); display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" id="btnCancelarModalEscola" class="btn btn-secondary btn-sm">Cancelar</button>
+            <button type="submit" id="btnSalvarEscola" class="btn btn-primary btn-sm">Salvar Unidade Escolar</button>
+          </div>
+        </form>
+      </div>
+    </div>

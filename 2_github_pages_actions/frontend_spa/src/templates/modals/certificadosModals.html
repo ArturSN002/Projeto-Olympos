@@ -1,0 +1,117 @@
+    <div id="modalLiraNovaAba" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalLiraNovaAbaTitulo">
+      <div class="modal-card" style="max-width: 680px; width: 94%;">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <span class="badge badge-purple" style="font-size: 0.72rem; margin-bottom: 4px;">Formação Continuada • A Lira de Orfeu</span>
+            <h3 id="modalLiraNovaAbaTitulo" style="margin: 0; font-size: 1.25rem; font-weight: 700;">Criar Nova Aba de Evento</h3>
+          </div>
+          <button id="closeModalLiraNovaAbaBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal"><span class="svg-icon-inline" data-icon="close"></span></button>
+        </div>
+
+        <form id="formLiraNovaAba">
+          <div class="modal-body" style="padding: 20px 24px; max-height: 75vh; overflow-y: auto;">
+            <p class="section-desc" style="margin-top: 0; margin-bottom: 14px;">
+              Configura os metadados do evento (Linha 2: A2:H2) e a grade inicial de participantes (Linha 4: A4:F4) na planilha selecionada.
+            </p>
+
+            <div class="controls-grid" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+              <div class="field-group">
+                <label for="liraNovaAbaNome">Nome da Nova Aba *</label>
+                <input type="text" id="liraNovaAbaNome" name="nomeAba" class="input-clean" placeholder="Ex: Jornada_Pedagogica_2026" required />
+              </div>
+              <div class="field-group">
+                <label for="liraNovaAbaModalidade">Modalidade do Documento *</label>
+                <select id="liraNovaAbaModalidade" name="modalidade" class="input-clean" required>
+                  <option value="CERTIFICADO" selected>Certificado (.pptx / Slides)</option>
+                  <option value="DECLARACAO">Declaração (Google Docs)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field-group" style="margin-bottom: 12px;">
+              <label for="liraNovaAbaEvento">Nome Oficial do Evento / Formação (A2) *</label>
+              <input type="text" id="liraNovaAbaEvento" name="eventName" class="input-clean" placeholder="Ex: I Seminário Municipal de Práticas Pedagógicas" required />
+            </div>
+
+            <div class="controls-grid" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+              <div class="field-group">
+                <label for="liraNovaAbaTemplate">ID do Template no Google Drive (B2)</label>
+                <input type="text" id="liraNovaAbaTemplate" name="templateId" class="input-clean" placeholder="ID do arquivo Slides ou Docs" />
+              </div>
+              <div class="field-group">
+                <label for="liraNovaAbaPasta">ID da Pasta Destino no Drive (C2)</label>
+                <input type="text" id="liraNovaAbaPasta" name="folderId" class="input-clean" placeholder="Padrão: Pasta da Lira de Orfeu" />
+              </div>
+            </div>
+
+            <div class="controls-grid" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+              <div class="field-group">
+                <label for="liraNovaAbaData">Data do Evento (D2) *</label>
+                <input type="text" id="liraNovaAbaData" name="eventDate" class="input-clean" placeholder="dd/mm/aaaa ou 15 de Novembro de 2026" required />
+              </div>
+              <div class="field-group">
+                <label for="liraNovaAbaPeriodo">Carga Horária Base (E2) *</label>
+                <input type="text" id="liraNovaAbaPeriodo" name="period" class="input-clean" value="40h" placeholder="Ex: 40h ou 20 horas" required />
+              </div>
+            </div>
+
+            <div class="controls-grid" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+              <div class="field-group">
+                <label for="liraNovaAbaResponsavel">Responsável / Signatário (F2)</label>
+                <input type="text" id="liraNovaAbaResponsavel" name="responsavel" class="input-clean" value="Secretário(a) Municipal de Educação Básica" />
+              </div>
+              <div class="field-group">
+                <label for="liraNovaAbaEmailContato">E-mail de Contato para Suporte (G2)</label>
+                <input type="email" id="liraNovaAbaEmailContato" name="emailContato" class="input-clean" value="educacao@cearamirim.rn.gov.br" />
+              </div>
+            </div>
+
+            <div class="field-group" style="margin-bottom: 12px;">
+              <label for="liraNovaAbaMensagem">Mensagem Adicional / Rodapé do E-mail (H2)</label>
+              <textarea id="liraNovaAbaMensagem" name="bonusMessage" class="input-clean" rows="2" placeholder="Mensagem personalizada incluída no rodapé do e-mail oficial"></textarea>
+            </div>
+
+            <div id="liraNovaAbaFeedback" class="output-panel hidden" style="margin-top: 10px; font-size: 13px;"></div>
+          </div>
+
+          <div class="modal-footer" style="padding: 14px 24px; border-top: 1px solid var(--border-hairline); display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" id="btnCancelarNovaAbaLira" class="btn btn-secondary btn-sm">Cancelar</button>
+            <button type="submit" id="btnSalvarNovaAbaLira" class="btn btn-primary btn-sm">+ Criar Aba de Evento</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- =========================================================================
+         MODAL DE IMPORTAÇÃO EM LOTE DE PARTICIPANTES (#modalLiraColarLote)
+         ========================================================================= -->
+    <div id="modalLiraColarLote" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalLiraColarLoteTitulo">
+      <div class="modal-card" style="max-width: 640px; width: 94%;">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <span class="badge badge-blue" style="font-size: 0.72rem; margin-bottom: 4px;">Importação Rápida • A Lira de Orfeu</span>
+            <h3 id="modalLiraColarLoteTitulo" style="margin: 0; font-size: 1.25rem; font-weight: 700;">Colar Participantes em Lote</h3>
+          </div>
+          <button id="closeModalLiraColarLoteBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal"><span class="svg-icon-inline" data-icon="close"></span></button>
+        </div>
+
+        <div class="modal-body" style="padding: 20px 24px; max-height: 75vh; overflow-y: auto;">
+          <p class="section-desc" style="margin-top: 0; margin-bottom: 12px;">
+            Copie as colunas da sua planilha do Excel ou Google Sheets e cole no campo abaixo.
+            O formato recomendado é <strong>E-mail</strong> e <strong>Nome Completo</strong>, com <strong>Nota</strong> e <strong>Carga Horária</strong> opcionais (separadas por tabulação ou vírgula).
+          </p>
+
+          <div class="field-group" style="margin-bottom: 12px;">
+            <label for="liraColarLoteTextarea">Dados dos Participantes (uma linha por participante)</label>
+            <textarea id="liraColarLoteTextarea" class="input-clean" rows="10" placeholder="maria.silva@escola.rn.gov.br&#9;Maria da Silva&#9;9,5&#9;40h&#10;joao.souza@gmail.com&#9;João de Souza&#9;10,0&#9;20h" style="font-family: monospace; font-size: 12.5px;"></textarea>
+          </div>
+
+          <div id="liraColarLoteFeedback" class="output-panel hidden" style="margin-top: 10px; font-size: 13px;"></div>
+        </div>
+
+        <div class="modal-footer" style="padding: 14px 24px; border-top: 1px solid var(--border-hairline); display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" id="btnCancelarLiraColarLote" class="btn btn-secondary btn-sm">Cancelar</button>
+          <button type="button" id="btnProcessarLiraColarLote" class="btn btn-primary btn-sm">Importar Participantes</button>
+        </div>
+      </div>
+    </div>

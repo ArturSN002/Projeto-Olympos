@@ -1,17 +1,81 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-// Configuração do Vite para build da SPA Hub Olympos V3.0
-// Compatível com GitHub Pages (base: './') e exportação para dist/
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+/**
+ * Copia os artefatos estáticos necessários (data/, assets/, PWA shell) para dist/
+ * após o bundle do Vite, preservando compatibilidade com GitHub Pages (base: './').
+ */
+function copyStaticAssetsPlugin(): Plugin {
+  return {
+    name: 'olympos-copy-static-assets',
+    closeBundle() {
+      const outDir = path.resolve(__dirname, 'dist');
+      if (!fs.existsSync(outDir)) {
+        fs.mkdirSync(outDir, { recursive: true });
+      }
+
+      const copyDirs = ['data', 'assets'];
+      for (const dirName of copyDirs) {
+        const src = path.resolve(__dirname, dirName);
+        const dst = path.resolve(outDir, dirName);
+        if (fs.existsSync(src)) {
+          fs.cpSync(src, dst, { recursive: true, force: true });
+        }
+      }
+
+      const copyFiles = ['sw.js', 'manifest.json', 'favicon.ico'];
+      for (const fileName of copyFiles) {
+        const src = path.resolve(__dirname, fileName);
+        const dst = path.resolve(outDir, fileName);
+        if (fs.existsSync(src)) {
+          fs.copyFileSync(src, dst);
+        }
+      }
+    }
+  };
+}
+
+function minifyHtmlShellPlugin(): Plugin {
+  return {
+    name: 'olympos-minify-html-shell',
+    transformIndexHtml(html: string) {
+      return html
+        .replace(/<!--(?!\[)[\s\S]*?-->/g, '')
+        .replace(/\r?\n\s+/g, '\n')
+        .replace(/\n{2,}/g, '\n')
+        .trim();
+    }
+  };
+}
+
 export default defineConfig({
   base: './',
+  plugins: [copyStaticAssetsPlugin(), minifyHtmlShellPlugin()],
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
+    cssCodeSplit: true,
     sourcemap: false,
     emptyOutDir: true,
     rollupOptions: {
       input: {
-        main: './index.html'
+        main: path.resolve(__dirname, 'index.html')
+      },
+      output: {
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash][extname]',
+        manualChunks(id: string) {
+          if (id.includes('node_modules/@preact/signals-core')) {
+            return 'vendor-signals';
+          }
+          return undefined;
+        }
       }
     }
   },

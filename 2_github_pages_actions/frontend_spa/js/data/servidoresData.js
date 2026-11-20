@@ -1283,7 +1283,7 @@
 
       var perf = (typeof root !== 'undefined' && root.OlymposPerfEngine) ? root.OlymposPerfEngine : null;
       var checkIdb = perf && typeof perf.getCache === 'function'
-        ? perf.getCache('servidores_consolidados_v3_1')
+        ? perf.getCache('servidores_consolidados_v4_0')
         : Promise.resolve(null);
 
       promessaCarregamentoBase = checkIdb
@@ -1313,10 +1313,8 @@
               var mat = String(item.m || item.matricula || '').trim();
               var ente = String(item.e || item.ente || 'Ente Federativo').trim();
               var cargo = String(item.g || item.cargo || 'Cargo não informado').trim();
-              var ch = parseCargaHoraria(item.h || item.cargaHoraria);
               var lot = String(item.l || item.lotacao || 'Lotação não informada').trim();
-              var cpf = String(item.c || item.cpf || '###.***.***-##').trim();
-              var situacao = String(item.s || item.situacao || 'ATIVO').trim();
+              var mesRef = String(item.r || item.mesReferencia || 'N/I').trim();
 
               var quadro = 'Administrativo';
               var normG = normalizarTexto(cargo);
@@ -1346,8 +1344,6 @@
                 m: mat,
                 nome: nome,
                 n: nome,
-                cpfMascarado: cpf,
-                c: cpf,
                 ente: ente,
                 enteId: enteId,
                 orgao: lot || ente,
@@ -1355,13 +1351,12 @@
                 cargo: cargo,
                 g: cargo,
                 funcao: cargo,
-                cargaHoraria: ch,
-                cargaHorariaTexto: (ch > 0 ? (ch + 'h') : '30h'),
-                h: (ch > 0 ? (ch + 'h') : '30h'),
+                cargaHoraria: 30,
+                cargaHorariaTexto: '30h (Ref. Padrão)',
                 lotacao: lot,
                 l: lot,
-                situacao: situacao,
-                status: situacao,
+                mesReferencia: mesRef,
+                r: mesRef,
                 regime: 'Efetivo / Estatutário'
               };
             });
@@ -1369,7 +1364,7 @@
             BASE_CONSOLIDADA_DINAMICA = formatados;
             OLYMPOS_SERVIDORES_UNIFICADOS = formatados;
             if (perf && typeof perf.setCache === 'function') {
-              perf.setCache('servidores_consolidados_v3_1', formatados);
+              perf.setCache('servidores_consolidados_v4_0', formatados);
             }
             if (perf && typeof perf.buildSearchIndex === 'function') {
               perf.buildSearchIndex(formatados);

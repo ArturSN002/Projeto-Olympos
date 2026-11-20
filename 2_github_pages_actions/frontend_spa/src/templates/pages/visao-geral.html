@@ -1,0 +1,215 @@
+        <section class="page-view active" id="page-visao-geral">
+          <div class="stats-grid">
+            <div class="stat-card" id="statCardProximoOficio" data-requires-auth="true">
+              <div class="stat-top">
+                <span class="stat-label">Olho de Apolo • Próximo Ofício</span>
+                <div class="stat-actions">
+                  <button id="copyOficioBtn" class="btn-mini" title="Copiar número">Copiar</button>
+                  <button id="reserveOficioBtn" class="btn-mini btn-mini-accent" title="Reservar número atual e avançar +1" data-requires-auth="true" data-access-page="oficios">+1 Reservar</button>
+                  <button id="editOficioBtn" class="btn-mini" title="Ajustar contador oficial" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE">Ajustar</button>
+                </div>
+              </div>
+              <div class="stat-value" id="kpiProximoOficio">--</div>
+              <div class="stat-meta" id="kpiUltimoOficio">
+                <span>Último emitido: --</span>
+                <a href="https://docs.google.com/document/d/1ZXTlg2Wk5IKZ2Sg84HOnlePCOihccPFcYTd67wHUgkM/edit" target="_blank" rel="noopener noreferrer" class="folder-chip" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE,RH_COMISSAO,PEDAGOGICO_EVENTOS,JURIDICO">Memória de Apolo ↗</a>
+              </div>
+            </div>
+
+            <div class="stat-card" id="statCardProximaPortaria" data-requires-auth="true">
+              <div class="stat-top">
+                <span class="stat-label">Olho de Apolo • Próxima Portaria</span>
+                <div class="stat-actions">
+                  <button id="copyPortariaBtn" class="btn-mini" title="Copiar número">Copiar</button>
+                  <button id="reservePortariaBtn" class="btn-mini btn-mini-accent" title="Reservar número atual e avançar +1" data-requires-auth="true" data-access-page="portarias">+1 Reservar</button>
+                  <button id="editPortariaBtn" class="btn-mini" title="Ajustar contador oficial" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE">Ajustar</button>
+                </div>
+              </div>
+              <div class="stat-value" id="kpiProximaPortaria">--</div>
+              <div class="stat-meta" id="kpiUltimaPortaria">
+                <span>Última emitida: --</span>
+                <a href="https://docs.google.com/document/d/1ZXTlg2Wk5IKZ2Sg84HOnlePCOihccPFcYTd67wHUgkM/edit" target="_blank" rel="noopener noreferrer" class="folder-chip" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE,RH_COMISSAO,PEDAGOGICO_EVENTOS,JURIDICO">Memória de Apolo ↗</a>
+              </div>
+            </div>
+
+            <div class="stat-card">
+              <div class="stat-top">
+                <span class="stat-label">Agenda Escolar • Eventos Externos</span>
+                <span class="pill-badge pill-purple" id="kpiAgendaStatusBadge">Agenda SMEB</span>
+              </div>
+              <div class="stat-value" id="kpiAgendaPendentes">--</div>
+              <div class="stat-meta" id="kpiAgendaMeta">
+                <span>Compromissos agendados no Calendário</span>
+                <a href="#calendario" class="folder-chip">Ver Agenda ↗</a>
+              </div>
+              <span id="kpiCotaEmail" style="display: none !important;">--</span>
+            </div>
+          </div>
+
+          <!-- WIDGET DE EVENTOS EXTERNOS PENDENTES DA AGENDA ESCOLAR (VISÃO GERAL) -->
+          <div class="surface-card" id="widgetAgendaVisaoGeral" style="margin-bottom: 24px;">
+            <div class="card-header-row">
+              <div>
+                <span class="section-eyebrow">AGENDA ESCOLAR • COMPROMISSOS EXTERNOS</span>
+                <h3 class="section-title" style="font-size: 1.15rem;">Próximos Eventos &amp; Audiências Externas</h3>
+                <p class="section-desc">Monitore e conclua compromissos da agenda intersetorial diretamente pela Visão Geral.</p>
+              </div>
+              <div class="header-actions">
+                <a href="#calendario" class="btn btn-secondary btn-sm" style="font-size: 12px; display: inline-flex; align-items: center; gap: 4px;">
+                  <span class="svg-icon-inline" data-icon="calendar"></span> <span>Abrir Calendário Completo</span>
+                </a>
+              </div>
+            </div>
+            <div id="listaEventosExternosVisaoGeral" style="display: flex; flex-direction: column; gap: 10px; margin-top: 12px;">
+              <div class="output-panel" style="font-size: 12.5px;">Carregando compromissos da agenda externa...</div>
+            </div>
+          </div>
+
+          <!-- NOTÍCIAS OFICIAIS DE CEARÁ-MIRIM (VISITANTES & OPERADORES) -->
+          <div class="surface-card municipal-news-section" id="municipalNewsSection">
+            <div class="municipal-news-header">
+              <div>
+                <span class="section-eyebrow">PORTAIS OFICIAIS DO MUNICÍPIO</span>
+                <h2 class="section-title">Notícias Oficiais de Ceará-Mirim</h2>
+              </div>
+              <div class="municipal-news-controls">
+                <div id="municipalNewsFilters" class="filter-pills-inline" role="tablist" aria-label="Filtrar notícias por fonte">
+                  <button type="button" class="filter-pill active" data-news-source="todas">Todas</button>
+                  <button type="button" class="filter-pill" data-news-source="prefeitura">Prefeitura</button>
+                  <button type="button" class="filter-pill" data-news-source="camara">Câmara Municipal</button>
+                </div>
+                <button type="button" id="btnRefreshMunicipalNews" class="btn btn-secondary btn-sm">
+                  <span class="svg-icon-inline" data-icon="refreshSync"></span><span>Atualizar</span>
+                </button>
+              </div>
+            </div>
+            <div id="municipalNewsStatus" class="municipal-news-status">Carregando matérias oficiais...</div>
+            <div id="municipalNewsGrid" class="municipal-news-grid"></div>
+            <div class="municipal-news-footer-links">
+              <a href="https://cearamirim.rn.gov.br/" target="_blank" rel="noopener noreferrer" class="folder-chip" data-news-footer-source="prefeitura">Portal da Prefeitura ↗</a>
+              <a href="https://www.cearamirim.rn.leg.br/" target="_blank" rel="noopener noreferrer" class="folder-chip" data-news-footer-source="camara">Portal da Câmara Municipal ↗</a>
+            </div>
+          </div>
+
+          <!-- FRENTES OPERACIONAIS EM DESTAQUE -->
+          <div class="surface-card" id="operacoesModularesSection">
+            <div class="card-header-row">
+              <div>
+                <span class="section-eyebrow">OPERAÇÕES MODULARES</span>
+                <h2 class="section-title">Frentes de Automação Documental e Inteligência</h2>
+                <p class="section-desc">Cada módulo opera em página dedicada para redação oficial, gestão funcional e acompanhamento documental da SMEB.</p>
+              </div>
+              <div class="header-actions" id="operacoesModularesDriveActions" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <a href="https://drive.google.com/drive/folders/1W9mGmQCrX8BRPsGcK_vqUwfXw1dRmSya" target="_blank" rel="noopener" class="folder-chip" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE"><span class="svg-icon-inline" data-icon="folderDrive"></span> Pasta Central Olympo <span class="external-arrow">↗</span></a>
+                <a href="https://drive.google.com/drive/folders/1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu" target="_blank" rel="noopener" class="folder-chip" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE"><span class="svg-icon-inline" data-icon="edit"></span> Memórias Operacionais <span class="external-arrow">↗</span></a>
+              </div>
+            </div>
+
+            <div class="quick-modules-grid">
+              <div class="quick-module-card" data-nav-target="chamados">
+                <div class="qm-icon-badge" data-persona-icon="temis"></div>
+                <div>
+                  <div class="qm-category">Atendimento &amp; Prazos</div>
+                  <div class="qm-title">Central de Pendências</div>
+                  <div class="qm-desc">Solicitações organizadas por ordem de chegada e prioridade, com previsão de atendimento durante o expediente.</div>
+                </div>
+                <span class="qm-action">Abrir página dedicada →</span>
+              </div>
+
+              <div class="quick-module-card" data-nav-target="oficios">
+                <div class="qm-icon-badge" data-persona-icon="homero"></div>
+                <div>
+                  <div class="qm-category">Redação Oficial PR/2018</div>
+                  <div class="qm-title">Emissão de Ofícios</div>
+                  <div class="qm-desc">Gere expedientes do Gabinete no Google Docs com atualização imediata da numeração sequencial.</div>
+                </div>
+                <span class="qm-action">Abrir página dedicada →</span>
+              </div>
+
+              <div class="quick-module-card" data-nav-target="portarias">
+                <div class="qm-icon-badge" data-persona-icon="apolo"></div>
+                <div>
+                  <div class="qm-category">O Pincel de Homero</div>
+                  <div class="qm-title">Portarias em Lote</div>
+                  <div class="qm-desc">Conferência prévia dos dados, emissão rápida e acesso imediato aos atos gerados.</div>
+                </div>
+                <span class="qm-action">Abrir página dedicada →</span>
+              </div>
+
+              <div class="quick-module-card" data-nav-target="licencas">
+                <div class="qm-icon-badge" data-persona-icon="hera"></div>
+                <div>
+                  <div class="qm-category">Gestão Funcional</div>
+                  <div class="qm-title">Cadastro de Licenças</div>
+                  <div class="qm-desc">Registre Licenças-Prêmio, Sem Remuneração ou Anulações direto no Hub com emissão instantânea.</div>
+                </div>
+                <span class="qm-action">Abrir página dedicada →</span>
+              </div>
+
+              <div class="quick-module-card" data-nav-target="diario-oficial">
+                <div class="qm-icon-badge" data-persona-icon="helio"></div>
+                <div>
+                  <div class="qm-category">Publicações Oficiais</div>
+                  <div class="qm-title">Fogo de Prometheus</div>
+                  <div class="qm-desc">Consulta diária aos atos e decretos de interesse da educação municipal.</div>
+                </div>
+                <span class="qm-action">Abrir página dedicada →</span>
+              </div>
+
+              <div class="quick-module-card" data-nav-target="papiro-cadmo">
+                <div class="qm-icon-badge" data-persona-icon="cadmo"></div>
+                <div>
+                  <div class="qm-category">Mobilidade Funcional</div>
+                  <div class="qm-title">O Papiro de Cadmo</div>
+                  <div class="qm-desc">Acompanhamento e cruzamento de servidores permutados entre redes de ensino.</div>
+                </div>
+                <span class="qm-action">Abrir página dedicada →</span>
+              </div>
+
+              <div class="quick-module-card" data-nav-target="servidores">
+                <div class="qm-icon-badge" data-persona-icon="cadmo"></div>
+                <div>
+                  <div class="qm-category">Quadro Funcional Unificado</div>
+                  <div class="qm-title">Consulta de Servidores</div>
+                  <div class="qm-desc">Dossiê funcional, pesquisa multirrede por nome/matrícula e filtros dinâmicos de Ceará-Mirim, Natal, Parnamirim, SGA e Governo do RN.</div>
+                </div>
+                <span class="qm-action">Abrir página dedicada →</span>
+              </div>
+
+              <div class="quick-module-card" data-nav-target="certificados">
+                <div class="qm-icon-badge" data-persona-icon="orfeu"></div>
+                <div>
+                  <div class="qm-category">A Lira de Orfeu</div>
+                  <div class="qm-title">Certificados &amp; Eventos</div>
+                  <div class="qm-desc">Conferência de participantes, geração de certificados autênticos e envio institucional.</div>
+                </div>
+                <span class="qm-action">Abrir página dedicada →</span>
+              </div>
+
+              <div class="quick-module-card" data-nav-target="escolas">
+                <div class="qm-icon-badge" data-persona-icon="hera"></div>
+                <div>
+                  <div class="qm-category">Georreferenciamento Municipal</div>
+                  <div class="qm-title">Mapa de Escolas</div>
+                  <div class="qm-desc">Mapeamento cartográfico interativo, catálogo e gestão completa com latitude e longitude da rede SMEB.</div>
+                </div>
+                <span class="qm-action">Abrir página dedicada →</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="homeMemoriasPanel" class="surface-card" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE,RH_COMISSAO,PEDAGOGICO_EVENTOS,JURIDICO" style="margin-top: 20px;">
+            <div class="card-header-row" style="margin-bottom: 14px;">
+              <div>
+                <span class="section-eyebrow">MEMÓRIAS OPERACIONAIS • GOOGLE DOCS (22 DOCUMENTOS)</span>
+                <h3 class="section-title" style="font-size: 1.15rem;">Constelação das 22 Memórias Olympos</h3>
+                <p class="section-desc" style="margin-bottom: 0;">Clique em qualquer card para visualizar/editar no painel ou abra diretamente o Documento padrão do Google Docs.</p>
+              </div>
+              <div class="header-actions" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                <a href="https://drive.google.com/drive/folders/1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu" target="_blank" rel="noopener noreferrer" class="folder-chip">Pasta Memórias ↗</a>
+                <button type="button" id="homeOpenAllMemoriasBtn" class="btn btn-secondary btn-sm">Gerenciar Memórias →</button>
+              </div>
+            </div>
+            <div id="homePersonasConstellation" class="home-personas-grid"></div>
+          </div>
+        </section>

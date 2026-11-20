@@ -1,0 +1,109 @@
+        <section class="page-view hidden" id="page-certificados">
+          <div class="surface-card">
+            <div class="card-header-row">
+              <div>
+                <span class="section-eyebrow">FORMAÇÃO CONTINUADA • CERTIFICAÇÃO AUTÊNTICA</span>
+                <h2 class="section-title">Certificados e Declarações (A Lira de Orfeu)</h2>
+                <p class="section-desc">Padronização automática de participantes, gravação de código verificável na aba <code>Registro_Autenticidade</code> e links visíveis de todos os PDFs emitidos.</p>
+              </div>
+              <div class="button-group" style="display: flex; gap: 8px; align-items: center;">
+                <button type="button" id="liraNovaAbaBtn" class="btn btn-secondary btn-sm">+ Nova Aba de Evento</button>
+                <a href="https://drive.google.com/drive/folders/1XriqpPQsWjQxJROsE_FyaQQpCwybJSUJ" target="_blank" rel="noopener" class="folder-chip">
+                  Abrir Pasta A Lira de Orfeu ↗
+                </a>
+              </div>
+            </div>
+
+            <div class="controls-grid" style="grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 18px;">
+              <div class="field-group">
+                <label for="liraModalidadeSelect">1. Modalidade do Documento</label>
+                <select id="liraModalidadeSelect" class="input-clean">
+                  <option value="CERTIFICADO">Certificado de Evento / Formação</option>
+                  <option value="DECLARACAO">Declaração Institucional</option>
+                </select>
+              </div>
+              <div class="field-group">
+                <label for="liraPlanilhaSelect">2. Planilha do Evento</label>
+                <select id="liraPlanilhaSelect" class="input-clean"></select>
+              </div>
+              <div class="field-group">
+                <label for="liraAbaSelect">3. Aba de Participantes</label>
+                <select id="liraAbaSelect" class="input-clean"></select>
+              </div>
+            </div>
+
+            <!-- OS 3 GATILHOS INDEPENDENTES + ATALHO COMPOSTO -->
+            <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 14px; margin-bottom: 20px; padding: 14px; background: var(--bg-surface-hover); border-radius: 10px; border: 1px solid var(--border-hairline);">
+              <button id="liraHigienizarBtn" class="btn btn-secondary" title="Limpa espaços, corrige domínios @gmail e padroniza em Title Case">1. Higienizar Lista</button>
+              <button id="liraGerarPdfsBtn" class="btn btn-secondary" title="Gera PDFs e QR Codes sem envio de e-mails">2. Somente Gerar Certificados (PDF)</button>
+              <button id="liraEnviarEmailsBtn" class="btn btn-secondary" title="Envia e-mails exclusivamente para participantes com PDF gerado">3. Somente Enviar E-mails</button>
+              <button id="liraExecutarBtn" class="btn btn-primary" title="Atalho opcional: Executa geração de PDFs seguida de envio de e-mails">Executar Ambos (Gerar + Enviar)</button>
+              <span id="liraCotaBadge" class="pill-badge pill-blue" style="margin-left: auto;">Envios Disponíveis: --</span>
+            </div>
+
+            <div id="liraCompletedJobBox" class="job-result-card hidden"></div>
+
+            <div id="liraOutput" class="output-panel" style="margin-bottom: 20px;">
+              Selecione a planilha do evento e a aba de participantes para higienizar registros ou iniciar a emissão com QR Code.
+            </div>
+
+            <!-- GESTÃO INTERATIVA DE PARTICIPANTES (F14) -->
+            <div class="lira-participantes-section" style="margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--border-hairline);">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+                <div>
+                  <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700;">Participantes da Aba</h3>
+                  <span id="liraParticipantesContagem" style="font-size: 12.5px; color: var(--text-muted);">Nenhuma aba carregada</span>
+                </div>
+                <div class="button-group" style="display: flex; gap: 8px;">
+                  <button type="button" id="liraColarLoteBtn" class="btn btn-secondary btn-sm"><span class="svg-icon-inline" data-icon="clipboard"></span> Colar em Lote</button>
+                  <button type="button" id="liraRecarregarParticipantesBtn" class="btn btn-secondary btn-sm"><span class="svg-icon-inline" data-icon="refresh"></span> Atualizar Lista</button>
+                </div>
+              </div>
+
+              <!-- Formulário Rápido de Adição -->
+              <form id="liraFormQuickAdd" style="display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 16px; padding: 12px 14px; background: var(--bg-surface-hover); border-radius: 8px; border: 1px solid var(--border-hairline);">
+                <div class="field-group" style="flex: 2; min-width: 180px;">
+                  <label for="liraQuickNome" style="font-size: 11.5px; font-weight: 600;">Nome Completo *</label>
+                  <input type="text" id="liraQuickNome" class="input-clean" placeholder="Ex: Maria da Silva" required />
+                </div>
+                <div class="field-group" style="flex: 2; min-width: 180px;">
+                  <label for="liraQuickEmail" style="font-size: 11.5px; font-weight: 600;">E-mail *</label>
+                  <input type="email" id="liraQuickEmail" class="input-clean" placeholder="maria.silva@escola.rn.gov.br" required />
+                </div>
+                <div class="field-group" style="flex: 1; min-width: 90px;">
+                  <label for="liraQuickNota" style="font-size: 11.5px; font-weight: 600;">Nota (opcional)</label>
+                  <input type="text" id="liraQuickNota" class="input-clean" placeholder="Ex: 9,5" />
+                </div>
+                <div class="field-group" style="flex: 1; min-width: 110px;">
+                  <label for="liraQuickCarga" style="font-size: 11.5px; font-weight: 600;">Carga Horária</label>
+                  <input type="text" id="liraQuickCarga" class="input-clean" placeholder="Ex: 40h" />
+                </div>
+                <button type="submit" id="liraQuickAddBtn" class="btn btn-primary btn-sm" style="height: 38px; white-space: nowrap;">+ Adicionar</button>
+              </form>
+
+              <!-- Grade de Participantes -->
+              <div class="table-wrapper" style="max-height: 440px; overflow-y: auto;">
+                <table class="clean-table" id="liraTabelaParticipantes">
+                  <thead>
+                    <tr>
+                      <th style="width: 50px;">Linha</th>
+                      <th>Nome Completo</th>
+                      <th>E-mail</th>
+                      <th style="width: 90px;">Nota</th>
+                      <th style="width: 110px;">Carga Horária</th>
+                      <th style="width: 150px;">Certificado (PDF)</th>
+                      <th style="width: 130px;">Status Envio</th>
+                    </tr>
+                  </thead>
+                  <tbody id="liraTabelaParticipantesBody">
+                    <tr><td colspan="7" class="text-muted text-center" style="padding: 24px;">Selecione uma planilha e aba para carregar os participantes.</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <div id="certificadosPaginacaoBar" class="olympos-pagination-bar hidden">
+                <span id="certificadosPaginacaoInfo" class="olympos-pagination-info"></span>
+                <div id="certificadosPaginacaoControles" class="olympos-pagination-controls"></div>
+              </div>
+            </div>
+          </div>
+        </section>

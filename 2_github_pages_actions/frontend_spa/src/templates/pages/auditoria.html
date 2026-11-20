@@ -1,0 +1,85 @@
+        <!-- =========================================================================
+             PÁGINA 15: TRILHA DE AUDITORIA IMUTÁVEL (EXCLUSIVO MODERADOR)
+             ========================================================================= -->
+        <section class="page-view hidden" id="page-auditoria" aria-labelledby="auditoriaSectionTitle">
+          <div class="surface-card">
+            <div class="card-header-row" style="margin-bottom: 16px;">
+              <div>
+                <span class="section-eyebrow">GOVERNANÇA &amp; LGPD • SOMENTE MODERADOR</span>
+                <h2 id="auditoriaSectionTitle" class="section-title">Trilha de Auditoria Imutável (audit_logs)</h2>
+                <p class="section-desc">
+                  Registro append-only (sem UPDATE/DELETE) de acessos a dados sensíveis, edições nas 22 memórias Google Docs, numeração Apolo e alterações de papéis RBAC.
+                </p>
+              </div>
+              <div class="button-group">
+                <button type="button" id="auditoriaAtualizarBtn" class="btn btn-secondary btn-sm">
+                  <span class="svg-icon-inline" data-icon="refreshSync"></span><span>Atualizar Logs</span>
+                </button>
+                <button type="button" id="auditoriaExportarCsvBtn" class="btn btn-primary btn-sm">
+                  <span class="svg-icon-inline" data-icon="download"></span><span>Exportar CSV</span>
+                </button>
+              </div>
+            </div>
+
+            <div id="auditoriaAcessoNegado" class="surface-card hidden" style="padding: 28px; text-align: center; border: 1px solid var(--border-hairline);">
+              <span class="svg-icon-inline" data-icon="lock" style="width: 32px; height: 32px;"></span>
+              <h3 style="margin: 8px 0 4px;">Acesso Restrito ao Moderador (MFA aal2)</h3>
+              <p class="section-desc" style="margin: 0;">Somente o perfil Moderador autenticado com segundo fator (TOTP) pode consultar a trilha de auditoria.</p>
+            </div>
+
+            <div id="auditoriaPainelConteudo">
+              <div class="controls-grid" style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: 12px; margin-bottom: 16px;">
+                <div class="field-group">
+                  <label for="auditoriaFiltroAcao">Ação</label>
+                  <select id="auditoriaFiltroAcao" class="input-clean">
+                    <option value="">Todas as ações</option>
+                    <option value="DECRYPT_READ">DECRYPT_READ (Revelar PII)</option>
+                    <option value="TERMO_SIGILO_ACEITO">TERMO_SIGILO_ACEITO</option>
+                    <option value="USER_ROLE_PROMOTION">USER_ROLE_PROMOTION</option>
+                    <option value="GAS_memorias_salvar">GAS_memorias_salvar</option>
+                    <option value="GAS_atualizar_contador_md">GAS_atualizar_contador_md</option>
+                    <option value="GAS_oficio_emitir">GAS_oficio_emitir</option>
+                    <option value="GAS_portarias_gerar_lote">GAS_portarias_gerar_lote</option>
+                    <option value="INSERT">INSERT</option>
+                    <option value="UPDATE">UPDATE</option>
+                    <option value="DELETE">DELETE</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label for="auditoriaFiltroTabela">Tabela / Recurso</label>
+                  <input type="text" id="auditoriaFiltroTabela" class="input-clean" placeholder="Ex: servidores, gas-gateway..." />
+                </div>
+                <div class="field-group">
+                  <label for="auditoriaFiltroDataInicio">Data Inicial</label>
+                  <input type="date" id="auditoriaFiltroDataInicio" class="input-clean" />
+                </div>
+                <div class="field-group">
+                  <label for="auditoriaFiltroDataFim">Data Final</label>
+                  <input type="date" id="auditoriaFiltroDataFim" class="input-clean" />
+                </div>
+              </div>
+
+              <div class="table-wrapper">
+                <table class="clean-table table-responsive-cards" id="tabelaAuditoriaLogs">
+                  <thead>
+                    <tr>
+                      <th>Data/Hora (UTC)</th>
+                      <th>Ação</th>
+                      <th>Tabela / Recurso</th>
+                      <th>Ator / Papel</th>
+                      <th>Detalhes (Diff JSON)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tabelaAuditoriaBody">
+                    <tr><td colspan="5" class="text-muted text-center" style="padding: 24px;">Carregando registros de auditoria...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div id="auditoriaPaginacaoBar" class="olympos-pagination-bar hidden">
+                <span id="auditoriaPaginacaoInfo" class="olympos-pagination-info"></span>
+                <div id="auditoriaPaginacaoControles" class="olympos-pagination-controls"></div>
+              </div>
+            </div>
+          </div>
+        </section>

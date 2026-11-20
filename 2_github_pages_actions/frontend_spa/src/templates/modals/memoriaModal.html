@@ -1,0 +1,23 @@
+    <div id="memoriaModal" class="modal-backdrop hidden">
+      <div class="modal-card">
+        <div class="modal-header" style="gap: 10px;">
+          <div style="min-width: 0;">
+            <h3 id="modalMemoriaTitle" style="font-size: 1.08rem; margin: 0;">Memória Operacional</h3>
+            <div id="modalMemoriaSubtitle" class="modal-memoria-subtitle">Documento Google Docs canônico</div>
+          </div>
+          <a id="modalMemoriaOpenDocLink" href="#" target="_blank" rel="noopener noreferrer" class="folder-chip" style="margin-left: auto;">Abrir no Google Docs ↗</a>
+          <button id="closeModalBtn" class="icon-capsule-btn" type="button" aria-label="Fechar"><span class="svg-icon-inline" data-icon="close"></span></button>
+        </div>
+        <div class="modal-body">
+          <textarea id="modalMemoriaTextarea" rows="16" class="input-clean" style="font-family: var(--font-mono); font-size: 12.5px; line-height: 1.55;"></textarea>
+        </div>
+        <div class="modal-footer" style="flex-wrap: wrap; gap: 8px;">
+          <span class="pill-badge pill-gold" id="modalLineCounter">0 / 60 linhas</span>
+          <div class="button-group" style="flex-wrap: wrap;">
+            <button id="reloadMemoriaBtn" type="button" class="btn btn-ghost btn-sm">Recarregar do Docs</button>
+            <button id="clearMemoriaBtn" type="button" class="btn btn-secondary btn-sm">Limpar Caixa/Pendências</button>
+            <button id="saveMemoriaBtn" type="button" class="btn btn-primary btn-sm">Salvar no Google Docs</button>
+          </div>
+        </div>
+      </div>
+    </div>

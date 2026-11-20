@@ -1,0 +1,46 @@
+    <div id="userProfileModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="userProfileModalTitle">
+      <div class="modal-card" style="max-width: 480px; width: 92%;">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <span class="eyebrow-pill" style="margin-bottom: 4px; display: inline-block;">CONTA INSTITUCIONAL • SMEB</span>
+            <h3 id="userProfileModalTitle" style="margin: 0; font-size: 1.22rem; font-weight: 700;">Perfil do Usuário</h3>
+          </div>
+          <button id="closeUserProfileModalBtn" class="icon-capsule-btn" type="button" aria-label="Fechar perfil"><span class="svg-icon-inline" data-icon="close"></span></button>
+        </div>
+
+        <div class="modal-body" style="padding: 20px 24px;">
+          <div class="user-profile-summary">
+            <div class="user-profile-avatar-lg" id="profileModalAvatarInitials">--</div>
+            <div class="user-profile-summary-meta">
+              <div class="user-profile-display-name" id="profileModalDisplayName">--</div>
+              <div class="user-profile-email" id="profileModalEmail">--</div>
+              <span class="pill-badge pill-gold" id="profileModalRoleBadge" style="margin-top: 6px; font-size: 0.72rem;">--</span>
+            </div>
+          </div>
+
+          <form id="formUserProfile">
+            <div class="field-group" style="margin-bottom: 14px;">
+              <label for="profileInputFullName">Nome completo *</label>
+              <input type="text" id="profileInputFullName" class="input-clean" placeholder="Seu nome completo" required autocomplete="name" />
+            </div>
+
+            <div class="field-group" style="margin-bottom: 14px;">
+              <label for="profileInputDepartment">Departamento / Lotação</label>
+              <input type="text" id="profileInputDepartment" class="input-clean" placeholder="Ex: Gabinete do Secretário" autocomplete="organization" />
+            </div>
+
+            <div id="profileModalFeedback" class="output-panel hidden" style="margin-bottom: 14px; font-size: 12.5px;"></div>
+
+            <button type="submit" id="btnSaveUserProfile" class="btn btn-primary" style="width: 100%; justify-content: center;">
+              Salvar Alterações
+            </button>
+          </form>
+
+          <div class="user-profile-footer-danger">
+            <button type="button" id="btnLogoutFromProfileModal" class="btn btn-danger" style="width: 100%; justify-content: center;">
+              Sair (Encerrar acesso)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>

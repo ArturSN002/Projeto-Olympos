@@ -23,6 +23,9 @@ window.OlymposCarto = (function() {
     } catch (e) {}
 
     if (typeof window !== 'undefined') {
+      if (typeof window.__OLYMPOS_CARTO_API_KEY__ === 'string' && window.__OLYMPOS_CARTO_API_KEY__.trim()) {
+        return window.__OLYMPOS_CARTO_API_KEY__.trim();
+      }
       if (typeof window.CARTO_API_KEY === 'string' && window.CARTO_API_KEY.trim()) {
         return window.CARTO_API_KEY.trim();
       }

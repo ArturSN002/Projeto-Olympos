@@ -1,0 +1,54 @@
+        <section class="page-view hidden" id="page-oficios">
+          <div class="surface-card">
+            <div class="card-header-row">
+              <div>
+                <span class="section-eyebrow">EXPEDIENTE DE GABINETE</span>
+                <h2 class="section-title">Novo Ofício Oficial (Manual da Presidência PR/2018)</h2>
+                <p class="section-desc">Preenche o modelo institucional no Google Docs, arquiva na pasta oficial de Ofícios 2026 e incrementa a memória de Apolo.</p>
+              </div>
+              <div class="header-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <a href="https://drive.google.com/drive/folders/1H4bJXClx66Mr5PmRmSQBQLHDpAaKwdab" target="_blank" rel="noopener" class="folder-chip">
+                  <span class="svg-icon-inline" data-icon="folderDrive"></span> Pasta Ofícios 2026 <span class="external-arrow">↗</span>
+                </a>
+                <a href="https://docs.google.com/document/d/1ZXTlg2Wk5IKZ2Sg84HOnlePCOihccPFcYTd67wHUgkM/edit" target="_blank" rel="noopener noreferrer" class="folder-chip">
+                  <span class="svg-icon-inline" data-icon="olymposLogo"></span> Memória de Apolo <span class="external-arrow">↗</span>
+                </a>
+              </div>
+            </div>
+
+            <div class="controls-grid">
+              <div class="field-group">
+                <label for="oficioNumeroInput">Nº do Ofício (Sugerido por Apolo)</label>
+                <input type="text" id="oficioNumeroInput" class="input-clean" placeholder="--" />
+              </div>
+              <div class="field-group">
+                <label for="oficioDestinatarioInput">Destinatário / Cargo e Órgão</label>
+                <input type="text" id="oficioDestinatarioInput" class="input-clean" placeholder="Ex: Ao Senhor Secretário Municipal de Infraestrutura" />
+              </div>
+              <div class="field-group">
+                <label for="oficioFechoSelect">Fecho Oficial (PR/2018)</label>
+                <select id="oficioFechoSelect" class="input-clean">
+                  <option value="Atenciosamente,">Atenciosamente, (Mesma hierarquia ou inferior)</option>
+                  <option value="Respeitosamente,">Respeitosamente, (Autoridade superior)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="controls-grid" style="grid-template-columns: 1fr; margin-top: 16px;">
+              <div class="field-group">
+                <label for="oficioAssuntoInput">Assunto do Expediente</label>
+                <input type="text" id="oficioAssuntoInput" class="input-clean" placeholder="Ex: Solicitação de manutenção predial na Escola Municipal..." />
+              </div>
+              <div class="field-group">
+                <label for="oficioCorpoInput">Texto Oficial do Ofício</label>
+                <textarea id="oficioCorpoInput" rows="6" class="input-clean" style="resize: vertical;" placeholder="Redija os parágrafos objetivos do expediente..."></textarea>
+              </div>
+            </div>
+
+            <div class="button-group" style="margin-top: 20px;">
+              <button id="gerarOficioRapidoBtn" class="btn btn-primary">Emitir Ofício no Google Docs</button>
+            </div>
+
+            <div id="oficioRapidoOutput" class="job-result-card hidden"></div>
+          </div>
+        </section>

@@ -1,0 +1,105 @@
+        <section class="page-view hidden" id="page-chamados" aria-labelledby="chamadosSectionTitle">
+          <div class="chamados-view-container">
+            <!-- Hero & Métricas da Fila -->
+            <div class="stats-grid chamados-kpi-grid">
+              <div class="stat-card spotlight-card">
+                <div class="stat-top">
+                  <span class="stat-label">Fila de Chamados • Pendentes</span>
+                  <span class="pill-badge pill-blue" id="kpiChamadosFilaTotal">0 na fila</span>
+                </div>
+                <div class="stat-value" id="kpiChamadosTotal">0</div>
+                <div class="stat-meta">
+                  <span>Demandas ativas em análise ou atendimento</span>
+                </div>
+              </div>
+
+              <div class="stat-card spotlight-card">
+                <div class="stat-top">
+                  <span class="stat-label">Prioridade Máxima • Urgências</span>
+                  <span class="pill-badge pill-red" id="kpiChamadosUrgentesBadge"><span class="svg-icon-inline" data-icon="siren"></span> 0 Urgentes</span>
+                </div>
+                <div class="stat-value text-danger" id="kpiChamadosUrgentes">0</div>
+                <div class="stat-meta">
+                  <span>Solicitados ou escalonados após 24h sem leitura</span>
+                </div>
+              </div>
+
+              <div class="stat-card spotlight-card">
+                <div class="stat-top">
+                  <span class="stat-label">Tempo Médio de Atendimento</span>
+                  <span class="pill-badge pill-gold">Expediente 08h–15h</span>
+                </div>
+                <div class="stat-value" id="kpiChamadosSlaMedio">--</div>
+                <div class="stat-meta">
+                  <span>Previsão estimada para o horário de expediente</span>
+                </div>
+              </div>
+
+              <div class="stat-card spotlight-card">
+                <div class="stat-top">
+                  <span class="stat-label">Resolvidos • Concluídos</span>
+                  <span class="pill-badge pill-green">Finalizados</span>
+                </div>
+                <div class="stat-value text-success" id="kpiChamadosResolvidos">0</div>
+                <div class="stat-meta">
+                  <span>Demandas solucionadas com sucesso na SMEB</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Barra de Filtros e Busca Reativa (Preact Signals) -->
+            <div class="chamados-toolbar">
+              <div class="chamados-search-row">
+                <input type="search" id="chamadosBuscaInput" class="chamados-search-input" placeholder="Buscar por nome, e-mail, setor, dia ou descrição..." autocomplete="off" />
+                
+                <div class="field-group" style="margin: 0; min-width: 180px;">
+                  <select id="chamadosSetorSelect" class="input-clean" style="height: 42px; border-radius: 9999px;">
+                    <option value="TODOS">Todos os Setores</option>
+                    <option value="Gabinete">Gabinete</option>
+                    <option value="Recursos Humanos">Recursos Humanos (RH)</option>
+                    <option value="Pedagógico">Pedagógico</option>
+                    <option value="Inspeção Escolar">Inspeção Escolar</option>
+                    <option value="Transporte">Transporte</option>
+                    <option value="Alimentação Escolar">Alimentação Escolar</option>
+                    <option value="Jurídico">Jurídico</option>
+                    <option value="Financeiro">Financeiro / Contabilidade</option>
+                    <option value="Outro">Outro Setor</option>
+                  </select>
+                </div>
+
+                <button type="button" id="chamadosAtualizarBtn" class="btn btn-secondary btn-sm" style="border-radius: 9999px; height: 42px; padding: 0 16px;">
+                  <span class="svg-icon-inline" data-icon="refresh"></span> Atualizar Fila
+                </button>
+              </div>
+
+              <div style="display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+                <div class="filter-pills-group" id="filterStatusGroup">
+                  <span style="font-size: 0.76rem; font-family: var(--font-mono); color: var(--text-muted); margin-right: 4px;">STATUS:</span>
+                  <button type="button" class="filter-pill active" data-status="ABERTOS">Fila Aberta</button>
+                  <button type="button" class="filter-pill" data-status="EM_ATENDIMENTO">Em Atendimento</button>
+                  <button type="button" class="filter-pill" data-status="CONCLUIDOS">Concluídos</button>
+                  <button type="button" class="filter-pill" data-status="TODOS">Todos</button>
+                </div>
+
+                <div class="filter-pills-group" id="filterUrgenciaGroup">
+                  <span style="font-size: 0.76rem; font-family: var(--font-mono); color: var(--text-muted); margin-right: 4px;">PRIORIDADE:</span>
+                  <button type="button" class="filter-pill active" data-urgencia="TODOS">Todos</button>
+                  <button type="button" class="filter-pill" data-urgencia="URGENTE"><span class="svg-icon-inline" data-icon="siren"></span> Urgentes</button>
+                  <button type="button" class="filter-pill" data-urgencia="PADRAO">Padrão</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Contêiner da Grade de Chamados (Reatividade via Signals) -->
+            <div id="chamadosListaContainer" class="chamados-grid">
+              <div class="empty-state-card" style="padding: 40px; text-align: center;">
+                <div class="empty-state-icon"><span class="svg-icon-inline" data-icon="hourglass" style="font-size:2.2rem;"></span></div>
+                <p>Carregando fila de chamados...</p>
+              </div>
+            </div>
+            <div id="chamadosPaginacaoBar" class="olympos-pagination-bar hidden">
+              <span id="chamadosPaginacaoInfo" class="olympos-pagination-info"></span>
+              <div id="chamadosPaginacaoControles" class="olympos-pagination-controls"></div>
+            </div>
+          </div>
+        </section>

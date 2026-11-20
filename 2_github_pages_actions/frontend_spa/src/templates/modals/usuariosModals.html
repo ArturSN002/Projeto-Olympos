@@ -1,0 +1,141 @@
+    <div id="modalNovoUsuario" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalNovoUsuarioTitulo">
+      <div class="modal-card" style="max-width: 560px; width: 92%;">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <span class="badge badge-purple" style="font-size: 0.72rem; margin-bottom: 4px;">Moderação de Acessos • Perfil Moderador</span>
+            <h3 id="modalNovoUsuarioTitulo" style="margin: 0; font-size: 1.22rem; font-weight: 700;">Adicionar Novo Usuário</h3>
+          </div>
+          <button id="closeModalNovoUsuarioBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal"><span class="svg-icon-inline" data-icon="close"></span></button>
+        </div>
+
+        <form id="formNovoUsuario">
+          <div class="modal-body" style="padding: 20px 24px;">
+            <p class="section-desc" style="margin-top: 0; margin-bottom: 16px;">
+              O usuário será provisionado no <strong>Supabase Auth</strong> e sincronizado com as permissões da função designada.
+            </p>
+
+            <!-- Campo: Nome Completo -->
+            <div class="field-group" style="margin-bottom: 14px;">
+              <label for="novoUsuarioNome">Nome Completo *</label>
+              <input type="text" id="novoUsuarioNome" class="input-clean" placeholder="Nome completo do usuário" required autocomplete="name" />
+            </div>
+
+            <!-- Campo: Email Institucional -->
+            <div class="field-group" style="margin-bottom: 14px;">
+              <label for="novoUsuarioEmail">Email Institucional *</label>
+              <input type="email" id="novoUsuarioEmail" class="input-clean" placeholder="servidor@smeb.cearamirim.rn.gov.br" required autocomplete="email username" />
+            </div>
+
+            <!-- Campo: Papel (select) -->
+            <div class="field-group" style="margin-bottom: 14px;">
+              <label for="novoUsuarioRole">Perfil de Acesso *</label>
+              <select id="novoUsuarioRole" class="input-clean" required>
+                <option value="RH_COMISSAO">Recursos Humanos e Portarias</option>
+                <option value="PEDAGOGICO_EVENTOS">Pedagógico e Eventos</option>
+                <option value="JURIDICO">Assessoria Jurídica</option>
+                <option value="ADMIN_GABINETE">Gabinete Executivo</option>
+                <option value="MODERADOR">Moderador (Acesso Máximo)</option>
+              </select>
+            </div>
+
+            <!-- Campo: Departamento -->
+            <div class="field-group" style="margin-bottom: 14px;">
+              <label for="novoUsuarioDepartamento">Departamento / Lotação</label>
+              <input type="text" id="novoUsuarioDepartamento" class="input-clean" value="Secretaria Municipal de Educacao" autocomplete="organization" />
+            </div>
+
+            <!-- Campo: Senha Temporária -->
+            <div class="field-group" style="margin-bottom: 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <label for="novoUsuarioSenha" style="margin-bottom: 0;">Senha Temporária *</label>
+                <button type="button" id="btnGerarSenhaNovoUsuario" class="btn-mini" style="font-size: 0.74rem; display: inline-flex; align-items: center; gap: 4px;"><span class="svg-icon-inline" data-icon="sparkles"></span> Gerar Senha Segura</button>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <input type="password" id="novoUsuarioSenha" class="input-clean" style="font-family: var(--font-mono); font-size: 13px;" placeholder="Mínimo 12 caracteres (forte)" required autocomplete="new-password" />
+                <button type="button" id="btnToggleVisibilidadeSenha" class="btn btn-secondary btn-sm" style="white-space: nowrap; padding: 0 12px; display: inline-flex; align-items: center; justify-content: center;" title="Alternar visibilidade da senha"><span class="svg-icon-inline" data-icon="eyeOfApollo"></span></button>
+              </div>
+              <small style="color: var(--text-muted); font-size: 0.75rem; margin-top: 4px; display: block;">Mínimo de 12 caracteres com complexidade e verificação anti-vazamento (HIBP k-Anonymity).</small>
+            </div>
+
+            <!-- Área de feedback / Mensagem -->
+            <div id="novoUsuarioFeedback" class="output-panel hidden" style="margin-bottom: 14px; font-size: 12.5px;"></div>
+          </div>
+
+          <div class="modal-footer" style="padding: 14px 24px; border-top: 1px solid var(--border-hairline); display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" id="btnCancelarNovoUsuario" class="btn btn-secondary btn-sm">Cancelar</button>
+            <button type="submit" id="btnSalvarNovoUsuario" class="btn btn-primary btn-sm">Criar Usuário</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- =========================================================================
+         MODAL DE EDIÇÃO DE USUÁRIO (#modalEditarUsuario - ADMIN_GABINETE)
+         ========================================================================= -->
+    <div id="modalEditarUsuario" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalEditarUsuarioTitulo">
+      <div class="modal-card" style="max-width: 560px; width: 92%;">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <span class="badge badge-purple" style="font-size: 0.72rem; margin-bottom: 4px;">Moderação de Acessos • Perfil Moderador</span>
+            <h3 id="modalEditarUsuarioTitulo" style="margin: 0; font-size: 1.22rem; font-weight: 700;">Editar Usuário</h3>
+          </div>
+          <button id="closeModalEditarUsuarioBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal"><span class="svg-icon-inline" data-icon="close"></span></button>
+        </div>
+
+        <form id="formEditarUsuario">
+          <input type="hidden" id="editarUsuarioId" />
+          <div class="modal-body" style="padding: 20px 24px;">
+            <p class="section-desc" style="margin-top: 0; margin-bottom: 16px;">
+              Atualize as permissões e dados cadastrais do operador no Supabase.
+            </p>
+
+            <!-- Campo: Nome Completo -->
+            <div class="field-group" style="margin-bottom: 14px;">
+              <label for="editarUsuarioNome">Nome Completo *</label>
+              <input type="text" id="editarUsuarioNome" class="input-clean" required autocomplete="name" />
+            </div>
+
+            <!-- Campo: Email Institucional -->
+            <div class="field-group" style="margin-bottom: 14px;">
+              <label for="editarUsuarioEmail">Email Institucional</label>
+              <input type="email" id="editarUsuarioEmail" class="input-clean" readonly disabled style="opacity: 0.7; cursor: not-allowed;" autocomplete="username" />
+            </div>
+
+            <!-- Campo: Papel (select) -->
+            <div class="field-group" style="margin-bottom: 14px;">
+              <label for="editarUsuarioRole">Perfil de Acesso *</label>
+              <select id="editarUsuarioRole" class="input-clean" required>
+                <option value="RH_COMISSAO">Recursos Humanos e Portarias</option>
+                <option value="PEDAGOGICO_EVENTOS">Pedagógico e Eventos</option>
+                <option value="JURIDICO">Assessoria Jurídica</option>
+                <option value="ADMIN_GABINETE">Gabinete Executivo</option>
+                <option value="MODERADOR">Moderador (Acesso Máximo)</option>
+              </select>
+            </div>
+
+            <!-- Campo: Departamento -->
+            <div class="field-group" style="margin-bottom: 14px;">
+              <label for="editarUsuarioDepartamento">Departamento / Lotação</label>
+              <input type="text" id="editarUsuarioDepartamento" class="input-clean" autocomplete="organization" />
+            </div>
+
+            <!-- Campo: Status Ativo -->
+            <div class="field-group" style="margin-bottom: 16px;">
+              <label for="editarUsuarioAtivo">Status da Conta</label>
+              <select id="editarUsuarioAtivo" class="input-clean">
+                <option value="true">Ativo (Acesso Liberado)</option>
+                <option value="false">Inativo (Acesso Suspenso)</option>
+              </select>
+            </div>
+
+            <!-- Área de feedback / Mensagem -->
+            <div id="editarUsuarioFeedback" class="output-panel hidden" style="margin-bottom: 14px; font-size: 12.5px;"></div>
+          </div>
+
+          <div class="modal-footer" style="padding: 14px 24px; border-top: 1px solid var(--border-hairline); display: flex; justify-content: flex-end; gap: 10px;">
+            <button type="button" id="btnCancelarEditarUsuario" class="btn btn-secondary btn-sm">Cancelar</button>
+            <button type="submit" id="btnSalvarEdicaoUsuario" class="btn btn-primary btn-sm">Salvar Alterações</button>
+          </div>
+        </form>
+      </div>
+    </div>

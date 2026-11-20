@@ -3,6 +3,7 @@ Módulo de Geração de Catálogos JSON e Resumos de KPIs para o Frontend SPA.
 O Papiro de Cadmo — Projeto Olympos / SMEB Ceará-Mirim
 """
 from datetime import datetime, timezone
+import gzip
 import json
 import logging
 from pathlib import Path
@@ -60,18 +61,17 @@ def gerar_catalogos_frontend(csv_path: Optional[Path] = None) -> Dict[str, Any]:
         "por_ente": counts_ente
     }
 
-    # Gera registros compactos
+    # Gera registros compactos estritamente com as 6 chaves públicas (LGPD - zero CPF/carga/situacao)
+    competencia_padrao = str(resumo_kpis.get("competencia", "")).strip()
     registros = []
     for _, row in df.iterrows():
         registros.append({
             "n": str(row.get("nome_completo", "")).strip().upper(),
-            "m": sanitizar_matricula(row.get("matricula", "")),
-            "c": str(row.get("cpf", "")).strip() or "###.***.***-##",
-            "e": str(row.get("ente_origem", "")).strip(),
             "g": str(row.get("cargo_funcao", "")).strip().upper(),
-            "h": str(row.get("carga_horaria", "30h")).strip(),
+            "m": sanitizar_matricula(row.get("matricula", "")),
             "l": str(row.get("lotacao_orgao", "")).strip().upper(),
-            "s": str(row.get("situacao_vinculo", "ATIVO")).strip().upper()
+            "e": str(row.get("ente_origem", "")).strip(),
+            "r": str(row.get("competencia", "")).strip() or competencia_padrao
         })
 
     # Destinos de gravação
@@ -83,6 +83,8 @@ def gerar_catalogos_frontend(csv_path: Optional[Path] = None) -> Dict[str, Any]:
         spa_dir.mkdir(parents=True, exist_ok=True)
         destinos_dir.append(spa_dir)
 
+    payload_bytes = json.dumps(registros, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+
     for d in destinos_dir:
         json_kpis_path = d / "resumo_kpis.json"
         with open(json_kpis_path, "w", encoding="utf-8") as f:
@@ -90,9 +92,14 @@ def gerar_catalogos_frontend(csv_path: Optional[Path] = None) -> Dict[str, Any]:
         logger.info(f"Resumo KPIs salvo em: {json_kpis_path}")
 
         json_servidores_path = d / "servidores_consolidados.json"
-        with open(json_servidores_path, "w", encoding="utf-8") as f:
-            json.dump(registros, f, ensure_ascii=False)
+        with open(json_servidores_path, "wb") as f:
+            f.write(payload_bytes)
         logger.info(f"Base consolidada ({len(registros)} servidores) salva em: {json_servidores_path}")
+
+        gz_servidores_path = d / "servidores_consolidados.json.gz"
+        with gzip.open(gz_servidores_path, "wb", compresslevel=9) as f_gz:
+            f_gz.write(payload_bytes)
+        logger.info(f"Base consolidada gzip (nível 9) salva em: {gz_servidores_path}")
 
     return resumo_kpis
 

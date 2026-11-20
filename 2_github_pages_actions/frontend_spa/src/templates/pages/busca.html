@@ -1,0 +1,63 @@
+        <section class="page-view hidden" id="page-busca">
+          <div class="surface-card">
+            <div class="card-header-row">
+              <div>
+                <span class="section-eyebrow">MOTOR TOKENIZADO RECURSIVO</span>
+                <h2 class="section-title">Busca Global no Acervo SMEB (2025 e 2026)</h2>
+                <p class="section-desc">Localiza arquivos independentemente de acentos, traços ou ordem das palavras (ex.: pesquisar <code>portaria 163</code> encontra <code>Portaria_Nº163_2026</code> em subpastas setoriais).</p>
+              </div>
+            </div>
+
+            <div class="controls-grid search-controls-responsive" style="align-items: end; margin-bottom: 14px;">
+              <div class="field-group">
+                <label for="pageBuscaInput">Termo de Pesquisa (Servidor, Matrícula, Nº do Ato ou * para listar recentes)</label>
+                <input type="search" id="pageBuscaInput" class="input-clean" placeholder="Pesquisar ato, servidor, portaria ou palavra-chave..." />
+              </div>
+              <div class="field-group">
+                <label for="pageBuscaAnoSelect">Recorte Temporal</label>
+                <select id="pageBuscaAnoSelect" class="input-clean">
+                  <option value="TODOS">2025 e 2026 (Completo)</option>
+                  <option value="2026">Exercício 2026 (Ativo)</option>
+                  <option value="2025">Acervo 2025 (Histórico)</option>
+                </select>
+              </div>
+              <div>
+                <button id="pageBuscaExecBtn" class="btn btn-primary" style="height: 41px;">Pesquisar Acervo</button>
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
+              <span class="stat-label">Sugestões rápidas:</span>
+              <button type="button" class="btn-mini" data-quick-query="Portaria">Portarias</button>
+              <button type="button" class="btn-mini" data-quick-query="Oficio">Ofícios</button>
+              <button type="button" class="btn-mini" data-quick-query="FEMURN">FEMURN</button>
+              <button type="button" class="btn-mini" data-quick-query="Licenca">Licenças</button>
+              <button type="button" class="btn-mini" data-quick-query="*">Documentos Recentes (*)</button>
+            </div>
+
+            <div id="pageBuscaStatusMsg" style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px;">
+              Digite um termo ou selecione um filtro rápido para varrer as pastas oficiais.
+            </div>
+
+            <div class="table-wrapper">
+              <table class="clean-table table-responsive-cards">
+                <thead>
+                  <tr>
+                    <th style="width: 85px;">Ano</th>
+                    <th style="width: 240px;">Setor / Subpasta</th>
+                    <th style="width: 115px;">Criação</th>
+                    <th>Título do Arquivo</th>
+                    <th class="text-right" style="width: 150px;">Acesso</th>
+                  </tr>
+                </thead>
+                <tbody id="pageBuscaTableBody">
+                  <tr><td colspan="5" class="text-muted text-center" style="padding: 28px;">Nenhuma pesquisa executada nesta sessão.</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div id="buscaPaginacaoBar" class="olympos-pagination-bar hidden">
+              <span id="buscaPaginacaoInfo" class="olympos-pagination-info"></span>
+              <div id="buscaPaginacaoControles" class="olympos-pagination-controls"></div>
+            </div>
+          </div>
+        </section>

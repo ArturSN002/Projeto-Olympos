@@ -50,11 +50,15 @@ window.OlymposApi = (function() {
 
   function getSession() {
     try {
-      const s = localStorage.getItem('olympos_session');
-      return s ? JSON.parse(s) : null;
-    } catch (e) {
-      return null;
+      const s = sessionStorage.getItem('olympos_session_rbac');
+      if (s) return JSON.parse(s);
+    } catch (e) {}
+    if (window.OlymposApp && typeof window.OlymposApp.getSession === 'function') {
+      try {
+        return window.OlymposApp.getSession();
+      } catch (e) {}
     }
+    return null;
   }
 
   function getJwtToken() {
@@ -67,16 +71,31 @@ window.OlymposApi = (function() {
     return null;
   }
 
-  let edgeGatewayDisponivel = (function() {
-    try {
-      if (sessionStorage.getItem('olympos_gateway_unavailable') === 'true') {
-        return false;
-      }
-    } catch (e) {}
-    return true;
-  })();
+  const PUBLIC_ACTIONS = new Set([
+    'ping',
+    'status',
+    'health',
+    'diario_listar',
+    'escolas_listar',
+    'agenda_listar',
+    'estatisticas_publicas',
+    'prometheus_status',
+    'prometheus_extrair_linhas',
+    'cadmo_status',
+    'certificados_verificar_publico'
+  ]);
+
+  let edgeGatewayDisponivel = true;
 
   function processarResposta(data, onSuccess, onError, action) {
+    if (data && data.code === 'MFA_REQUIRED') {
+      console.warn('[Olympos Zero-Trust] MFA (aal2) obrigatório para [' + (action || 'ação') + '].');
+      if (window.OlymposApp && typeof window.OlymposApp.solicitarMfaObrigatorio === 'function') {
+        window.OlymposApp.solicitarMfaObrigatorio(data);
+      }
+      if (onError) onError(new Error(data.mensagem || 'Autenticação em dois fatores (MFA) obrigatória para este perfil.'));
+      return;
+    }
     if (data && data.code === 'AUTH_REQUIRED') {
       console.warn('[Olympos Drive/GAS] Autenticação necessária para [' + (action || 'ação') + ']:', data.mensagem);
       if (window.OlymposApp && typeof window.OlymposApp.solicitarLogin === 'function') {
@@ -85,11 +104,11 @@ window.OlymposApi = (function() {
       if (onError) onError(new Error(data.mensagem || 'Sessão expirada. Faça login novamente via Supabase.'));
       return;
     }
-    if (data && data.status === 'ERRO') {
+    if (data && (data.status === 'ERRO' || data.ok === false)) {
       if (data.mensagem && data.mensagem.includes('Token não autorizado')) {
         console.info('[Olympos Drive/GAS] Token do Apps Script pendente para [' + (action || '') + ']. Acionando contingência local/Supabase de forma transparente.');
       } else {
-        console.warn('[Olympos Drive/GAS] Resposta com status de erro do Gateway [' + (action || 'ação') + ']:', data);
+        console.warn('[Olympos Drive/GAS] Resposta com erro do Gateway [' + (action || 'ação') + ']:', data);
       }
       if (onError) {
         onError(new Error(data.mensagem || 'Erro no Gateway GAS'));
@@ -116,6 +135,7 @@ window.OlymposApi = (function() {
 
   function chamar(action, payload, onSuccess, onError) {
     const token = getJwtToken();
+    const isPublicAction = PUBLIC_ACTIONS.has(String(action || '').trim());
     const bodyData = Object.assign({}, payload || {}, {
       action: action,
       token: token,
@@ -126,7 +146,7 @@ window.OlymposApi = (function() {
 
     console.log('[Olympos Drive/GAS] Requisição enviada [' + action + ']:', payload);
 
-    // Frente 1: Execução embarcada no Google Apps Script (HtmlService)
+    // Frente 1 legada (somente se executado diretamente dentro de google.script.run)
     if (typeof google !== 'undefined' && google.script && google.script.run) {
       google.script.run
         .withSuccessHandler(function(data) {
@@ -140,12 +160,15 @@ window.OlymposApi = (function() {
       return;
     }
 
-    // Função de Fallback Direto para o Google Apps Script (CORS Simple Request)
-    // 1. Método POST
-    // 2. Content-Type: text/plain;charset=utf-8 (evita preflight OPTIONS no GAS)
-    // 3. ZERO headers de autorização HTTP (token trafega no corpo JSON)
-    // 4. redirect: 'follow' explícito para redirecionamentos do script.googleusercontent.com
+    // Fallback direto para GAS permitido APENAS para ações públicas de leitura
     function executarFallbackDiretoGAS() {
+      if (!isPublicAction) {
+        const err = new Error('Operação privilegiada bloqueada sem mediação do Edge Gateway Zero-Trust (GATEWAY_UNAVAILABLE).');
+        err.code = 'GATEWAY_UNAVAILABLE';
+        if (onError) onError(err);
+        return;
+      }
+
       const url = getApiUrl();
       const fetchOpts = {
         method: 'POST',
@@ -187,12 +210,16 @@ window.OlymposApi = (function() {
         });
     }
 
-    // Frente 2 Principal: Roteamento via Supabase Edge Function (gas-gateway) com fallback automático
+    // Zero-Trust: ações privilegiadas trafegam exclusivamente pela Edge Function gas-gateway
     const gatewayUrl = getGasGatewayUrl();
-    const useGateway = edgeGatewayDisponivel && localStorage.getItem('olympos_disable_gateway') !== 'true' && Boolean(gatewayUrl);
-
-    if (!useGateway) {
-      executarFallbackDiretoGAS();
+    if (!gatewayUrl) {
+      if (isPublicAction) {
+        executarFallbackDiretoGAS();
+      } else {
+        const err = new Error('Edge Gateway Supabase não configurado para operações privilegiadas (GATEWAY_UNAVAILABLE).');
+        err.code = 'GATEWAY_UNAVAILABLE';
+        if (onError) onError(err);
+      }
       return;
     }
 
@@ -222,9 +249,16 @@ window.OlymposApi = (function() {
         });
       }
       if (res.status >= 500) {
-        console.warn('[OlymposApi] Edge Gateway retornou HTTP ' + res.status + '. Ativando fallback direto para GAS.');
-        executarFallbackDiretoGAS();
-        return null;
+        if (isPublicAction) {
+          console.warn('[OlymposApi] Edge Gateway retornou HTTP ' + res.status + ' para rota pública. Executando fallback de leitura GAS.');
+          executarFallbackDiretoGAS();
+          return null;
+        }
+        return res.json().catch(function() { return {}; }).then(function(errBody) {
+          const err = new Error((errBody && errBody.mensagem) || ('Edge Gateway indisponível (HTTP ' + res.status + ').'));
+          err.code = (errBody && errBody.code) || 'GATEWAY_UNAVAILABLE';
+          throw err;
+        });
       }
       return res.json();
     })
@@ -234,17 +268,19 @@ window.OlymposApi = (function() {
       }
     })
     .catch(function(err) {
-      if (err.message && err.message.includes('Limite de requisições')) {
+      if (err && err.message && err.message.includes('Limite de requisições')) {
         if (onError) onError(err);
         return;
       }
-      // Circuit Breaker: desativa chamadas repetidas à Edge Function na sessão se não estiver implantada ou falhar por CORS/rede
-      edgeGatewayDisponivel = false;
-      try {
-        sessionStorage.setItem('olympos_gateway_unavailable', 'true');
-      } catch (e) {}
-      console.info('[OlymposApi] Edge Gateway (gas-gateway) indisponível ou não implantado no Supabase. Alternando para Google Apps Script direto nesta sessão.');
-      executarFallbackDiretoGAS();
+      if (isPublicAction) {
+        edgeGatewayDisponivel = false;
+        executarFallbackDiretoGAS();
+        return;
+      }
+      const errOut = err instanceof Error ? err : new Error(String(err || 'Falha de comunicação Zero-Trust'));
+      if (!errOut.code) errOut.code = 'GATEWAY_UNAVAILABLE';
+      console.warn('[OlymposApi Zero-Trust] Ação privilegiada [' + action + '] recusada por indisponibilidade do Edge Gateway:', errOut.message);
+      if (onError) onError(errOut);
     });
   }
 

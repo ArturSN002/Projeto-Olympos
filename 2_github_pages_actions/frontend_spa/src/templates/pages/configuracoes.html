@@ -1,0 +1,275 @@
+        <section class="page-view hidden" id="page-configuracoes">
+          <div class="surface-card">
+            <div class="card-header-row">
+              <div>
+                <span class="section-eyebrow">SISTEMA &amp; GOVERNANÇA</span>
+                <h2 class="section-title">Ajustes &amp; Configurações do Hub Olympos</h2>
+                <p class="section-desc">Gerencie a conexão do sistema, o tema visual, os usuários autorizados, as personas da equipe e as notificações.</p>
+              </div>
+              <div class="header-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <a href="https://drive.google.com/drive/folders/1W9mGmQCrX8BRPsGcK_vqUwfXw1dRmSya" target="_blank" rel="noopener" class="folder-chip"><span class="svg-icon-inline" data-icon="folderDrive"></span> Pasta Central Olympo <span class="external-arrow">↗</span></a>
+                <a href="https://drive.google.com/drive/folders/1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu" target="_blank" rel="noopener" class="folder-chip"><span class="svg-icon-inline" data-icon="fileText"></span> Memórias Operacionais <span class="external-arrow">↗</span></a>
+              </div>
+            </div>
+
+            <!-- SELETOR DE SUB-ABAS DE AJUSTES TIPO PÍLULA -->
+            <div class="subnav-tabs-bar" role="tablist" aria-label="Navegação interna de Ajustes">
+              <button type="button" class="subnav-tab active" id="subtabBtnAjustesConexao" data-subtab="conexao">
+                <span class="svg-icon-inline" data-icon="settingsGear"></span><span>Conectividade &amp; Gateway</span>
+              </button>
+              <button type="button" class="subnav-tab" id="subtabBtnAjustesAparencia" data-subtab="aparencia">
+                <span class="svg-icon-inline" data-icon="sliders"></span><span>Aparência &amp; Tema</span>
+              </button>
+              <button type="button" class="subnav-tab" id="subtabBtnAjustesUsuarios" data-subtab="usuarios">
+                <span class="svg-icon-inline" data-icon="users"></span><span>Usuários &amp; Permissões</span>
+              </button>
+              <button type="button" class="subnav-tab" id="subtabBtnAjustesPersonas" data-subtab="personas">
+                <span class="svg-icon-inline" data-icon="olymposLogo"></span><span>Personas &amp; Memórias</span>
+              </button>
+              <button type="button" class="subnav-tab" id="subtabBtnAjustesAutomacoes" data-subtab="automacoes">
+                <span class="svg-icon-inline" data-icon="mail"></span><span>Automações &amp; Notificações</span>
+              </button>
+            </div>
+
+            <!-- SUB-ABA 1: CONECTIVIDADE & GATEWAY -->
+            <div id="subpaneAjustesConexao" class="subtab-pane">
+              <div class="controls-grid config-grid-responsive" style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 24px;">
+                <div class="surface-card" style="border: 1px solid var(--border-hairline);">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                    <h3 style="font-size: 1.05rem; margin: 0;">Servidor de Integração (Google Apps Script)</h3>
+                    <div id="apiStatusPill" class="status-pill status-online" title="Conectividade com o Gateway Google Apps Script">
+                      <span>Gateway Online</span>
+                    </div>
+                  </div>
+                  <div class="field-group" style="margin-bottom: 14px;">
+                    <label for="configGasUrlInput">Endereço do Serviço Web App (<code>/exec</code>)</label>
+                    <input type="url" id="configGasUrlInput" class="input-clean" style="font-family: var(--font-mono); font-size: 12px;" placeholder="https://script.google.com/macros/s/.../exec" />
+                  </div>
+                  <div class="button-group" style="margin-bottom: 14px;">
+                    <button id="configTestarApiBtn" class="btn btn-secondary btn-sm">Testar Conexão</button>
+                    <button id="configSalvarApiBtn" class="btn btn-primary btn-sm">Salvar Endpoint</button>
+                    <button id="configResetApiBtn" class="btn btn-ghost btn-sm">Restaurar Padrão</button>
+                  </div>
+                  <div id="configTestResult" class="output-panel" style="font-size: 12.5px;">
+                    Pronto para verificar conectividade com o Gateway GAS.
+                  </div>
+                </div>
+
+                <!-- Painel CARTO integrado em Conexão -->
+                <div class="surface-card" style="border: 1px solid var(--border-hairline);">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                    <div>
+                      <span class="section-eyebrow" style="font-size: 10px;">GEORREFERENCIAMENTO VETORIAL</span>
+                      <h3 style="font-size: 1.05rem; margin: 0;">Chave de API CARTO</h3>
+                    </div>
+                    <span id="configCartoKeyStatusBadge" class="pill-badge pill-blue">CARTO Ativo</span>
+                  </div>
+                  <div class="field-group" style="margin-bottom: 14px;">
+                    <label for="configCartoApiKeyInput">Chave do Mapa Interativo (CARTO)</label>
+                    <input type="text" id="configCartoApiKeyInput" class="input-clean" style="font-family: var(--font-mono); font-size: 12px;" placeholder="cb1_59be_1_e706175c142a6271abaac593" />
+                  </div>
+                  <div class="button-group">
+                    <button type="button" id="configSalvarCartoKeyBtn" class="btn btn-primary btn-sm">Salvar Chave</button>
+                    <button type="button" id="configLimparCartoKeyBtn" class="btn btn-ghost btn-sm">Restaurar Padrão</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SUB-ABA 2: APARÊNCIA & TEMA -->
+            <div id="subpaneAjustesAparencia" class="subtab-pane">
+              <div class="controls-grid" style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 24px;">
+                <div>
+                  <h3 style="font-size: 1.05rem; margin-bottom: 12px;">Sessão de Usuário &amp; Tema Visual</h3>
+                  <div class="output-panel" style="margin-bottom: 16px;">
+                    <div style="margin-bottom: 6px;">Operador Autenticado: <strong id="configUserLabel">Gabinete SMEB</strong></div>
+                    <div style="margin-bottom: 6px;">Perfil de Acesso: <strong id="configUserRole">Governança Total</strong></div>
+                    <div style="margin-bottom: 12px; font-size: 12px; color: var(--text-muted);">Páginas Habilitadas: <span id="configUserTabs">Todas</span></div>
+                    <button id="configLogoutBtn" class="btn btn-secondary btn-sm">Trocar Usuário / Encerrar Sessão</button>
+                  </div>
+
+                  <div class="field-group">
+                    <label for="configTemaSelect">Tema Visual do Sistema</label>
+                    <select id="configTemaSelect" class="input-clean">
+                      <option value="light">Modo Claro — Padrão Oficial (Fundo Claro com Detalhes em Ouro)</option>
+                      <option value="dark">Modo Escuro — Conforto Noturno (Fundo Escuro com Alto Contraste)</option>
+                    </select>
+                  </div>
+
+                  <!-- Widget de Inspeção Cromática 60-30-10 -->
+                  <div id="inspectorWidget" class="fixed bottom-4 right-4 inspector-settings-embedded" style="margin-top: 14px;">
+                    <div class="inspect-60" title="60% Base Dominante (Obsidian Void / Scientific Daylight)">60% Base</div>
+                    <div class="inspect-30" title="30% Superfícies &amp; Tipografia (Surface Hairline)">30% Surface</div>
+                    <div class="inspect-10" title="10% Acento &amp; Foco (Azul Elétrico DeepMind)">10% Accent</div>
+                    <button id="themeToggleBtnInspector" type="button" class="btn-theme-toggle" onclick="window.OlymposApp &amp;&amp; window.OlymposApp.alternarTema()" aria-label="Alternar Tema">Alternar Tema</button>
+                  </div>
+                </div>
+
+                <!-- Painel Segurança, MFA aal2 & Gestão de Sessões Ativas -->
+                <div class="surface-card" id="cardSegurancaMfaSessoes" style="border: 1px solid var(--border-hairline);">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 8px; flex-wrap: wrap;">
+                    <div>
+                      <span class="section-eyebrow" style="font-size: 10px;">ZERO-TRUST • MFA &amp; SESSÕES</span>
+                      <h3 style="font-size: 1.05rem; margin: 0;">Segurança da Conta e Dispositivos</h3>
+                    </div>
+                    <span id="configMfaAalBadge" class="pill-badge pill-gold">AAL1</span>
+                  </div>
+                  <p class="section-desc" style="font-size: 12.5px; margin-bottom: 12px;">
+                    Perfis críticos (Moderador e Gabinete) exigem autenticação em dois fatores (<code>aal2</code>) e timeout por inatividade.
+                  </p>
+                  <div class="button-group" style="margin-bottom: 14px; flex-wrap: wrap;">
+                    <button type="button" id="btnAtivarMfaConfig" class="btn btn-secondary btn-sm">Configurar 2FA (TOTP)</button>
+                    <button type="button" id="btnAtualizarSessoesConfig" class="btn btn-ghost btn-sm">Atualizar Sessões</button>
+                    <button type="button" id="btnEncerrarTodasSessoesConfig" class="btn btn-danger btn-sm">Encerrar em todos os dispositivos</button>
+                  </div>
+                  <div id="listaSessoesAtivasConfig" class="output-panel" style="font-size: 12px; max-height: 190px; overflow-y: auto;">
+                    Faça login para consultar sessões ativas registradas.
+                  </div>
+                  <div style="margin-top: 12px;" data-access-roles="MODERADOR">
+                    <a href="#auditoria" class="btn btn-primary btn-sm" data-page="auditoria" style="display: inline-flex; align-items: center; gap: 6px;">
+                      <span class="svg-icon-inline" data-icon="shieldCheck"></span>
+                      <span>Abrir Trilha de Auditoria (audit_logs)</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SUB-ABA 3: USUÁRIOS & RBAC (GESTÃO EXCLUSIVA MODERADOR) -->
+            <div id="subpaneAjustesUsuarios" class="subtab-pane">
+              <!-- Aviso para operadores que não possuem perfil MODERADOR -->
+              <div id="avisoAcessoUsuariosRestrito" class="surface-card hidden" style="border: 1px solid var(--border-hairline); padding: 32px 24px; text-align: center; margin-bottom: 16px;">
+                <div class="svg-icon-inline" data-icon="lock" style="width: 36px; height: 36px; margin-bottom: 12px; color: var(--text-muted); display: inline-flex;"></div>
+                <h4 style="margin: 0 0 8px; font-size: 1.1rem; color: var(--text-primary);">Acesso Restrito ao Moderador</h4>
+                <p class="section-desc" style="max-width: 480px; margin: 0 auto; color: var(--text-secondary);">Apenas usuários com perfil Moderador possuem permissão para gerenciar operadores e perfis de acesso do Hub Olympos.</p>
+              </div>
+
+              <div id="blocoGestaoUsuarios" class="surface-card" style="border: 1px solid var(--border-hairline); background: var(--bg-surface);">
+                <div class="card-header-row" style="margin-bottom: 16px;">
+                  <div>
+                    <span class="section-eyebrow">MODERAÇÃO DE ACESSOS • PERFIL MODERADOR</span>
+                    <h3 class="section-title" style="font-size: 1.15rem;">Gerenciamento de Usuários e Permissões</h3>
+                    <p class="section-desc" style="margin-bottom: 0;">Consulte, cadastre, edite perfis e gerencie operadores autorizados do Hub Olympos.</p>
+                  </div>
+                  <div style="display: flex; gap: 8px;">
+                    <button type="button" id="btnRecarregarUsuarios" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;" onclick="window.OlymposViews.configuracoes.carregarUsuarios()">
+                      <span class="svg-icon-inline" data-icon="refreshSync"></span><span>Atualizar Lista</span>
+                    </button>
+                    <button type="button" id="btnAbrirModalNovoUsuario" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;">
+                      <span class="svg-icon-inline" data-icon="users"></span><span>+ Novo Usuário</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div id="tabelaUsuariosContainer" class="table-wrapper">
+                  <table class="clean-table" id="tabelaUsuarios">
+                    <thead>
+                      <tr>
+                        <th>Operador / Nome</th>
+                        <th>Email</th>
+                        <th>Perfil de Acesso</th>
+                        <th>Departamento</th>
+                        <th class="text-right" style="width: 140px;">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody id="tabelaUsuariosBody">
+                      <tr><td colspan="5" class="text-muted text-center" style="padding: 24px;">Carregando operadores do Supabase...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div id="usuariosPaginacaoBar" class="olympos-pagination-bar hidden">
+                  <span id="usuariosPaginacaoInfo" class="olympos-pagination-info"></span>
+                  <div id="usuariosPaginacaoControles" class="olympos-pagination-controls"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- SUB-ABA 4: PERSONAS & MEMÓRIAS OPERACIONAIS -->
+            <div id="subpaneAjustesPersonas" class="subtab-pane">
+              <div class="card-header-row" style="margin-bottom: 14px;">
+                <div>
+                  <span class="section-eyebrow">DIRETRIZES SETORIAIS E MEMÓRIAS GOOGLE DOCS DA SMEB</span>
+                  <h3 class="section-title" style="font-size: 1.15rem;">As 22 Memórias Google Docs &amp; Ecossistema Olympos (26 Personas)</h3>
+                  <p class="section-desc" style="margin-bottom: 6px;">Consulte, edite em tempo real e abra os documentos canônicos no formato padrão do Google Docs sincronizados no Google Drive.</p>
+                  <span id="memoriasSyncStatus" class="memorias-sync-status" data-status="local">22 memórias Google Docs conectadas</span>
+                </div>
+                <div class="button-group">
+                  <button id="refreshMemoriasBtn" type="button" class="btn btn-ghost btn-sm">Atualizar Docs</button>
+                  <button id="snapshotDedaloBtn" type="button" class="btn btn-secondary btn-sm">Snapshot (Dédalo)</button>
+                  <button id="copyGeminiContextBtn" type="button" class="btn btn-secondary btn-sm">Copiar p/ Gemini</button>
+                  <button id="syncApoloBtn" type="button" class="btn btn-primary btn-sm">Sincronizar Apolo (Docs)</button>
+                </div>
+              </div>
+
+              <div id="memoriasFilterBar" class="memorias-filter-bar" role="group" aria-label="Filtrar memórias por perfil ou tipo">
+                <button type="button" class="memoria-filter-pill active" data-filter="TODAS">Todas (26)</button>
+                <button type="button" class="memoria-filter-pill" data-filter="GOOGLE_DOCS">Google Docs (22)</button>
+                <button type="button" class="memoria-filter-pill" data-filter="ADMIN_GABINETE">Gabinete</button>
+                <button type="button" class="memoria-filter-pill" data-filter="RH_COMISSAO">RH &amp; Comissão</button>
+                <button type="button" class="memoria-filter-pill" data-filter="PEDAGOGICO_EVENTOS">Pedagógico</button>
+                <button type="button" class="memoria-filter-pill" data-filter="JURIDICO">Jurídico</button>
+                <button type="button" class="memoria-filter-pill" data-filter="ANFITRIAS">Anfitriãs (4)</button>
+              </div>
+
+              <div style="display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; align-items: center;">
+                <input type="search" id="memoriaSearchInput" class="input-clean" style="max-width: 260px;" placeholder="Filtrar persona, domínio ou ID..." autocomplete="off" />
+                <div class="quick-alert-bar quick-alert-bar-responsive" style="display: flex; gap: 8px; flex: 1; min-width: 0; width: 100%; flex-wrap: wrap;">
+                  <select id="quickAlertTargetSelect" class="input-clean" style="max-width: 220px;" aria-label="Destinatário do Alerta">
+                    <option value="_memoria_afrodite.md">Afrodite (Clima &amp; RH)</option>
+                    <option value="_memoria_apolo.md">Apolo (Numeração 2026)</option>
+                    <option value="_memoria_ares.md">Ares (Sindicâncias)</option>
+                    <option value="_memoria_artemis.md">Ártemis (Licitações &amp; Fiscalização)</option>
+                    <option value="_memoria_atena.md">Atena (Pedagógico)</option>
+                    <option value="_memoria_cronos.md">Cronos (Prazos &amp; Agendas)</option>
+                    <option value="_memoria_dedalo.md">Dédalo (Infra/Backups)</option>
+                    <option value="_memoria_demeter.md">Deméter (Alimentação &amp; Logística)</option>
+                    <option value="_memoria_dionisio.md">Dionísio (Cultura &amp; Eventos)</option>
+                    <option value="_memoria_hades.md">Hades (Auditoria &amp; Acervo)</option>
+                    <option value="_memoria_hefesto.md">Hefesto (Automações DevOps)</option>
+                    <option value="_memoria_helio.md">Hélio (Diário FEMURN)</option>
+                    <option value="_memoria_hera.md">Hera (RH &amp; Permutas)</option>
+                    <option value="_memoria_hermes.md">Hermes (Transporte)</option>
+                    <option value="_memoria_hestia.md">Héstia (Gabinete)</option>
+                    <option value="_memoria_homero.md">Homero (Portarias)</option>
+                    <option value="_memoria_nike.md">Niké (Seletivos PSS)</option>
+                    <option value="_memoria_orfeu.md">Orfeu (Certificados)</option>
+                    <option value="_memoria_poseidon.md">Poseidon (Rede Escolar)</option>
+                    <option value="_memoria_prometeu.md">Prometeu (Fogo de Prometheus)</option>
+                    <option value="_memoria_temis.md">Têmis (Jurídico)</option>
+                    <option value="_memoria_zeus.md">Zeus (Direção Executiva)</option>
+                  </select>
+                  <input type="text" id="quickAlertMessageInput" class="input-clean" style="flex: 1; min-width: min(100%, 180px);" placeholder="Despachar alerta oficial no Correio do Olimpo (Google Docs)..." autocomplete="off" aria-label="Mensagem do Alerta" />
+                  <button id="quickAlertSendBtn" class="btn btn-primary btn-sm">Registrar Recado</button>
+                </div>
+              </div>
+
+              <div id="memoriasGrid" class="memorias-grid">
+                <div class="output-panel">Carregando ecossistema de personas e memórias Google Docs...</div>
+              </div>
+            </div>
+
+            <!-- SUB-ABA 5: AUTOMAÇÕES & NOTIFICAÇÕES -->
+            <div id="subpaneAjustesAutomacoes" class="subtab-pane">
+              <div class="surface-card" style="border: 1px solid var(--border-hairline);">
+                <div class="card-header-row" style="margin-bottom: 12px;">
+                  <div>
+                    <span class="section-eyebrow">BOLETIM DIÁRIO FEMURN • FOGO DE PROMETHEUS</span>
+                    <h3 class="section-title" style="font-size: 1.15rem;">Destinatários do Resumo Executivo por E-mail</h3>
+                    <p class="section-desc" style="margin-bottom: 0;">E-mails institucionais que recebem o briefing matinal às 00:10 BRT com atos da FEMURN e links do Drive (<code>BOLETIM_DESTINATARIOS_EMAIL</code>).</p>
+                  </div>
+                </div>
+                <div class="controls-grid" style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 12px; align-items: end;">
+                  <div class="field-group">
+                    <label for="configBoletimEmailInput">Lista de E-mails (separados por vírgula)</label>
+                    <input type="text" id="configBoletimEmailInput" class="input-clean" placeholder="gabinete@smeb.cearamirim.rn.gov.br, assessoria@smeb.cearamirim.rn.gov.br" />
+                  </div>
+                  <div class="button-group">
+                    <button type="button" id="configSalvarBoletimEmailBtn" class="btn btn-primary btn-sm">Salvar Destinatários</button>
+                    <button type="button" id="configTestarBoletimEmailBtn" class="btn btn-secondary btn-sm">Enviar Teste</button>
+                  </div>
+                </div>
+                <div id="configBoletimEmailFeedback" class="stat-label" style="margin-top: 8px; font-size: 12px;"></div>
+              </div>
+            </div>
+          </div>
+        </section>

@@ -32,17 +32,26 @@ jobs:
         with:
           enablement: true
 
-      - name: 3. Injetar CARTO_API_KEY dos GitHub Secrets no Frontend
-        env:
-          CARTO_API_KEY: ${{ secrets.CARTO_API_KEY }}
-        run: |
-          python3 -c "import os, json, re, pathlib; p = pathlib.Path('2_github_pages_actions/frontend_spa/js/carto_config.js'); k = os.environ.get('CARTO_API_KEY', '').strip(); txt = p.read_text(encoding='utf-8'); (p.write_text(re.sub(r'apiKey:\s*\'[^\']*\'', 'apiKey: ' + json.dumps(k), txt, count=1), encoding='utf-8')) if k else print('CARTO_API_KEY vazia no secret, mantendo chave canonica padrao.')"
+      - name: 3. Configurar Node.js 20 e Cache NPM
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: "2_github_pages_actions/frontend_spa/package.json"
 
-      - name: 4. Empacotar exclusivamente o Frontend Estático
+      - name: 4. Instalar Dependências e Build Vite (Code Splitting)
+        working-directory: "2_github_pages_actions/frontend_spa"
+        env:
+          VITE_CARTO_API_KEY: ${{ secrets.CARTO_API_KEY }}
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+          npm run build
+
+      - name: 5. Empacotar Bundle Otimizado (dist/)
         uses: actions/upload-pages-artifact@v5
         with:
-          path: "2_github_pages_actions/frontend_spa"
+          path: "2_github_pages_actions/frontend_spa/dist"
 
-      - name: 5. Publicar no GitHub Pages
+      - name: 6. Publicar no GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5

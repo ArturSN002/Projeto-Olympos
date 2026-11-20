@@ -1,0 +1,30 @@
+    <!-- MODAL DE TERMO DE SIGILO E LGPD (#termoSigiloModal) -->
+    <div id="termoSigiloModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="termoSigiloTitle">
+      <div class="modal-card" style="max-width: 540px; width: 92%;">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <span class="badge badge-purple" style="font-size: 0.72rem; margin-bottom: 4px;">Conformidade LGPD • SMEB Ceará-Mirim</span>
+            <h3 id="termoSigiloTitle" style="margin: 0; font-size: 1.18rem; font-weight: 700;">Termo de Sigilo e Responsabilidade</h3>
+          </div>
+        </div>
+        <div class="modal-body" style="padding: 20px 24px; max-height: 70vh; overflow-y: auto; font-size: 0.9rem; line-height: 1.55;">
+          <p style="margin-top: 0;">
+            Ao acessar o ambiente autenticado do <strong>Hub Olympos (SMEB)</strong>, comprometo-me a tratar todos os dados pessoais e documentos funcionais em conformidade com a <strong>Lei Geral de Proteção de Dados (Lei nº 13.709/2018)</strong>:
+          </p>
+          <ul style="padding-left: 18px; margin: 10px 0;">
+            <li>Utilizar informações restritas e ações de decifração (<em>Revelar dados sensíveis</em>) exclusivamente para finalidade pública institucional;</li>
+            <li>Não compartilhar credenciais, códigos TOTP ou exportações com terceiros não autorizados;</li>
+            <li>Ciência de que todos os acessos, revelações de PII, edições em memórias e emissões são registrados em trilha de auditoria imutável.</li>
+          </ul>
+          <label style="display: flex; align-items: flex-start; gap: 10px; margin-top: 14px; cursor: pointer;">
+            <input type="checkbox" id="termoSigiloCheckbox" style="margin-top: 3px;" />
+            <span>Li e concordo integralmente com o Termo de Sigilo e Responsabilidade LGPD (Versão 1.0-LGPD-2026).</span>
+          </label>
+          <div id="termoSigiloFeedback" class="pill-badge pill-red hidden" style="margin-top: 12px; display: block;"></div>
+        </div>
+        <div class="modal-footer" style="padding: 14px 24px; border-top: 1px solid var(--border-hairline); display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" id="btnRecusarTermoSigilo" class="btn btn-secondary btn-sm">Sair</button>
+          <button type="button" id="btnAceitarTermoSigilo" class="btn btn-primary btn-sm" disabled>Aceitar Termo e Continuar</button>
+        </div>
+      </div>
+    </div>

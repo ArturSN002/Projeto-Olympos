@@ -7346,3 +7346,70 @@ button.btn-mini:disabled {
   pointer-events: none;
   cursor: not-allowed;
 }
+
+/* ==========================================================================
+   ONDA 0 (V4.0): PERFORMANCE (content-visibility), SKELETON, AUDITORIA E LGPD
+   ========================================================================== */
+.table-wrapper tbody tr,
+.diario-card,
+.persona-card,
+.servidor-card {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 420px;
+}
+
+.table-wrapper tbody tr {
+  contain-intrinsic-size: 0 56px;
+}
+
+.route-skeleton-loader {
+  margin-bottom: 16px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.skeleton-shimmer {
+  border-radius: 8px;
+  background: linear-gradient(
+    90deg,
+    var(--bg-tonal) 25%,
+    rgba(255, 255, 255, 0.08) 50%,
+    var(--bg-tonal) 75%
+  );
+  background-size: 200% 100%;
+  animation: olymposShimmer 1.35s infinite linear;
+}
+
+@keyframes olymposShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.audit-json-diff {
+  margin: 8px 0 0 0;
+  padding: 10px 12px;
+  max-width: 380px;
+  max-height: 220px;
+  overflow: auto;
+  border-radius: 8px;
+  border: 1px solid var(--border-hairline);
+  background: var(--bg-tonal);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+#termoSigiloModal .modal-body ul {
+  padding-left: 20px;
+  margin: 10px 0 14px 0;
+  color: var(--text-secondary);
+}
+
+#termoSigiloModal .modal-body li {
+  margin-bottom: 6px;
+}
+
+#btnRevelarPiiDossie {
+  margin-top: 6px;
+}

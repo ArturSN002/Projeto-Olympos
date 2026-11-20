@@ -84,8 +84,14 @@ window.OlymposRouter = (function() {
       subtitle: 'Acompanhamento das solicitações prioritárias da SMEB organizadas por ordem de chegada e previsão de atendimento no expediente.',
       category: 'atendimento'
     },
+    'auditoria': {
+      eyebrow: 'GOVERNANÇA & LGPD • SOMENTE MODERADOR',
+      title: 'Trilha de Auditoria Imutável (audit_logs).',
+      subtitle: 'Consulta auditada e imutável de acessos a dados pessoais, edições nas 22 memórias Google Docs, numeração Apolo e alterações de papéis RBAC.',
+      category: 'sistema'
+    },
     'configuracoes': {
-      eyebrow: 'INFRAESTRUTURA • DUAL-FRONT GATEWAY',
+      eyebrow: 'INFRAESTRUTURA • CONECTIVIDADE & SEGURANÇA',
       title: 'Conexão, Sessão e Preferências.',
       subtitle: 'Configurações de conectividade, aparência visual do sistema, gestão de usuários e diretrizes operacionais.',
       category: 'sistema'
@@ -94,6 +100,7 @@ window.OlymposRouter = (function() {
 
   let activePage = 'visao-geral';
   let suppressNextHashChange = false;
+  let navSequence = 0;
 
   function init() {
     window.addEventListener('hashchange', function() {
@@ -226,19 +233,37 @@ window.OlymposRouter = (function() {
     document.body.classList.remove('nav-drawer-open');
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    if (pageId === 'portarias') {
-      if (window.OlymposViews && window.OlymposViews.portarias && typeof window.OlymposViews.portarias.alternarSubtab === 'function') {
-        window.OlymposViews.portarias.alternarSubtab(targetSubtab || 'lote');
+    const currentSeq = ++navSequence;
+
+    function ativarPaginaMontada() {
+      if (currentSeq !== navSequence) return;
+
+      document.querySelectorAll('.page-view').forEach(function(view) {
+        const isTarget = view.id === 'page-' + pageId;
+        view.classList.toggle('active', isTarget);
+        view.classList.toggle('hidden', !isTarget);
+      });
+
+      if (pageId === 'portarias') {
+        if (window.OlymposViews && window.OlymposViews.portarias && typeof window.OlymposViews.portarias.alternarSubtab === 'function') {
+          window.OlymposViews.portarias.alternarSubtab(targetSubtab || 'lote');
+        }
       }
+
+      if (pageId === 'configuracoes') {
+        if (window.OlymposViews && window.OlymposViews.configuracoes && typeof window.OlymposViews.configuracoes.init === 'function') {
+          window.OlymposViews.configuracoes.init(targetSubtab || 'conexao');
+        }
+      }
+
+      dispararCarregamentoPagina(pageId);
     }
 
-    if (pageId === 'configuracoes') {
-      if (window.OlymposViews && window.OlymposViews.configuracoes && typeof window.OlymposViews.configuracoes.init === 'function') {
-        window.OlymposViews.configuracoes.init(targetSubtab || 'conexao');
-      }
+    if (window.OlymposRouteLoader && typeof window.OlymposRouteLoader.loadRoute === 'function') {
+      window.OlymposRouteLoader.loadRoute(pageId).then(ativarPaginaMontada);
+    } else {
+      ativarPaginaMontada();
     }
-
-    dispararCarregamentoPagina(pageId);
   }
 
   function dispararCarregamentoPagina(pageId) {
@@ -258,6 +283,7 @@ window.OlymposRouter = (function() {
       'personas': 'personas',
       'busca': 'busca',
       'chamados': 'chamados',
+      'auditoria': 'auditoria',
       'configuracoes': 'configuracoes'
     };
     const key = map[pageId];

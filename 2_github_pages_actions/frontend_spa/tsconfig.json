@@ -2,7 +2,8 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
+    "moduleDetection": "force",
     "strict": true,
     "noImplicitAny": true,
     "esModuleInterop": true,
@@ -10,11 +11,12 @@
     "forceConsistentCasingInFileNames": true,
     "allowJs": true,
     "checkJs": false,
+    "types": ["vite/client", "node"],
     "lib": ["DOM", "DOM.Iterable", "ES2022"]
   },
   "include": [
-    "src/**/*",
-    "js/**/*"
+    "vite.config.ts",
+    "src/**/*"
   ],
   "exclude": [
     "node_modules",

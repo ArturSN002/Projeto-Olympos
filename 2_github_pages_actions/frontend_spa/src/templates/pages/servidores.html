@@ -1,0 +1,167 @@
+        <section class="page-view hidden" id="page-servidores">
+          <div class="surface-card">
+            <!-- CABEÇALHO DO CARD -->
+            <div class="card-header-row">
+              <div>
+                <span class="section-eyebrow">DOSSIÊ FUNCIONAL MULTIRREDE • BASE CONSOLIDADA</span>
+                <h2 class="section-title">Consulta Integrada de Servidores Públicos</h2>
+                <p class="section-desc">Consulte vínculos funcionais ativos, carga horária semanal acumulada, lotação e auditoria constitucional (CF/88 Art. 37, XVI) dos 5 entes monitorados.</p>
+              </div>
+              <div class="button-group">
+                <button type="button" id="btnExportarServidoresCsv" class="btn btn-secondary btn-sm" title="Exportar resultado filtrado em CSV">
+                  <span class="svg-icon-inline" data-icon="download"></span> <span>Exportar CSV</span>
+                </button>
+                <button type="button" id="btnExportarServidoresJson" class="btn btn-secondary btn-sm" title="Exportar catálogo em JSON">
+                  <span class="svg-icon-inline" data-icon="download"></span> <span>Exportar JSON</span>
+                </button>
+                <button type="button" id="btnImprimirServidores" class="btn btn-ghost btn-sm" title="Imprimir listagem filtrada">
+                  <span class="svg-icon-inline" data-icon="printer"></span> <span>Imprimir</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- CARDS DE KPIS / CONTADORES -->
+            <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin: 16px 0 20px 0;">
+              <div class="stat-card">
+                <div class="stat-top">
+                  <span class="stat-label">Total no Acervo</span>
+                  <span class="pill-badge pill-gold" id="kpiServidoresTotalBadge">16 Entes</span>
+                </div>
+                <div class="stat-value" id="kpiServidoresTotal">--</div>
+                <div class="stat-meta">Servidores públicos cadastrados</div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-top">
+                  <span class="stat-label">Redes Municipais</span>
+                  <span class="pill-badge pill-green">SME / SEMEC</span>
+                </div>
+                <div class="stat-value" id="kpiServidoresMunicipais">--</div>
+                <div class="stat-meta">Ceará-Mirim, Natal, Parnamirim, SGA e demais municípios</div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-top">
+                  <span class="stat-label">Rede Estadual</span>
+                  <span class="pill-badge pill-blue">SEEC / RN</span>
+                </div>
+                <div class="stat-value" id="kpiServidoresEstaduais">--</div>
+                <div class="stat-meta">Governo do Estado do RN</div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-top">
+                  <span class="stat-label">Auditoria Constitucional</span>
+                  <span class="pill-badge pill-amber">CF/88 Art. 37</span>
+                </div>
+                <div class="stat-value" id="kpiServidoresMultiplos">--</div>
+                <div class="stat-meta">Servidores com múltiplos vínculos</div>
+              </div>
+            </div>
+
+            <!-- TOOLBAR DE BUSCA E FILTROS DINÂMICOS -->
+            <div class="servidor-filter-toolbar" style="background: var(--bg-tonal); padding: 16px; border-radius: var(--radius-md, 12px); border: 1px solid var(--border-hairline); margin-bottom: 20px;">
+              <!-- LINHA 1: BARRA DE BUSCA RÁPIDA -->
+              <div class="servidores-search-row" style="display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap;">
+                <div style="flex: 1 1 300px; position: relative;">
+                  <input type="search" id="servidorBuscaInput" class="input-clean" placeholder="Digite nome, matrícula, cargo ou escola..." style="width: 100%; padding-left: 36px;" />
+                  <span class="svg-icon-inline" data-icon="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 15px; color: var(--text-muted); pointer-events: none;"></span>
+                </div>
+                <div class="button-group" style="align-items: center;">
+                  <button type="button" id="btnLimparBuscaServidores" class="btn btn-secondary btn-sm hidden"><span class="svg-icon-inline" data-icon="close"></span> Limpar</button>
+                </div>
+              </div>
+
+              <!-- LINHA 2: GRID RESPONSIVO DE FILTROS EM DROPDOWNS MODERNOS -->
+              <div class="servidor-selects-grid">
+                <div class="filter-select-field">
+                  <label for="filtroEnteSelect" class="filter-select-label"><span class="svg-icon-inline" data-icon="olymposLogo"></span> Ente Federativo</label>
+                  <select id="filtroEnteSelect" class="input-clean filter-select-modern" data-filtro-select="ente" title="Filtrar por Ente Público">
+                    <option value="todos" data-filtro-ente="todos" selected>Todos os Entes (16 Entes Federativos)</option>
+                    <option value="ceara-mirim" data-filtro-ente="ceara-mirim">Ceará-Mirim (SMEB)</option>
+                    <option value="governo-rn" data-filtro-ente="governo-rn">Governo do RN (SEEC)</option>
+                    <option value="natal" data-filtro-ente="natal">Natal (SME)</option>
+                    <option value="parnamirim" data-filtro-ente="parnamirim">Parnamirim (SEMEC)</option>
+                    <option value="sga" data-filtro-ente="sga">São Gonçalo do Amarante</option>
+                    <option value="macaiba" data-filtro-ente="macaiba">Macaíba</option>
+                    <option value="extremoz" data-filtro-ente="extremoz">Extremoz</option>
+                    <option value="nisia-floresta" data-filtro-ente="nisia-floresta">Nísia Floresta</option>
+                    <option value="touros" data-filtro-ente="touros">Touros</option>
+                    <option value="monte-alegre" data-filtro-ente="monte-alegre">Monte Alegre</option>
+                    <option value="joao-camara" data-filtro-ente="joao-camara">João Câmara</option>
+                    <option value="poco-branco" data-filtro-ente="poco-branco">Poço Branco</option>
+                    <option value="ielmo-marinho" data-filtro-ente="ielmo-marinho">Ielmo Marinho</option>
+                    <option value="sao-paulo-potengi" data-filtro-ente="sao-paulo-potengi">São Paulo do Potengi</option>
+                    <option value="taipu" data-filtro-ente="taipu">Taipú</option>
+                    <option value="rio-do-fogo" data-filtro-ente="rio-do-fogo">Rio do Fogo</option>
+                  </select>
+                </div>
+
+                <div class="filter-select-field">
+                  <label for="filtroQuadroSelect" class="filter-select-label"><span class="svg-icon-inline" data-icon="clipboard"></span> Quadro Funcional</label>
+                  <select id="filtroQuadroSelect" class="input-clean filter-select-modern" data-filtro-select="cargo" title="Filtrar por Quadro Funcional">
+                    <option value="todos" data-filtro-cargo="todos" selected>Todos os Quadros</option>
+                    <option value="docente" data-filtro-cargo="docente">Docente / Professor</option>
+                    <option value="gestao" data-filtro-cargo="gestao">Gestão Escolar</option>
+                    <option value="tecnico" data-filtro-cargo="tecnico">Técnico / Especialista</option>
+                    <option value="administrativo" data-filtro-cargo="administrativo">Administrativo</option>
+                    <option value="apoio" data-filtro-cargo="apoio">Apoio / Operacional</option>
+                  </select>
+                </div>
+
+                <div class="filter-select-field">
+                  <label for="filtroRegimeSelect" class="filter-select-label"><span class="svg-icon-inline" data-icon="papyrusOfCadmus"></span> Regime Jurídico</label>
+                  <select id="filtroRegimeSelect" class="input-clean filter-select-modern" data-filtro-select="regime" title="Filtrar por Regime Jurídico">
+                    <option value="todos" data-filtro-regime="todos" selected>Todos os Regimes</option>
+                    <option value="efetivo" data-filtro-regime="efetivo">Efetivo / Estatutário</option>
+                    <option value="comissionado" data-filtro-regime="comissionado">Comissionado</option>
+                    <option value="temporario" data-filtro-regime="temporario">Temporário / Contrato</option>
+                  </select>
+                </div>
+
+                <div class="filter-select-field">
+                  <label for="filtroVinculosSelect" class="filter-select-label"><span class="svg-icon-inline" data-icon="shieldOfThemis"></span> Vínculos / CF/88</label>
+                  <select id="filtroVinculosSelect" class="input-clean filter-select-modern" data-filtro-select="vinculos" title="Filtrar por Auditoria CF/88">
+                    <option value="todos" data-filtro-vinculos="todos" selected>Todos os Vínculos</option>
+                    <option value="unico" data-filtro-vinculos="unico">Vínculo Único</option>
+                    <option value="duplo" data-filtro-vinculos="duplo">Acúmulo Lícito (≤ 60h)</option>
+                    <option value="alerta" data-filtro-vinculos="alerta">Alerta CF/88 (> 60h)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- CONTAGEM DE RESULTADOS E STATUS -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+              <span id="servidoresContagemStatus" style="font-size: 13px; font-weight: 600; color: var(--text-secondary);">Carregando quadro de servidores...</span>
+              <div id="servidoresPaginacaoTopo" class="pagination-controls" style="display: flex; gap: 6px; align-items: center;"></div>
+            </div>
+
+            <!-- VISUALIZAÇÃO EM TABELA SINTÉTICA -->
+            <div id="servidoresContainerTabela" class="table-wrapper table-responsive">
+              <table class="clean-table table-responsive-cards" id="tabelaServidoresGeral">
+                <thead>
+                  <tr>
+                    <th>Servidor(a)</th>
+                    <th style="width: 140px;">Matrícula(s)</th>
+                    <th style="width: 160px;">Ente(s)</th>
+                    <th>Cargo Principal</th>
+                    <th style="width: 130px;">Ref. Transparência</th>
+                    <th>Lotação Principal</th>
+                    <th style="width: 130px;">Auditoria CF/88</th>
+                    <th class="text-right" style="width: 110px;">Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="tabelaServidoresGeralBody">
+                  <tr><td colspan="8" class="text-muted text-center" style="padding: 24px;">Carregando servidores...</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- CONTROLES DE PAGINAÇÃO INFERIOR -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border-hairline); flex-wrap: wrap; gap: 10px;">
+              <span id="servidoresInfoPaginacao" style="font-size: 12px; color: var(--text-muted);">Página 1 de 1</span>
+              <div id="servidoresPaginacaoRodape" class="pagination-controls" style="display: flex; gap: 6px; align-items: center;"></div>
+            </div>
+          </div>
+        </section>

@@ -1,0 +1,457 @@
+        <section class="page-view hidden" id="page-papiro-cadmo">
+          <div class="surface-card">
+            <div class="card-header-row">
+              <div>
+                <span class="section-eyebrow">GOVERNANÇA INTERMUNICIPAL • 16 ENTES MONITORADOS</span>
+                <h2 class="section-title">O Papiro de Cadmo — Coletor Mensal de Servidores (RN)</h2>
+                <p class="section-desc">Levantamento atualizado dos quadros de pessoal para acompanhamento de servidores cedidos e em permuta entre Ceará-Mirim, 14 municípios potiguares e SEEC/RN.</p>
+              </div>
+              <div class="button-group">
+                <a href="https://drive.google.com/drive/folders/1dcc_5GcNG0ciVE-i1J6iwtojATk-1utD" target="_blank" rel="noopener" class="folder-chip">
+                  Pasta Setor Pessoal (CSVs) ↗
+                </a>
+                <a href="https://docs.google.com/spreadsheets/d/1fOZHe871yxu6UdF0vsRzjSzQBc7AVFRZZtx3JSCdwCY/edit" target="_blank" rel="noopener" class="folder-chip">
+                  Matriz Oficial de Permutas ↗
+                </a>
+                <a href="https://drive.google.com/drive/folders/1SDBCXU3LjI0Qnf6E6O6SLqRjctHz70k0" target="_blank" rel="noopener" class="folder-chip folder-chip-indigo">
+                  <span class="svg-icon-inline" data-icon="folderDrive"></span> Pasta de Permutas (Drive) <span class="external-arrow">↗</span>
+                </a>
+                <button id="cadmoTriggerEtlBtn" class="btn btn-primary btn-sm">Atualizar Dados de Servidores</button>
+              </div>
+            </div>
+
+            <div class="architecture-banner">
+              <div class="arch-front-col">
+                <span class="pill-badge pill-gold" style="align-self: flex-start;">ÚLTIMA COMPETÊNCIA CONSOLIDADA</span>
+                <strong style="font-size: 15px;" id="cadmoLastCompetencia">Verificando acervo no Drive...</strong>
+                <span style="font-size: 12.5px; color: var(--text-secondary);" id="cadmoLastUploadMeta">Consumo direto por Cadmo (busca cadastral) e Hera (auditoria de permutas).</span>
+              </div>
+              <div class="arch-front-col" id="cadmoEsquemaCanonicoCol" style="display: none !important;">
+                <span class="pill-badge pill-blue" style="align-self: flex-start;">PADRÃO UNIFICADO DE CADASTRO FUNCIONAL</span>
+                <div class="schema-chips-row">
+                  <span class="schema-chip">ente_origem</span>
+                  <span class="schema-chip">competencia</span>
+                  <span class="schema-chip">matricula</span>
+                  <span class="schema-chip">nome_completo</span>
+                  <span class="schema-chip">cargo_funcao</span>
+                  <span class="schema-chip">carga_horaria</span>
+                  <span class="schema-chip">lotacao_orgao</span>
+                  <span class="schema-chip">situacao_vinculo</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- BASES CSV CONSOLIDADAS NO GOOGLE DRIVE -->
+            <div id="cadmoCsvFilesSection" style="margin-bottom: 24px;">
+              <strong style="font-family: var(--font-display); font-size: 15px; display: block; margin-bottom: 10px;">Arquivos Consolidados Disponíveis no Google Drive</strong>
+              <div id="cadmoCsvFilesList" class="output-panel">Consultando pasta do Setor Pessoal...</div>
+            </div>
+
+            <div class="cadmo-portais-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;">
+              <strong style="font-family: var(--font-display); font-size: 15px; color: var(--text-main);">Portais da Transparência Monitorados</strong>
+              <input type="search" id="cadmoPortalFilterInput" class="input-clean" style="flex: 1 1 200px; max-width: 100%; padding: 7px 12px; font-size: 13px;" placeholder="Filtrar município ou tecnologia..." aria-label="Filtrar município ou tecnologia" />
+            </div>
+
+            <div id="cadmoPortaisGrid" class="controls-grid cadmo-portais-grid" style="grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px;"></div>
+          </div>
+
+          <!-- =========================================================================
+               PAINEL GEORREFERENCIADO DE PERMUTAS (CADMO & HERA)
+               ========================================================================= -->
+          <div id="painelPermutasCadmo" class="surface-card cadmo-permutas-panel" style="margin-top: 24px; border: 1px solid var(--border-hairline);">
+            <div class="card-header-row">
+              <div>
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                  <span class="section-eyebrow">INTELIGÊNCIA GEORREFERENCIADA • PERSONA HERA</span>
+                  <span class="selo-hera-badge" title="Algoritmo de Matching e Parecer Funcional Hera"><span class="svg-icon-inline" data-icon="boltZeus"></span> Selo Hera</span>
+                </div>
+                <h3 class="section-title" style="font-size: 1.28rem; margin: 0 0 6px 0;">Painel de Permutas Docentes Intermunicipais</h3>
+                <p class="section-desc" style="margin: 0;">Mapeamento georreferenciado interativo das unidades escolares da SMEB de Ceará-Mirim e polos metropolitanos parceiros (Natal ZN/ZS, Extremoz, São Gonçalo do Amarante e Macaíba) com motor de compatibilidade automática da persona Hera.</p>
+              </div>
+              <div class="button-group">
+                <button type="button" id="btnAlternarFormPermuta" class="btn btn-secondary btn-sm" aria-expanded="false">
+                  <span class="svg-icon-inline" data-icon="edit"></span> <span>Intenção de Permuta</span>
+                </button>
+                <button type="button" id="btnCarregarCsvTransparencia" class="btn btn-secondary btn-sm" title="Carregar planilha CSV de servidores da transparência">
+                  <span class="svg-icon-inline" data-icon="folderDrive"></span> <span>Carregar Planilha CSV</span>
+                </button>
+                <input type="file" id="cadmoUploadCsvInput" accept=".csv" style="display: none;" />
+                <button type="button" id="btnRecalcularMatchesHera" class="btn btn-primary btn-sm">
+                  <span class="svg-icon-inline" data-icon="boltZeus"></span> <span>Recalcular Matching (Hera)</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- STATUS DA BASE DE REFERÊNCIA DA TRANSPARÊNCIA -->
+            <div id="cadmoStatusTransparencia" style="margin: 14px 0; padding: 10px 16px; background: var(--bg-tonal); border: 1px solid var(--border-hairline); border-radius: var(--radius-md, 12px); display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; flex-wrap: wrap; gap: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10B981;"></span>
+                <strong style="color: var(--text-main);">Base de Referência Transparência:</strong>
+                <span id="cadmoBadgeBaseRef" style="color: var(--text-secondary);">Ceará-Mirim (4.182 servidores • 890 docentes ativos com matrícula de 7 dígitos)</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px; font-size: 11.5px; color: var(--text-muted); flex-wrap: wrap;">
+                <span><span class="svg-icon-inline" data-icon="olymposLogo"></span> Cruzamento CF/88 Art. 37, XVI Ativo</span>
+                <span><span class="svg-icon-inline" data-icon="shieldOfThemis"></span> Teto Máx: 60h</span>
+                <button type="button" id="btnSincronizarCadmoServidores" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 3px 10px; margin-left: 8px;" title="Sincronizar base de servidores com o catálogo unificado Olympos" onclick="window.OlymposViews.papiroCadmo.sincronizarServidores(true)">
+                  <span class="svg-icon-inline" data-icon="refresh"></span> <span>Sincronizar Servidores</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- CONTÊINER DO MAPA INTERATIVO (LEAFLET.JS) - COLAPSÁVEL -->
+            <div class="cadmo-map-outer" style="margin: 18px 0; border: 1px solid var(--border-hairline); border-radius: var(--radius-lg, 16px); overflow: hidden; background: var(--bg-surface); box-shadow: var(--shadow-subtle);">
+              <div id="cadmoMapCollapsibleHeader" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; background: var(--bg-tonal); border-bottom: 1px solid var(--border-hairline); font-size: 12.5px; cursor: pointer; user-select: none;">
+                <span style="font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;">
+                  <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10B981;"></span>
+                  <span class="svg-icon-inline" data-icon="compass"></span> Mapa Interativo de Polos &amp; Escolas Polo — Ceará-Mirim &amp; Grande Natal
+                </span>
+                <div style="display: flex; gap: 14px; font-size: 11.5px; color: var(--text-muted); align-items: center; flex-wrap: wrap;">
+                  <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #D4AF37;"></span> SMEB Sede</span>
+                  <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #38BDF8;"></span> Escolas Ceará-Mirim</span>
+                  <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10B981;"></span> Polos Parceiros</span>
+                  <button type="button" id="btnGerenciarSecretarias" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 2px 8px; margin-left: 6px;" title="Gerenciar secretarias municipais parceiras" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE">
+                    <span class="svg-icon-inline" data-icon="olymposLogo"></span> <span>Secretarias Parceiras</span>
+                  </button>
+                  <button type="button" id="btnToggleMapaCadmo" class="btn btn-ghost btn-sm" style="font-size: 11px; padding: 2px 8px; display: inline-flex; align-items: center; gap: 4px;">
+                    <span id="mapaCadmoToggleLabel">Expandir Mapa</span>
+                    <span id="mapaCadmoChevronIcon" class="svg-icon-inline" data-icon="chevronDown"></span>
+                  </button>
+                </div>
+              </div>
+              <div id="cadmoMapCollapsibleBody" class="hera-collapsible-body is-collapsed" style="display: none;">
+                <div id="mapaPermutasCadmo" style="height: 420px; width: 100%; border-radius: 0; position: relative; z-index: 1;"></div>
+              </div>
+            </div>
+
+            <!-- SELETOR DE MODO OPERACIONAL: CONSULTA DE SERVIDOR (PADRÃO) OU INTENÇÃO DE PERMUTA -->
+            <div class="permuta-mode-switcher" id="permutaModoSwitcher" role="tablist" aria-label="Modo de operação em Permutas">
+              <button type="button" id="btnModoConsultaServidor" class="permuta-mode-tab active" role="tab" aria-selected="true" aria-controls="painelConsultaServidorCadmo">
+                <span class="svg-icon-inline" data-icon="search"></span> Consultar Servidor (Nome ou Matrícula)
+              </button>
+              <button type="button" id="btnModoIntencaoPermuta" class="permuta-mode-tab" role="tab" aria-selected="false" aria-controls="wrapperFormPermuta">
+                <span class="svg-icon-inline" data-icon="edit"></span> Registrar Intenção de Permuta
+              </button>
+            </div>
+
+            <!-- SEÇÃO DE CONSULTA DE SERVIDOR POR NOME OU MATRÍCULA (SUBSTITUI INTENÇÃO DE PERMUTA POR PADRÃO) -->
+            <div id="painelConsultaServidorCadmo" class="servidor-lookup-panel" role="tabpanel" aria-labelledby="btnModoConsultaServidor">
+              <div class="servidor-lookup-header">
+                <div>
+                  <span class="section-eyebrow">DOSSIÊ FUNCIONAL MULTIRREDE • CADMO &amp; HERA</span>
+                  <h4 class="servidor-lookup-title">Buscar Informações de Servidor por Nome ou Matrícula</h4>
+                  <p class="servidor-lookup-desc">Consulte vínculos ativos na SMEB Ceará-Mirim, Governo do Estado (SEEC/RN), acúmulos constitucionais (CF/88 Art. 37, XVI) e intenções de permuta registradas.</p>
+                </div>
+                <span id="badgeStatusConsultaServidor" class="pill-badge pill-gold">Pronto para consulta</span>
+              </div>
+
+              <form id="formConsultaServidorCadmo" class="servidor-lookup-searchbar" autocomplete="off">
+                <div class="servidor-lookup-input-wrap">
+                  <label for="consultaServidorInput" class="sr-only">Nome completo ou matrícula funcional do servidor</label>
+                  <input type="text" id="consultaServidorInput" list="listaServidoresCearaMirim" class="input-clean" placeholder="Digite o nome do(a) servidor(a) ou matrícula..." autocomplete="off" />
+                </div>
+                <div class="button-group">
+                  <button type="submit" id="btnExecutarConsultaServidor" class="btn btn-primary btn-sm">
+                    <span class="svg-icon-inline" data-icon="search"></span> <span>Buscar Servidor</span>
+                  </button>
+                  <button type="button" id="btnLimparConsultaServidor" class="btn btn-secondary btn-sm hidden">
+                    <span>Limpar</span>
+                  </button>
+                </div>
+              </form>
+
+              <div id="resultadoConsultaServidorCadmo" class="servidor-lookup-results">
+                <div class="servidor-lookup-empty">
+                  <span class="svg-icon-inline" data-icon="lightbulb"></span> <span>Informe o <strong>nome</strong> (completo ou parcial) ou a <strong>matrícula funcional</strong> acima para exibir a ficha consolidada de vínculos, carga horária acumulada, lotação escolar e compatibilidade de permuta.</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- FORMULÁRIO DE INTENÇÃO DE PERMUTA (ALTERNÁVEL SOB DEMANDA) -->
+            <div id="wrapperFormPermuta" class="hidden" style="margin-bottom: 24px;" role="tabpanel" aria-labelledby="btnModoIntencaoPermuta">
+              <form id="formPermutaCadmo" class="controls-grid permuta-form-grid" style="grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; padding: 18px; background: var(--bg-surface); border-radius: var(--radius-md, 12px); border: 1px solid var(--border-hairline);">
+                <div class="field-group">
+                  <label for="permutaNome">Nome do(a) Servidor(a)</label>
+                  <input type="text" id="permutaNome" name="permutaNome" list="listaServidoresCearaMirim" class="input-clean" placeholder="Digite ou selecione o professor(a)..." required autocomplete="off" />
+                  <datalist id="listaServidoresCearaMirim"></datalist>
+                </div>
+                <div class="field-group">
+                  <label for="permutaMatricula">Matrícula Funcional</label>
+                  <input type="text" id="permutaMatricula" name="permutaMatricula" class="input-clean" placeholder="Ex: 0010016 (7 dígitos)" required />
+                </div>
+                <div class="field-group">
+                  <label for="permutaCargo">Cargo / Função</label>
+                  <select id="permutaCargo" name="permutaCargo" class="input-clean" required>
+                    <option value="Professor dos Anos Iniciais">Professor dos Anos Iniciais (1º ao 5º)</option>
+                    <option value="Professor de Educação Infantil">Professor de Educação Infantil</option>
+                    <option value="Professor dos Anos Finais">Professor dos Anos Finais (6º ao 9º)</option>
+                    <option value="Especialista em Educação">Especialista em Educação / Pedagogo</option>
+                    <option value="Assistente de Apoio Pedagógico">Assistente de Apoio Pedagógico</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label for="permutaDisciplina">Disciplina / Habilitação</label>
+                  <select id="permutaDisciplina" name="permutaDisciplina" class="input-clean" required>
+                    <option value="Polivalente / Pedagogia">Polivalente / Pedagogia</option>
+                    <option value="Língua Portuguesa">Língua Portuguesa</option>
+                    <option value="Matemática">Matemática</option>
+                    <option value="História">História</option>
+                    <option value="Geografia">Geografia</option>
+                    <option value="Ciências Biológicas">Ciências Biológicas</option>
+                    <option value="Língua Inglesa">Língua Inglesa</option>
+                    <option value="Educação Física">Educação Física</option>
+                    <option value="Artes">Artes</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label for="permutaCargaHoraria">Carga Horária Semanal</label>
+                  <select id="permutaCargaHoraria" name="permutaCargaHoraria" class="input-clean" required>
+                    <option value="30h">30h Semanais (Padrão SMEB)</option>
+                    <option value="25h">25h Semanais</option>
+                    <option value="20h">20h Semanais</option>
+                    <option value="40h">40h Semanais (Dedicação Exclusiva)</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label for="permutaTurno">Turno de Lotação / Preferência</label>
+                  <select id="permutaTurno" name="permutaTurno" class="input-clean" required>
+                    <option value="Matutino">Matutino</option>
+                    <option value="Vespertino">Vespertino</option>
+                    <option value="Noturno">Noturno</option>
+                    <option value="Integral">Integral</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label for="permutaEscolaOrigem">Polo / Escola de Origem</label>
+                  <select id="permutaEscolaOrigem" name="permutaEscolaOrigem" class="input-clean" required>
+                    <optgroup label="Ceará-Mirim — SMEB (Sede &amp; Escolas Polo)">
+                      <option value="E. M. Alice Garcia Freire (Ceará-Mirim)">E. M. Alice Garcia Freire (Ceará-Mirim)</option>
+                      <option value="E. M. Prefeito Roberto Varela (Ceará-Mirim)">E. M. Prefeito Roberto Varela (Ceará-Mirim)</option>
+                      <option value="E. M. Augusto Severo (Ceará-Mirim)">E. M. Augusto Severo (Ceará-Mirim)</option>
+                      <option value="E. M. Monsenhor Celso Cicco (Ceará-Mirim)">E. M. Monsenhor Celso Cicco (Ceará-Mirim)</option>
+                      <option value="E. M. Dr. Júlio Senna (Gravatá - Ceará-Mirim)">E. M. Dr. Júlio Senna (Gravatá - Ceará-Mirim)</option>
+                      <option value="E. M. Barão de Ceará-Mirim">E. M. Barão de Ceará-Mirim</option>
+                      <option value="E. M. Madalena Antunes (Massangana - Ceará-Mirim)">E. M. Madalena Antunes (Massangana - Ceará-Mirim)</option>
+                      <option value="SMEB Sede (Ceará-Mirim)">SMEB Sede (Ceará-Mirim)</option>
+                    </optgroup>
+                    <optgroup label="Polos Parceiros Metropolitanos">
+                      <option value="Polo Natal (Zona Norte - SME)">Polo Natal (Zona Norte - SME)</option>
+                      <option value="Polo Natal (Zona Sul / Centro - SME)">Polo Natal (Zona Sul / Centro - SME)</option>
+                      <option value="Polo Extremoz (SME Centro)">Polo Extremoz (SME Centro)</option>
+                      <option value="Polo São Gonçalo do Amarante (SME Centro)">Polo São Gonçalo do Amarante (SME Centro)</option>
+                      <option value="Polo Macaíba (SME Centro)">Polo Macaíba (SME Centro)</option>
+                    </optgroup>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label for="permutaPoloDestino">Polo / Cidade de Destino Desejada</label>
+                  <select id="permutaPoloDestino" name="permutaPoloDestino" class="input-clean" required>
+                    <option value="Ceará-Mirim">Ceará-Mirim (Rede Municipal SMEB)</option>
+                    <option value="Natal">Natal (SME Natal / Zona Norte &amp; Sul)</option>
+                    <option value="Extremoz">Extremoz (SME Extremoz)</option>
+                    <option value="São Gonçalo do Amarante">São Gonçalo do Amarante (SME SGA)</option>
+                    <option value="Macaíba">Macaíba (SME Macaíba)</option>
+                  </select>
+                </div>
+                <div class="field-group" style="grid-column: 1 / -1; display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-top: 4px;">
+                  <button type="button" id="btnLimparFormPermuta" class="btn btn-secondary btn-sm">Limpar</button>
+                  <button type="submit" id="btnSalvarIntencaoPermuta" class="btn btn-primary btn-sm">
+                    <span>Gravar Intenção de Permuta</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- =========================================================================
+                 SEÇÃO DEDICADA E SEMPRE VISÍVEL: FUNCIONÁRIOS EM PERMUTAS ATIVAS (SMEB)
+                 ========================================================================= -->
+            <div id="secaoPermutasAtivasCadmo" class="surface-card permutas-vigentes-card" style="margin-top: 24px; border: 1px solid var(--border-hairline);">
+              <div class="card-header-row">
+                <div>
+                  <span class="section-eyebrow">CONTROLE MUNICIPAL • 160 SERVIDORES EM PERMUTA</span>
+                  <h3 class="section-title" style="font-size: 1.28rem; margin: 0 0 6px 0;">Funcionários em Permutas Ativas — Controle Municipal (SMEB)</h3>
+                  <p class="section-desc" style="margin: 0;">Levantamento oficial consolidado dos servidores cedidos por Ceará-Mirim e recebidos na rede municipal em cooperação técnica com 14 entes parceiros (SEEC/RN e 13 municípios).</p>
+                </div>
+                <div class="button-group">
+                  <span id="badgeTotalMatches" class="pill-badge pill-gold" style="font-size: 11px;">160 servidores em permuta ativa</span>
+                  <span id="heraMatchPreviewPill" class="pill-badge pill-green hidden" style="font-size: 10.5px;"></span>
+                  <a href="https://drive.google.com/drive/folders/1SDBCXU3LjI0Qnf6E6O6SLqRjctHz70k0" target="_blank" rel="noopener" class="folder-chip folder-chip-indigo">
+                    <span class="svg-icon-inline" data-icon="folderDrive"></span> <span>Pasta de Permutas (Drive)</span> <span class="external-arrow">↗</span>
+                  </a>
+                  <button type="button" id="btnExportarPermutasVigentesTopo" class="btn btn-secondary btn-sm" onclick="window.OlymposViews.papiroCadmo.exportarPermutasVigentesCsv()">
+                    <span class="svg-icon-inline" data-icon="download"></span> <span>Exportar CSV</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Toolbar de Busca e Abas (Preservando 100% dos IDs exigidos por testes) -->
+              <div class="cadmo-toolbar-filtros" style="display: flex; flex-direction: column; gap: 12px; margin-top: 16px; margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                  <!-- Campo de Busca em Tempo Real -->
+                  <div class="cadmo-search-wrap" style="position: relative; flex: 1; min-width: 240px; max-width: 520px;">
+                    <span class="svg-icon-inline" data-icon="search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--text-muted); pointer-events: none;" aria-hidden="true"></span>
+                    <input type="search" id="cadmoBuscaServidorInput" class="input-clean" style="padding-left: 34px; padding-right: 32px; font-size: 13px; width: 100%; border-radius: var(--radius-md, 8px);" placeholder="Buscar servidor por nome, matrícula funcional (ex: 2405221-1 ou 184920-1), cargo ou município..." autocomplete="off" aria-label="Buscar servidor por nome, matrícula, cargo, escola ou município" />
+                    <button type="button" id="btnLimparBuscaServidor" class="icon-btn-sm hidden" title="Limpar busca" aria-label="Limpar busca"><span class="svg-icon-inline" data-icon="close"></span></button>
+                  </div>
+
+                  <!-- Abas de Visualização (Permutas Recíprocas, Acúmulos CF/88 e Base Geral) -->
+                  <div class="cadmo-tabs-group">
+                    <button type="button" id="tabAbaPermutasVigentes" class="btn btn-secondary btn-sm active" style="font-size: 12px; font-weight: 600;">
+                      <span class="svg-icon-inline" data-icon="refresh"></span> <span>Em Permuta Ativa (160)</span>
+                    </button>
+                    <button type="button" id="tabAbaPermutas" class="btn btn-secondary btn-sm" style="font-size: 12px; font-weight: 600;">
+                      <span class="svg-icon-inline" data-icon="users"></span> <span>Permutas Recíprocas (Hera)</span>
+                    </button>
+                    <button type="button" id="tabAbaVinculos" class="btn btn-secondary btn-sm" style="font-size: 12px; font-weight: 600;">
+                      <span class="svg-icon-inline" data-icon="olymposLogo"></span> <span>Cruzamento de Vínculos (CF Art. 37)</span>
+                    </button>
+                    <button type="button" id="tabAbaDocentesGeral" class="btn btn-secondary btn-sm" style="font-size: 12px; font-weight: 600;">
+                      <span class="svg-icon-inline" data-icon="clipboard"></span> <span>Base 890 Docentes</span>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Resumo da Pesquisa Ativa -->
+                <div id="cadmoResumoBuscaRow" class="hidden" style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding: 6px 12px; background: var(--bg-tonal); border-radius: var(--radius-sm, 6px); border: 1px solid var(--border-hairline);">
+                  <span id="cadmoResumoBuscaTexto" style="color: var(--text-secondary);">Exibindo resultados filtrados</span>
+                  <button type="button" id="btnRemoverFiltroPesquisa" class="btn btn-ghost btn-sm" style="font-size: 11px; padding: 2px 8px; color: var(--accent-gold);">Restaurar todos</button>
+                </div>
+              </div>
+
+              <!-- CONTÊINER PRINCIPAL DE RESULTADOS: SEMPRE VISÍVEL -->
+              <div id="resultadoMatchingHera" class="resultado-matching-container" style="min-height: 200px; padding-right: 4px;">
+                <!-- Tabela ou Cards de Matching Injetados via JS -->
+              </div>
+            </div>
+
+            <!-- PAINEL AUXILIAR COLAPSÁVEL: AUDITORIA FUNCIONAL & ALGORITMO HERA -->
+            <div id="heraMatchingCollapsibleCard" class="surface-card hera-collapsible-card" style="margin-top: 20px; border: 1px solid var(--border-hairline); border-radius: var(--radius-lg, 16px); overflow: hidden; background: var(--bg-surface); box-shadow: var(--shadow-subtle);">
+              <!-- CABEÇALHO / TRIGGER DO DROPDOWN COLAPSÁVEL -->
+              <div id="heraCollapsibleHeader" class="hera-collapsible-header" role="button" tabindex="0" aria-expanded="false" aria-controls="heraCollapsibleBody" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; background: var(--bg-tonal); cursor: pointer; user-select: none; border-bottom: 1px solid var(--border-hairline); transition: background 0.2s ease;">
+                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="svg-icon-inline" data-icon="boltZeus" aria-hidden="true"></span>
+                    <strong style="font-size: 14px; font-weight: 700; color: var(--text-main);">Auditoria da Persona Hera &bull; Algoritmo de Compatibilidade (40/30/30)</strong>
+                    <span class="selo-hera-badge" title="Algoritmo de Matching e Parecer Funcional Hera"><span class="svg-icon-inline" data-icon="boltZeus"></span> Selo Hera</span>
+                  </div>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span id="heraToggleLabel" style="font-size: 12px; color: var(--text-secondary); font-weight: 500;">Expandir Diretrizes</span>
+                  <button type="button" id="btnToggleHeraMatching" class="icon-btn-sm" aria-label="Expandir ou recolher diretrizes de matching">
+                    <span id="heraChevronIcon" class="svg-icon-inline" data-icon="chevronDown"></span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- CORPO RECOLHIDO POR PADRÃO -->
+              <div id="heraCollapsibleBody" class="hera-collapsible-body is-collapsed" style="display: none; padding: 18px 20px; transition: all 0.3s ease;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;">
+                  <div class="output-panel" style="padding: 12px 14px;">
+                    <strong style="color: var(--accent-gold); font-size: 12.5px; display: flex; align-items: center; gap: 6px;">
+                      <span class="svg-icon-inline" data-icon="compass"></span> 40% Proximidade Territorial
+                    </strong>
+                    <p style="font-size: 12px; color: var(--text-secondary); margin: 6px 0 0 0;">Cálculo geodésico Haversine entre as unidades escolares e polos conveniados na Grande Natal e Litoral Norte.</p>
+                  </div>
+                  <div class="output-panel" style="padding: 12px 14px;">
+                    <strong style="color: var(--accent-link); font-size: 12.5px; display: flex; align-items: center; gap: 6px;">
+                      <span class="svg-icon-inline" data-icon="clipboard"></span> 30% Habilitação Curricular
+                    </strong>
+                    <p style="font-size: 12px; color: var(--text-secondary); margin: 6px 0 0 0;">Convergência estrita de cargo, disciplina e segmento de ensino (Anos Iniciais, Finais, Ed. Infantil ou Especialista).</p>
+                  </div>
+                  <div class="output-panel" style="padding: 12px 14px;">
+                    <strong style="color: var(--success); font-size: 12.5px; display: flex; align-items: center; gap: 6px;">
+                      <span class="svg-icon-inline" data-icon="clock"></span> 30% Turno e Carga Horária
+                    </strong>
+                    <p style="font-size: 12px; color: var(--text-secondary); margin: 6px 0 0 0;">Equivalência de regime funcional (30h padrão SMEB) e compatibilidade de turno sem sobreposição constitucional.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- MODAL DE EDIÇÃO DE SECRETARIAS MUNICIPAIS PARCEIRAS (#modalEdicaoSecretaria) -->
+            <div id="modalEdicaoSecretaria" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalEdicaoSecretariaTitulo" style="display: none;">
+              <div class="modal-card" style="max-width: 580px; width: 92%;">
+                <div class="modal-header">
+                  <div class="modal-title-wrap">
+                    <span class="sec-edit-header-badge"><span class="svg-icon-inline" data-icon="olymposLogo"></span> Inteligência Cartográfica &bull; Polos Parceiros</span>
+                    <h3 id="modalEdicaoSecretariaTitulo" style="margin: 0; font-size: 1.18rem; font-weight: 700; color: var(--text-main);">Editar Secretaria Municipal Parceira</h3>
+                  </div>
+                  <button id="closeModalEdicaoSecretariaBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal"><span class="svg-icon-inline" data-icon="close"></span></button>
+                </div>
+
+                <form id="formEdicaoSecretaria">
+                  <input type="hidden" id="editSecId" name="editSecId" />
+                  <div class="modal-body" style="padding: 20px 24px; max-height: 75vh; overflow-y: auto;">
+                    <p class="section-desc" style="margin-top: 0; margin-bottom: 14px; font-size: 12px; color: var(--text-secondary);">
+                      Edite as informações cadastrais e as coordenadas georreferenciadas dos polos parceiros da rede intermunicipal de permutas. Os dados são salvos localmente e podem ser restaurados a qualquer momento.
+                    </p>
+
+                    <!-- Seleção rápida entre os polos ou criar novo -->
+                    <div class="field-group" style="margin-bottom: 14px;">
+                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <label for="editSecSelectPonto" style="margin-bottom: 0;">Selecionar Município / Polo Parceiro</label>
+                        <button type="button" id="btnNovaSecretaria" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 2px 8px;">
+                          <span>+ Novo Município</span>
+                        </button>
+                      </div>
+                      <select id="editSecSelectPonto" class="input-clean" style="font-weight: 600;"></select>
+                    </div>
+
+                    <!-- Nome da Secretaria -->
+                    <div class="field-group" style="margin-bottom: 12px;">
+                      <label for="editSecNome">Nome da Secretaria / Unidade *</label>
+                      <input type="text" id="editSecNome" name="editSecNome" class="input-clean" placeholder="Ex: SME Natal (Polo Natal)" required />
+                    </div>
+
+                    <!-- Grid: Município e Responsável / Contato -->
+                    <div class="sec-edit-grid" style="margin-bottom: 12px;">
+                      <div class="field-group">
+                        <label for="editSecMunicipio">Município *</label>
+                        <input type="text" id="editSecMunicipio" name="editSecMunicipio" class="input-clean" placeholder="Ex: Natal" required />
+                      </div>
+                      <div class="field-group">
+                        <label for="editSecContato">Responsável / Contato Telefônico</label>
+                        <input type="text" id="editSecContato" name="editSecContato" class="input-clean" placeholder="Ex: (84) 3232-4700" />
+                      </div>
+                    </div>
+
+                    <!-- Bloco de Coordenadas Georreferenciadas -->
+                    <div class="sec-edit-coords-box">
+                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <strong style="font-size: 12.5px; color: var(--text-main); display: flex; align-items: center; gap: 6px;">
+                          <span class="svg-icon-inline" data-icon="mapPin"></span> Coordenadas Cartográficas (Graus Decimais WGS84)
+                        </strong>
+                        <span style="font-size: 11px; color: var(--text-muted);">Precisão GPS</span>
+                      </div>
+                      <div class="sec-edit-grid">
+                        <div class="field-group">
+                          <label for="editSecLat">Latitude (Decimal) *</label>
+                          <input type="number" id="editSecLat" name="editSecLat" class="input-clean" step="0.000001" placeholder="-5.789000" required />
+                        </div>
+                        <div class="field-group">
+                          <label for="editSecLng">Longitude (Decimal) *</label>
+                          <input type="number" id="editSecLng" name="editSecLng" class="input-clean" step="0.000001" placeholder="-35.202000" required />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 24px;">
+                    <div style="display: flex; gap: 8px;">
+                      <button type="button" id="btnRestaurarPadraoSecretarias" class="btn btn-ghost btn-sm" style="color: var(--text-muted);">
+                        <span class="svg-icon-inline" data-icon="refresh"></span> Restaurar Padrões
+                      </button>
+                      <button type="button" id="btnExcluirSecretaria" class="btn btn-ghost btn-sm" style="color: var(--danger); border-color: var(--danger-soft);">
+                        <span class="svg-icon-inline" data-icon="trash"></span> Excluir Município
+                      </button>
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                      <button type="button" id="btnCancelarEdicaoSecretaria" class="btn btn-secondary btn-sm">Cancelar</button>
+                      <button type="submit" id="btnSalvarSecretaria" class="btn btn-primary btn-sm">Salvar Alterações</button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </section>

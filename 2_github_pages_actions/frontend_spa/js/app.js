@@ -15,17 +15,22 @@ window.OlymposApp = (function() {
     'tab-prometheus': ['diario-oficial', 'papiro-cadmo']
   };
 
-  document.addEventListener('DOMContentLoaded', function() {
+  function bootOlymposApp() {
     hydrateVectorIcons();
     initTheme();
     initSession();
     bindGlobalElements();
-    window.OlymposRouter.init();
-    verificarStatusConexaoInicial();
-    if (window.OlymposPerfEngine && typeof window.OlymposPerfEngine.scheduleIdleWarmup === 'function') {
-      window.OlymposPerfEngine.scheduleIdleWarmup();
+    if (window.OlymposRouter && typeof window.OlymposRouter.init === 'function') {
+      window.OlymposRouter.init();
     }
-  });
+    verificarStatusConexaoInicial();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootOlymposApp);
+  } else {
+    bootOlymposApp();
+  }
 
   function hydrateVectorIcons() {
     if (!window.OlymposIcons) return;
@@ -90,7 +95,12 @@ window.OlymposApp = (function() {
   // AUTENTICAÇÃO E CONTROLE DE ACESSO RBAC
   // =========================================================================
   function initSession() {
-    // 1. Tenta sessionStorage (memória da aba ativa para carregamento veloz)
+    // Limpa chave legada duplicada em localStorage (Zero-Trust: sessão reside no SDK Supabase / sessionStorage)
+    try {
+      localStorage.removeItem('olympos_session');
+    } catch (eCleanLs) {}
+
+    // 1. Restaura sessão ativa da aba em sessionStorage
     try {
       const cachedRbac = sessionStorage.getItem('olympos_session_rbac');
       if (cachedRbac) {
@@ -98,6 +108,9 @@ window.OlymposApp = (function() {
         if (sessionObj && sessionObj.perfil && obterRoleIdSessao(sessionObj) !== 'VISITANTE') {
           currentUserSession = sessionObj;
           aplicarSessaoNaInterface(currentUserSession);
+          if (window.OlymposSessionGuard && typeof window.OlymposSessionGuard.startIdleMonitor === 'function') {
+            window.OlymposSessionGuard.startIdleMonitor(obterRoleIdSessao(currentUserSession));
+          }
           return;
         }
         sessionStorage.removeItem('olympos_session_rbac');
@@ -107,37 +120,62 @@ window.OlymposApp = (function() {
       sessionStorage.removeItem('olympos_session_rbac');
     }
 
-    // 2. Fallback resiliente para localStorage
-    const stored = localStorage.getItem('olympos_session');
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        if (parsed && parsed.perfil && obterRoleIdSessao(parsed) !== 'VISITANTE') {
-          currentUserSession = parsed;
-          try {
-            sessionStorage.setItem('olympos_session_rbac', JSON.stringify(currentUserSession));
-            if (currentUserSession.perfil) {
-              sessionStorage.setItem('olympos_rbac_profile_cache', JSON.stringify(currentUserSession.perfil));
-            }
-          } catch (eStore) {}
-          aplicarSessaoNaInterface(currentUserSession);
-          return;
-        }
-        localStorage.removeItem('olympos_session');
-        try {
-          sessionStorage.removeItem('olympos_session_rbac');
-          sessionStorage.removeItem('olympos_rbac_profile_cache');
-        } catch (eClean) {}
-      } catch (e) {
-        localStorage.removeItem('olympos_session');
-      }
-    }
-
-    // 3. Sem sessão ativa: inicia diretamente no Modo Visitante (Acesso Público)
+    // 2. Sem sessão síncrona: inicia no Modo Visitante e tenta hidratar sessão válida do Supabase Auth (nova aba)
     currentUserSession = null;
     aplicarModoVisitanteNaInterface();
 
     const initialHash = window.location.hash.replace('#', '').trim();
+    if (window.OlymposSupabase && typeof window.OlymposSupabase.isConfigured === 'function' && window.OlymposSupabase.isConfigured()) {
+      window.OlymposSupabase.getSession().then(async function(sbSession) {
+        if (!sbSession || !sbSession.user || currentUserSession) {
+          if (!currentUserSession && initialHash && !PUBLIC_PAGES.includes(initialHash)) {
+            window.location.hash = '#visao-geral';
+            solicitarLogin();
+          }
+          return;
+        }
+        try {
+          const client = window.OlymposSupabase.getClient();
+          const { data: profData } = await client
+            .from('profiles')
+            .select('id, email, full_name, role, department, termo_sigilo_aceito_em, termo_sigilo_versao')
+            .eq('id', sbSession.user.id)
+            .maybeSingle();
+          const profile = profData || {
+            id: sbSession.user.id,
+            email: sbSession.user.email,
+            full_name: sbSession.user.email,
+            role: (sbSession.user.app_metadata && sbSession.user.app_metadata.role) || 'PEDAGOGICO_EVENTOS'
+          };
+          const role = profile.role || 'PEDAGOGICO_EVENTOS';
+          const abas = RBAC_TAB_PERMISSIONS[role] || RBAC_TAB_PERMISSIONS.PEDAGOGICO_EVENTOS;
+          currentUserSession = {
+            ok: true,
+            token: sbSession.access_token,
+            access_token: sbSession.access_token,
+            usuario: sbSession.user.email,
+            nome: profile.full_name || sbSession.user.email,
+            department: profile.department || '',
+            user: { id: sbSession.user.id, email: sbSession.user.email },
+            profile: profile,
+            perfil: { id: role, nome: obterLabelPerfilOrganico(role), abasPermitidas: abas }
+          };
+          sessionStorage.setItem('olympos_session_rbac', JSON.stringify(currentUserSession));
+          sessionStorage.setItem('olympos_rbac_profile_cache', JSON.stringify(profile));
+          aplicarSessaoNaInterface(currentUserSession);
+          if (window.OlymposSessionGuard && typeof window.OlymposSessionGuard.startIdleMonitor === 'function') {
+            window.OlymposSessionGuard.startIdleMonitor(role);
+          }
+          if (window.OlymposRouter) {
+            window.OlymposRouter.navegarPara(initialHash || window.OlymposRouter.getPaginaAtual(), true);
+          }
+        } catch (eHydrate) {
+          console.warn('[OlymposApp] Falha silenciosa ao hidratar sessão Supabase:', eHydrate);
+        }
+      });
+      return;
+    }
+
     if (initialHash && !PUBLIC_PAGES.includes(initialHash)) {
       window.location.hash = '#visao-geral';
       solicitarLogin();
@@ -187,7 +225,7 @@ window.OlymposApp = (function() {
   const RBAC_TAB_PERMISSIONS = {
     MODERADOR: [
       'visao-geral', 'oficios', 'portarias', 'licencas', 'certificados',
-      'diario-oficial', 'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'configuracoes'
+      'diario-oficial', 'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'auditoria', 'configuracoes'
     ],
     ADMIN_GABINETE: [
       'visao-geral', 'oficios', 'portarias', 'licencas', 'certificados',
@@ -221,13 +259,46 @@ window.OlymposApp = (function() {
       currentUserSession.token = novoToken;
       currentUserSession.access_token = novoToken;
       try {
-        localStorage.setItem('olympos_session', JSON.stringify(currentUserSession));
         sessionStorage.setItem('olympos_session_rbac', JSON.stringify(currentUserSession));
       } catch (e) {}
     }
   }
 
-  function abrirModalMfaDesafio(factorId, onSucesso) {
+  async function solicitarMfaObrigatorio(onSucesso) {
+    if (!window.OlymposSupabase || typeof window.OlymposSupabase.checkMfaStatus !== 'function') {
+      return;
+    }
+    try {
+      const mfaStatus = await window.OlymposSupabase.checkMfaStatus();
+      if (!mfaStatus || !mfaStatus.supported) return;
+      const currentAal = mfaStatus.currentAal || mfaStatus.currentLevel;
+      if (mfaStatus.hasEnrolled && currentAal !== 'aal2') {
+        const factorId = mfaStatus.verifiedFactors && mfaStatus.verifiedFactors[0]
+          ? mfaStatus.verifiedFactors[0].id
+          : (mfaStatus.factors[0] && mfaStatus.factors[0].id);
+        abrirModalMfaDesafio(factorId, function(verifiedSession) {
+          if (verifiedSession && verifiedSession.access_token) {
+            atualizarTokenSessao(verifiedSession.access_token);
+          }
+          if (onSucesso) onSucesso(verifiedSession);
+        });
+      } else if (!mfaStatus.hasEnrolled) {
+        abrirModalMfaEnroll(function(verifiedSession) {
+          if (verifiedSession && verifiedSession.access_token) {
+            atualizarTokenSessao(verifiedSession.access_token);
+          }
+          if (onSucesso) onSucesso(verifiedSession);
+        });
+      }
+    } catch (e) {
+      console.warn('[OlymposApp] Falha ao iniciar desafio MFA:', e);
+    }
+  }
+
+  async function abrirModalMfaDesafio(factorId, onSucesso) {
+    if (window.OlymposRouteLoader && typeof window.OlymposRouteLoader.ensureModal === 'function') {
+      await window.OlymposRouteLoader.ensureModal('mfa');
+    }
     const modal = document.getElementById('modalMfaDesafio');
     if (!modal) {
       if (onSucesso) onSucesso();
@@ -297,6 +368,9 @@ window.OlymposApp = (function() {
   }
 
   async function abrirModalMfaEnroll(onSucesso) {
+    if (window.OlymposRouteLoader && typeof window.OlymposRouteLoader.ensureModal === 'function') {
+      await window.OlymposRouteLoader.ensureModal('mfa');
+    }
     const modal = document.getElementById('modalMfaEnroll');
     if (!modal) {
       if (onSucesso) onSucesso();
@@ -465,6 +539,14 @@ window.OlymposApp = (function() {
       return;
     }
 
+    if (window.OlymposSessionGuard && typeof window.OlymposSessionGuard.getLockoutRemainingSeconds === 'function') {
+      const lockSec = window.OlymposSessionGuard.getLockoutRemainingSeconds();
+      if (lockSec > 0) {
+        showToast('Muitas tentativas inválidas. Aguarde ' + lockSec + 's antes de tentar novamente.', true);
+        return;
+      }
+    }
+
     btn.disabled = true;
     btn.textContent = 'Validando credenciais...';
 
@@ -475,11 +557,15 @@ window.OlymposApp = (function() {
         btn.disabled = false;
         btn.textContent = 'Acessar Ambiente Olympos';
 
+        if (window.OlymposSessionGuard && typeof window.OlymposSessionGuard.resetLoginAttempts === 'function') {
+          window.OlymposSessionGuard.resetLoginAttempts();
+        }
+
         const profile = authResult.profile || {};
         const role = profile.role || 'RH_COMISSAO';
         const abas = RBAC_TAB_PERMISSIONS[role] || RBAC_TAB_PERMISSIONS.RH_COMISSAO;
 
-        function concluirSessaoLogin(tokenAal) {
+        async function concluirSessaoLogin(tokenAal, aalLevel) {
           const organicRoleLabel = obterLabelPerfilOrganico(role);
           currentUserSession = {
             ok: true,
@@ -500,13 +586,28 @@ window.OlymposApp = (function() {
             }
           };
 
-          localStorage.setItem('olympos_session', JSON.stringify(currentUserSession));
           try {
+            localStorage.removeItem('olympos_session');
             sessionStorage.setItem('olympos_session_rbac', JSON.stringify(currentUserSession));
             sessionStorage.setItem('olympos_rbac_profile_cache', JSON.stringify(profile));
           } catch (eStore) {}
           document.getElementById('loginScreen').classList.add('hidden');
           aplicarSessaoNaInterface(currentUserSession);
+
+          if (window.OlymposTermoSigilo && typeof window.OlymposTermoSigilo.verificarEAplicarTermoSigilo === 'function') {
+            const aceito = await window.OlymposTermoSigilo.verificarEAplicarTermoSigilo(currentUserSession);
+            if (!aceito) return;
+          }
+
+          if (window.OlymposSessionGuard) {
+            if (typeof window.OlymposSessionGuard.startIdleMonitor === 'function') {
+              window.OlymposSessionGuard.startIdleMonitor(role);
+            }
+            if (typeof window.OlymposSessionGuard.registrarSessaoAtiva === 'function') {
+              window.OlymposSessionGuard.registrarSessaoAtiva(authResult.user.id, aalLevel || 'aal1');
+            }
+          }
+
           showToast('Bem-vindo(a), ' + (profile.full_name || authResult.user.email) + '!');
 
           if (window.OlymposViews && window.OlymposViews.visaoGeral) {
@@ -530,33 +631,38 @@ window.OlymposApp = (function() {
           if (mfaStatus.hasEnrolled && currentAal !== 'aal2') {
             const factorId = mfaStatus.verifiedFactors && mfaStatus.verifiedFactors[0] ? mfaStatus.verifiedFactors[0].id : (mfaStatus.factors[0] && mfaStatus.factors[0].id);
             abrirModalMfaDesafio(factorId, function(verifiedSession) {
-              concluirSessaoLogin(verifiedSession && verifiedSession.access_token);
+              concluirSessaoLogin(verifiedSession && verifiedSession.access_token, 'aal2');
             });
             return;
           } else if (isMfaMandatory && (!mfaStatus.hasEnrolled || currentAal !== 'aal2')) {
             if (!mfaStatus.hasEnrolled) {
               abrirModalMfaEnroll(function(verifiedSession) {
-                concluirSessaoLogin(verifiedSession && verifiedSession.access_token);
+                concluirSessaoLogin(verifiedSession && verifiedSession.access_token, 'aal2');
               });
               return;
             }
           }
         }
 
-        concluirSessaoLogin();
+        await concluirSessaoLogin(null, (mfaStatus && (mfaStatus.currentAal || mfaStatus.currentLevel)) || 'aal1');
         return;
       } catch (err) {
         console.warn('[handleLoginSubmit] Falha no Supabase Auth:', err);
-        if (err.message && (err.message.includes('Invalid login') || err.message.includes('credentials'))) {
-          btn.disabled = false;
-          btn.textContent = 'Acessar Ambiente Olympos';
-          showToast('Credenciais inválidas no Supabase Auth. Verifique e-mail e senha.', true);
-          return;
+        btn.disabled = false;
+        btn.textContent = 'Acessar Ambiente Olympos';
+        if (window.OlymposSessionGuard && typeof window.OlymposSessionGuard.recordFailedLoginAttempt === 'function') {
+          const att = window.OlymposSessionGuard.recordFailedLoginAttempt();
+          if (att.lockSeconds > 0) {
+            showToast('Muitas tentativas inválidas. Login bloqueado temporariamente por ' + att.lockSeconds + 's.', true);
+            return;
+          }
         }
+        showToast((err && err.message) ? ('Falha na autenticação: ' + err.message) : 'Credenciais inválidas no Supabase Auth.', true);
+        return;
       }
     }
 
-    // 2. Fallback via backend GAS (se configurado ou em contingência)
+    // 2. Contingência GAS apenas quando Supabase não está configurado
     window.OlymposApi.chamar('auth_login', { usuario: userInput, senha: passInput }, function(res) {
       btn.disabled = false;
       btn.textContent = 'Acessar Ambiente Olympos';
@@ -570,8 +676,8 @@ window.OlymposApp = (function() {
           res.perfil.nome = obterLabelPerfilOrganico(resolvedRoleId);
         }
         currentUserSession = res;
-        localStorage.setItem('olympos_session', JSON.stringify(res));
         try {
+          localStorage.removeItem('olympos_session');
           sessionStorage.setItem('olympos_session_rbac', JSON.stringify(res));
           if (res.perfil) {
             sessionStorage.setItem('olympos_rbac_profile_cache', JSON.stringify(res.perfil));
@@ -596,6 +702,9 @@ window.OlymposApp = (function() {
   }
 
   async function fazerLogout() {
+    if (window.OlymposSessionGuard && typeof window.OlymposSessionGuard.stopIdleMonitor === 'function') {
+      window.OlymposSessionGuard.stopIdleMonitor();
+    }
     if (window.OlymposSupabase && typeof window.OlymposSupabase.logout === 'function') {
       try {
         await window.OlymposSupabase.logout();
@@ -955,17 +1064,6 @@ window.OlymposApp = (function() {
     return currentUserSession;
   }
 
-  function atualizarTokenSessao(novoToken) {
-    if (!novoToken) return;
-    if (currentUserSession) {
-      currentUserSession.token = novoToken;
-      currentUserSession.access_token = novoToken;
-      try {
-        localStorage.setItem('olympos_session', JSON.stringify(currentUserSession));
-      } catch (e) {}
-    }
-  }
-
   // =========================================================================
   // JANELA COMPANION GEMINI (DESKTOP RESEARCH ASSISTANT)
   // =========================================================================
@@ -1189,33 +1287,6 @@ window.OlymposApp = (function() {
       });
     }
 
-    const btnCloseProfile = document.getElementById('closeUserProfileModalBtn');
-    if (btnCloseProfile) {
-      btnCloseProfile.addEventListener('click', fecharModalPerfilUsuario);
-    }
-
-    const userProfileBackdrop = document.getElementById('userProfileModal');
-    if (userProfileBackdrop) {
-      userProfileBackdrop.addEventListener('click', function(e) {
-        if (e.target === userProfileBackdrop) {
-          fecharModalPerfilUsuario();
-        }
-      });
-    }
-
-    const formUserProfile = document.getElementById('formUserProfile');
-    if (formUserProfile) {
-      formUserProfile.addEventListener('submit', handleSalvarPerfilProprio);
-    }
-
-    const btnLogoutFromProfile = document.getElementById('btnLogoutFromProfileModal');
-    if (btnLogoutFromProfile) {
-      btnLogoutFromProfile.addEventListener('click', function() {
-        fecharModalPerfilUsuario();
-        fazerLogout();
-      });
-    }
-
     const btnCloseLogin = document.getElementById('closeLoginModalBtn');
     if (btnCloseLogin) {
       btnCloseLogin.addEventListener('click', function() {
@@ -1277,7 +1348,7 @@ window.OlymposApp = (function() {
           'Esta ação irá:\n' +
           '1. Limpar todo o cache PWA offline;\n' +
           '2. Desregistrar versões anteriores do Service Worker;\n' +
-          '3. Forçar o download da versão mais recente (V2.03);\n' +
+          '3. Forçar o download da versão mais recente;\n' +
           '4. Recarregar o sistema limpo.\n\n' +
           'Deseja continuar?'
         );
@@ -1339,14 +1410,6 @@ window.OlymposApp = (function() {
       fecharModalPerfilUsuario();
     });
 
-    document.querySelectorAll('[data-nav-target]').forEach(function(el) {
-      el.addEventListener('click', function() {
-        const target = el.getAttribute('data-nav-target');
-        document.body.classList.remove('nav-drawer-open');
-        if (target) window.OlymposRouter.navegarPara(target);
-      });
-    });
-
     const inTopSearch = document.getElementById('topQuickSearchInput');
     const btnTopSearch = document.getElementById('topQuickSearchBtn');
     if (btnTopSearch && inTopSearch) {
@@ -1376,81 +1439,85 @@ window.OlymposApp = (function() {
       }
     });
 
-    const closeMem = document.getElementById('closeModalBtn');
-    if (closeMem) {
-      closeMem.addEventListener('click', function() {
-        document.getElementById('memoriaModal').classList.add('hidden');
+    bindDynamicControls();
+  }
+
+  function bindDynamicControls() {
+    const bindOnce = function(el, evt, fn) {
+      if (!el) return;
+      const key = '_bound_' + evt;
+      if (el[key]) return;
+      el[key] = true;
+      el.addEventListener(evt, fn);
+    };
+
+    document.querySelectorAll('[data-nav-target]').forEach(function(el) {
+      bindOnce(el, 'click', function() {
+        const target = el.getAttribute('data-nav-target');
+        document.body.classList.remove('nav-drawer-open');
+        if (target) window.OlymposRouter.navegarPara(target);
       });
-    }
+    });
+
+    const btnCloseProfile = document.getElementById('closeUserProfileModalBtn');
+    bindOnce(btnCloseProfile, 'click', fecharModalPerfilUsuario);
+
+    const userProfileBackdrop = document.getElementById('userProfileModal');
+    bindOnce(userProfileBackdrop, 'click', function(e) {
+      if (e.target === userProfileBackdrop) {
+        fecharModalPerfilUsuario();
+      }
+    });
+
+    const formUserProfile = document.getElementById('formUserProfile');
+    bindOnce(formUserProfile, 'submit', handleSalvarPerfilProprio);
+
+    const btnLogoutFromProfile = document.getElementById('btnLogoutFromProfileModal');
+    bindOnce(btnLogoutFromProfile, 'click', function() {
+      fecharModalPerfilUsuario();
+      fazerLogout();
+    });
+
+    const closeMem = document.getElementById('closeModalBtn');
+    bindOnce(closeMem, 'click', function() {
+      const m = document.getElementById('memoriaModal');
+      if (m) m.classList.add('hidden');
+    });
 
     const closeCont = document.getElementById('closeContadoresModalBtn');
-    if (closeCont) {
-      closeCont.addEventListener('click', function() {
-        document.getElementById('contadoresModal').classList.add('hidden');
-      });
-    }
+    bindOnce(closeCont, 'click', function() {
+      const m = document.getElementById('contadoresModal');
+      if (m) m.classList.add('hidden');
+    });
 
-    const btnSaveCont = document.getElementById('saveContadoresMdBtn');
-    if (btnSaveCont) btnSaveCont.addEventListener('click', salvarContadoresMd);
+    bindOnce(document.getElementById('saveContadoresMdBtn'), 'click', salvarContadoresMd);
+    bindOnce(document.getElementById('saveMemoriaBtn'), 'click', salvarMemoriaMd);
+    bindOnce(document.getElementById('reloadMemoriaBtn'), 'click', function() {
+      recarregarMemoriaModalAoVivo(false);
+    });
+    bindOnce(document.getElementById('clearMemoriaBtn'), 'click', limparPendenciasMemoriaModal);
 
-    const btnSaveMem = document.getElementById('saveMemoriaBtn');
-    if (btnSaveMem) btnSaveMem.addEventListener('click', salvarMemoriaMd);
-
-    const btnReloadMem = document.getElementById('reloadMemoriaBtn');
-    if (btnReloadMem) {
-      btnReloadMem.addEventListener('click', function() {
-        recarregarMemoriaModalAoVivo(false);
-      });
-    }
-
-    const btnClearMem = document.getElementById('clearMemoriaBtn');
-    if (btnClearMem) btnClearMem.addEventListener('click', limparPendenciasMemoriaModal);
-
-    // Modal de Cadastro de Novo Usuário (Exclusivo ADMIN_GABINETE)
-    const btnOpenNovoUser = document.getElementById('btnAbrirModalNovoUsuario');
-    if (btnOpenNovoUser) btnOpenNovoUser.addEventListener('click', abrirModalNovoUsuario);
-
-    const btnCloseNovoUser = document.getElementById('closeModalNovoUsuarioBtn');
-    if (btnCloseNovoUser) btnCloseNovoUser.addEventListener('click', fecharModalNovoUsuario);
-
-    const btnCancelNovoUser = document.getElementById('btnCancelarNovoUsuario');
-    if (btnCancelNovoUser) btnCancelNovoUser.addEventListener('click', fecharModalNovoUsuario);
-
-    const btnGenPass = document.getElementById('btnGerarSenhaNovoUsuario');
-    if (btnGenPass) btnGenPass.addEventListener('click', gerarSenhaParaFormularioNovoUsuario);
-
-    const btnTogglePass = document.getElementById('btnToggleVisibilidadeSenha');
-    if (btnTogglePass) btnTogglePass.addEventListener('click', toggleVisibilidadeSenhaNovoUsuario);
+    bindOnce(document.getElementById('btnAbrirModalNovoUsuario'), 'click', abrirModalNovoUsuario);
+    bindOnce(document.getElementById('closeModalNovoUsuarioBtn'), 'click', fecharModalNovoUsuario);
+    bindOnce(document.getElementById('btnCancelarNovoUsuario'), 'click', fecharModalNovoUsuario);
+    bindOnce(document.getElementById('btnGerarSenhaNovoUsuario'), 'click', gerarSenhaParaFormularioNovoUsuario);
+    bindOnce(document.getElementById('btnToggleVisibilidadeSenha'), 'click', toggleVisibilidadeSenhaNovoUsuario);
 
     const formNovoUser = document.getElementById('formNovoUsuario');
-    if (formNovoUser) {
-      formNovoUser.addEventListener('submit', function(e) {
-        e.preventDefault();
-        handleNovoUsuarioSubmit(e);
-      });
-    }
+    bindOnce(formNovoUser, 'submit', function(e) {
+      e.preventDefault();
+      handleNovoUsuarioSubmit(e);
+    });
 
-    // Configuração de Destinatários do Boletim (Ajustes e Diário Oficial)
-    const btnSalvarCfgEmail = document.getElementById('configSalvarBoletimEmailBtn');
-    if (btnSalvarCfgEmail) {
-      btnSalvarCfgEmail.addEventListener('click', function() {
-        const inCfg = document.getElementById('configBoletimEmailInput');
-        salvarBoletimEmails(inCfg ? inCfg.value : '');
-      });
-    }
-
-    const btnTestarCfgEmail = document.getElementById('configTestarBoletimEmailBtn');
-    if (btnTestarCfgEmail) {
-      btnTestarCfgEmail.addEventListener('click', testarEnvioBoletim);
-    }
-
-    const btnSalvarDiarioEmail = document.getElementById('diarioSalvarBoletimEmailBtn');
-    if (btnSalvarDiarioEmail) {
-      btnSalvarDiarioEmail.addEventListener('click', function() {
-        const inDiario = document.getElementById('diarioBoletimEmailInput');
-        salvarBoletimEmails(inDiario ? inDiario.value : '');
-      });
-    }
+    bindOnce(document.getElementById('configSalvarBoletimEmailBtn'), 'click', function() {
+      const inCfg = document.getElementById('configBoletimEmailInput');
+      salvarBoletimEmails(inCfg ? inCfg.value : '');
+    });
+    bindOnce(document.getElementById('configTestarBoletimEmailBtn'), 'click', testarEnvioBoletim);
+    bindOnce(document.getElementById('diarioSalvarBoletimEmailBtn'), 'click', function() {
+      const inDiario = document.getElementById('diarioBoletimEmailInput');
+      salvarBoletimEmails(inDiario ? inDiario.value : '');
+    });
 
     carregarConfiguracaoBoletimEmails();
   }
@@ -1472,8 +1539,12 @@ window.OlymposApp = (function() {
   // =========================================================================
   // MODAIS DE CONTADORES E MEMÓRIAS .MD
   // =========================================================================
-  function abrirModalContadores() {
-    document.getElementById('contadoresModal').classList.remove('hidden');
+  async function abrirModalContadores() {
+    if (window.OlymposRouteLoader && typeof window.OlymposRouteLoader.ensureModal === 'function') {
+      await window.OlymposRouteLoader.ensureModal('contadores');
+    }
+    const modal = document.getElementById('contadoresModal');
+    if (modal) modal.classList.remove('hidden');
   }
 
   function salvarContadoresMd() {
@@ -1623,7 +1694,10 @@ window.OlymposApp = (function() {
     });
   }
 
-  function abrirModalMemoria(memoriaObj) {
+  async function abrirModalMemoria(memoriaObj) {
+    if (window.OlymposRouteLoader && typeof window.OlymposRouteLoader.ensureModal === 'function') {
+      await window.OlymposRouteLoader.ensureModal('memoria');
+    }
     let enriched = memoriaObj || {};
     if (window.OLYMPOS_MEMORIAS_CATALOGO) {
       const catMeta = (enriched.id && window.OLYMPOS_MEMORIAS_CATALOGO.obterPorId(enriched.id)) ||
@@ -1880,7 +1954,7 @@ window.OlymposApp = (function() {
     }
 
     try {
-      localStorage.setItem('olympos_session', JSON.stringify(currentUserSession));
+      localStorage.removeItem('olympos_session');
       sessionStorage.setItem('olympos_session_rbac', JSON.stringify(currentUserSession));
       if (currentUserSession.profile) {
         sessionStorage.setItem('olympos_rbac_profile_cache', JSON.stringify(currentUserSession.profile));
@@ -1900,10 +1974,14 @@ window.OlymposApp = (function() {
     };
   }
 
-  function abrirModalPerfilUsuario() {
+  async function abrirModalPerfilUsuario() {
     if (!currentUserSession || !currentUserSession.perfil) {
       solicitarLogin();
       return;
+    }
+
+    if (window.OlymposRouteLoader && typeof window.OlymposRouteLoader.ensureModal === 'function') {
+      await window.OlymposRouteLoader.ensureModal('userProfile');
     }
 
     const modal = document.getElementById('userProfileModal');
@@ -2012,10 +2090,13 @@ window.OlymposApp = (function() {
   // =========================================================================
   // GESTÃO DE USUÁRIOS E MODAL NOVO USUÁRIO (EXCLUSIVO MODERADOR)
   // =========================================================================
-  function abrirModalNovoUsuario() {
+  async function abrirModalNovoUsuario() {
     if (!isModerador(currentUserSession)) {
       showToast('Acesso restrito ao perfil Moderador.', true);
       return;
+    }
+    if (window.OlymposRouteLoader && typeof window.OlymposRouteLoader.ensureModal === 'function') {
+      await window.OlymposRouteLoader.ensureModal('usuarios');
     }
     const modal = document.getElementById('modalNovoUsuario');
     if (modal) {
@@ -2263,6 +2344,8 @@ window.OlymposApp = (function() {
     resetMobileApp: resetMobileApp,
     escapeHtml: escapeHtml,
     hydrateVectorIcons: hydrateVectorIcons,
+    bindDynamicControls: bindDynamicControls,
+    solicitarMfaObrigatorio: solicitarMfaObrigatorio,
     PUBLIC_PAGES: PUBLIC_PAGES,
     RBAC_TAB_PERMISSIONS: RBAC_TAB_PERMISSIONS,
     ROLE_LABELS: ROLE_LABELS,

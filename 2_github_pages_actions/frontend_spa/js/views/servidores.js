@@ -22,6 +22,31 @@ window.OlymposViews.servidores = (function() {
   var servidorModalAtivo = null;
   var dossiesAgrupadosCache = null;
   var dossiesRawCountCache = -1;
+  var piiRevealTimeoutId = null;
+  var piiRevealIntervalId = null;
+
+  function obterRoleUsuarioAtual() {
+    if (window.OlymposApp && typeof window.OlymposApp.obterRoleIdSessao === 'function') {
+      return window.OlymposApp.obterRoleIdSessao();
+    }
+    return 'VISITANTE';
+  }
+
+  function limparTimerRevelacaoPii() {
+    if (piiRevealTimeoutId) {
+      clearTimeout(piiRevealTimeoutId);
+      piiRevealTimeoutId = null;
+    }
+    if (piiRevealIntervalId) {
+      clearInterval(piiRevealIntervalId);
+      piiRevealIntervalId = null;
+    }
+    var box = document.getElementById('piiRevealedResultDossie');
+    if (box) {
+      box.innerHTML = '';
+      box.classList.add('hidden');
+    }
+  }
 
   function escapeHtml(str) {
     if (window.OlymposApp && typeof window.OlymposApp.escapeHtml === 'function') {
@@ -80,11 +105,15 @@ window.OlymposViews.servidores = (function() {
       var nomeNorm = normalizarTexto(s.nome || s.n);
       if (!nomeNorm) return;
 
+      var mesRefItem = String(s.mesReferencia || s.r || 'N/I').trim();
+
       if (!mapaDossies[nomeNorm]) {
         mapaDossies[nomeNorm] = {
           id: s.id || ('serv_' + Math.random().toString(36).substr(2, 9)),
+          supabaseId: /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(s.id || '')) ? String(s.id) : null,
           nome: s.nome || s.n,
-          cpfMascarado: s.cpfMascarado || s.c || '###.***.***-##',
+          cpfMascarado: '*** (Protegido pela LGPD)',
+          mesReferencia: mesRefItem,
           matriculas: [],
           entes: [],
           cargos: [],
@@ -97,6 +126,9 @@ window.OlymposViews.servidores = (function() {
       }
 
       var dossie = mapaDossies[nomeNorm];
+      if (!dossie.mesReferencia || dossie.mesReferencia === 'N/I') {
+        dossie.mesReferencia = mesRefItem;
+      }
       var mat = String(s.matricula || s.m || '').trim();
       if (mat && dossie.matriculas.indexOf(mat) === -1) {
         dossie.matriculas.push(mat);
@@ -122,7 +154,7 @@ window.OlymposViews.servidores = (function() {
         dossie.lotacoes.push(lotacaoNome);
       }
 
-      var ch = parseCargaHoraria(s.cargaHoraria || s.h);
+      var ch = parseCargaHoraria(s.cargaHoraria || 30);
 
       // Evita duplicatas idênticas de vínculo
       var vId = (s.enteId || enteNome) + '|' + mat + '|' + cargoNome;
@@ -143,6 +175,7 @@ window.OlymposViews.servidores = (function() {
           cargaHoraria: ch,
           cargaHorariaTexto: s.cargaHorariaTexto || (ch + 'h'),
           lotacao: lotacaoNome,
+          mesReferencia: mesRefItem,
           turno: s.turno || 'Não informado',
           regime: s.regime || 'Efetivo / Estatutário',
           situacao: s.situacao || s.status || 'Ativo',
@@ -450,23 +483,31 @@ window.OlymposViews.servidores = (function() {
       return;
     }
 
+    var roleAtual = obterRoleUsuarioAtual();
+    var piiMask = window.OlymposPiiMask;
     var html = '';
     listaPaginada.forEach(function(d) {
       var auditoria = d.auditoria;
       var entesStr = d.entes.join('; ');
-      var matStr = d.matriculas.join(', ') || 'N/I';
+      var matsExibicao = d.matriculas.map(function(m) {
+        return (piiMask && typeof piiMask.maskMatricula === 'function')
+          ? piiMask.maskMatricula(m, roleAtual)
+          : m;
+      });
+      var matStr = matsExibicao.join(', ') || 'N/I';
       var cargoPrin = d.cargos[0] || 'Docente';
       var lotacaoPrin = d.lotacoes[0] || 'Lotação não informada';
+      var refTransp = d.mesReferencia || 'N/I';
 
       html += '<tr>' +
         '<td data-label="Servidor">' +
           '<div style="font-weight: 700; color: var(--text-main);">' + escapeHtml(d.nome) + '</div>' +
-          '<div style="font-size: 11px; color: var(--text-muted);">CPF: ' + escapeHtml(d.cpfMascarado) + '</div>' +
+          '<div style="font-size: 11px; color: var(--text-muted);">Vínculos: ' + d.vinculos.length + ' • Jornada Est.: ' + d.cargaHorariaTotal + 'h</div>' +
         '</td>' +
         '<td data-label="Matrícula(s)"><span class="code-badge" style="font-size: 11.5px;">' + escapeHtml(matStr) + '</span></td>' +
         '<td data-label="Ente(s)"><span style="font-size: 12px; color: var(--text-secondary);">' + escapeHtml(entesStr) + '</span></td>' +
         '<td data-label="Cargo Principal"><span style="font-size: 12.5px; font-weight: 600;">' + escapeHtml(cargoPrin) + '</span></td>' +
-        '<td data-label="Carga Horária"><span class="pill-badge pill-gold" style="font-size: 11px;">' + d.cargaHorariaTotal + 'h sem.</span></td>' +
+        '<td data-label="Ref. Transparência"><span class="pill-badge pill-gold" style="font-size: 11px;">' + escapeHtml(refTransp) + '</span></td>' +
         '<td data-label="Lotação Principal"><span style="font-size: 12px; color: var(--text-muted);">' + escapeHtml(lotacaoPrin) + '</span></td>' +
         '<td data-label="Auditoria CF/88"><span class="pill-badge ' + auditoria.badgeClass + '" style="font-size: 11px;">' + escapeHtml(auditoria.badgeTexto) + '</span></td>' +
         '<td data-label="Ações" class="text-right">' +
@@ -590,10 +631,99 @@ window.OlymposViews.servidores = (function() {
     atualizarConsultaCompleta();
   }
 
+  function revelarPiiAuditadoModal(dossie) {
+    var justInput = document.getElementById('inputJustificativaPiiDossie');
+    var resultEl = document.getElementById('piiRevealedResultDossie');
+    var btn = document.getElementById('btnRevelarPiiDossie');
+    if (!resultEl) return;
+
+    var justificativa = justInput ? String(justInput.value || '').trim() : '';
+    if (justificativa.length < 5) {
+      resultEl.classList.remove('hidden');
+      resultEl.innerHTML = '<div style="padding:10px 12px; border-radius:8px; border:1px solid #ef4444; color:#b91c1c; font-size:12.5px;">Informe uma justificativa formal com pelo menos 5 caracteres para registro em <code>audit_logs</code>.</div>';
+      if (justInput) justInput.focus();
+      return;
+    }
+
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Consultando cofre auditado...';
+    }
+
+    if (!window.OlymposApi || typeof window.OlymposApi.chamar !== 'function') {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Revelar dados sensíveis (Auditado)';
+      }
+      resultEl.classList.remove('hidden');
+      resultEl.innerHTML = '<div style="padding:10px 12px; border-radius:8px; border:1px solid #f59e0b; font-size:12.5px;">Gateway seguro indisponível neste ambiente offline.</div>';
+      return;
+    }
+
+    window.OlymposApi.chamar(
+      'servidores_revelar_pii',
+      {
+        dados: {
+          servidor_id: dossie.supabaseId || null,
+          nome: dossie.nome,
+          matricula: dossie.matriculas[0] || '',
+          justificativa: justificativa
+        }
+      },
+      function(res) {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'Revelar dados sensíveis (Auditado)';
+        }
+        var payload = (res && (res.dados || res.data || res)) || {};
+        var cpfDecrypted = payload.cpf_decrypted || payload.cpf || '*** Não localizado no cofre ***';
+        var matDecrypted = payload.matricula_decrypted || payload.matricula || (dossie.matriculas[0] || 'N/I');
+
+        limparTimerRevelacaoPii();
+        var segundos = 60;
+        resultEl.classList.remove('hidden');
+        resultEl.innerHTML =
+          '<div style="padding: 12px; border-radius: 8px; border: 1px solid #10b981; background: rgba(16, 185, 129, 0.08); font-size: 13px;">' +
+            '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">' +
+              '<strong>Dados Sensíveis Revelados (Evento Auditado)</strong>' +
+              '<span id="piiRevealCountdown" class="pill-badge pill-amber" style="font-size:11px;">Oculta em 60s</span>' +
+            '</div>' +
+            '<div>CPF: <strong style="font-family:var(--font-mono);">' + escapeHtml(cpfDecrypted) + '</strong></div>' +
+            '<div>Matrícula Cofre: <strong style="font-family:var(--font-mono);">' + escapeHtml(matDecrypted) + '</strong></div>' +
+          '</div>';
+
+        piiRevealIntervalId = setInterval(function() {
+          segundos--;
+          var badge = document.getElementById('piiRevealCountdown');
+          if (badge) {
+            badge.textContent = 'Oculta em ' + Math.max(segundos, 0) + 's';
+          }
+          if (segundos <= 0) {
+            limparTimerRevelacaoPii();
+          }
+        }, 1000);
+
+        piiRevealTimeoutId = setTimeout(function() {
+          limparTimerRevelacaoPii();
+        }, 60000);
+      },
+      function(err) {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'Revelar dados sensíveis (Auditado)';
+        }
+        var msg = (err && (err.mensagem || err.message)) || 'Não foi possível decifrar os dados sensíveis no momento.';
+        resultEl.classList.remove('hidden');
+        resultEl.innerHTML = '<div style="padding:10px 12px; border-radius:8px; border:1px solid #ef4444; color:#b91c1c; font-size:12.5px;">' + escapeHtml(msg) + '</div>';
+      }
+    );
+  }
+
   /**
    * Abre o Modal de Dossiê Funcional Completo
    */
   function abrirDossieModal(nomeOuMatricula) {
+    limparTimerRevelacaoPii();
     var modal = document.getElementById('modalDossieServidor');
     var modalNome = document.getElementById('modalDossieServidorNome');
     var modalConteudo = document.getElementById('modalDossieServidorConteudo');
@@ -616,36 +746,56 @@ window.OlymposViews.servidores = (function() {
 
     if (modalNome) modalNome.textContent = dossie.nome;
 
+    var roleAtual = obterRoleUsuarioAtual();
+    var piiMask = window.OlymposPiiMask;
     var auditoria = dossie.auditoria;
     var vinculosHtml = dossie.vinculos.map(function(v, idx) {
+      var matExibicao = v.matricula
+        ? (piiMask && typeof piiMask.maskMatricula === 'function' ? piiMask.maskMatricula(v.matricula, roleAtual) : v.matricula)
+        : 'Não informada';
       return '<div style="background: var(--bg-surface); padding: 14px; border: 1px solid var(--border-hairline); border-radius: 8px; margin-bottom: 10px;">' +
         '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">' +
           '<span class="pill-badge pill-gold">Vínculo #' + (idx + 1) + ' • ' + escapeHtml(v.ente) + '</span>' +
-          '<span style="font-size: 12px; font-weight: 700; color: var(--text-muted);">' + escapeHtml(v.matricula ? ('Matrícula: ' + v.matricula) : 'Matrícula não informada') + '</span>' +
+          '<span style="font-size: 12px; font-weight: 700; color: var(--text-muted);">Matrícula: ' + escapeHtml(matExibicao) + '</span>' +
         '</div>' +
-        '<div style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">' + escapeHtml(v.cargo) + (v.funcao ? (' (' + escapeHtml(v.funcao) + ')') : '') + '</div>' +
+        '<div style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">' + escapeHtml(v.cargo) + (v.funcao && v.funcao !== v.cargo ? (' (' + escapeHtml(v.funcao) + ')') : '') + '</div>' +
         '<div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">' +
           '<div>' + (window.OlymposIcons ? window.OlymposIcons.ui('olymposLogo') : '') + ' <strong>Lotação:</strong> ' + escapeHtml(v.lotacao) + '</div>' +
-          '<div>' + (window.OlymposIcons ? window.OlymposIcons.ui('clock') : '') + ' <strong>Jornada:</strong> ' + escapeHtml(v.cargaHorariaTexto) + ' • Turno: ' + escapeHtml(v.turno) + '</div>' +
-          '<div>' + (window.OlymposIcons ? window.OlymposIcons.ui('papyrusOfCadmus') : '') + ' <strong>Regime / Quadro:</strong> ' + escapeHtml(v.regime) + ' (' + escapeHtml(v.quadro) + ') • Situação: ' + escapeHtml(v.situacao) + '</div>' +
-          (v.dataAdmissao ? ('<div>' + (window.OlymposIcons ? window.OlymposIcons.ui('calendar') : '') + ' <strong>Admissão:</strong> ' + escapeHtml(v.dataAdmissao) + '</div>') : '') +
+          '<div>' + (window.OlymposIcons ? window.OlymposIcons.ui('calendar') : '') + ' <strong>Ref. Transparência:</strong> ' + escapeHtml(v.mesReferencia || dossie.mesReferencia || 'N/I') + ' • Regime: ' + escapeHtml(v.regime) + '</div>' +
+          '<div>' + (window.OlymposIcons ? window.OlymposIcons.ui('clock') : '') + ' <strong>Jornada Estimada:</strong> ' + escapeHtml(v.cargaHorariaTexto) + '</div>' +
         '</div>' +
       '</div>';
     }).join('');
+
+    var podeRevelarPii = piiMask && typeof piiMask.canRevealSensitivePii === 'function' && piiMask.canRevealSensitivePii(roleAtual);
+    var piiBoxHtml = podeRevelarPii
+      ? '<div id="piiRevealBoxDossie" style="margin-top: 14px; padding: 14px; background: var(--bg-tonal); border: 1px dashed var(--border-hairline); border-radius: 8px;">' +
+          '<div style="font-size: 13px; font-weight: 700; margin-bottom: 6px;">Decifração Pontual LGPD (Cofre Supabase pgcrypto)</div>' +
+          '<label for="inputJustificativaPiiDossie" style="display:block; font-size:12px; color:var(--text-secondary); margin-bottom:6px;">Justificativa obrigatória da consulta (registrada em <code>audit_logs</code>):</label>' +
+          '<div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">' +
+            '<input type="text" id="inputJustificativaPiiDossie" class="input-clean" style="flex:1 1 240px;" placeholder="Ex.: Conferência de portaria / acúmulo funcional..." />' +
+            '<button type="button" id="btnRevelarPiiDossie" class="btn btn-secondary btn-sm">Revelar dados sensíveis (Auditado)</button>' +
+          '</div>' +
+          '<div id="piiRevealedResultDossie" class="hidden" aria-live="polite" style="margin-top: 10px;"></div>' +
+        '</div>'
+      : '';
 
     var boxColor = auditoria.licito ? '#10B981' : '#EF4444';
 
     modalConteudo.innerHTML = '<div style="margin-bottom: 16px;">' +
       '<div style="display: flex; flex-wrap: wrap; gap: 12px; font-size: 13px; margin-bottom: 14px; padding: 10px 14px; background: var(--bg-tonal); border-radius: 8px; border: 1px solid var(--border-hairline);">' +
-        '<span>CPF Mascarado: <strong>' + escapeHtml(dossie.cpfMascarado) + '</strong></span>' +
+        '<span>CPF: <strong>*** (Protegido pela LGPD)</strong></span>' +
+        '<span>•</span>' +
+        '<span>Ref. Transparência: <strong>' + escapeHtml(dossie.mesReferencia || 'N/I') + '</strong></span>' +
         '<span>•</span>' +
         '<span>Total de Vínculos: <strong>' + dossie.vinculos.length + '</strong></span>' +
         '<span>•</span>' +
-        '<span>Jornada Total Acumulada: <strong>' + dossie.cargaHorariaTotal + 'h semanais</strong></span>' +
+        '<span>Jornada Est. Acumulada: <strong>' + dossie.cargaHorariaTotal + 'h semanais</strong></span>' +
       '</div>' +
 
       '<h5 style="margin: 0 0 10px 0; font-size: 14px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Vínculos Funcionais Identificados</h5>' +
       vinculosHtml +
+      piiBoxHtml +
 
       '<div style="margin-top: 14px; padding: 12px 16px; background: var(--bg-surface); border-left: 4px solid ' + boxColor + '; border-radius: 6px; font-size: 13px;">' +
         '<div style="font-weight: 700; margin-bottom: 4px; color: var(--text-main);">Auditoria Constitucional de Acúmulo (CF/88 Art. 37, XVI)</div>' +
@@ -653,10 +803,18 @@ window.OlymposViews.servidores = (function() {
       '</div>' +
     '</div>';
 
+    var btnRevelar = document.getElementById('btnRevelarPiiDossie');
+    if (btnRevelar) {
+      btnRevelar.addEventListener('click', function() {
+        revelarPiiAuditadoModal(dossie);
+      });
+    }
+
     modal.classList.remove('hidden');
   }
 
   function fecharDossieModal() {
+    limparTimerRevelacaoPii();
     var modal = document.getElementById('modalDossieServidor');
     if (modal) modal.classList.add('hidden');
     servidorModalAtivo = null;
@@ -665,25 +823,30 @@ window.OlymposViews.servidores = (function() {
   function copiarFichaDossie() {
     if (!servidorModalAtivo) return;
     var d = servidorModalAtivo;
+    var roleAtual = obterRoleUsuarioAtual();
+    var piiMask = window.OlymposPiiMask;
+    var mats = d.matriculas.map(function(m) {
+      return (piiMask && typeof piiMask.maskMatricula === 'function') ? piiMask.maskMatricula(m, roleAtual) : m;
+    });
     var texto = '========================================\n' +
       'DOSSIÊ FUNCIONAL INTEGRADO — HUB OLYMPOS\n' +
       '========================================\n' +
       'Servidor: ' + d.nome + '\n' +
-      'CPF: ' + d.cpfMascarado + '\n' +
-      'Matrícula(s): ' + (d.matriculas.join(', ') || 'N/I') + '\n' +
-      'Carga Horária Semanal Total: ' + d.cargaHorariaTotal + 'h\n' +
+      'CPF: *** (Protegido pela LGPD)\n' +
+      'Ref. Transparência: ' + (d.mesReferencia || 'N/I') + '\n' +
+      'Matrícula(s): ' + (mats.join(', ') || 'N/I') + '\n' +
       'Total de Vínculos: ' + d.vinculos.length + '\n\n' +
       '--- VÍNCULOS REGISTRADOS ---\n';
 
     d.vinculos.forEach(function(v, idx) {
+      var mExib = (piiMask && typeof piiMask.maskMatricula === 'function') ? piiMask.maskMatricula(v.matricula, roleAtual) : v.matricula;
       texto += '\n[Vínculo #' + (idx + 1) + ']\n' +
         'Ente: ' + v.ente + '\n' +
-        'Matrícula: ' + (v.matricula || 'N/I') + '\n' +
+        'Matrícula: ' + (mExib || 'N/I') + '\n' +
         'Cargo: ' + v.cargo + '\n' +
         'Quadro: ' + v.quadro + '\n' +
         'Lotação: ' + v.lotacao + '\n' +
-        'Jornada: ' + v.cargaHorariaTexto + ' (' + v.turno + ')\n' +
-        'Regime: ' + v.regime + ' | Situação: ' + v.situacao + '\n';
+        'Ref. Transparência: ' + (v.mesReferencia || d.mesReferencia || 'N/I') + '\n';
     });
 
     texto += '\n--- AUDITORIA CF/88 ART. 37, XVI ---\n' +
@@ -702,7 +865,7 @@ window.OlymposViews.servidores = (function() {
   }
 
   /**
-   * Exporta resultado atual para CSV
+   * Exporta resultado atual para CSV (LGPD: zero CPF e matrículas mascaradas por perfil)
    */
   function exportarCsv() {
     if (!listaFiltradaCache || listaFiltradaCache.length === 0) {
@@ -710,19 +873,23 @@ window.OlymposViews.servidores = (function() {
       return;
     }
 
+    var roleAtual = obterRoleUsuarioAtual();
+    var piiMask = window.OlymposPiiMask;
     var csvRows = [];
-    csvRows.push(['Nome', 'CPF Mascarado', 'Matrículas', 'Ente(s)', 'Cargo Principal', 'Carga Horária Total', 'Lotação Principal', 'Parecer CF88'].map(function(c) {
+    csvRows.push(['Nome', 'Matrículas', 'Ente(s)', 'Cargo Principal', 'Ref. Transparência', 'Lotação Principal', 'Parecer CF88'].map(function(c) {
       return '"' + String(c).replace(/"/g, '""') + '"';
     }).join(';'));
 
     listaFiltradaCache.forEach(function(d) {
+      var mats = d.matriculas.map(function(m) {
+        return (piiMask && typeof piiMask.maskMatricula === 'function') ? piiMask.maskMatricula(m, roleAtual) : m;
+      });
       var row = [
         d.nome,
-        d.cpfMascarado,
-        d.matriculas.join(', '),
+        mats.join(', '),
         d.entes.join(' | '),
         d.cargos[0] || '',
-        d.cargaHorariaTotal + 'h',
+        d.mesReferencia || 'N/I',
         d.lotacoes[0] || '',
         d.auditoria.badgeTexto + ' - ' + d.auditoria.parecer
       ];

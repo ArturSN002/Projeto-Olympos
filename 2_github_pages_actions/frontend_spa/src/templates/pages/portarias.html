@@ -1,0 +1,190 @@
+        <section class="page-view hidden" id="page-portarias">
+          <div class="surface-card">
+            <!-- SELETOR DE SUB-ABAS TIPO PÍLULA -->
+            <div class="subnav-tabs-bar" role="tablist" aria-label="Navegação interna de Portarias">
+              <button type="button" class="subnav-tab active" id="subtabBtnPortariasLote" data-subtab="lote">
+                <span class="svg-icon-inline" data-icon="boltZeus"></span> <span>Portarias em Lote</span>
+              </button>
+              <button type="button" class="subnav-tab" id="subtabBtnPortariasLicencas" data-subtab="licencas">
+                <span class="svg-icon-inline" data-icon="clipboard"></span> <span>Cadastro de Licenças</span>
+              </button>
+            </div>
+
+            <!-- SUB-ABA 1: PORTARIAS EM LOTE (O PINCEL DE HOMERO) -->
+            <div id="subpanePortariasLote" class="subtab-pane">
+              <div class="card-header-row">
+                <div>
+                  <span class="section-eyebrow">EMISSÃO EM LOTE • VALIDAÇÃO AUTOMÁTICA</span>
+                  <h2 class="section-title">Emissão de Portarias (Licenças, Anulações e Readaptações)</h2>
+                  <p class="section-desc">Valide inconsistências antes da geração e receba a confirmação de término com links diretos para abrir ou copiar todos os documentos gerados.</p>
+                </div>
+                <a href="https://drive.google.com/drive/folders/1qGq5uqxOtN_V63itUheYatLIcj5R86O3" target="_blank" rel="noopener" class="folder-chip">
+                  Abrir Pasta Portarias 2026 ↗
+                </a>
+              </div>
+
+              <div class="controls-grid">
+                <div class="field-group">
+                  <label for="pincelOperacaoSelect">1. Modalidade da Portaria</label>
+                  <select id="pincelOperacaoSelect" class="input-clean">
+                    <option value="LICENCAS">Licenças (Prêmio, Não Remunerada e Anulação)</option>
+                    <option value="READAPTACOES">Readaptações Funcionais</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label for="pincelPlanilhaSelect">2. Planilha Oficial de Controle</label>
+                  <select id="pincelPlanilhaSelect" class="input-clean"></select>
+                </div>
+                <div class="field-group">
+                  <label for="pincelAbaSelect">3. Aba Selecionada</label>
+                  <select id="pincelAbaSelect" class="input-clean"></select>
+                </div>
+              </div>
+
+              <div class="button-group" style="margin-top: 20px; margin-bottom: 18px;">
+                <button id="pincelDryRunBtn" class="btn btn-secondary">Simular Emissão (Verificar Dados)</button>
+                <button id="pincelGenerateBtn" class="btn btn-primary">Gerar Portarias Pendentes</button>
+                <button id="pincelStopBtn" class="btn btn-danger hidden">Interromper Lote</button>
+              </div>
+
+              <div id="pincelProgressBox" class="output-panel hidden" style="margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12.5px; font-weight: 600;">
+                  <span id="pincelProgressLabel">Processando portarias no Google Drive...</span>
+                  <span id="pincelProgressNumbers" style="font-family: var(--font-mono);">0 / 0</span>
+                </div>
+                <div class="progress-track-clean">
+                  <div id="pincelProgressFill" class="progress-fill-clean" style="width: 0%;"></div>
+                </div>
+              </div>
+
+              <!-- IDENTIFICAÇÃO DE FINALIZAÇÃO E LINKS VISÍVEIS DOS ARQUIVOS GERADOS -->
+              <div id="pincelCompletedJobBox" class="job-result-card hidden">
+                <div class="job-result-header">
+                  <div class="job-result-title">
+                    <span class="job-done-badge" id="pincelDoneCheckSvg"></span>
+                    <span id="jobResultHeading">Finalização Confirmada — Portarias Disponíveis</span>
+                  </div>
+                  <div class="button-group">
+                    <button id="copyAllJobLinksBtn" class="btn btn-secondary btn-sm">Copiar Todos os Links</button>
+                    <button id="closeJobResultBtn" class="btn btn-ghost btn-sm">Fechar</button>
+                  </div>
+                </div>
+                <div id="jobResultSummary" style="font-size: 13.5px; color: var(--text-secondary);"></div>
+                <div class="job-links-list" id="jobLinksList"></div>
+              </div>
+
+              <div id="pincelOutput" class="output-panel">
+                Selecione a modalidade, a planilha oficial e a aba para executar a validação pré-voo ou iniciar a geração em lote.
+              </div>
+            </div>
+
+            <!-- SUB-ABA 2: CADASTRO DIRETO DE LICENÇA -->
+            <div id="subpanePortariasLicencas" class="subtab-pane hidden">
+              <div class="card-header-row">
+                <div>
+                  <span class="section-eyebrow">REGISTRO FUNCIONAL INTEGRADO</span>
+                  <h2 class="section-title">Cadastrar Licença Direto no Hub</h2>
+                  <p class="section-desc">Registra o servidor na aba correspondente da planilha oficial de Licenças, calcula automaticamente o término (90 dias ou anos afastados) e emite a Portaria no ato se desejado.</p>
+                </div>
+                <a href="https://docs.google.com/spreadsheets/d/1agqeKFfubxvmdq2oND3ndykU2037NIuOXBOHVSLS9oc/edit" target="_blank" rel="noopener" class="folder-chip">
+                  Abrir Planilha Oficial de Licenças ↗
+                </a>
+              </div>
+
+              <form id="formCadastroLicenca">
+                <div class="controls-grid">
+                  <div class="field-group">
+                    <label for="licModalidadeSelect">Modalidade da Licença</label>
+                    <select id="licModalidadeSelect" class="input-clean">
+                      <option value="PREMIO">Licença-Prêmio (90 dias corridos)</option>
+                      <option value="NAO_REMUNERADA">Licença Sem Remuneração</option>
+                      <option value="ANULACAO">Portaria de Anulação de Licença</option>
+                    </select>
+                  </div>
+
+                  <div class="field-group" id="grpLicNome">
+                    <label for="licNomeInput">Nome Completo do(a) Servidor(a)</label>
+                    <input type="text" id="licNomeInput" class="input-clean" placeholder="Nome completo do(a) servidor(a)" />
+                  </div>
+
+                  <div class="field-group" id="grpLicMatricula">
+                    <label for="licMatriculaInput">Matrícula Funcional</label>
+                    <input type="text" id="licMatriculaInput" class="input-clean" placeholder="Matrícula funcional" />
+                  </div>
+
+                  <div class="field-group" id="grpLicCargo">
+                    <label for="licCargoInput">Cargo / Categoria Funcional</label>
+                    <input type="text" id="licCargoInput" class="input-clean" placeholder="Ex: Professor de Ensino Fundamental" />
+                  </div>
+                </div>
+
+                <div class="controls-grid" style="margin-top: 16px;">
+                  <div class="field-group" id="grpLicPeriodoAquisitivo">
+                    <label for="licPeriodoInput">Período Aquisitivo (Nº do quinquênio ou intervalo)</label>
+                    <input type="text" id="licPeriodoInput" class="input-clean" placeholder="Ex: 1 (ou 2019/2024)" />
+                  </div>
+
+                  <div class="field-group hidden" id="grpLicAnosAfastados">
+                    <label for="licAnosInput">Quantidade de Anos Afastados</label>
+                    <input type="number" min="1" max="10" id="licAnosInput" class="input-clean" placeholder="Ex: 2" />
+                  </div>
+
+                  <div class="field-group hidden" id="grpLicPortariaAnular">
+                    <label for="licPortariaAnularInput">Nº da Portaria a Anular</label>
+                    <input type="text" id="licPortariaAnularInput" class="input-clean" placeholder="Ex: 120/2026" />
+                  </div>
+
+                  <div class="field-group hidden" id="grpLicParecer">
+                    <label for="licParecerInput">Nº do Parecer Jurídico</label>
+                    <input type="text" id="licParecerInput" class="input-clean" placeholder="Ex: 045/2026-ASJUR" />
+                  </div>
+
+                  <div class="field-group" id="grpLicDataInicio">
+                    <label for="licDataInicioInput">Data de Início</label>
+                    <input type="date" id="licDataInicioInput" class="input-clean" />
+                  </div>
+
+                  <div class="field-group" id="grpLicDataTermino">
+                    <label for="licDataTerminoInput">Data de Término (Calculada Automaticamente)</label>
+                    <input type="date" id="licDataTerminoInput" class="input-clean" />
+                  </div>
+                </div>
+
+                <div class="controls-grid" style="margin-top: 16px; align-items: end;">
+                  <div class="field-group">
+                    <label for="licNumPortariaInput">Nº da Portaria</label>
+                    <input type="text" id="licNumPortariaInput" class="input-clean" value="AUTO" placeholder="Automático (Próximo número oficial)" />
+                  </div>
+
+                  <div class="field-group">
+                    <label style="display: flex; align-items: center; gap: 9px; cursor: pointer; padding: 10px 0;">
+                      <input type="checkbox" id="licRepublicadoCheck" />
+                      <span>Republicação por incorreção</span>
+                    </label>
+                  </div>
+
+                  <div class="field-group">
+                    <label style="display: flex; align-items: center; gap: 9px; cursor: pointer; padding: 10px 0;">
+                      <input type="checkbox" id="licRetroativoCheck" />
+                      <span>Efeitos retroativos à data inicial</span>
+                    </label>
+                  </div>
+
+                  <div class="field-group">
+                    <label style="display: flex; align-items: center; gap: 9px; cursor: pointer; padding: 10px 0; color: var(--accent-gold); font-weight: 700;">
+                      <input type="checkbox" id="licGerarAgoraCheck" checked />
+                      <span>Emitir documento Google Docs agora</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="button-group" style="margin-top: 20px;">
+                  <button type="submit" id="btnSalvarLicenca" class="btn btn-primary">Registrar Licença e Gerar Ato</button>
+                  <button type="reset" class="btn btn-secondary">Limpar Campos</button>
+                </div>
+              </form>
+
+              <div id="licencaOutputFeedback" class="job-result-card hidden"></div>
+            </div>
+          </div>
+        </section>

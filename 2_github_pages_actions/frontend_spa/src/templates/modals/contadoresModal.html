@@ -1,0 +1,37 @@
+    <div id="contadoresModal" class="modal-backdrop hidden">
+      <div class="modal-card" style="max-width: 560px;">
+        <div class="modal-header">
+          <h3 style="font-size: 1.08rem;">Ajuste de Numeração Sequencial 2026 (Apolo)</h3>
+          <button id="closeContadoresModalBtn" class="icon-capsule-btn" type="button" aria-label="Fechar"><span class="svg-icon-inline" data-icon="close"></span></button>
+        </div>
+        <div class="modal-body">
+          <p class="section-desc" style="margin-bottom: 16px;">
+            Atualiza diretamente a seção de estado oficial em <code>_memoria_apolo.md</code> com registro auditável no histórico.
+          </p>
+          <div class="controls-grid" style="grid-template-columns: repeat(2, 1fr);">
+            <div class="field-group">
+              <label for="inputProximoOficioMd">Próximo Ofício 2026</label>
+              <input type="number" id="inputProximoOficioMd" class="input-clean" min="1" placeholder="--" value="" />
+            </div>
+            <div class="field-group">
+              <label for="inputProximaPortariaMd">Próxima Portaria 2026</label>
+              <input type="number" id="inputProximaPortariaMd" class="input-clean" min="1" placeholder="--" value="" />
+            </div>
+          </div>
+          <div class="controls-grid" style="grid-template-columns: 1fr; margin-top: 14px;">
+            <div class="field-group">
+              <label for="inputSignatarioMd">Signatário Titular da SMEB</label>
+              <input type="text" id="inputSignatarioMd" class="input-clean" placeholder="Nome ou Cargo Oficial do(a) Secretário(a)" />
+            </div>
+            <div class="field-group">
+              <label for="inputMotivoAjusteMd">Justificativa do Ajuste (Rolling Log)</label>
+              <input type="text" id="inputMotivoAjusteMd" class="input-clean" placeholder="Ex: Alinhamento com ato assinado em gabinete" />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <a href="https://docs.google.com/document/d/1ZXTlg2Wk5IKZ2Sg84HOnlePCOihccPFcYTd67wHUgkM/edit" target="_blank" rel="noopener noreferrer" class="folder-chip">Abrir Memória no Google Docs ↗</a>
+          <button id="saveContadoresMdBtn" class="btn btn-primary btn-sm">Gravar Numeração</button>
+        </div>
+      </div>
+    </div>

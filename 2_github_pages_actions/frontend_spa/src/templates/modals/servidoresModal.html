@@ -1,0 +1,19 @@
+    <div id="modalDossieServidor" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalDossieServidorNome">
+      <div class="modal-card" style="max-width: 720px; width: 94%;">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <span class="badge badge-amber" style="font-size: 0.72rem; margin-bottom: 4px;">Dossiê Funcional Consolidado</span>
+            <h3 id="modalDossieServidorNome" style="margin: 0; font-size: 1.25rem; font-weight: 700;">Nome do Servidor</h3>
+          </div>
+          <button id="closeModalDossieServidorBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal"><span class="svg-icon-inline" data-icon="close"></span></button>
+        </div>
+        <div class="modal-body" id="modalDossieServidorConteudo" style="padding: 20px 24px; max-height: 75vh; overflow-y: auto;">
+          <!-- Preenchido dinamicamente via JS -->
+        </div>
+        <div class="modal-footer" style="padding: 14px 24px; border-top: 1px solid var(--border-hairline); display: flex; justify-content: flex-end; gap: 10px;">
+          <button type="button" id="btnCopiarFichaDossie" class="btn btn-secondary btn-sm"><span class="svg-icon-inline" data-icon="clipboard"></span> Copiar Ficha</button>
+          <button type="button" id="btnImprimirFichaDossie" class="btn btn-secondary btn-sm"><span class="svg-icon-inline" data-icon="printer"></span> Imprimir Dossiê</button>
+          <button type="button" id="btnFecharModalDossie" class="btn btn-primary btn-sm">Fechar</button>
+        </div>
+      </div>
+    </div>
