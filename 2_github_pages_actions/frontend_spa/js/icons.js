@@ -53,7 +53,34 @@ window.OlymposIcons = (function() {
     iris: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17a9 9 0 0 1 18 0"/><path d="M6.5 17a5.5 5.5 0 0 1 11 0"/><path d="M10 17a2 2 0 0 1 4 0"/><path d="M2 17h20"/></svg>',
 
     // 17. Sólon — Coluna Jônica Constitucional (Técnica Legislativa)
-    solon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16M5.5 5a2 2 0 1 0 0 3.5h13a2 2 0 1 0 0-3.5"/><path d="M8 8.5v9.5M12 8.5v9.5M16 8.5v9.5M4 21h16M5.5 18h13"/></svg>'
+    solon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16M5.5 5a2 2 0 1 0 0 3.5h13a2 2 0 1 0 0-3.5"/><path d="M8 8.5v9.5M12 8.5v9.5M16 8.5v9.5M4 21h16M5.5 18h13"/></svg>',
+
+    // 18. Afrodite — Rosa Radiante & Harmonia (Clima Escolar e Saúde Mental)
+    afrodite: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="5"/><path d="M12 14v7M9 18h6"/><path d="M12 4v2M7.5 9h-2M18.5 9h-2"/></svg>',
+
+    // 19. Ares — Escudo Octogonal & Lança (Mediação e Disciplina Funcional)
+    ares: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5.5c0 4.5-3 7.8-7 9.5-4-1.7-7-5-7-9.5V6l7-3z"/><path d="M12 7v9M8.5 11.5h7"/></svg>',
+
+    // 20. Ártemis — Arco Lunar & Flecha (Auditoria FUNDEB e Conformidade)
+    artemis: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4a9 9 0 0 1 0 16"/><path d="M5 12h15M16 9l4 3-4 3"/></svg>',
+
+    // 21. Cronos — Ampulheta do Tempo Letivo (203 Dias & Prazos Históricos)
+    cronos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12M6 21h12M7.5 3v4.5a4.5 4.5 0 0 0 9 0V3M7.5 21v-4.5a4.5 4.5 0 0 1 9 0V21"/></svg>',
+
+    // 22. Deméter — Espiga Dourada PNAE (Alimentação Escolar e Nutrição)
+    demeter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"/><path d="M12 7c-2.2 0-4-1.3-4-3.2C10.2 3.8 12 5 12 7zM12 7c2.2 0 4-1.3 4-3.2C13.8 3.8 12 5 12 7zM12 12c-2.4 0-4.2-1.4-4.2-3.4 2.4 0 4.2 1.2 4.2 3.4zM12 12c2.4 0 4.2-1.4 4.2-3.4-2.4 0-4.2 1.2-4.2 3.4zM12 17c-2.2 0-3.8-1.2-3.8-3 2.2 0 3.8 1.1 3.8 3zM12 17c2.2 0 3.8-1.2 3.8-3-2.2 0-3.8 1.1-3.8 3z"/></svg>',
+
+    // 23. Dionísio — Cálice Cultural & Louros (Cultura, Esporte e JEMs)
+    dionisio: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7c0 4 2.5 7 5.5 7s5.5-3 5.5-7H4z"/><path d="M9.5 14v5M6.5 19h6M16 7.5c2 0 3.5 1.5 3.5 3.8 0 2.5-1.8 4.2-3.5 4.2"/></svg>',
+
+    // 24. Hades — Chave do Acervo Histórico (Contencioso e Arquivo Morto)
+    hades: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="12" r="4"/><path d="M12 12h9M18 12v3M21 12v4"/></svg>',
+
+    // 25. Poseidon — Tridente Hídrico (Abastecimento e Saneamento Escolar)
+    poseidon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M7 5v5a5 5 0 0 0 10 0V5"/><path d="M9 21h6M10 5l2-2 2 2"/></svg>',
+
+    // 26. Prometeu / Prometheus — Tocha do Fogo Sagrado (Raspagem FEMURN & NER)
+    prometeu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c2 2.4 3.8 4.5 3.8 7a3.8 3.8 0 1 1-7.6 0c0-1.6.9-3.1 1.9-4.2.3 1 .9 1.6 1.7 1.6-.2-1.4.2-3 .2-4.4z"/><path d="M9 14h6l-1.5 7h-3L9 14z"/></svg>'
   };
 
   // Aliases de compatibilidade retroativa com nomes de ícones do backend
@@ -75,7 +102,7 @@ window.OlymposIcons = (function() {
     hammer: 'hefesto',
     rainbow: 'iris',
     pillar: 'solon',
-    prometheus: 'helio',
+    prometheus: 'prometeu',
     mnemosine: 'cadmo',
     argos: 'apolo',
     quiron: 'atena',
@@ -157,7 +184,12 @@ window.OlymposIcons = (function() {
     arrowLeft: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>',
     arrowDownLeft: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 7 7 17M17 17H7V7"/></svg>',
     map: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" y1="3" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="21"/></svg>',
-    repeat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 2 21 6 17 10"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><polyline points="7 22 3 18 7 14"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>'
+    repeat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 2 21 6 17 10"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><polyline points="7 22 3 18 7 14"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>',
+    graduationCap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>',
+    schoolCei: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="8" height="9" rx="1.5"/><rect x="13" y="13" width="8" height="7" rx="1.5"/><path d="M8 11V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v7"/><circle cx="12" cy="7.5" r="1"/></svg>',
+    schoolEspecial: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.5-9-9.5C1.5 7.5 4.5 4 8 4c1.9 0 3.2 1 4 2.2C12.8 5 14.1 4 16 4c3.5 0 6.5 3.5 5 7.5-2 5-9 9.5-9 9.5z"/><path d="M12 9v4M10 11h4"/></svg>',
+    schoolTecnico: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>',
+    schoolMulti: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg>'
   };
 
   const emojiToIconKey = {
@@ -357,24 +389,57 @@ window.OlymposIcons = (function() {
 
   function getCatalogo17Personas() {
     return [
-      { id: 'hestia', nome: 'Héstia', camada: 'Camada 1', tipo: 'memoria', arquivo: '_memoria_hestia.md', dominio: 'Governança Central & Gabinete' },
-      { id: 'zeus', nome: 'Zeus', camada: 'Camada 1', tipo: 'anfitriao', anfitriao: 'Héstia', dominio: 'Oráculo Executivo & Triagem Macro' },
-      { id: 'hera', nome: 'Hera', camada: 'Camada 2', tipo: 'memoria', arquivo: '_memoria_hera.md', dominio: 'Gestão de Pessoas & Permutas' },
-      { id: 'atena', nome: 'Atena', camada: 'Camada 2', tipo: 'memoria', arquivo: '_memoria_atena.md', dominio: 'Coordenação Pedagógica' },
-      { id: 'nike', nome: 'Nike', camada: 'Camada 2', tipo: 'memoria', arquivo: '_memoria_nike.md', dominio: 'Processos Seletivos (PSS)' },
-      { id: 'temis', nome: 'Têmis', camada: 'Camada 2', tipo: 'memoria', arquivo: '_memoria_temis.md', dominio: 'Assessoria Jurídica' },
-      { id: 'hermes', nome: 'Hermes', camada: 'Camada 2', tipo: 'memoria', arquivo: '_memoria_hermes.md', dominio: 'Transporte Escolar & Logística' },
-      { id: 'apolo', nome: 'Apolo', camada: 'Camada 3A', tipo: 'memoria', arquivo: '_memoria_apolo.md', dominio: 'Numeração Oficial 2026' },
-      { id: 'homero', nome: 'Homero', camada: 'Camada 3A', tipo: 'memoria', arquivo: '_memoria_homero.md', dominio: 'Portarias, Licenças & Ofícios' },
-      { id: 'orfeu', nome: 'Orfeu', camada: 'Camada 3A', tipo: 'memoria', arquivo: '_memoria_orfeu.md', dominio: 'Certificados & Declarações' },
-      { id: 'helio', nome: 'Hélio', camada: 'Camada 3A', tipo: 'memoria', arquivo: '_memoria_helio.md', dominio: 'Diário Oficial FEMURN' },
+      { id: 'hestia', nome: 'Héstia', camada: 'Camada 1', tipo: 'memoria', docId: '1gj0U051uTCjl3oh_X_kqnxtVQQHae0nvlFa62c2N91Q', arquivo: '_memoria_hestia.md', dominio: 'Governança Central & Gabinete' },
+      { id: 'zeus', nome: 'Zeus', camada: 'Camada 1', tipo: 'memoria', docId: '1qi_H4oKokFDEmXiNuGRYsh6kM4YxgJAQuFirDzOVkdM', arquivo: '_memoria_zeus.md', dominio: 'Oráculo Executivo & Triagem Macro' },
+      { id: 'hera', nome: 'Hera', camada: 'Camada 2', tipo: 'memoria', docId: '1x3TO_H3TXbnjFqsTq3rEyOXL0cbeQmD5n_nu0GD44G4', arquivo: '_memoria_hera.md', dominio: 'Gestão de Pessoas & Permutas' },
+      { id: 'atena', nome: 'Atena', camada: 'Camada 2', tipo: 'memoria', docId: '1L_VJ4xwZIT3KaSOsLnImeORgjmiDjSuBhPavRzh0tHg', arquivo: '_memoria_atena.md', dominio: 'Coordenação Pedagógica' },
+      { id: 'nike', nome: 'Niké', camada: 'Camada 2', tipo: 'memoria', docId: '18wyqKRmpVpcNgIHPB2Vg-akLWyGBTLvrkEUwz5bWOW4', arquivo: '_memoria_nike.md', dominio: 'Processos Seletivos (PSS)' },
+      { id: 'temis', nome: 'Têmis', camada: 'Camada 2', tipo: 'memoria', docId: '11Veph2HxedUA6O0NoMMzB87C1X1lGAexyt8pmZRdx2A', arquivo: '_memoria_temis.md', dominio: 'Assessoria Jurídica' },
+      { id: 'hermes', nome: 'Hermes', camada: 'Camada 2', tipo: 'memoria', docId: '1_7WJSZ0D2tbP1sHWH32pjkDZfmcVUBGJXLUtRWMrlEo', arquivo: '_memoria_hermes.md', dominio: 'Transporte Escolar & Logística' },
+      { id: 'apolo', nome: 'Apolo', camada: 'Camada 3A', tipo: 'memoria', docId: '1ZXTlg2Wk5IKZ2Sg84HOnlePCOihccPFcYTd67wHUgkM', arquivo: '_memoria_apolo.md', dominio: 'Numeração Oficial 2026' },
+      { id: 'homero', nome: 'Homero', camada: 'Camada 3A', tipo: 'memoria', docId: '1JgCEpBhJC07zjt1TkZvmgzfG00US4FgwwDn-DvgCx8c', arquivo: '_memoria_homero.md', dominio: 'Portarias, Licenças & Ofícios' },
+      { id: 'orfeu', nome: 'Orfeu', camada: 'Camada 3A', tipo: 'memoria', docId: '18a_OUyL4tgIN_NkHzStSWOVZS_krGz_B8Z7uVGQfRK8', arquivo: '_memoria_orfeu.md', dominio: 'Certificados & Declarações' },
+      { id: 'helio', nome: 'Hélio', camada: 'Camada 3A', tipo: 'memoria', docId: '1JUrOsacYDgF5X1H5DUdYXhOalGoUBUPatli8xp39SU8', arquivo: '_memoria_helio.md', dominio: 'Diário Oficial FEMURN' },
       { id: 'cadmo', nome: 'Cadmo', camada: 'Camada 3B', tipo: 'anfitriao', anfitriao: 'Hera', dominio: 'Papiro de Cadmo (16 Entes RN)' },
       { id: 'iris', nome: 'Íris', camada: 'Camada 3B', tipo: 'anfitriao', anfitriao: 'Héstia', dominio: 'Comunicação Ágil & Chat' },
       { id: 'solon', nome: 'Sólon', camada: 'Camada 3B', tipo: 'anfitriao', anfitriao: 'Têmis', dominio: 'Técnica Legislativa' },
-      { id: 'dedalo', nome: 'Dédalo', camada: 'Camada 4', tipo: 'memoria', arquivo: '_memoria_dedalo.md', dominio: 'Infraestrutura & Snapshots' },
+      { id: 'dedalo', nome: 'Dédalo', camada: 'Camada 4', tipo: 'memoria', docId: '1odtXhXWeio4g7UY3Sis-sMGZoDLr1BwJwffJ2SNAGdg', arquivo: '_memoria_dedalo.md', dominio: 'Infraestrutura & Snapshots' },
       { id: 'arquimedes', nome: 'Arquimedes', camada: 'Camada 4', tipo: 'anfitriao', anfitriao: 'Dédalo', dominio: 'Ciência de Dados & Censo' },
-      { id: 'hefesto', nome: 'Hefesto', camada: 'Camada 4', tipo: 'anfitriao', anfitriao: 'Dédalo', dominio: 'GitHub Actions & Integração GAS' }
+      { id: 'hefesto', nome: 'Hefesto', camada: 'Camada 4', tipo: 'memoria', docId: '1Zzjp9NNhRSKka773EoVj6s9NcrTu2m3XnPL63GLBQcg', arquivo: '_memoria_hefesto.md', dominio: 'Infraestrutura Escolar & Patrimônio' }
     ];
+  }
+
+  function getCatalogoCompletoPersonas() {
+    if (typeof window !== 'undefined' && window.OLYMPOS_MEMORIAS_CATALOGO) {
+      var memorias = window.OLYMPOS_MEMORIAS_CATALOGO.listarTodas().map(function(m) {
+        return {
+          id: m.slug,
+          nome: m.nome || m.deus,
+          camada: m.camada,
+          tipo: 'memoria',
+          docId: m.id,
+          url: m.url,
+          arquivo: m.arquivo,
+          dominio: m.dominio,
+          perfilRbac: m.perfilRbac
+        };
+      });
+      var extras = window.OLYMPOS_MEMORIAS_CATALOGO.listarExtras().map(function(ex) {
+        return {
+          id: ex.slug,
+          nome: ex.nome,
+          camada: ex.camada,
+          tipo: 'anfitriao',
+          anfitriao: ex.anfitriao,
+          docId: ex.idAnfitriao,
+          url: ex.urlAnfitriao,
+          arquivo: ex.arquivoAnfitriao,
+          dominio: ex.dominio
+        };
+      });
+      return memorias.concat(extras);
+    }
+    return getCatalogo17Personas();
   }
 
   return {
@@ -385,6 +450,7 @@ window.OlymposIcons = (function() {
     inline: inline,
     normalizarChave: normalizarChave,
     getCatalogo17Personas: getCatalogo17Personas,
+    getCatalogoCompletoPersonas: getCatalogoCompletoPersonas,
     fromEmojiOrKey: fromEmojiOrKey,
     hydrateAll: hydrateAll
   };

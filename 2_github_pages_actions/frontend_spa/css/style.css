@@ -753,33 +753,46 @@ body.nav-drawer-open .sidebar-backdrop,
 .user-capsule-btn {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
-  padding: 4px 13px 4px 5px;
+  gap: 8px;
+  min-height: 36px;
+  padding: 4px 12px 4px 5px;
   border-radius: var(--radius-pill);
   border: 1px solid var(--border-hairline);
-  background: var(--bg-surface);
+  background: var(--bg-elevated);
   color: var(--text-main);
   cursor: pointer;
-  transition: background 0.18s ease, border-color 0.18s ease;
+  box-shadow: var(--shadow-subtle);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .user-capsule-btn:hover {
-  background: var(--bg-tonal);
-  border-color: var(--border-strong);
+  background: var(--bg-surface);
+  border-color: var(--accent-gold-border);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
 }
 
 .user-avatar-dot {
-  width: 26px;
-  height: 26px;
+  width: 27px;
+  height: 27px;
   border-radius: 50%;
-  background: var(--accent-gold-soft);
-  color: var(--accent-gold);
+  background: var(--bg-tonal);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-hairline);
   font-family: var(--font-display);
   font-weight: 700;
   font-size: 11px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.user-capsule-btn.is-authenticated .user-avatar-dot {
+  background: var(--accent-gold-soft);
+  color: var(--accent-gold);
+  border-color: var(--accent-gold-border);
 }
 
 .user-capsule-meta {
@@ -790,9 +803,14 @@ body.nav-drawer-open .sidebar-backdrop,
 }
 
 .user-capsule-name {
+  font-family: var(--font-display);
   font-size: 12.5px;
   font-weight: 600;
   color: var(--text-main);
+  max-width: 145px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .user-capsule-role {
@@ -802,6 +820,21 @@ body.nav-drawer-open .sidebar-backdrop,
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.user-capsule-caret {
+  width: 13px;
+  height: 13px;
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.18s ease, color 0.18s ease;
+}
+
+.user-capsule-btn:hover .user-capsule-caret {
+  color: var(--text-main);
 }
 
 /* Trilho de Navegação Modular (blog.google Category Strip) */
@@ -1367,11 +1400,11 @@ html.light-theme .folder-chip-indigo:hover {
 }
 
 /* ==========================================================================
-   CONSTELAÇÃO DAS 17 PERSONAS NA PÁGINA INICIAL & GRADE DE MEMÓRIAS
+   CONSTELAÇÃO DAS 22 MEMÓRIAS GOOGLE DOCS NA PÁGINA INICIAL & GRADE DE MEMÓRIAS
    ========================================================================== */
 .home-personas-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 210px), 1fr));
   gap: 12px;
 }
 
@@ -1384,6 +1417,8 @@ html.light-theme .folder-chip-indigo:hover {
   align-items: flex-start;
   gap: 12px;
   cursor: pointer;
+  min-width: 0;
+  overflow: hidden;
   transition: all 0.18s ease;
 }
 
@@ -1454,7 +1489,106 @@ html.light-theme .folder-chip-indigo:hover {
   font-family: var(--font-mono);
   font-size: 10.5px;
   color: var(--text-muted);
-  margin-top: 6px;
+  margin-top: 0;
+}
+
+.home-persona-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.home-persona-doc-link {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--accent-link);
+  text-decoration: none;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--accent-link-soft);
+  white-space: nowrap;
+}
+
+.home-persona-doc-link:hover {
+  text-decoration: underline;
+}
+
+.memorias-sync-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+.memorias-sync-status[data-status="online"] {
+  color: #166534;
+  border-color: rgba(22, 101, 52, 0.25);
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.memorias-sync-status[data-status="syncing"] {
+  color: var(--accent-gold);
+}
+
+.memorias-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.memoria-filter-pill {
+  border: 1px solid var(--border-hairline);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.memoria-filter-pill:hover {
+  border-color: var(--border-strong);
+  color: var(--text-main);
+}
+
+.memoria-filter-pill.active {
+  background: var(--accent-gold-soft);
+  color: var(--accent-gold);
+  border-color: var(--accent-gold-border);
+}
+
+.memoria-badges-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.pill-docs {
+  background: var(--accent-link-soft);
+  color: var(--accent-link);
+  border: 1px solid rgba(26, 115, 232, 0.25);
+}
+
+.modal-memoria-subtitle {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  word-break: break-all;
 }
 
 /* Cards Completos na Página #personas */
@@ -1473,6 +1607,8 @@ html.light-theme .folder-chip-indigo:hover {
   flex-direction: column;
   justify-content: space-between;
   gap: 14px;
+  min-width: 0;
+  overflow: hidden;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -2729,7 +2865,8 @@ html.light-theme .badge-blue {
     margin-left: auto;
   }
 
-  .user-capsule-meta {
+  .user-capsule-meta,
+  .user-capsule-caret {
     display: none !important;
   }
   .user-capsule-btn {
@@ -3182,7 +3319,8 @@ html.light-theme .badge-blue {
   .brand-edition-pill {
     display: none !important;
   }
-  .user-capsule-meta {
+  .user-capsule-meta,
+  .user-capsule-caret {
     display: none !important;
   }
 
@@ -3755,6 +3893,43 @@ html.light-theme .badge-blue {
 }
 .hera-chevron-rotated {
   transform: rotate(-180deg);
+}
+#mapaCadmoChevronIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.22s ease;
+}
+
+/* Controles ocultos na página de publicações do Diário Oficial (preserva IDs no DOM) */
+#promSheetLinkBtn,
+#promBackupLinkBtn,
+#prometheusTriggerActionBtn,
+#prometheusChatSummaryBtn,
+#prometheusSyncBtn,
+#diarioDestinatariosCard,
+#drawerLinkPlanilhaDiario,
+#drawerLinkBackupDiario {
+  display: none !important;
+}
+
+/* Badges SVG específicos por categoria, rede, zona e combinação nos mapas */
+.escola-marker-badge,
+.cadmo-marker-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+}
+.escola-marker-badge:hover,
+.cadmo-marker-badge:hover {
+  transform: scale(1.12);
+}
+.escola-marker-badge svg,
+.cadmo-marker-badge svg {
+  display: block;
+  flex-shrink: 0;
 }
 .resultado-matching-container::-webkit-scrollbar {
   width: 6px;
@@ -6357,6 +6532,7 @@ html.light-theme .cal-modal-badge.cal-badge-purple {
   box-shadow: 0 0 20px -6px rgba(248, 113, 113, 0.25);
 }
 
+.chamado-card[data-status="EM_ANDAMENTO"],
 .chamado-card[data-status="EM_ATENDIMENTO"] {
   border-left: 4px solid var(--accent-primary);
 }
@@ -6876,3 +7052,297 @@ html.light-theme .cal-modal-badge.cal-badge-purple {
 
 
 
+
+/* ==========================================================================
+   M1: POLIMENTO VISITANTE (body.is-visitante) & MODAL DE PERFIL (#userProfileModal)
+   ========================================================================== */
+body.is-visitante #heroTelemetryStrip {
+  grid-template-columns: 1fr;
+}
+
+body.is-visitante #page-visao-geral .stats-grid {
+  grid-template-columns: 1fr;
+}
+
+body.is-visitante #page-visao-geral .quick-modules-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+}
+
+.user-profile-summary {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-lg);
+}
+
+.user-profile-avatar-lg {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--accent-gold-soft);
+  color: var(--accent-gold);
+  border: 1px solid var(--accent-gold-border);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.user-profile-summary-meta {
+  min-width: 0;
+  flex: 1;
+}
+
+.user-profile-display-name {
+  font-family: var(--font-display);
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--text-main);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-profile-email {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-profile-footer-danger {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-hairline);
+}
+
+.user-profile-footer-danger .btn-danger {
+  background: var(--danger-soft, rgba(229, 57, 53, 0.1));
+  color: var(--danger, #dc2626);
+  border: 1px solid rgba(220, 38, 38, 0.28);
+}
+
+.user-profile-footer-danger .btn-danger:hover {
+  background: var(--danger, #dc2626);
+  color: #ffffff;
+}
+
+/* ==========================================================================
+   M3: CHAMADOS KPI 4 CARDS EM FILEIRA ÚNICA NO DESKTOP
+   ========================================================================== */
+#page-chamados .stats-grid.chamados-kpi-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  #page-chamados .stats-grid.chamados-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  #page-chamados .stats-grid.chamados-kpi-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+}
+
+#page-chamados .stats-grid.chamados-kpi-grid > .stat-card {
+  min-width: 0;
+}
+
+/* ==========================================================================
+   M4: NOTÍCIAS OFICIAIS DO MUNICÍPIO (#municipalNewsSection)
+   ========================================================================== */
+.municipal-news-section {
+  margin-top: 20px;
+}
+
+.municipal-news-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.municipal-news-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.municipal-news-status {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.municipal-news-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr));
+  gap: 14px;
+}
+
+.municipal-news-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-lg, 14px);
+  overflow: hidden;
+  transition: transform 0.2s var(--ease-deepmind), border-color 0.2s var(--ease-deepmind);
+}
+
+.municipal-news-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-gold-border, rgba(212, 175, 55, 0.45));
+}
+
+.municipal-news-thumb {
+  width: 100%;
+  height: 150px;
+  object-fit: cover;
+  display: block;
+  background: var(--bg-base);
+}
+
+.municipal-news-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 8px;
+  padding: 14px 16px;
+}
+
+.municipal-news-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.municipal-news-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.municipal-news-badge.is-prefeitura {
+  background: rgba(37, 99, 235, 0.14);
+  color: #1d4ed8;
+  border: 1px solid rgba(37, 99, 235, 0.3);
+}
+
+[data-theme="dark"] .municipal-news-badge.is-prefeitura {
+  color: #93c5fd;
+  background: rgba(37, 99, 235, 0.22);
+}
+
+.municipal-news-badge.is-camara {
+  background: var(--accent-gold-soft, rgba(212, 175, 55, 0.15));
+  color: #926c0c;
+  border: 1px solid var(--accent-gold-border, rgba(212, 175, 55, 0.35));
+}
+
+[data-theme="dark"] .municipal-news-badge.is-camara {
+  color: var(--accent-gold, #f59e0b);
+}
+
+.municipal-news-date {
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+
+.municipal-news-title {
+  margin: 0;
+  font-size: 0.94rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--text-primary);
+}
+
+.municipal-news-summary {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  flex: 1;
+}
+
+.municipal-news-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent-primary, var(--accent-gold));
+  text-decoration: none;
+}
+
+.municipal-news-link:hover {
+  text-decoration: underline;
+}
+
+.municipal-news-footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-hairline);
+  font-size: 0.78rem;
+}
+
+/* ==========================================================================
+   M5: BARRA REUTILIZÁVEL DE PAGINAÇÃO (.olympos-pagination-bar)
+   ========================================================================== */
+.olympos-pagination-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-hairline);
+}
+
+.olympos-pagination-info {
+  font-size: 0.8rem;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+
+.olympos-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+button.btn-mini.disabled,
+button.btn-mini:disabled {
+  opacity: 0.45;
+  pointer-events: none;
+  cursor: not-allowed;
+}

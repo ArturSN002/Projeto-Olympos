@@ -6,8 +6,14 @@ window.OlymposViews = window.OlymposViews || {};
 window.OlymposViews.visaoGeral = (function() {
   let isLoaded = false;
   let lastOverviewData = null;
+  let newsLoaded = false;
+  let newsLoading = false;
+  let municipalNewsCache = [];
+  let activeNewsSource = 'todas';
 
-  const APOLO_MEMORIA_URL = 'https://drive.google.com/file/d/1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_/view';
+  const APOLO_MEMORIA_URL = 'https://docs.google.com/document/d/1ZXTlg2Wk5IKZ2Sg84HOnlePCOihccPFcYTd67wHUgkM/edit';
+  const PREFEITURA_SITE_URL = 'https://cearamirim.rn.gov.br/';
+  const CAMARA_SITE_URL = 'https://www.cearamirim.rn.leg.br/';
 
   function init() {
     bindEvents();
@@ -15,6 +21,11 @@ window.OlymposViews.visaoGeral = (function() {
     renderizarConstelacao17Personas(lastOverviewData ? lastOverviewData.memorias : null);
     atualizarTelemetriaCientifica();
     renderizarWidgetEventosAgenda();
+    if (!newsLoaded && !newsLoading) {
+      carregarNoticiasMunicipais(false);
+    } else {
+      renderizarNoticiasMunicipais();
+    }
     if (!isLoaded) {
       definirEstadoInicialNumeracao();
       carregarDados();
@@ -38,10 +49,16 @@ window.OlymposViews.visaoGeral = (function() {
   }
 
   function atualizarTelemetriaCientifica() {
-    // 1. Chamados SMEB
+    const sessao = (window.OlymposApp && typeof window.OlymposApp.getSession === 'function')
+      ? window.OlymposApp.getSession()
+      : null;
+
+    // 1. Chamados SMEB (apenas para usuários autenticados)
     const elChamados = document.getElementById('heroTelemetryChamados');
     if (elChamados) {
-      if (window.OlymposSignals && typeof window.OlymposSignals.getActiveQueue === 'function') {
+      if (!sessao || !sessao.perfil) {
+        elChamados.textContent = '--';
+      } else if (window.OlymposSignals && typeof window.OlymposSignals.getActiveQueue === 'function') {
         const fila = window.OlymposSignals.getActiveQueue();
         elChamados.textContent = fila.length + ' demandas';
       } else {
@@ -126,12 +143,12 @@ window.OlymposViews.visaoGeral = (function() {
     if (elOf) elOf.textContent = '--';
     if (elUltOf) {
       elUltOf.innerHTML = '<span>Último emitido: --</span>' +
-        '<a href="' + APOLO_MEMORIA_URL + '" target="_blank" rel="noopener noreferrer" class="folder-chip" data-requires-auth="true" data-access-roles="ADMIN_GABINETE,RH_COMISSAO,PEDAGOGICO_EVENTOS,JURIDICO">Memória de Apolo ↗</a>';
+        '<a href="' + APOLO_MEMORIA_URL + '" target="_blank" rel="noopener noreferrer" class="folder-chip" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE,RH_COMISSAO,PEDAGOGICO_EVENTOS,JURIDICO">Memória de Apolo ↗</a>';
     }
     if (elPt) elPt.textContent = '--';
     if (elUltPt) {
       elUltPt.innerHTML = '<span>Última emitida: --</span>' +
-        '<a href="' + APOLO_MEMORIA_URL + '" target="_blank" rel="noopener noreferrer" class="folder-chip" data-requires-auth="true" data-access-roles="ADMIN_GABINETE,RH_COMISSAO,PEDAGOGICO_EVENTOS,JURIDICO">Memória de Apolo ↗</a>';
+        '<a href="' + APOLO_MEMORIA_URL + '" target="_blank" rel="noopener noreferrer" class="folder-chip" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE,RH_COMISSAO,PEDAGOGICO_EVENTOS,JURIDICO">Memória de Apolo ↗</a>';
     }
     if (window.OlymposApp && typeof window.OlymposApp.aplicarControleAcessoModularEDrive === 'function') {
       window.OlymposApp.aplicarControleAcessoModularEDrive();
@@ -174,6 +191,203 @@ window.OlymposViews.visaoGeral = (function() {
     bindClick('reservePortariaBtn', function() { reservarNumero('PORTARIA'); });
     bindClick('editOficioBtn', function() { window.OlymposApp.abrirModalContadores(); });
     bindClick('editPortariaBtn', function() { window.OlymposApp.abrirModalContadores(); });
+    bindClick('btnRefreshMunicipalNews', function() { carregarNoticiasMunicipais(true); });
+    bindClick('homeOpenAllMemoriasBtn', function() {
+      if (window.OlymposRouter) window.OlymposRouter.navegarPara('personas');
+    });
+
+    const newsFiltersEl = document.getElementById('municipalNewsFilters');
+    if (newsFiltersEl && !newsFiltersEl._bound) {
+      newsFiltersEl._bound = true;
+      newsFiltersEl.addEventListener('click', function(e) {
+        const btn = e.target && e.target.closest ? e.target.closest('[data-news-source]') : null;
+        if (!btn) return;
+        const src = btn.getAttribute('data-news-source') || 'todas';
+        activeNewsSource = src;
+        newsFiltersEl.querySelectorAll('[data-news-source]').forEach(function(pill) {
+          pill.classList.toggle('active', pill === btn);
+        });
+        renderizarNoticiasMunicipais();
+      });
+    }
+  }
+
+  function sanitizarUrlHttp(raw) {
+    if (typeof raw !== 'string') return '';
+    const trimmed = raw.trim();
+    if (!/^https?:\/\/\S+/i.test(trimmed)) return '';
+    return trimmed;
+  }
+
+  function formatarDataNoticia(iso) {
+    if (!iso) return 'Recente';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return 'Recente';
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    return dd + '/' + mm + '/' + yyyy;
+  }
+
+  function obterEndpointNoticiasMunicipais() {
+    const baseUrl =
+      (window.OLYMPOS_CONFIG && window.OLYMPOS_CONFIG.SUPABASE_URL) ||
+      (window.OlymposSupabase && window.OlymposSupabase.SUPABASE_URL) ||
+      'https://rbwizevjvbvjwtbwwyif.supabase.co';
+    return String(baseUrl).replace(/\/+$/, '') + '/functions/v1/municipal-news';
+  }
+
+  function renderizarNoticiasFallback(statusMsg) {
+    const statusEl = document.getElementById('municipalNewsStatus');
+    const gridEl = document.getElementById('municipalNewsGrid');
+    if (statusEl) {
+      statusEl.textContent = statusMsg || 'Acesse diretamente os portais oficiais de Ceará-Mirim.';
+    }
+    if (!gridEl) return;
+    gridEl.innerHTML =
+      '<article class="municipal-news-card">' +
+        '<div class="municipal-news-body">' +
+          '<div class="municipal-news-meta"><span class="municipal-news-badge is-prefeitura">Prefeitura</span><span class="municipal-news-date">Portal Oficial</span></div>' +
+          '<h3 class="municipal-news-title">Prefeitura Municipal de Ceará-Mirim</h3>' +
+          '<p class="municipal-news-summary">Acompanhe decretos, editais da SMEB e notícias oficiais do Poder Executivo Municipal.</p>' +
+          '<a href="' + PREFEITURA_SITE_URL + '" target="_blank" rel="noopener noreferrer" class="municipal-news-link">Acessar site da Prefeitura ↗</a>' +
+        '</div>' +
+      '</article>' +
+      '<article class="municipal-news-card">' +
+        '<div class="municipal-news-body">' +
+          '<div class="municipal-news-meta"><span class="municipal-news-badge is-camara">Câmara Municipal</span><span class="municipal-news-date">Poder Legislativo</span></div>' +
+          '<h3 class="municipal-news-title">Câmara Municipal de Ceará-Mirim</h3>' +
+          '<p class="municipal-news-summary">Consulte pautas das sessões, proposições legislativas e informativos oficiais do Legislativo.</p>' +
+          '<a href="' + CAMARA_SITE_URL + '" target="_blank" rel="noopener noreferrer" class="municipal-news-link">Acessar site da Câmara Municipal ↗</a>' +
+        '</div>' +
+      '</article>';
+  }
+
+  function renderizarNoticiasMunicipais() {
+    const gridEl = document.getElementById('municipalNewsGrid');
+    if (!gridEl) return;
+
+    document.querySelectorAll('#municipalNewsSection [data-news-footer-source]').forEach(function(link) {
+      const linkSource = String(link.getAttribute('data-news-footer-source') || '').toLowerCase();
+      const shouldHide = activeNewsSource !== 'todas' && linkSource !== activeNewsSource;
+      link.classList.toggle('hidden', shouldHide);
+    });
+
+    const esc = (window.OlymposApp && typeof window.OlymposApp.escapeHtml === 'function')
+      ? window.OlymposApp.escapeHtml
+      : function(v) { return String(v == null ? '' : v); };
+
+    const filtradas = municipalNewsCache.filter(function(item) {
+      if (activeNewsSource === 'todas') return true;
+      return String(item.source || '').toLowerCase() === activeNewsSource;
+    });
+
+    if (filtradas.length === 0) {
+      if (municipalNewsCache.length === 0) {
+        renderizarNoticiasFallback('Não há matérias disponíveis no momento. Utilize os links diretos abaixo.');
+      } else {
+        gridEl.innerHTML =
+          '<div class="empty-state-card" style="padding: 24px; text-align: center; grid-column: 1 / -1;">' +
+            '<p style="margin: 0; color: var(--text-muted); font-size: 0.88rem;">Nenhuma matéria encontrada para o filtro selecionado.</p>' +
+          '</div>';
+      }
+      return;
+    }
+
+    const htmlCards = filtradas.map(function(item) {
+      const safeUrl = sanitizarUrlHttp(item.url || '');
+      const safeImg = sanitizarUrlHttp(item.imageUrl || '');
+      const isCamara = String(item.source || '').toLowerCase() === 'camara';
+      const badgeClass = isCamara ? 'is-camara' : 'is-prefeitura';
+      const sourceLabel = item.sourceLabel || (isCamara ? 'Câmara Municipal' : 'Prefeitura');
+      const dateStr = formatarDataNoticia(item.publishedAt);
+      const titleSafe = esc(item.title || 'Matéria oficial');
+      const summarySafe = esc(item.summary || '');
+      const linkHtml = safeUrl
+        ? '<a href="' + esc(safeUrl) + '" target="_blank" rel="noopener noreferrer" class="municipal-news-link">Ler matéria completa ↗</a>'
+        : '';
+      const imgHtml = safeImg
+        ? '<img src="' + esc(safeImg) + '" alt="' + titleSafe + '" class="municipal-news-thumb" loading="lazy" />'
+        : '';
+
+      return (
+        '<article class="municipal-news-card" data-source="' + esc(item.source || 'prefeitura') + '">' +
+          imgHtml +
+          '<div class="municipal-news-body">' +
+            '<div class="municipal-news-meta">' +
+              '<span class="municipal-news-badge ' + badgeClass + '">' + esc(sourceLabel) + '</span>' +
+              '<span class="municipal-news-date">' + esc(dateStr) + '</span>' +
+            '</div>' +
+            '<h3 class="municipal-news-title">' + titleSafe + '</h3>' +
+            (summarySafe ? '<p class="municipal-news-summary">' + summarySafe + '</p>' : '') +
+            linkHtml +
+          '</div>' +
+        '</article>'
+      );
+    }).join('');
+
+    gridEl.innerHTML = htmlCards;
+
+    gridEl.querySelectorAll('img.municipal-news-thumb').forEach(function(img) {
+      img.addEventListener('error', function() {
+        img.style.display = 'none';
+      });
+    });
+  }
+
+  function carregarNoticiasMunicipais(forcar) {
+    if (newsLoading) return;
+    if (newsLoaded && !forcar) {
+      renderizarNoticiasMunicipais();
+      return;
+    }
+
+    const statusEl = document.getElementById('municipalNewsStatus');
+    const gridEl = document.getElementById('municipalNewsGrid');
+    if (!gridEl) return;
+
+    newsLoading = true;
+    if (statusEl) {
+      statusEl.textContent = 'Consultando portais oficiais da Prefeitura e da Câmara Municipal...';
+    }
+
+    fetch(obterEndpointNoticiasMunicipais(), {
+      method: 'GET',
+      headers: { Accept: 'application/json' }
+    })
+      .then(function(resp) {
+        if (!resp.ok) {
+          throw new Error('HTTP ' + resp.status);
+        }
+        return resp.json();
+      })
+      .then(function(data) {
+        const items = data && Array.isArray(data.items) ? data.items : [];
+        const errors = data && Array.isArray(data.errors) ? data.errors : [];
+        municipalNewsCache = items;
+        newsLoaded = items.length > 0;
+
+        if (statusEl) {
+          if (items.length > 0 && errors.length === 0) {
+            statusEl.textContent = items.length + ' matérias oficiais carregadas dos portais do município.';
+          } else if (items.length > 0) {
+            statusEl.textContent = items.length + ' matérias carregadas (aviso em uma fonte: ' + errors[0] + ').';
+          } else {
+            statusEl.textContent = 'Não foi possível obter matérias recentes agora. Utilize os portais abaixo.';
+          }
+        }
+
+        renderizarNoticiasMunicipais();
+      })
+      .catch(function(err) {
+        console.warn('[VisaoGeral] Erro ao carregar notícias municipais:', err);
+        municipalNewsCache = [];
+        newsLoaded = false;
+        renderizarNoticiasFallback('Feed temporariamente indisponível. Acesse os portais oficiais pelos links diretos abaixo.');
+      })
+      .finally(function() {
+        newsLoading = false;
+      });
   }
 
   function consultarFallbackSupabase() {
@@ -191,7 +405,19 @@ window.OlymposViews.visaoGeral = (function() {
   }
 
   function carregarDados() {
+    const sessao = (window.OlymposApp && typeof window.OlymposApp.getSession === 'function')
+      ? window.OlymposApp.getSession()
+      : null;
+
     renderizarConstelacao17Personas(lastOverviewData ? lastOverviewData.memorias : null);
+
+    if (!sessao || !sessao.perfil) {
+      lastOverviewData = null;
+      isLoaded = false;
+      definirEstadoInicialNumeracao();
+      return;
+    }
+
     if (!lastOverviewData) {
       definirEstadoInicialNumeracao();
     }
@@ -234,7 +460,10 @@ window.OlymposViews.visaoGeral = (function() {
       const ultPt = (n.ultimaPortaria2026 !== undefined && n.ultimaPortaria2026 !== null)
         ? n.ultimaPortaria2026
         : (ptVal !== null ? (ptVal - 1) : null);
-      const memUrl = n.arquivoUrl || 'https://drive.google.com/file/d/1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_/view';
+      const rawMemUrl = (n.arquivoUrl && String(n.arquivoUrl).includes('docs.google.com/document/d/'))
+        ? n.arquivoUrl
+        : '';
+      const memUrl = rawMemUrl || APOLO_MEMORIA_URL;
 
       const elOf = document.getElementById('kpiProximoOficio');
       const elUltOf = document.getElementById('kpiUltimoOficio');
@@ -244,13 +473,13 @@ window.OlymposViews.visaoGeral = (function() {
       if (elOf) elOf.textContent = ofVal !== null ? ('Nº ' + ofVal) : '--';
       if (elUltOf) {
         elUltOf.innerHTML = '<span>Último emitido: ' + (ultOf !== null ? ('Nº ' + ultOf) : '--') + '</span>' +
-          '<a href="' + window.OlymposApp.escapeHtml(memUrl) + '" target="_blank" rel="noopener" class="folder-chip" data-requires-auth="true" data-access-roles="ADMIN_GABINETE,RH_COMISSAO,PEDAGOGICO_EVENTOS,JURIDICO">Memória de Apolo ↗</a>';
+          '<a href="' + window.OlymposApp.escapeHtml(memUrl) + '" target="_blank" rel="noopener" class="folder-chip" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE,RH_COMISSAO,PEDAGOGICO_EVENTOS,JURIDICO">Memória de Apolo ↗</a>';
       }
 
       if (elPt) elPt.textContent = ptVal !== null ? ('Nº ' + ptVal) : '--';
       if (elUltPt) {
         elUltPt.innerHTML = '<span>Última emitida: ' + (ultPt !== null ? ('Nº ' + ultPt) : '--') + '</span>' +
-          '<a href="' + window.OlymposApp.escapeHtml(memUrl) + '" target="_blank" rel="noopener" class="folder-chip" data-requires-auth="true" data-access-roles="ADMIN_GABINETE,RH_COMISSAO,PEDAGOGICO_EVENTOS,JURIDICO">Memória de Apolo ↗</a>';
+          '<a href="' + window.OlymposApp.escapeHtml(memUrl) + '" target="_blank" rel="noopener" class="folder-chip" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE,RH_COMISSAO,PEDAGOGICO_EVENTOS,JURIDICO">Memória de Apolo ↗</a>';
       }
 
       if (window.OlymposApp && typeof window.OlymposApp.aplicarControleAcessoModularEDrive === 'function') {
@@ -290,43 +519,56 @@ window.OlymposViews.visaoGeral = (function() {
 
   function renderizarConstelacao17Personas(memoriasLive) {
     const container = document.getElementById('homePersonasConstellation');
-    if (!container || !window.OlymposIcons) return;
+    if (!container) return;
 
-    const catalogo = window.OlymposIcons.getCatalogo17Personas();
-    const mapaLive = {};
+    const catalogoDocs = (window.OLYMPOS_MEMORIAS_CATALOGO && typeof window.OLYMPOS_MEMORIAS_CATALOGO.listarTodas === 'function')
+      ? window.OLYMPOS_MEMORIAS_CATALOGO.listarTodas()
+      : (window.OlymposIcons ? window.OlymposIcons.getCatalogo17Personas() : []);
+
+    const mapaLivePorArq = {};
+    const mapaLivePorId = {};
     (memoriasLive || []).forEach(function(m) {
-      if (m.arquivo) mapaLive[m.arquivo] = m;
+      if (m.arquivo) mapaLivePorArq[m.arquivo] = m;
+      if (m.id) mapaLivePorId[m.id] = m;
     });
 
     container.innerHTML = '';
-    catalogo.forEach(function(p) {
-      const live = p.arquivo ? mapaLive[p.arquivo] : null;
-      const isHost = p.tipo === 'anfitriao';
-      const svg = window.OlymposIcons.get(p.id);
-      const linhasInfo = live && live.totalLinhas !== undefined
-        ? (live.totalLinhas + ' / 60 linhas • ' + p.arquivo)
-        : (isHost ? ('Anfitriã: ' + p.anfitriao) : p.arquivo);
+    catalogoDocs.forEach(function(p) {
+      const live = (p.id && mapaLivePorId[p.id]) || (p.arquivo && mapaLivePorArq[p.arquivo]) || null;
+      const merged = live ? Object.assign({}, p, live, { id: p.id || live.id, url: p.url || live.url }) : p;
+      const docId = merged.id || merged.driveId || '';
+      const docUrl = (docId ? ('https://docs.google.com/document/d/' + docId + '/edit') : (merged.url || ''));
+      const iconKey = merged.icone || merged.slug || merged.id || 'olymposLogo';
+      const svg = window.OlymposIcons ? window.OlymposIcons.get(iconKey) : '';
+      const totalLinhas = (live && live.totalLinhas !== undefined)
+        ? live.totalLinhas
+        : (merged.totalLinhas !== undefined ? merged.totalLinhas : 0);
+      const nome = merged.nome || merged.deus || merged.arquivo;
+      const linhasInfo = totalLinhas ? (totalLinhas + ' / 60 linhas') : (merged.arquivo || 'Google Docs');
+      const domCurto = String(merged.dominio || '').split(',')[0].trim();
 
       const tile = document.createElement('div');
       tile.className = 'home-persona-tile';
-      tile.title = 'Clique para abrir ' + p.nome + ' na página Personas & Memórias';
+      tile.title = 'Clique para abrir a memória Google Docs de ' + nome;
       tile.innerHTML =
-        '<div class="persona-emblem ' + (isHost ? 'is-host-routed' : '') + '" aria-hidden="true">' + svg + '</div>' +
+        '<div class="persona-emblem" aria-hidden="true">' + svg + '</div>' +
         '<div class="home-persona-info">' +
           '<div class="home-persona-top">' +
-            '<span class="home-persona-name">' + window.OlymposApp.escapeHtml(p.nome) + '</span>' +
-            '<span class="home-persona-layer">' + window.OlymposApp.escapeHtml(p.camada) + '</span>' +
+            '<span class="home-persona-name">' + window.OlymposApp.escapeHtml(nome) + '</span>' +
+            '<span class="home-persona-layer">Google Docs</span>' +
           '</div>' +
-          '<div class="home-persona-domain">' + window.OlymposApp.escapeHtml(p.dominio) + '</div>' +
-          '<div class="home-persona-meta">' + window.OlymposApp.escapeHtml(linhasInfo) + '</div>' +
+          '<div class="home-persona-domain">' + window.OlymposApp.escapeHtml(domCurto || merged.dominio || '') + '</div>' +
+          '<div class="home-persona-footer">' +
+            '<span class="home-persona-meta">' + window.OlymposApp.escapeHtml(linhasInfo) + '</span>' +
+            (docUrl ? '<a href="' + window.OlymposApp.escapeHtml(docUrl) + '" target="_blank" rel="noopener noreferrer" class="home-persona-doc-link" onclick="event.stopPropagation()">Docs ↗</a>' : '') +
+          '</div>' +
         '</div>';
 
       tile.addEventListener('click', function() {
-        window.OlymposRouter.navegarPara('personas');
-        const filtro = document.getElementById('memoriaSearchInput');
-        if (filtro) {
-          filtro.value = p.nome;
-          filtro.dispatchEvent(new Event('input'));
+        if (window.OlymposApp && typeof window.OlymposApp.abrirModalMemoria === 'function') {
+          window.OlymposApp.abrirModalMemoria(merged);
+        } else if (window.OlymposRouter) {
+          window.OlymposRouter.navegarPara('personas');
         }
       });
 
@@ -351,9 +593,20 @@ window.OlymposViews.visaoGeral = (function() {
     });
   }
 
+  function resetarEstadoLogout() {
+    isLoaded = false;
+    lastOverviewData = null;
+    definirEstadoInicialNumeracao();
+    atualizarTelemetriaCientifica();
+    const elChamados = document.getElementById('heroTelemetryChamados');
+    if (elChamados) elChamados.textContent = '--';
+  }
+
   return {
     init: init,
     recarregar: carregarDados,
+    resetarEstadoLogout: resetarEstadoLogout,
+    carregarNoticiasMunicipais: carregarNoticiasMunicipais,
     renderizarWidgetEventosAgenda: renderizarWidgetEventosAgenda,
     atualizarTelemetriaCientifica: atualizarTelemetriaCientifica,
     getLastOverviewData: function() { return lastOverviewData; }

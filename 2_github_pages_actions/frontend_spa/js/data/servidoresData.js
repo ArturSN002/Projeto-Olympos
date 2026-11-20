@@ -1330,7 +1330,15 @@
                 quadro = 'Apoio';
               }
 
-              var enteId = normalizarTexto(ente).replace(/[^a-z0-9]/g, '_');
+              var slugBruto = normalizarTexto(ente).replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+              var enteId = slugBruto;
+              if (slugBruto.indexOf('governo') !== -1 || slugBruto.indexOf('seec') !== -1) {
+                enteId = 'governo_rn';
+              } else if (slugBruto.indexOf('goncalo') !== -1) {
+                enteId = 'sga';
+              } else if (slugBruto.indexOf('potengi') !== -1) {
+                enteId = 'sao_paulo_potengi';
+              }
 
               return {
                 id: mat ? (enteId + '_' + mat) : ('serv_' + Math.random().toString(36).substr(2, 9)),

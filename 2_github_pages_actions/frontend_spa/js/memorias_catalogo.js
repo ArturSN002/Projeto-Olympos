@@ -1,7 +1,7 @@
 /**
- * Hub Olympos V2.1 — Catálogo Canônico Síncrono de Memórias Operacionais (.md)
+ * Hub Olympos V3.1 — Catálogo Canônico Síncrono das 22 Memórias Operacionais (Google Docs)
  * Fornece disponibilidade instantânea offline e online para a SPA.
- * Contém o conteúdo consolidado real das 11 memórias físicas e mapeamento das personas anfitriãs.
+ * Todas as 22 memórias físicas estão no formato padrão Google Docs (MimeType.GOOGLE_DOCS).
  * Pasta Oficial no Google Drive: 1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu
  */
 window.OLYMPOS_MEMORIAS_CATALOGO = (function() {
@@ -9,342 +9,525 @@ window.OLYMPOS_MEMORIAS_CATALOGO = (function() {
 
   var PASTA_DRIVE_ID = '1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu';
   var PASTA_DRIVE_URL = 'https://drive.google.com/drive/folders/1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu';
+  var TOTAL_MEMORIAS_DOCS = 22;
 
-  // 11 Memórias Canônicas Físicas com Conteúdo Markdown Consolidado Real
+  function docsUrl(id) {
+    return 'https://docs.google.com/document/d/' + id + '/edit';
+  }
+
+  // 22 Memórias Canônicas Físicas em Formato Padrão Google Docs (MimeType.GOOGLE_DOCS)
   var CANONICAL_MEMORIAS = [
-  {
-    "slug": "apolo",
-    "nome": "Apolo",
-    "deus": "Apolo",
-    "arquivo": "_memoria_apolo.md",
-    "id": "1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_",
-    "driveId": "1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_",
-    "url": "https://drive.google.com/file/d/1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_/view",
-    "camada": "Camada 2 — Gestão e Expedição de Atos",
-    "perfilRbac": "ADMIN_GABINETE",
-    "dominio": "Numeração Sequencial de Ofícios e Portarias 2026",
-    "icone": "apolo",
-    "totalLinhas": 36,
-    "alertasRecentes": [
-      "[OLHO DE APOLO]: Último Ofício 2026 detectado no Drive: nº 0 (Próximo: 1) | Última Portaria 2026: nº 0 (Próxima: 1)",
-      "[ ] Nenhuma pendência crítica registrada."
-    ],
-    "conteudoCompleto": "# Memória Operacional — APOLO\nAtualizado em: 2026-10-29 14:16\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- [OLHO DE APOLO]: Último Ofício 2026 detectado no Drive: nº 0 (Próximo: 1) | Última Portaria 2026: nº 0 (Próxima: 1)\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n- Proximo_Oficio_2026: 155\n- Ultimo_Oficio_2026: 154\n- Proxima_Portaria_2026: 175\n- Ultima_Portaria_2026: 174\n- Proximo_Memorando_2026: 1\n- Proximo_Parecer_Juridico_2026: 1\n- Proximo_Edital_PSS_2026: 1\n- Signatario_Titular_SMEB: Secretário(a) Municipal de Educação Básica\n- Cargo_Signatario_SMEB: Secretário(a) Municipal de Educação Básica\n- Ano_Exercicio_Ativo: 2026\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Nenhuma pendência crítica registrada.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-10-29 14:16] [AUTO-NUMERAÇÃO PINCEL]: Portaria nº 174/2026 alocada automaticamente. Próxima disponível: nº 175.\n- [2026-10-29 14:16] [AUTO-NUMERAÇÃO PINCEL]: Portaria nº 173/2026 alocada automaticamente. Próxima disponível: nº 174.\n- [2026-10-29 14:15] [AUTO-NUMERAÇÃO PINCEL]: Portaria nº 172/2026 alocada automaticamente. Próxima disponível: nº 173.\n- [2026-10-29 14:15] [AUTO-NUMERAÇÃO PINCEL]: Portaria nº 171/2026 alocada automaticamente. Próxima disponível: nº 172.\n- [2026-10-29 14:15] [AUTO-NUMERAÇÃO PINCEL]: Portaria nº 170/2026 alocada automaticamente. Próxima disponível: nº 171.\n- [2026-10-29 14:15] [AUTO-NUMERAÇÃO PINCEL]: Portaria nº 169/2026 alocada automaticamente. Próxima disponível: nº 170.\n- [2026-10-29 14:15] [AUTO-NUMERAÇÃO PINCEL]: Portaria nº 168/2026 alocada automaticamente. Próxima disponível: nº 169.\n- [2026-10-29 14:15] [AUTO-NUMERAÇÃO PINCEL]: Portaria nº 167/2026 alocada automaticamente. Próxima disponível: nº 168.\n- [2026-10-29 14:15] [AUTO-NUMERAÇÃO PINCEL]: Portaria nº 166/2026 alocada automaticamente. Próxima disponível: nº 167.\n- [2026-10-29 14:15] [AUTO-NUMERAÇÃO PINCEL]: Portaria nº 165/2026 alocada automaticamente. Próxima disponível: nº 166.\n- [2026-10-29 14:15] [AUTO-NUMERAÇÃO PINCEL]: Portaria nº 164/2026 alocada automaticamente. Próxima disponível: nº 165.\n- [2026-10-29 14:15] [AUTO-NUMERAÇÃO PINCEL]: Portaria nº 163/2026 alocada automaticamente. Próxima disponível: nº 164.\n- [2026-10-24 20:15] Arquivo de memória inicializado pelo Hub Olympos."
-  },
-  {
-    "slug": "atena",
-    "nome": "Atena",
-    "deus": "Atena",
-    "arquivo": "_memoria_atena.md",
-    "id": "1bngNddimtP8nMmfhUJEa1YvkSEcmZ69Q",
-    "driveId": "1bngNddimtP8nMmfhUJEa1YvkSEcmZ69Q",
-    "url": "https://drive.google.com/file/d/1bngNddimtP8nMmfhUJEa1YvkSEcmZ69Q/view",
-    "camada": "Camada 2 — Planejamento Educacional",
-    "perfilRbac": "PEDAGOGICO_EVENTOS",
-    "dominio": "Coordenação Pedagógica, Formação e Diretrizes BNCC",
-    "icone": "atena",
-    "totalLinhas": 14,
-    "alertasRecentes": [
-      "Sem novos alertas na caixa de entrada.",
-      "[ ] Nenhuma pendência crítica registrada."
-    ],
-    "conteudoCompleto": "# Memória Operacional — ATENA\nAtualizado em: 2026-10-24 20:15\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- Sem novos alertas na caixa de entrada.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Nenhuma pendência crítica registrada.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-10-24 20:15] Arquivo de memória inicializado pelo Hub Olympos."
-  },
-  {
-    "slug": "dedalo",
-    "nome": "Dédalo",
-    "deus": "Dédalo",
-    "arquivo": "_memoria_dedalo.md",
-    "id": "16U0x5463ldiyxjgbN5IyiYNoCQQ4BdF-",
-    "driveId": "16U0x5463ldiyxjgbN5IyiYNoCQQ4BdF-",
-    "url": "https://drive.google.com/file/d/16U0x5463ldiyxjgbN5IyiYNoCQQ4BdF-/view",
-    "camada": "Camada 4 — Arquitetura e Engenharia de Software",
-    "perfilRbac": "ADMIN_GABINETE",
-    "dominio": "Infraestrutura Técnica, Snapshots e Integridade do Monorepo",
-    "icone": "dedalo",
-    "totalLinhas": 14,
-    "alertasRecentes": [
-      "Sem novos alertas na caixa de entrada.",
-      "[ ] Nenhuma pendência crítica registrada."
-    ],
-    "conteudoCompleto": "# Memória Operacional — DEDALO\nAtualizado em: 2026-10-24 20:15\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- Sem novos alertas na caixa de entrada.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Nenhuma pendência crítica registrada.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-10-24 20:15] Arquivo de memória inicializado pelo Hub Olympos."
-  },
-  {
-    "slug": "helio",
-    "nome": "Hélio",
-    "deus": "Hélio",
-    "arquivo": "_memoria_helio.md",
-    "id": "1JGVVV1umqhKa06nKDK5h_6TD34_Z2v90",
-    "driveId": "1JGVVV1umqhKa06nKDK5h_6TD34_Z2v90",
-    "url": "https://drive.google.com/file/d/1JGVVV1umqhKa06nKDK5h_6TD34_Z2v90/view",
-    "camada": "Camada 2 — Publicidade Institucional e Vigilância",
-    "perfilRbac": "ADMIN_GABINETE",
-    "dominio": "Vigilância Diária do Diário Oficial FEMURN e Atos de Ceará-Mirim",
-    "icone": "helio",
-    "totalLinhas": 32,
-    "alertasRecentes": [
-      "[2026-11-03] Edição FEMURN (0 atos): Nenhuma publicação da SMEB/Educação localizada nesta edição.",
-      "[2026-11-02] Edição FEMURN (0 atos): Nenhuma publicação da SMEB/Educação localizada nesta edição.",
-      "[2026-10-30] Edição FEMURN (12 atos): CF8FA90B, 93AC65DA, D0454967, FCA1C759, B9166C97, A52E9337, D6963F41, CB29B175, 1D7D1792, B7AEB7F5, 5DBB0859, 7D9C51E4 catalogados.",
-      "[2026-10-29] Edição FEMURN (0 atos): Nenhuma publicação da SMEB/Educação localizada nesta edição.",
-      "[2026-10-28] Edição FEMURN (1 ato): Lei Federal nº 15.247/2025 (ID: 2407C44B) catalogado.",
-      "[2026-10-27] Edição FEMURN (0 atos): Nenhuma publicação da SMEB/Educação localizada nesta edição.",
-      "[2026-10-26] Edição FEMURN (1 ato): Ato_FEMURN_84D30E38 catalogado.",
-      "[2026-10-23] Edição FEMURN (7 atos): DD6CE488, 85C4A851, Portaria 160/2026 (5D5C754A), 89D56A2D, Portarias 2338/2339 e Decreto 5143 catalogados.",
-      "[ ] Validar espelho na Planilha de Publicações da FEMURN (1tU6rvgB2jNGaGqHK1oecNMQX7-5QcB8Q-1fNgzWcZqs).",
-      "[ ] Monitorar publicações da próxima edição matutina (08:00 BRT)."
-    ],
-    "conteudoCompleto": "# Memória Operacional — HELIO\nAtualizado em: 2026-11-03 14:39\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- [2026-11-03] Edição FEMURN (0 atos): Nenhuma publicação da SMEB/Educação localizada nesta edição.\n- [2026-11-02] Edição FEMURN (0 atos): Nenhuma publicação da SMEB/Educação localizada nesta edição.\n- [2026-10-30] Edição FEMURN (12 atos): CF8FA90B, 93AC65DA, D0454967, FCA1C759, B9166C97, A52E9337, D6963F41, CB29B175, 1D7D1792, B7AEB7F5, 5DBB0859, 7D9C51E4 catalogados.\n- [2026-10-29] Edição FEMURN (0 atos): Nenhuma publicação da SMEB/Educação localizada nesta edição.\n- [2026-10-28] Edição FEMURN (1 ato): Lei Federal nº 15.247/2025 (ID: 2407C44B) catalogado.\n- [2026-10-27] Edição FEMURN (0 atos): Nenhuma publicação da SMEB/Educação localizada nesta edição.\n- [2026-10-26] Edição FEMURN (1 ato): Ato_FEMURN_84D30E38 catalogado.\n- [2026-10-23] Edição FEMURN (7 atos): DD6CE488, 85C4A851, Portaria 160/2026 (5D5C754A), 89D56A2D, Portarias 2338/2339 e Decreto 5143 catalogados.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n- Total_Atos_Indexados_2026: 21 atos\n- Ultima_Edicao_Verificada: 2026-11-03\n- Cronograma_Varredura: Diário às 08:00 e 16:00 BRT\n- Workflow_Operacional: Coleta diária -> Extração de IDs -> Catalogação Drive -> Notificação de Setores\n- Planilha_Controle_FEMURN: 1tU6rvgB2jNGaGqHK1oecNMQX7-5QcB8Q-1fNgzWcZqs\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Validar espelho na Planilha de Publicações da FEMURN (1tU6rvgB2jNGaGqHK1oecNMQX7-5QcB8Q-1fNgzWcZqs).\n- [ ] Monitorar publicações da próxima edição matutina (08:00 BRT).\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-11-03 14:39] Varredura diária FEMURN executada: 0 atos novos.\n- [2026-11-02 08:00] Varredura diária FEMURN executada: 0 atos novos.\n- [2026-10-30 18:30] Varredura diária FEMURN executada: 12 atos catalogados.\n- [2026-10-28 17:00] Varredura diária FEMURN executada: 1 ato catalogado.\n- [2026-10-23 16:00] Varredura diária FEMURN executada: 7 atos catalogados.\n- [2026-10-24 20:15] Arquivo de memória inicializado pelo Hub Olympos."
-  },
-  {
-    "slug": "hera",
-    "nome": "Hera",
-    "deus": "Hera",
-    "arquivo": "_memoria_hera.md",
-    "id": "1nV-BkugwDaDiqgvodP6VV-gNFi5tRMXh",
-    "driveId": "1nV-BkugwDaDiqgvodP6VV-gNFi5tRMXh",
-    "url": "https://drive.google.com/file/d/1nV-BkugwDaDiqgvodP6VV-gNFi5tRMXh/view",
-    "camada": "Camada 2 — Gestão do Quadro de Servidores",
-    "perfilRbac": "RH_COMISSAO",
-    "dominio": "Recursos Humanos, Lotação, Movimentação Funcional e Permutas",
-    "icone": "hera",
-    "totalLinhas": 14,
-    "alertasRecentes": [
-      "Sem novos alertas na caixa de entrada.",
-      "[ ] Nenhuma pendência crítica registrada."
-    ],
-    "conteudoCompleto": "# Memória Operacional — HERA\nAtualizado em: 2026-10-24 20:15\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- Sem novos alertas na caixa de entrada.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Nenhuma pendência crítica registrada.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-10-24 20:15] Arquivo de memória inicializado pelo Hub Olympos."
-  },
-  {
-    "slug": "hermes",
-    "nome": "Hermes",
-    "deus": "Hermes",
-    "arquivo": "_memoria_hermes.md",
-    "id": "1yKxawxSXKGzT-qCWfNPN3cqVgIzcoLWH",
-    "driveId": "1yKxawxSXKGzT-qCWfNPN3cqVgIzcoLWH",
-    "url": "https://drive.google.com/file/d/1yKxawxSXKGzT-qCWfNPN3cqVgIzcoLWH/view",
-    "camada": "Camada 2 — Logística e Operações de Campo",
-    "perfilRbac": "ADMIN_GABINETE",
-    "dominio": "Transporte Escolar, Rotas Urbanas/Rurais e Frotas SMEB",
-    "icone": "hermes",
-    "totalLinhas": 14,
-    "alertasRecentes": [
-      "Sem novos alertas na caixa de entrada.",
-      "[ ] Nenhuma pendência crítica registrada."
-    ],
-    "conteudoCompleto": "# Memória Operacional — HERMES\nAtualizado em: 2026-10-24 20:15\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- Sem novos alertas na caixa de entrada.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Nenhuma pendência crítica registrada.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-10-24 20:15] Arquivo de memória inicializado pelo Hub Olympos."
-  },
-  {
-    "slug": "hestia",
-    "nome": "Héstia",
-    "deus": "Héstia",
-    "arquivo": "_memoria_hestia.md",
-    "id": "1uUuHvJ-fsjlqK_CWrin-YBBp_0VmiJKnSBiujFUP8VM",
-    "driveId": "1uUuHvJ-fsjlqK_CWrin-YBBp_0VmiJKnSBiujFUP8VM",
-    "url": "https://drive.google.com/file/d/1uUuHvJ-fsjlqK_CWrin-YBBp_0VmiJKnSBiujFUP8VM/view",
-    "camada": "Camada 1 — Governança Central e Gabinete",
-    "perfilRbac": "ADMIN_GABINETE",
-    "dominio": "Governança Central, Recepção, Triagem, LGPD e Selo CNCA 2026",
-    "icone": "hestia",
-    "totalLinhas": 27,
-    "alertasRecentes": [
-      "[2026-10-28 12:15] [HÉSTIA]: Pendência crítica ativa – Selo CNCA 2026 (Pasta: CNCA - Selo - Edição 2026): Acompanhar cumprimento dos 16 critérios pendentes com os respectivos responsáveis.",
-      "[ ] CNCA - Rayssa: Critérios 01, 02, 03, 05 e 06",
-      "[ ] CNCA - Francisco: Critérios 13, 14 e 19",
-      "[ ] CNCA - Rosana: Critérios 17, 18 e 19",
-      "[ ] CNCA - Carlos: Critérios 01 e 07",
-      "[ ] CNCA - Sara: Critério 04",
-      "[ ] CNCA - Cristina: Critério 08",
-      "[ ] CNCA - Elba: Critério 15",
-      "[ ] CNCA - Veridiana: Critério 21",
-      "[ ] CNCA - Kivia e Glicelia: Critério 35"
-    ],
-    "conteudoCompleto": "# Memória Operacional — HESTIA\nAtualizado em: 2026-10-28 12:15\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- [2026-10-28 12:15] [HÉSTIA]: Pendência crítica ativa – Selo CNCA 2026 (Pasta: CNCA - Selo - Edição 2026): Acompanhar cumprimento dos 16 critérios pendentes com os respectivos responsáveis.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n- Atividade_Temporaria: Selo CNCA 2026 (Pasta: CNCA - Selo - Edição 2026) | 9 OK / 16 Pendentes\n- Seguranca_Documental: Conforme LGPD (Lei 13.709/2018) e Proteção de PII\n- Registro_Infraestrutura_Patrimonio: Ativo e Auditado (Inventário e Tombamento de Bens SMEB)\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] CNCA - Rayssa: Critérios 01, 02, 03, 05 e 06\n- [ ] CNCA - Francisco: Critérios 13, 14 e 19\n- [ ] CNCA - Rosana: Critérios 17, 18 e 19\n- [ ] CNCA - Carlos: Critérios 01 e 07\n- [ ] CNCA - Sara: Critério 04\n- [ ] CNCA - Cristina: Critério 08\n- [ ] CNCA - Elba: Critério 15\n- [ ] CNCA - Veridiana: Critério 21\n- [ ] CNCA - Kivia e Glicelia: Critério 35\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-10-28 12:15] Alocada pendência crítica do Selo CNCA 2026 na Caixa de Entrada.\n- [2026-10-28 12:05] Registrada pendência operacional: Acompanhamento de 16 critérios do Selo CNCA 2026 na pasta oficial.\n- [2026-10-24 20:15] Arquivo de memória inicializado pelo Hub Olympos."
-  },
-  {
-    "slug": "homero",
-    "nome": "Homero",
-    "deus": "Homero",
-    "arquivo": "_memoria_homero.md",
-    "id": "1JTB1SMgjq9Ws4E4RDBVAkH2GmCK1Fv6Q",
-    "driveId": "1JTB1SMgjq9Ws4E4RDBVAkH2GmCK1Fv6Q",
-    "url": "https://drive.google.com/file/d/1JTB1SMgjq9Ws4E4RDBVAkH2GmCK1Fv6Q/view",
-    "camada": "Camada 2 — Atos Oficiais e Redação Administrativa",
-    "perfilRbac": "RH_COMISSAO",
-    "dominio": "Redação Oficial, Portarias de Licença, Readaptação e Ofícios",
-    "icone": "homero",
-    "totalLinhas": 14,
-    "alertasRecentes": [
-      "[2026-10-29 14:16] Lote concluído (LICENCAS - Premio): 12 portaria(s) processada(s).",
-      "[ ] Nenhuma pendência crítica registrada."
-    ],
-    "conteudoCompleto": "# Memória Operacional — HOMERO\nAtualizado em: 2026-10-29 14:16\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- [2026-10-29 14:16] Lote concluído (LICENCAS - Premio): 12 portaria(s) processada(s).\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Nenhuma pendência crítica registrada.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-10-24 20:15] Arquivo de memória inicializado pelo Hub Olympos."
-  },
-  {
-    "slug": "nike",
-    "nome": "Niké",
-    "deus": "Niké",
-    "arquivo": "_memoria_nike.md",
-    "id": "13ziWkZGuh3HSTvSjE8fXlqoPTEc-kHze",
-    "driveId": "13ziWkZGuh3HSTvSjE8fXlqoPTEc-kHze",
-    "url": "https://drive.google.com/file/d/13ziWkZGuh3HSTvSjE8fXlqoPTEc-kHze/view",
-    "camada": "Camada 2 — Seleção e Provimento de Pessoal",
-    "perfilRbac": "RH_COMISSAO",
-    "dominio": "Processos Seletivos Simplificados (PSS) e Concursos Públicos",
-    "icone": "nike",
-    "totalLinhas": 22,
-    "alertasRecentes": [
-      "[2026-10-30] [HÉLIO/FEMURN]: Publicado Ato_FEMURN_7D9C51E4 (https://drive.google.com/file/d/1F_p_mqh9mHjJHl4wk4bTzt-WSoAk88ls/view?usp=drivesdk)",
-      "[2026-10-26] [HÉLIO/FEMURN]: Publicado Ato_FEMURN_84D30E38 (https://drive.google.com/file/d/1d7DJTKfmc98l9jKHQhFPykj5S9TXAlLI/view?usp=drivesdk)",
-      "[ ] Acompanhar homologação, prazos recursais e convocações dos Atos FEMURN 84D30E38 e 7D9C51E4.",
-      "[ ] Aplicar matriz de pontuação e rubricas objetivas de avaliação para o próximo edital PSS 2026."
-    ],
-    "conteudoCompleto": "# Memória Operacional — NIKE\nAtualizado em: 2026-10-30 18:00\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- [2026-10-30] [HÉLIO/FEMURN]: Publicado Ato_FEMURN_7D9C51E4 (https://drive.google.com/file/d/1F_p_mqh9mHjJHl4wk4bTzt-WSoAk88ls/view?usp=drivesdk)\n- [2026-10-26] [HÉLIO/FEMURN]: Publicado Ato_FEMURN_84D30E38 (https://drive.google.com/file/d/1d7DJTKfmc98l9jKHQhFPykj5S9TXAlLI/view?usp=drivesdk)\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n- Dominio_Atuacao: Processos Seletivos Simplificados (PSS) e Concursos Públicos\n- Padroes_Avaliacao: Rubricas de pontuação de títulos, critérios objetivos de desempate e homologação legal\n- Benchmarks_Juridicos: Conformidade com Art. 37, IX da CF/88 e Lei Municipal de Contratação Temporária\n- Monitoramento_Atos_FEMURN: Sincronizado (Atos 84D30E38 e 7D9C51E4)\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Acompanhar homologação, prazos recursais e convocações dos Atos FEMURN 84D30E38 e 7D9C51E4.\n- [ ] Aplicar matriz de pontuação e rubricas objetivas de avaliação para o próximo edital PSS 2026.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-10-30 18:00] Ato FEMURN 7D9C51E4 catalogado na Caixa de Entrada com link oficial do Drive.\n- [2026-10-26 12:00] Ato FEMURN 84D30E38 catalogado na Caixa de Entrada com link oficial do Drive.\n- [2026-10-24 20:15] Arquivo de memória inicializado pelo Hub Olympos."
-  },
-  {
-    "slug": "orfeu",
-    "nome": "Orfeu",
-    "deus": "Orfeu",
-    "arquivo": "_memoria_orfeu.md",
-    "id": "1OUIM7SUDvEtnn08kIMyedRnp1UHKiWhF",
-    "driveId": "1OUIM7SUDvEtnn08kIMyedRnp1UHKiWhF",
-    "url": "https://drive.google.com/file/d/1OUIM7SUDvEtnn08kIMyedRnp1UHKiWhF/view",
-    "camada": "Camada 2 — Certificação e Reconhecimento Institucional",
-    "perfilRbac": "PEDAGOGICO_EVENTOS",
-    "dominio": "Emissão de Certificados, Eventos Culturais e Declarações (A Lira)",
-    "icone": "orfeu",
-    "totalLinhas": 14,
-    "alertasRecentes": [
-      "Sem novos alertas na caixa de entrada.",
-      "[ ] Nenhuma pendência crítica registrada."
-    ],
-    "conteudoCompleto": "# Memória Operacional — ORFEU\nAtualizado em: 2026-10-24 20:15\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- Sem novos alertas na caixa de entrada.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Nenhuma pendência crítica registrada.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-10-24 20:15] Arquivo de memória inicializado pelo Hub Olympos."
-  },
-  {
-    "slug": "temis",
-    "nome": "Têmis",
-    "deus": "Têmis",
-    "arquivo": "_memoria_temis.md",
-    "id": "1cGAfAIynCD6xbwg7HpAx3_GLy6q0yOwt",
-    "driveId": "1cGAfAIynCD6xbwg7HpAx3_GLy6q0yOwt",
-    "url": "https://drive.google.com/file/d/1cGAfAIynCD6xbwg7HpAx3_GLy6q0yOwt/view",
-    "camada": "Camada 2 — Consultoria Jurídica e Controle de Legalidade",
-    "perfilRbac": "JURIDICO",
-    "dominio": "Assessoria Jurídica, Pareceres, Legalidade e Prazos MP/TCE",
-    "icone": "temis",
-    "totalLinhas": 22,
-    "alertasRecentes": [
-      "[2026-10-28] [HÉLIO/FEMURN]: Publicado Lei nº 9.394/1996, Lei Federal nº 15.247/2025 (Compromisso Nacional Criança Alfabetizada), novo Plano (https://drive.google.com/file/d/1HQeKuZDaqlF9YJkTwB-KH-AkM9gYYXPA/view?usp=drivesdk)",
-      "[2026-10-23] [HÉLIO/FEMURN]: Publicado DECRETO Nº 5143, DE 21 DE OUTUBRO DE 2026 (https://drive.google.com/file/d/1DxBSGnCBGYE7wfBTlGYSjOdvf_rlH78E/view?usp=drivesdk)",
-      "[ ] Avaliar adequação dos procedimentos SMEB à Lei Federal nº 15.247/2025 e Decreto Municipal nº 5143/2026.",
-      "[ ] Revisão de conformidade de termos aditivos e contratos educacionais conforme Lei nº 14.133/2021."
-    ],
-    "conteudoCompleto": "# Memória Operacional — TEMIS\nAtualizado em: 2026-10-28 15:30\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- [2026-10-28] [HÉLIO/FEMURN]: Publicado Lei nº 9.394/1996, Lei Federal nº 15.247/2025 (Compromisso Nacional Criança Alfabetizada), novo Plano (https://drive.google.com/file/d/1HQeKuZDaqlF9YJkTwB-KH-AkM9gYYXPA/view?usp=drivesdk)\n- [2026-10-23] [HÉLIO/FEMURN]: Publicado DECRETO Nº 5143, DE 21 DE OUTUBRO DE 2026 (https://drive.google.com/file/d/1DxBSGnCBGYE7wfBTlGYSjOdvf_rlH78E/view?usp=drivesdk)\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n- Dominio_Atuacao: Assessoria Jurídica, Controle de Legalidade e Prazos MP/TCE\n- Marco_Estatutario: LDB (Lei 9.394/1996), Lei 14.133/2021 (Licitações), Lei 15.247/2025 (CNCA) e Decretos Municipais\n- Template_Parecer: Estrutura Quadripartite (Ementa, Relatório, Fundamentação e Parecer Conclusivo)\n- Ultimo_Parecer_Emitido: 2026-10-28\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Avaliar adequação dos procedimentos SMEB à Lei Federal nº 15.247/2025 e Decreto Municipal nº 5143/2026.\n- [ ] Revisão de conformidade de termos aditivos e contratos educacionais conforme Lei nº 14.133/2021.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-10-28 15:30] Publicação sobre Lei Federal nº 15.247/2025 (CNCA) registrada para análise jurídica.\n- [2026-10-23 10:00] Decreto Municipal nº 5143/2026 registrado na Caixa de Entrada.\n- [2026-10-24 20:15] Arquivo de memória inicializado pelo Hub Olympos."
-  }
-];
+    {
+      "slug": "zeus",
+      "nome": "Zeus",
+      "deus": "Zeus",
+      "arquivo": "_memoria_zeus.md",
+      "id": "1qi_H4oKokFDEmXiNuGRYsh6kM4YxgJAQuFirDzOVkdM",
+      "driveId": "1qi_H4oKokFDEmXiNuGRYsh6kM4YxgJAQuFirDzOVkdM",
+      "url": docsUrl("1qi_H4oKokFDEmXiNuGRYsh6kM4YxgJAQuFirDzOVkdM"),
+      "formato": "GOOGLE_DOCS",
+      "mimeType": "application/vnd.google-apps.document",
+      "camada": "Camada 1 — Governança e Roteamento Macro",
+      "perfilRbac": "ADMIN_GABINETE",
+      "dominio": "Gabinete Executivo, Triagem Macro, Roteamento Zero-Latency e Governança Global",
+      "icone": "zeus",
+      "totalLinhas": 16,
+      "alertasRecentes": [
+        "[ZEUS]: Matriz das 22 memórias operacionais conectada em formato Google Docs.",
+        "[ ] Supervisionar fluxos intersetoriais (Gabinete, RH, Pedagógico e Jurídico)."
+      ],
+      "conteudoCompleto": "# Memória Operacional — ZEUS\nAtualizado em: 2026-11-20 00:30\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- [ZEUS]: Matriz das 22 memórias operacionais conectada em formato padrão Google Docs.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n- Formato_Memoria: Google Docs (application/vnd.google-apps.document)\n- Exercicio_Referencia: 2026\n- Roteamento_Personas: 22 Memórias Docs + 4 Anfitriãs\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Supervisionar fluxos intersetoriais (Gabinete, RH, Pedagógico e Jurídico).\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-11-20 00:30] Memória canônica em Google Docs vinculada ao Hub Olympos."
+    },
+    {
+      "slug": "apolo",
+      "nome": "Apolo",
+      "deus": "Apolo",
+      "arquivo": "_memoria_apolo.md",
+      "id": "1ZXTlg2Wk5IKZ2Sg84HOnlePCOihccPFcYTd67wHUgkM",
+      "driveId": "1ZXTlg2Wk5IKZ2Sg84HOnlePCOihccPFcYTd67wHUgkM",
+      "url": docsUrl("1ZXTlg2Wk5IKZ2Sg84HOnlePCOihccPFcYTd67wHUgkM"),
+      "formato": "GOOGLE_DOCS",
+      "mimeType": "application/vnd.google-apps.document",
+      "camada": "Camada 2 — Gestão e Expedição de Atos",
+      "perfilRbac": "ADMIN_GABINETE",
+      "dominio": "Numeração Sequencial de Ofícios e Portarias 2026 (Olho de Apolo)",
+      "icone": "apolo",
+      "totalLinhas": 28,
+      "alertasRecentes": [
+        "[OLHO DE APOLO]: Numeração 2026 sincronizada no Google Docs oficial.",
+        "[ ] Manter sequência cronológica ininterrupta de Ofícios e Portarias 2026."
+      ],
+      "conteudoCompleto": "# Memória Operacional — APOLO\nAtualizado em: 2026-11-20 00:30\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- [OLHO DE APOLO]: Numeração oficial 2026 conectada ao Google Docs canônico.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n- Proximo_Oficio_2026: 155\n- Ultimo_Oficio_2026: 154\n- Proxima_Portaria_2026: 163\n- Ultima_Portaria_2026: 162\n- Proximo_Memorando_2026: 1\n- Proximo_Parecer_Juridico_2026: 1\n- Proximo_Edital_PSS_2026: 1\n- Signatario_Titular_SMEB: Secretário(a) Municipal de Educação Básica\n- Cargo_Signatario_SMEB: Secretário(a) Municipal de Educação Básica\n- Ano_Exercicio_Ativo: 2026\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Manter sequência cronológica ininterrupta de Ofícios e Portarias 2026.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-11-20 00:30] Documento Google Docs conectado como fonte de verdade do Olho de Apolo."
+    },
+    {
+      "slug": "hermes",
+      "nome": "Hermes",
+      "deus": "Hermes",
+      "arquivo": "_memoria_hermes.md",
+      "id": "1_7WJSZ0D2tbP1sHWH32pjkDZfmcVUBGJXLUtRWMrlEo",
+      "driveId": "1_7WJSZ0D2tbP1sHWH32pjkDZfmcVUBGJXLUtRWMrlEo",
+      "url": docsUrl("1_7WJSZ0D2tbP1sHWH32pjkDZfmcVUBGJXLUtRWMrlEo"),
+      "formato": "GOOGLE_DOCS",
+      "mimeType": "application/vnd.google-apps.document",
+      "camada": "Camada 2 — Logística e Operações de Campo",
+      "perfilRbac": "ADMIN_GABINETE",
+      "dominio": "Transporte Escolar, Rotas Urbanas/Rurais e Frotas SMEB",
+      "icone": "hermes",
+      "totalLinhas": 15,
+      "alertasRecentes": [
+        "Sem novos alertas na caixa de entrada.",
+        "[ ] Acompanhar rotas escolares urbanas/rurais e vistorias de frota 2026."
+      ],
+      "conteudoCompleto": "# Memória Operacional — HERMES\nAtualizado em: 2026-11-20 00:30\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- Sem novos alertas na caixa de entrada.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n- Formato_Memoria: Google Docs\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Acompanhar rotas escolares urbanas/rurais e vistorias de frota 2026.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-11-20 00:30] Documento Google Docs conectado ao Hub Olympos."
+    },
+    {
+      "slug": "hefesto",
+      "nome": "Hefesto",
+      "deus": "Hefesto",
+      "arquivo": "_memoria_hefesto.md",
+      "id": "1Zzjp9NNhRSKka773EoVj6s9NcrTu2m3XnPL63GLBQcg",
+      "driveId": "1Zzjp9NNhRSKka773EoVj6s9NcrTu2m3XnPL63GLBQcg",
+      "url": docsUrl("1Zzjp9NNhRSKka773EoVj6s9NcrTu2m3XnPL63GLBQcg"),
+      "formato": "GOOGLE_DOCS",
+      "mimeType": "application/vnd.google-apps.document",
+      "camada": "Camada 2 — Infraestrutura, Obras e Patrimônio",
+      "perfilRbac": "ADMIN_GABINETE",
+      "dominio": "Infraestrutura Escolar, Manutenção Predial, Ordens de Serviço e Patrimônio",
+      "icone": "hefesto",
+      "totalLinhas": 16,
+      "alertasRecentes": [
+        "[HEFESTO]: Registro de Ordens de Serviço e patrimônio vinculado ao Google Docs.",
+        "[ ] Acompanhar demandas de manutenção elétrica/hidráulica Nível 1 e Nível 2."
+      ],
+      "conteudoCompleto": "# Memória Operacional — HEFESTO\nAtualizado em: 2026-11-20 00:30\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- [HEFESTO]: Registro de Ordens de Serviço e patrimônio conectado ao Google Docs.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n- Formato_Memoria: Google Docs\n- Normas_Tecnicas: ABNT NBR 5410 e NBR 9050\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Acompanhar demandas de manutenção elétrica/hidráulica Nível 1 e Nível 2.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-11-20 00:30] Memória em Google Docs conectada ao Hub Olympos."
+    },
+    {
+      "slug": "demeter",
+      "nome": "Deméter",
+      "deus": "Deméter",
+      "arquivo": "_memoria_demeter.md",
+      "id": "1J_xIwY2d027oIXWmHvr1Hm2_W5QVMgu0KhY4OXpgImw",
+      "driveId": "1J_xIwY2d027oIXWmHvr1Hm2_W5QVMgu0KhY4OXpgImw",
+      "url": docsUrl("1J_xIwY2d027oIXWmHvr1Hm2_W5QVMgu0KhY4OXpgImw"),
+      "formato": "GOOGLE_DOCS",
+      "mimeType": "application/vnd.google-apps.document",
+      "camada": "Camada 2 — Suprimentos Nutricionais e PNAE",
+      "perfilRbac": "ADMIN_GABINETE",
+      "dominio": "Alimentação Escolar, Cardápios PNAE, Estoque e Agricultura Familiar",
+      "icone": "demeter",
+      "totalLinhas": 16,
+      "alertasRecentes": [
+        "[DEMÉTER]: Monitoramento nutricional PNAE e estoque escolar ativo em 2026.",
+        "[ ] Acompanhar meta mínima de 30% da Agricultura Familiar no PNAE."
+      ],
+      "conteudoCompleto": "# Memória Operacional — DEMETER\nAtualizado em: 2026-11-20 00:30\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- [DEMÉTER]: Monitoramento nutricional PNAE e estoque escolar ativo em 2026.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n- Formato_Memoria: Google Docs\n- Programa_Ref: PNAE / FNDE 2026\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Acompanhar meta mínima de 30% da Agricultura Familiar no PNAE.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-11-20 00:30] Memória em Google Docs conectada ao Hub Olympos."
+    },
+    {
+      "slug": "poseidon",
+      "nome": "Poseidon",
+      "deus": "Poseidon",
+      "arquivo": "_memoria_poseidon.md",
+      "id": "1P6H0MChQZyoHAXxFEhO6W60jYuEac-_VYdD95PTOicw",
+      "driveId": "1P6H0MChQZyoHAXxFEhO6W60jYuEac-_VYdD95PTOicw",
+      "url": docsUrl("1P6H0MChQZyoHAXxFEhO6W60jYuEac-_VYdD95PTOicw"),
+      "formato": "GOOGLE_DOCS",
+      "mimeType": "application/vnd.google-apps.document",
+      "camada": "Camada 2 — Segurança Hídrica e Infraestrutura Sanitária",
+      "perfilRbac": "ADMIN_GABINETE",
+      "dominio": "Segurança Hídrica, Abastecimento, Cisternas e Saneamento Escolar",
+      "icone": "poseidon",
+      "totalLinhas": 15,
+      "alertasRecentes": [
+        "[POSEIDON]: Monitoramento de cisternas e abastecimento de água das escolas.",
+        "[ ] Priorizar atendimento hídrico às escolas rurais sem abastecimento regular."
+      ],
+      "conteudoCompleto": "# Memória Operacional — POSEIDON\nAtualizado em: 2026-11-20 00:30\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- [POSEIDON]: Monitoramento de cisternas e abastecimento de água das escolas.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n- Formato_Memoria: Google Docs\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Priorizar atendimento hídrico às escolas rurais sem abastecimento regular.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-11-20 00:30] Memória em Google Docs conectada ao Hub Olympos."
+    },
+    {
+      "slug": "hestia",
+      "nome": "Héstia",
+      "deus": "Héstia",
+      "arquivo": "_memoria_hestia.md",
+      "id": "1gj0U051uTCjl3oh_X_kqnxtVQQHae0nvlFa62c2N91Q",
+      "driveId": "1gj0U051uTCjl3oh_X_kqnxtVQQHae0nvlFa62c2N91Q",
+      "url": docsUrl("1gj0U051uTCjl3oh_X_kqnxtVQQHae0nvlFa62c2N91Q"),
+      "formato": "GOOGLE_DOCS",
+      "mimeType": "application/vnd.google-apps.document",
+      "camada": "Camada 1 — Governança Central e Gabinete",
+      "perfilRbac": "ADMIN_GABINETE",
+      "dominio": "Governança Central, Recepção, Triagem, LGPD e Selo CNCA 2026",
+      "icone": "hestia",
+      "totalLinhas": 27,
+      "alertasRecentes": [
+        "[HÉSTIA]: Pendência crítica ativa – Selo CNCA 2026 (Pasta: CNCA - Selo - Edição 2026): Acompanhar cumprimento dos 16 critérios pendentes.",
+        "[ ] CNCA - Rayssa: Critérios 01, 02, 03, 05 e 06"
+      ],
+      "conteudoCompleto": "# Memória Operacional — HESTIA\nAtualizado em: 2026-11-20 00:30\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- [HÉSTIA]: Pendência crítica ativa – Selo CNCA 2026 (Pasta: CNCA - Selo - Edição 2026): Acompanhar cumprimento dos 16 critérios pendentes.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n- Atividade_Temporaria: Selo CNCA 2026 (Pasta: CNCA - Selo - Edição 2026) | 9 OK / 16 Pendentes\n- Seguranca_Documental: Conforme LGPD (Lei 13.709/2018) e Proteção de PII\n- Correio_Olimpo: Conectado às 22 Memórias Google Docs\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] CNCA - Rayssa: Critérios 01, 02, 03, 05 e 06\n- [ ] CNCA - Francisco: Critérios 13, 14 e 19\n- [ ] CNCA - Rosana: Critérios 17, 18 e 19\n- [ ] CNCA - Carlos: Critérios 01 e 07\n- [ ] CNCA - Sara: Critério 04\n- [ ] CNCA - Cristina: Critério 08\n- [ ] CNCA - Elba: Critério 15\n- [ ] CNCA - Veridiana: Critério 21\n- [ ] CNCA - Kivia e Glicelia: Critério 35\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-11-20 00:30] Memória em Google Docs conectada ao Hub Olympos."
+    },
+    {
+      "slug": "cronos",
+      "nome": "Cronos",
+      "deus": "Cronos",
+      "arquivo": "_memoria_cronos.md",
+      "id": "1g3mqrS_Op1h7ZjO30mzc6pVCioV985Zr4oH1wOd6Wbo",
+      "driveId": "1g3mqrS_Op1h7ZjO30mzc6pVCioV985Zr4oH1wOd6Wbo",
+      "url": docsUrl("1g3mqrS_Op1h7ZjO30mzc6pVCioV985Zr4oH1wOd6Wbo"),
+      "formato": "GOOGLE_DOCS",
+      "mimeType": "application/vnd.google-apps.document",
+      "camada": "Camada 2 — Auditoria Temporal e Continuidade Histórica",
+      "perfilRbac": "ADMIN_GABINETE",
+      "dominio": "Calendário Escolar (203 dias LDB), Auditoria Temporal e Snapshots",
+      "icone": "cronos",
+      "totalLinhas": 16,
+      "alertasRecentes": [
+        "[CRONOS]: Monitoramento contínuo de prazos e 203 dias letivos da rede SMEB.",
+        "[ ] Auditar separação documental entre os exercícios 2025 e 2026."
+      ],
+      "conteudoCompleto": "# Memória Operacional — CRONOS\nAtualizado em: 2026-11-20 00:30\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- [CRONOS]: Monitoramento contínuo de prazos e 203 dias letivos da rede SMEB.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n- Dias_Letivos_Meta_LDB: 203 dias / 4 bimestres\n- Formato_Memoria: Google Docs\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Auditar separação documental entre os exercícios 2025 e 2026.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-11-20 00:30] Memória em Google Docs conectada ao Hub Olympos."
+    },
+    {
+      "slug": "hera",
+      "nome": "Hera",
+      "deus": "Hera",
+      "arquivo": "_memoria_hera.md",
+      "id": "1x3TO_H3TXbnjFqsTq3rEyOXL0cbeQmD5n_nu0GD44G4",
+      "driveId": "1x3TO_H3TXbnjFqsTq3rEyOXL0cbeQmD5n_nu0GD44G4",
+      "url": docsUrl("1x3TO_H3TXbnjFqsTq3rEyOXL0cbeQmD5n_nu0GD44G4"),
+      "formato": "GOOGLE_DOCS",
+      "mimeType": "application/vnd.google-apps.document",
+      "camada": "Camada 2 — Gestão do Quadro de Servidores",
+      "perfilRbac": "RH_COMISSAO",
+      "dominio": "Recursos Humanos, Lotação, Movimentação Funcional e Permutas",
+      "icone": "hera",
+      "totalLinhas": 16,
+      "alertasRecentes": [
+        "Sem novos alertas na caixa de entrada.",
+        "[ ] Acompanhar vigência de permutas intermunicipais e frequências mensais."
+      ],
+      "conteudoCompleto": "# Memória Operacional — HERA\nAtualizado em: 2026-11-20 00:30\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- Sem novos alertas na caixa de entrada.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n- Planilha_Permutas: 1fOZHe871yxu6UdF0vsRzjSzQBc7AVFRZZtx3JSCdwCY\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Acompanhar vigência de permutas intermunicipais e frequências mensais.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-11-20 00:30] Documento Google Docs conectado ao Hub Olympos."
+    },
+    {
+      "slug": "ares",
+      "nome": "Ares",
+      "deus": "Ares",
+      "arquivo": "_memoria_ares.md",
+      "id": "1gH3XxSOZ_KmAJIxvgfTM04b45YefcK4Y23hWVdOdgOE",
+      "driveId": "1gH3XxSOZ_KmAJIxvgfTM04b45YefcK4Y23hWVdOdgOE",
+      "url": docsUrl("1gH3XxSOZ_KmAJIxvgfTM04b45YefcK4Y23hWVdOdgOE"),
+      "formato": "GOOGLE_DOCS",
+      "mimeType": "application/vnd.google-apps.document",
+      "camada": "Camada 2 — Disciplina Funcional e Resolução de Conflitos",
+      "perfilRbac": "RH_COMISSAO",
+      "dominio": "Mediação de Conflitos, Relações de Trabalho e Disciplina Funcional",
+      "icone": "ares",
+      "totalLinhas": 16,
+      "alertasRecentes": [
+        "[ARES]: Fluxos de sindicância e mediação com rito Lei nº 1.290/1997 ativos.",
+        "[ ] Garantir ampla defesa e contraditório nas instruções de RH."
+      ],
+      "conteudoCompleto": "# Memória Operacional — ARES\nAtualizado em: 2026-11-20 00:30\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- [ARES]: Fluxos de sindicância e mediação com rito Lei nº 1.290/1997 ativos.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n- Base_Estatutaria: Lei Municipal nº 1.290/1997\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Garantir ampla defesa e contraditório nas instruções de RH.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-11-20 00:30] Memória em Google Docs conectada ao Hub Olympos."
+    },
+    {
+      "slug": "afrodite",
+      "nome": "Afrodite",
+      "deus": "Afrodite",
+      "arquivo": "_memoria_afrodite.md",
+      "id": "1c-CTMKdpQQ0k1vhSpGL-3ZH9WptM59pUDYt0HYI5SyI",
+      "driveId": "1c-CTMKdpQQ0k1vhSpGL-3ZH9WptM59pUDYt0HYI5SyI",
+      "url": docsUrl("1c-CTMKdpQQ0k1vhSpGL-3ZH9WptM59pUDYt0HYI5SyI"),
+      "formato": "GOOGLE_DOCS",
+      "mimeType": "application/vnd.google-apps.document",
+      "camada": "Camada 2 — Saúde Mental, Clima Escolar e Valorização Humana",
+      "perfilRbac": "RH_COMISSAO",
+      "dominio": "Saúde Mental, Clima Organizacional e Valorização dos Servidores",
+      "icone": "afrodite",
+      "totalLinhas": 16,
+      "alertasRecentes": [
+        "[AFRODITE]: Diretrizes de bem-estar ocupacional e acolhimento SMEB ativas.",
+        "[ ] Apoiar ações de clima escolar e valorização do magistério."
+      ],
+      "conteudoCompleto": "# Memória Operacional — AFRODITE\nAtualizado em: 2026-11-20 00:30\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- [AFRODITE]: Diretrizes de bem-estar ocupacional e acolhimento SMEB ativas.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n- Conformidade_LGPD: Sigilo ocupacional (LGPD Art. 11)\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Apoiar ações de clima escolar e valorização do magistério.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-11-20 00:30] Memória em Google Docs conectada ao Hub Olympos."
+    },
+    {
+      "slug": "atena",
+      "nome": "Atena",
+      "deus": "Atena",
+      "arquivo": "_memoria_atena.md",
+      "id": "1L_VJ4xwZIT3KaSOsLnImeORgjmiDjSuBhPavRzh0tHg",
+      "driveId": "1L_VJ4xwZIT3KaSOsLnImeORgjmiDjSuBhPavRzh0tHg",
+      "url": docsUrl("1L_VJ4xwZIT3KaSOsLnImeORgjmiDjSuBhPavRzh0tHg"),
+      "formato": "GOOGLE_DOCS",
+      "mimeType": "application/vnd.google-apps.document",
+      "camada": "Camada 2 — Planejamento Educacional",
+      "perfilRbac": "PEDAGOGICO_EVENTOS",
+      "dominio": "Coordenação Pedagógica, Formação e Diretrizes BNCC",
+      "icone": "atena",
+      "totalLinhas": 15,
+      "alertasRecentes": [
+        "Sem novos alertas na caixa de entrada.",
+        "[ ] Acompanhar formações continuadas e metas pedagógicas BNCC 2026."
+      ],
+      "conteudoCompleto": "# Memória Operacional — ATENA\nAtualizado em: 2026-11-20 00:30\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- Sem novos alertas na caixa de entrada.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n- Referencial: BNCC & Currículo Ceará-Mirim/RN\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Acompanhar formações continuadas e metas pedagógicas BNCC 2026.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-11-20 00:30] Documento Google Docs conectado ao Hub Olympos."
+    },
+    {
+      "slug": "dionisio",
+      "nome": "Dionísio",
+      "deus": "Dionísio",
+      "arquivo": "_memoria_dionisio.md",
+      "id": "1VJgWX03Z4qpS6jW8Zf-NsektuaEeT2QL2uwjTUajK6E",
+      "driveId": "1VJgWX03Z4qpS6jW8Zf-NsektuaEeT2QL2uwjTUajK6E",
+      "url": docsUrl("1VJgWX03Z4qpS6jW8Zf-NsektuaEeT2QL2uwjTUajK6E"),
+      "formato": "GOOGLE_DOCS",
+      "mimeType": "application/vnd.google-apps.document",
+      "camada": "Camada 2 — Eventos, Cultura e Esporte Escolar",
+      "perfilRbac": "PEDAGOGICO_EVENTOS",
+      "dominio": "Eventos Culturais, Festividades Escolares, Artes e JEMs",
+      "icone": "dionisio",
+      "totalLinhas": 15,
+      "alertasRecentes": [
+        "[DIONÍSIO]: Programação cultural e calendário esportivo escolar ativos.",
+        "[ ] Integrar emissão de certificados dos eventos junto à Lira de Orfeu."
+      ],
+      "conteudoCompleto": "# Memória Operacional — DIONISIO\nAtualizado em: 2026-11-20 00:30\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- [DIONÍSIO]: Programação cultural e calendário esportivo escolar ativos.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n- Formato_Memoria: Google Docs\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Integrar emissão de certificados dos eventos junto à Lira de Orfeu.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-11-20 00:30] Memória em Google Docs conectada ao Hub Olympos."
+    },
+    {
+      "slug": "temis",
+      "nome": "Têmis",
+      "deus": "Têmis",
+      "arquivo": "_memoria_temis.md",
+      "id": "11Veph2HxedUA6O0NoMMzB87C1X1lGAexyt8pmZRdx2A",
+      "driveId": "11Veph2HxedUA6O0NoMMzB87C1X1lGAexyt8pmZRdx2A",
+      "url": docsUrl("11Veph2HxedUA6O0NoMMzB87C1X1lGAexyt8pmZRdx2A"),
+      "formato": "GOOGLE_DOCS",
+      "mimeType": "application/vnd.google-apps.document",
+      "camada": "Camada 2 — Consultoria Jurídica e Controle de Legalidade",
+      "perfilRbac": "JURIDICO",
+      "dominio": "Assessoria Jurídica, Pareceres, Legalidade e Prazos MP/TCE",
+      "icone": "temis",
+      "totalLinhas": 22,
+      "alertasRecentes": [
+        "[HÉLIO/FEMURN]: Publicado Lei nº 9.394/1996, Lei Federal nº 15.247/2025 (CNCA).",
+        "[ ] Avaliar adequação dos procedimentos SMEB à Lei nº 14.133/2021 e Decreto Municipal nº 5143/2026."
+      ],
+      "conteudoCompleto": "# Memória Operacional — TEMIS\nAtualizado em: 2026-11-20 00:30\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- [2026-10-28] [HÉLIO/FEMURN]: Publicado Lei Federal nº 15.247/2025 (Compromisso Nacional Criança Alfabetizada).\n- [2026-10-23] [HÉLIO/FEMURN]: Publicado DECRETO Nº 5143, DE 21 DE OUTUBRO DE 2026.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n- Dominio_Atuacao: Assessoria Jurídica, Controle de Legalidade e Prazos MP/TCE\n- Marco_Estatutario: LDB (Lei 9.394/1996), Lei 14.133/2021 (Licitações), Lei 15.247/2025 (CNCA)\n- Template_Parecer: Estrutura Quadripartite (Ementa, Relatório, Fundamentação e Parecer Conclusivo)\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Avaliar adequação dos procedimentos SMEB à Lei Federal nº 15.247/2025 e Decreto Municipal nº 5143/2026.\n- [ ] Revisão de conformidade de termos aditivos e contratos educacionais conforme Lei nº 14.133/2021.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-11-20 00:30] Documento Google Docs conectado ao Hub Olympos."
+    },
+    {
+      "slug": "artemis",
+      "nome": "Ártemis",
+      "deus": "Ártemis",
+      "arquivo": "_memoria_artemis.md",
+      "id": "1q3TCb_0CxEGsKINR9oQiFbPA-ugynDqihQaAiyZxNc4",
+      "driveId": "1q3TCb_0CxEGsKINR9oQiFbPA-ugynDqihQaAiyZxNc4",
+      "url": docsUrl("1q3TCb_0CxEGsKINR9oQiFbPA-ugynDqihQaAiyZxNc4"),
+      "formato": "GOOGLE_DOCS",
+      "mimeType": "application/vnd.google-apps.document",
+      "camada": "Camada 2 — Conformidade Regulatória e Auditoria Jurídica",
+      "perfilRbac": "JURIDICO",
+      "dominio": "Conformidade Regulatória, Auditoria FUNDEB e Prestação de Contas",
+      "icone": "artemis",
+      "totalLinhas": 16,
+      "alertasRecentes": [
+        "[ÁRTEMIS]: Trilha de conformidade FUNDEB (Lei 14.113/2020) e TCE/RN ativa.",
+        "[ ] Verificar regularidade documental de processos de despesa vinculados."
+      ],
+      "conteudoCompleto": "# Memória Operacional — ARTEMIS\nAtualizado em: 2026-11-20 00:30\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- [ÁRTEMIS]: Trilha de conformidade FUNDEB (Lei 14.113/2020) e TCE/RN ativa.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n- Marco_Fiscal: Lei nº 14.113/2020 (Novo FUNDEB)\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Verificar regularidade documental de processos de despesa vinculados.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-11-20 00:30] Memória em Google Docs conectada ao Hub Olympos."
+    },
+    {
+      "slug": "hades",
+      "nome": "Hades",
+      "deus": "Hades",
+      "arquivo": "_memoria_hades.md",
+      "id": "1hA5GXqIN0M_PTTxTZlZanICSjk7Xjc1_J_WIfP46JA0",
+      "driveId": "1hA5GXqIN0M_PTTxTZlZanICSjk7Xjc1_J_WIfP46JA0",
+      "url": docsUrl("1hA5GXqIN0M_PTTxTZlZanICSjk7Xjc1_J_WIfP46JA0"),
+      "formato": "GOOGLE_DOCS",
+      "mimeType": "application/vnd.google-apps.document",
+      "camada": "Camada 2 — Contencioso Estratégico e Gestão de Riscos Graves",
+      "perfilRbac": "JURIDICO",
+      "dominio": "Arquivo Histórico Morto, Contencioso Estratégico e Prazos Prescricionais",
+      "icone": "hades",
+      "totalLinhas": 16,
+      "alertasRecentes": [
+        "[HADES]: Monitoramento prioritário de intimações e cumprimento de liminares.",
+        "[ ] Garantir custódia histórica digital e prazos prescricionais sem decurso."
+      ],
+      "conteudoCompleto": "# Memória Operacional — HADES\nAtualizado em: 2026-11-20 00:30\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- [HADES]: Monitoramento prioritário de intimações e cumprimento de liminares.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n- Formato_Memoria: Google Docs\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Garantir custódia histórica digital e prazos prescricionais sem decurso.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-11-20 00:30] Memória em Google Docs conectada ao Hub Olympos."
+    },
+    {
+      "slug": "prometeu",
+      "nome": "Prometeu (Prometheus)",
+      "deus": "Prometeu",
+      "arquivo": "_memoria_prometeu.md",
+      "id": "1Rp10RyJTyt5qxzTNacFv2lQysJAhzS6Cz5PU3Y-Hg4w",
+      "driveId": "1Rp10RyJTyt5qxzTNacFv2lQysJAhzS6Cz5PU3Y-Hg4w",
+      "url": docsUrl("1Rp10RyJTyt5qxzTNacFv2lQysJAhzS6Cz5PU3Y-Hg4w"),
+      "formato": "GOOGLE_DOCS",
+      "mimeType": "application/vnd.google-apps.document",
+      "camada": "Camada 2 — Coleta de Inteligência e Monitoramento Oficial",
+      "perfilRbac": "ADMIN_GABINETE",
+      "dominio": "Inteligência FEMURN (Fogo de Prometheus), NER e Ingestão Supabase",
+      "icone": "prometeu",
+      "totalLinhas": 17,
+      "alertasRecentes": [
+        "[PROMETHEUS]: Coleta automatizada FEMURN ➔ publicacoes_diario e alertas setoriais.",
+        "[ ] Sincronizar extrações NER e notificações diárias com Hélio."
+      ],
+      "conteudoCompleto": "# Memória Operacional — PROMETEU (PROMETHEUS)\nAtualizado em: 2026-11-20 00:30\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- [PROMETHEUS]: Coleta automatizada FEMURN ➔ publicacoes_diario e alertas setoriais.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n- Motor_Coleta: Fogo de Prometheus (GitHub Actions + GAS Webhook)\n- Tabela_SSOT: publicacoes_diario (Supabase)\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Sincronizar extrações NER e notificações diárias com Hélio.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-11-20 00:30] Memória em Google Docs conectada ao Hub Olympos."
+    },
+    {
+      "slug": "homero",
+      "nome": "Homero",
+      "deus": "Homero",
+      "arquivo": "_memoria_homero.md",
+      "id": "1JgCEpBhJC07zjt1TkZvmgzfG00US4FgwwDn-DvgCx8c",
+      "driveId": "1JgCEpBhJC07zjt1TkZvmgzfG00US4FgwwDn-DvgCx8c",
+      "url": docsUrl("1JgCEpBhJC07zjt1TkZvmgzfG00US4FgwwDn-DvgCx8c"),
+      "formato": "GOOGLE_DOCS",
+      "mimeType": "application/vnd.google-apps.document",
+      "camada": "Camada 3A — Atos Oficiais e Redação Administrativa",
+      "perfilRbac": "RH_COMISSAO",
+      "dominio": "Redação Oficial, Portarias de Licença, Readaptação e Ofícios (Pincel)",
+      "icone": "homero",
+      "totalLinhas": 15,
+      "alertasRecentes": [
+        "Lote concluído (LICENCAS - Premio): portarias processadas no Pincel de Homero.",
+        "[ ] Manter conformidade estrita com Manual PR/2018 nos Ofícios e Portarias."
+      ],
+      "conteudoCompleto": "# Memória Operacional — HOMERO\nAtualizado em: 2026-11-20 00:30\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- [PINCEL DE HOMERO]: Lote recente concluído com modelos oficiais Google Docs.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n- Formato_Memoria: Google Docs\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Manter conformidade estrita com Manual PR/2018 nos Ofícios e Portarias.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-11-20 00:30] Documento Google Docs conectado ao Hub Olympos."
+    },
+    {
+      "slug": "dedalo",
+      "nome": "Dédalo",
+      "deus": "Dédalo",
+      "arquivo": "_memoria_dedalo.md",
+      "id": "1odtXhXWeio4g7UY3Sis-sMGZoDLr1BwJwffJ2SNAGdg",
+      "driveId": "1odtXhXWeio4g7UY3Sis-sMGZoDLr1BwJwffJ2SNAGdg",
+      "url": docsUrl("1odtXhXWeio4g7UY3Sis-sMGZoDLr1BwJwffJ2SNAGdg"),
+      "formato": "GOOGLE_DOCS",
+      "mimeType": "application/vnd.google-apps.document",
+      "camada": "Camada 4 — Arquitetura e Engenharia de Software",
+      "perfilRbac": "ADMIN_GABINETE",
+      "dominio": "Infraestrutura Técnica, Snapshots Semanais e Integridade do Monorepo",
+      "icone": "dedalo",
+      "totalLinhas": 16,
+      "alertasRecentes": [
+        "[DÉDALO]: Catálogo das 22 memórias migrado para Google Docs (DocumentApp).",
+        "[ ] Gerar Snapshot semanal consolidado das 22 memórias em 99_Snapshots_Historicos."
+      ],
+      "conteudoCompleto": "# Memória Operacional — DEDALO\nAtualizado em: 2026-11-20 00:30\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- [DÉDALO]: Catálogo das 22 memórias operacionais migrado para Google Docs.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n- Total_Memorias_Mapeadas: 22 Google Docs\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Gerar Snapshot semanal consolidado das 22 memórias no Backup Local.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-11-20 00:30] Documento Google Docs conectado ao Hub Olympos."
+    },
+    {
+      "slug": "orfeu",
+      "nome": "Orfeu",
+      "deus": "Orfeu",
+      "arquivo": "_memoria_orfeu.md",
+      "id": "18a_OUyL4tgIN_NkHzStSWOVZS_krGz_B8Z7uVGQfRK8",
+      "driveId": "18a_OUyL4tgIN_NkHzStSWOVZS_krGz_B8Z7uVGQfRK8",
+      "url": docsUrl("18a_OUyL4tgIN_NkHzStSWOVZS_krGz_B8Z7uVGQfRK8"),
+      "formato": "GOOGLE_DOCS",
+      "mimeType": "application/vnd.google-apps.document",
+      "camada": "Camada 3A — Certificação e Reconhecimento Institucional",
+      "perfilRbac": "PEDAGOGICO_EVENTOS",
+      "dominio": "Emissão de Certificados, Eventos Culturais e Declarações (A Lira)",
+      "icone": "orfeu",
+      "totalLinhas": 15,
+      "alertasRecentes": [
+        "Sem novos alertas na caixa de entrada.",
+        "[ ] Monitorar cota diária MailApp e fila de emissão da Lira de Orfeu."
+      ],
+      "conteudoCompleto": "# Memória Operacional — ORFEU\nAtualizado em: 2026-11-20 00:30\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- Sem novos alertas na caixa de entrada.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n- Formato_Memoria: Google Docs\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Monitorar cota diária MailApp e fila de emissão da Lira de Orfeu.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-11-20 00:30] Documento Google Docs conectado ao Hub Olympos."
+    },
+    {
+      "slug": "nike",
+      "nome": "Niké",
+      "deus": "Niké",
+      "arquivo": "_memoria_nike.md",
+      "id": "18wyqKRmpVpcNgIHPB2Vg-akLWyGBTLvrkEUwz5bWOW4",
+      "driveId": "18wyqKRmpVpcNgIHPB2Vg-akLWyGBTLvrkEUwz5bWOW4",
+      "url": docsUrl("18wyqKRmpVpcNgIHPB2Vg-akLWyGBTLvrkEUwz5bWOW4"),
+      "formato": "GOOGLE_DOCS",
+      "mimeType": "application/vnd.google-apps.document",
+      "camada": "Camada 2 — Seleção e Provimento de Pessoal",
+      "perfilRbac": "RH_COMISSAO",
+      "dominio": "Processos Seletivos Simplificados (PSS) e Concursos Públicos",
+      "icone": "nike",
+      "totalLinhas": 22,
+      "alertasRecentes": [
+        "[HÉLIO/FEMURN]: Monitoramento de atos e convocações PSS 2026 ativo.",
+        "[ ] Acompanhar homologação, prazos recursais e matriz de pontuação PSS 2026."
+      ],
+      "conteudoCompleto": "# Memória Operacional — NIKE\nAtualizado em: 2026-11-20 00:30\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- [HÉLIO/FEMURN]: Atos e editais PSS 2026 catalogados no Google Docs oficial.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n- Dominio_Atuacao: Processos Seletivos Simplificados (PSS) e Concursos Públicos\n- Benchmarks_Juridicos: Conformidade com Art. 37, IX da CF/88 e Lei Municipal de Contratação Temporária\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Acompanhar homologação, prazos recursais e convocações PSS 2026.\n- [ ] Aplicar matriz de pontuação e rubricas objetivas de avaliação para o próximo edital PSS 2026.\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-11-20 00:30] Documento Google Docs conectado ao Hub Olympos."
+    },
+    {
+      "slug": "helio",
+      "nome": "Hélio",
+      "deus": "Hélio",
+      "arquivo": "_memoria_helio.md",
+      "id": "1JUrOsacYDgF5X1H5DUdYXhOalGoUBUPatli8xp39SU8",
+      "driveId": "1JUrOsacYDgF5X1H5DUdYXhOalGoUBUPatli8xp39SU8",
+      "url": docsUrl("1JUrOsacYDgF5X1H5DUdYXhOalGoUBUPatli8xp39SU8"),
+      "formato": "GOOGLE_DOCS",
+      "mimeType": "application/vnd.google-apps.document",
+      "camada": "Camada 3A — Publicidade Institucional e Vigilância",
+      "perfilRbac": "ADMIN_GABINETE",
+      "dominio": "Vigilância Diária do Diário Oficial FEMURN e Atos de Ceará-Mirim",
+      "icone": "helio",
+      "totalLinhas": 24,
+      "alertasRecentes": [
+        "[HÉLIO/FEMURN]: Varredura diária do Diário Oficial conectada ao Google Docs.",
+        "[ ] Monitorar publicações da próxima edição matutina (08:00 BRT) na FEMURN."
+      ],
+      "conteudoCompleto": "# Memória Operacional — HELIO\nAtualizado em: 2026-11-20 00:30\n\n## 0. Caixa de Entrada (Correio do Olimpo - Recados de Héstia e Hélio)\n- [HÉLIO/FEMURN]: Vigilância diária da FEMURN conectada ao documento Google Docs canônico.\n\n## 1. Estado Atual e Contadores Ativos (2026)\n- Status_Setor: Ativo\n- Cronograma_Varredura: Diário às 08:00 e 16:00 BRT\n- Workflow_Operacional: Coleta diária -> Extração de IDs -> Catalogação Drive -> Notificação de Setores\n- Planilha_Controle_FEMURN: 1tU6rvgB2jNGaGqHK1oecNMQX7-5QcB8Q-1fNgzWcZqs\n\n## 2. Pendências Críticas em Aberto (Máximo 10 itens)\n- [ ] Validar espelho na Planilha de Publicações da FEMURN (1tU6rvgB2jNGaGqHK1oecNMQX7-5QcB8Q-1fNgzWcZqs).\n- [ ] Monitorar publicações da próxima edição matutina (08:00 BRT).\n\n## 3. Histórico Recente — Rolling Log (Últimos 5 registros)\n- [2026-11-20 00:30] Documento Google Docs conectado ao Hub Olympos."
+    }
+  ];
 
-  // Personas com Roteamento Anfitrião (Host-Routed)
+  // Personas com Roteamento Anfitrião (4 especialistas stateless hospedados em Google Docs anfitriões)
   var HOST_PERSONAS = [
-  {
-    "nome": "Zeus",
-    "slug": "zeus",
-    "camada": "Camada 1",
-    "dominio": "Oráculo Executivo e Triagem Macro de Demandas",
-    "anfitriao": "Héstia",
-    "arquivoAnfitriao": "_memoria_hestia.md",
-    "icone": "zeus"
-  },
-  {
-    "nome": "Hefesto",
-    "slug": "hefesto",
-    "camada": "Camada 4",
-    "dominio": "Automação DevOps, GitHub Actions e Infraestrutura",
-    "anfitriao": "Dédalo",
-    "arquivoAnfitriao": "_memoria_dedalo.md",
-    "icone": "hefesto"
-  },
-  {
-    "nome": "Ares",
-    "slug": "ares",
-    "camada": "Camada 2",
-    "dominio": "Mediação de Conflitos, Relações de Trabalho e PAD",
-    "anfitriao": "Hera",
-    "arquivoAnfitriao": "_memoria_hera.md",
-    "icone": "ares"
-  },
-  {
-    "nome": "Afrodite",
-    "slug": "afrodite",
-    "camada": "Camada 3A",
-    "dominio": "Clima Organizacional, Eventos de Reconhecimento e Cultura",
-    "anfitriao": "Orfeu",
-    "arquivoAnfitriao": "_memoria_orfeu.md",
-    "icone": "afrodite"
-  },
-  {
-    "nome": "Dionísio",
-    "slug": "dionisio",
-    "camada": "Camada 2",
-    "dominio": "Projetos Culturais, Festividades Escolares e Artes",
-    "anfitriao": "Atena",
-    "arquivoAnfitriao": "_memoria_atena.md",
-    "icone": "dionisio"
-  },
-  {
-    "nome": "Poseidon",
-    "slug": "poseidon",
-    "camada": "Camada 2",
-    "dominio": "Logística Marítima/Fluvial e Rotas Hídricas",
-    "anfitriao": "Hermes",
-    "arquivoAnfitriao": "_memoria_hermes.md",
-    "icone": "poseidon"
-  },
-  {
-    "nome": "Hades",
-    "slug": "hades",
-    "camada": "Camada 2",
-    "dominio": "Arquivo Histórico Morto, Contencioso e Prazos Prescricionais",
-    "anfitriao": "Têmis",
-    "arquivoAnfitriao": "_memoria_temis.md",
-    "icone": "hades"
-  },
-  {
-    "nome": "Cadmo",
-    "slug": "cadmo",
-    "camada": "Camada 3B",
-    "dominio": "Localizador Cadastral & O Papiro de Cadmo (16 Entes RN)",
-    "anfitriao": "Hera",
-    "arquivoAnfitriao": "_memoria_hera.md",
-    "icone": "cadmo"
-  },
-  {
-    "nome": "Arquimedes",
-    "slug": "arquimedes",
-    "camada": "Camada 4",
-    "dominio": "Ciência de Dados Educacionais, Censo e Indicadores",
-    "anfitriao": "Dédalo",
-    "arquivoAnfitriao": "_memoria_dedalo.md",
-    "icone": "arquimedes"
-  },
-  {
-    "nome": "Íris",
-    "slug": "iris",
-    "camada": "Camada 3B",
-    "dominio": "Comunicação Ágil, Avisos Setoriais e Notificações",
-    "anfitriao": "Héstia",
-    "arquivoAnfitriao": "_memoria_hestia.md",
-    "icone": "iris"
-  },
-  {
-    "nome": "Sólon",
-    "slug": "solon",
-    "camada": "Camada 3B",
-    "dominio": "Técnica Legislativa e Constitucionalidade Municipal",
-    "anfitriao": "Têmis",
-    "arquivoAnfitriao": "_memoria_temis.md",
-    "icone": "solon"
-  }
-];
+    {
+      "nome": "Cadmo",
+      "slug": "cadmo",
+      "camada": "Camada 3B",
+      "dominio": "Localizador Cadastral & O Papiro de Cadmo (16 Entes RN)",
+      "anfitriao": "Hera",
+      "arquivoAnfitriao": "_memoria_hera.md",
+      "idAnfitriao": "1x3TO_H3TXbnjFqsTq3rEyOXL0cbeQmD5n_nu0GD44G4",
+      "urlAnfitriao": docsUrl("1x3TO_H3TXbnjFqsTq3rEyOXL0cbeQmD5n_nu0GD44G4"),
+      "icone": "cadmo"
+    },
+    {
+      "nome": "Arquimedes",
+      "slug": "arquimedes",
+      "camada": "Camada 4",
+      "dominio": "Ciência de Dados Educacionais, Censo e Indicadores",
+      "anfitriao": "Dédalo",
+      "arquivoAnfitriao": "_memoria_dedalo.md",
+      "idAnfitriao": "1odtXhXWeio4g7UY3Sis-sMGZoDLr1BwJwffJ2SNAGdg",
+      "urlAnfitriao": docsUrl("1odtXhXWeio4g7UY3Sis-sMGZoDLr1BwJwffJ2SNAGdg"),
+      "icone": "arquimedes"
+    },
+    {
+      "nome": "Íris",
+      "slug": "iris",
+      "camada": "Camada 3B",
+      "dominio": "Comunicação Ágil, Avisos Setoriais e Notificações",
+      "anfitriao": "Héstia",
+      "arquivoAnfitriao": "_memoria_hestia.md",
+      "idAnfitriao": "1gj0U051uTCjl3oh_X_kqnxtVQQHae0nvlFa62c2N91Q",
+      "urlAnfitriao": docsUrl("1gj0U051uTCjl3oh_X_kqnxtVQQHae0nvlFa62c2N91Q"),
+      "icone": "iris"
+    },
+    {
+      "nome": "Sólon",
+      "slug": "solon",
+      "camada": "Camada 3B",
+      "dominio": "Técnica Legislativa e Constitucionalidade Municipal",
+      "anfitriao": "Têmis",
+      "arquivoAnfitriao": "_memoria_temis.md",
+      "idAnfitriao": "11Veph2HxedUA6O0NoMMzB87C1X1lGAexyt8pmZRdx2A",
+      "urlAnfitriao": docsUrl("11Veph2HxedUA6O0NoMMzB87C1X1lGAexyt8pmZRdx2A"),
+      "icone": "solon"
+    }
+  ];
 
   function normalizar(texto) {
     if (!texto) return '';
@@ -353,6 +536,14 @@ window.OLYMPOS_MEMORIAS_CATALOGO = (function() {
       .replace(/[\u0300-\u036f]/g, '')
       .toLowerCase()
       .trim();
+  }
+
+  function normalizarChaveAlias(texto) {
+    var n = normalizar(texto);
+    if (n === 'prometheus' || n === '_memoria_prometheus' || n === '_memoria_prometheus.md' || n === 'prometeu (prometheus)') {
+      return n.replace('prometheus', 'prometeu');
+    }
+    return n;
   }
 
   function obterChaveStorage(arquivo) {
@@ -423,23 +614,45 @@ window.OLYMPOS_MEMORIAS_CATALOGO = (function() {
     return HOST_PERSONAS.slice();
   }
 
+  function obterPorId(docId) {
+    if (!docId) return null;
+    var alvo = String(docId).trim();
+    var todas = listarTodas();
+    for (var i = 0; i < todas.length; i++) {
+      if (todas[i].id === alvo || todas[i].driveId === alvo) {
+        return todas[i];
+      }
+    }
+    return null;
+  }
+
   function obterPorArquivo(arquivo) {
     if (!arquivo) return null;
-    var norm = normalizar(arquivo);
+    var porId = obterPorId(arquivo);
+    if (porId) return porId;
+
+    var norm = normalizarChaveAlias(arquivo);
+    var normSemMd = norm.replace(/^_+memoria_+/, '').replace(/\.md$/i, '');
     var todas = listarTodas();
 
-    // 1. Busca direta nas memórias canônicas
+    // 1. Busca direta nas 22 memórias canônicas
     for (var i = 0; i < todas.length; i++) {
       var m = todas[i];
-      if (normalizar(m.arquivo) === norm || normalizar(m.slug) === norm || normalizar(m.nome) === norm) {
+      if (
+        normalizar(m.arquivo) === norm ||
+        normalizar(m.slug) === norm ||
+        normalizar(m.slug) === normSemMd ||
+        normalizar(m.nome) === norm ||
+        normalizar(m.deus) === norm
+      ) {
         return m;
       }
     }
 
-    // 2. Busca entre as personas anfitriãs
+    // 2. Busca entre as 4 personas anfitriãs
     for (var j = 0; j < HOST_PERSONAS.length; j++) {
       var h = HOST_PERSONAS[j];
-      if (normalizar(h.slug) === norm || normalizar(h.nome) === norm) {
+      if (normalizar(h.slug) === norm || normalizar(h.slug) === normSemMd || normalizar(h.nome) === norm) {
         return obterPorArquivo(h.arquivoAnfitriao);
       }
     }
@@ -455,24 +668,38 @@ window.OLYMPOS_MEMORIAS_CATALOGO = (function() {
     return obterPorArquivo(nome);
   }
 
+  function getUrlGoogleDocs(slugOuArquivoOuId) {
+    var m = obterPorArquivo(slugOuArquivoOuId);
+    if (m && m.id) return docsUrl(m.id);
+    return PASTA_DRIVE_URL;
+  }
+
   function getMapaIdsDrive() {
     var mapa = {};
     for (var i = 0; i < CANONICAL_MEMORIAS.length; i++) {
       mapa[CANONICAL_MEMORIAS[i].slug] = CANONICAL_MEMORIAS[i].id;
     }
+    mapa.prometheus = DOCS_IDS_MAP_PROMETHEUS();
     return mapa;
+  }
+
+  function DOCS_IDS_MAP_PROMETHEUS() {
+    return '1Rp10RyJTyt5qxzTNacFv2lQysJAhzS6Cz5PU3Y-Hg4w';
   }
 
   return {
     PASTA_DRIVE_ID: PASTA_DRIVE_ID,
     PASTA_DRIVE_URL: PASTA_DRIVE_URL,
+    TOTAL_MEMORIAS_DOCS: TOTAL_MEMORIAS_DOCS,
     MEMORIAS: CANONICAL_MEMORIAS,
     EXTRAS: HOST_PERSONAS,
     listarTodas: listarTodas,
     listarExtras: listarExtras,
+    obterPorId: obterPorId,
     obterPorArquivo: obterPorArquivo,
     obterPorSlug: obterPorSlug,
     obterPorNome: obterPorNome,
+    getUrlGoogleDocs: getUrlGoogleDocs,
     salvarLocal: salvarLocal,
     obterConteudoLocal: obterConteudoLocal,
     removerEdicaoLocal: removerEdicaoLocal,

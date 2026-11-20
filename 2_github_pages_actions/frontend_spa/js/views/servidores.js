@@ -3,7 +3,7 @@
  * Rota Dedicada: #servidores (Alias: #consulta-servidores)
  * Abrange Ceará-Mirim, Natal, Parnamirim, São Gonçalo do Amarante e Governo do RN (SEEC)
  * Suporte a todos os 5 quadros: Docente, Administrativo, Apoio, Técnico e Operacional
- * Dossiê Funcional, Auditoria CF/88 Art. 37, XVI, Paginação, Alternância Cards/Tabela e Exportação
+ * Dossiê Funcional, Auditoria CF/88 Art. 37, XVI, Paginação em Tabela e Exportação
  */
 window.OlymposViews = window.OlymposViews || {};
 
@@ -15,7 +15,6 @@ window.OlymposViews.servidores = (function() {
   var filtroCargo = 'todos';
   var filtroRegime = 'todos';
   var filtroVinculos = 'todos';
-  var modoView = 'cards'; // 'cards' ou 'tabela'
   var paginaAtual = 1;
   var itensPorPagina = 20;
   var debounceTimer = null;
@@ -359,14 +358,10 @@ window.OlymposViews.servidores = (function() {
    * Exibe estado visual de carregamento na listagem
    */
   function exibirCarregando() {
-    var cardsContainer = document.getElementById('servidoresContainerCards');
     var tbody = document.getElementById('tabelaServidoresGeralBody');
     var statusEl = document.getElementById('servidoresContagemStatus');
     if (statusEl) {
       statusEl.textContent = 'Consultando quadro funcional dos entes monitorados...';
-    }
-    if (cardsContainer) {
-      cardsContainer.innerHTML = '<div class="surface-card text-center" style="padding: 32px;"><div class="spinner-gold" style="margin: 0 auto 12px;"></div><p class="text-muted" style="margin: 0;">Consultando quadro funcional dos entes monitorados...</p></div>';
     }
     if (tbody) {
       tbody.innerHTML = '<tr><td colspan="8" class="text-muted text-center" style="padding: 24px;">Consultando quadro funcional dos entes monitorados...</td></tr>';
@@ -444,101 +439,6 @@ window.OlymposViews.servidores = (function() {
   }
 
   /**
-   * Renderiza a visualização em Cards Dossiê
-   */
-  function renderizarCards(listaPaginada) {
-    var container = document.getElementById('servidoresContainerCards');
-    if (!container) return;
-
-    if (listaPaginada.length === 0) {
-      container.innerHTML = '<div class="surface-card text-center" style="padding: 32px;"><p class="text-muted" style="margin-bottom: 8px;">Nenhum vínculo funcional localizado para os parâmetros informados.</p><button type="button" class="btn btn-secondary btn-sm" id="btnResetarFiltrosVazio">Limpar filtros e busca</button></div>';
-      var btnReset = document.getElementById('btnResetarFiltrosVazio');
-      if (btnReset) {
-        btnReset.addEventListener('click', function() {
-          limparTodosFiltros();
-        });
-      }
-      return;
-    }
-
-    var html = '';
-    listaPaginada.forEach(function(d) {
-      var auditoria = d.auditoria;
-      var vinculosHtml = d.vinculos.map(function(v) {
-        var badgeColor = 'pill-blue';
-        var eNorm = normalizarTexto(v.enteId || v.ente);
-        if (eNorm.indexOf('ceara') !== -1) badgeColor = 'pill-gold';
-        else if (eNorm.indexOf('natal') !== -1) badgeColor = 'pill-green';
-        else if (eNorm.indexOf('parnamirim') !== -1) badgeColor = 'pill-purple';
-        else if (eNorm.indexOf('sga') !== -1 || eNorm.indexOf('goncalo') !== -1) badgeColor = 'pill-amber';
-        else if (eNorm.indexOf('governo') !== -1 || eNorm.indexOf('estado') !== -1 || eNorm.indexOf('seec') !== -1) badgeColor = 'pill-blue';
-        else if (eNorm.indexOf('macaiba') !== -1) badgeColor = 'pill-pink';
-        else if (eNorm.indexOf('extremoz') !== -1) badgeColor = 'pill-cyan';
-        else if (eNorm.indexOf('touros') !== -1) badgeColor = 'pill-teal';
-        else if (eNorm.indexOf('joao') !== -1) badgeColor = 'pill-orange';
-        else badgeColor = 'pill-indigo';
-
-        return '<div class="servidor-vinculo-item">' +
-          '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">' +
-            '<span class="pill-badge ' + badgeColor + '" style="font-size: 11px;">' + escapeHtml(v.ente) + '</span>' +
-            '<span style="font-size: 11.5px; font-weight: 700; color: var(--text-muted);">' + escapeHtml(v.matricula ? ('Mat: ' + v.matricula) : 'Sem Mat.') + '</span>' +
-          '</div>' +
-          '<div style="font-weight: 700; font-size: 13px; color: var(--text-main);">' + escapeHtml(v.cargo) + '</div>' +
-          '<div class="servidor-vinculo-meta">' +
-            '<div>' + (window.OlymposIcons ? window.OlymposIcons.ui('olymposLogo') : '') + ' ' + escapeHtml(v.lotacao) + '</div>' +
-            '<div style="display: flex; gap: 8px; margin-top: 2px;">' +
-              '<span>' + (window.OlymposIcons ? window.OlymposIcons.ui('clock') : '') + ' ' + escapeHtml(v.cargaHorariaTexto) + ' (' + escapeHtml(v.turno) + ')</span>' +
-              '<span>•</span>' +
-              '<span>' + (window.OlymposIcons ? window.OlymposIcons.ui('clipboard') : '') + ' ' + escapeHtml(v.quadro) + '</span>' +
-            '</div>' +
-          '</div>' +
-        '</div>';
-      }).join('');
-
-      var boxClass = auditoria.licito ? 'border-success' : 'border-danger';
-      var boxColor = auditoria.licito ? '#10B981' : '#EF4444';
-
-      html += '<div class="servidor-dossie-card" data-servidor-id="' + escapeHtml(d.id) + '">' +
-        '<div class="servidor-dossie-top">' +
-          '<div>' +
-            '<h4 class="servidor-dossie-nome">' + escapeHtml(d.nome) + '</h4>' +
-            '<div class="servidor-dossie-sub">' +
-              '<span>CPF: <strong>' + escapeHtml(d.cpfMascarado) + '</strong></span>' +
-              '<span>•</span>' +
-              '<span>Matrícula(s): <strong>' + escapeHtml(d.matriculas.join(', ') || 'N/I') + '</strong></span>' +
-              '<span>•</span>' +
-              '<span>Total Vínculos: <strong>' + d.vinculos.length + ' (' + d.cargaHorariaTotal + 'h/sem)</strong></span>' +
-            '</div>' +
-          '</div>' +
-          '<div style="display: flex; gap: 8px; align-items: center;">' +
-            '<span class="pill-badge ' + auditoria.badgeClass + '">' + escapeHtml(auditoria.badgeTexto) + '</span>' +
-            '<button type="button" class="btn btn-secondary btn-sm btn-abrir-dossie" data-nome="' + escapeHtml(d.nome) + '" title="Abrir Dossiê Detalhado">' + (window.OlymposIcons ? window.OlymposIcons.ui('search') : '') + ' Dossiê</button>' +
-          '</div>' +
-        '</div>' +
-
-        '<div class="servidor-vinculos-grid">' +
-          vinculosHtml +
-        '</div>' +
-
-        '<div class="parecer-hera-box ' + boxClass + '" style="margin-top: 12px; padding: 10px 14px; background: var(--bg-surface); border-left: 4px solid ' + boxColor + '; border-radius: 6px; font-size: 12px;">' +
-          '<strong>Auditoria CF/88 Art. 37:</strong> ' + escapeHtml(auditoria.parecer) +
-        '</div>' +
-      '</div>';
-    });
-
-    container.innerHTML = html;
-
-    // Vincula eventos nos botões de dossiê
-    container.querySelectorAll('.btn-abrir-dossie').forEach(function(btn) {
-      btn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        var nome = this.getAttribute('data-nome');
-        abrirDossieModal(nome);
-      });
-    });
-  }
-
-  /**
    * Renderiza a visualização em Tabela Sintética
    */
   function renderizarTabela(listaPaginada) {
@@ -587,80 +487,32 @@ window.OlymposViews.servidores = (function() {
   }
 
   /**
-   * Renderiza os controles numéricos de paginação
+   * Renderiza os controles numéricos de paginação via helper global OlymposPagination
    */
   function renderizarPaginacao(totalItens) {
+    if (window.OlymposPagination && typeof window.OlymposPagination.renderizarControles === 'function') {
+      var res = window.OlymposPagination.renderizarControles({
+        containers: ['servidoresPaginacaoTopo', 'servidoresPaginacaoRodape'],
+        statusEl: 'servidoresContagemStatus',
+        infoEl: 'servidoresInfoPaginacao',
+        totalItens: totalItens,
+        paginaAtual: paginaAtual,
+        itensPorPagina: itensPorPagina,
+        rotuloItem: 'servidores públicos cadastrados',
+        rotuloVazio: 'Nenhum servidor localizado',
+        maxBotoes: 5,
+        onPageChange: function(novaPagina) {
+          paginaAtual = novaPagina;
+          atualizarViewComCache();
+        }
+      });
+      paginaAtual = res.paginaAtual;
+      return;
+    }
+
     var totalPaginas = Math.ceil(totalItens / itensPorPagina) || 1;
     if (paginaAtual > totalPaginas) paginaAtual = totalPaginas;
     if (paginaAtual < 1) paginaAtual = 1;
-
-    var statusEl = document.getElementById('servidoresContagemStatus');
-    var infoPagEl = document.getElementById('servidoresInfoPaginacao');
-    var topoEl = document.getElementById('servidoresPaginacaoTopo');
-    var rodapeEl = document.getElementById('servidoresPaginacaoRodape');
-
-    var inicio = (paginaAtual - 1) * itensPorPagina + 1;
-    var fim = Math.min(paginaAtual * itensPorPagina, totalItens);
-
-    if (statusEl) {
-      if (totalItens === 0) {
-        statusEl.textContent = 'Nenhum servidor localizado';
-      } else {
-        statusEl.textContent = 'Exibindo ' + inicio + '–' + fim + ' de ' + totalItens + ' servidores públicos cadastrados';
-      }
-    }
-
-    if (infoPagEl) {
-      infoPagEl.textContent = 'Página ' + paginaAtual + ' de ' + totalPaginas + ' (' + totalItens + ' resultados)';
-    }
-
-    var botoesHtml = '';
-    botoesHtml += '<button type="button" class="btn-mini' + (paginaAtual === 1 ? ' disabled' : '') + '" data-ir-pag="ant" title="Página Anterior">' + (window.OlymposIcons ? window.OlymposIcons.ui('arrowLeft') : '&laquo;') + ' Ant</button>';
-
-    var maxBotoes = 5;
-    var startPage = Math.max(1, paginaAtual - 2);
-    var endPage = Math.min(totalPaginas, startPage + maxBotoes - 1);
-    if (endPage - startPage < maxBotoes - 1) {
-      startPage = Math.max(1, endPage - maxBotoes + 1);
-    }
-
-    for (var p = startPage; p <= endPage; p++) {
-      botoesHtml += '<button type="button" class="btn-mini' + (p === paginaAtual ? ' active' : '') + '" data-ir-pag="' + p + '">' + p + '</button>';
-    }
-
-    botoesHtml += '<button type="button" class="btn-mini' + (paginaAtual === totalPaginas ? ' disabled' : '') + '" data-ir-pag="prox" title="Próxima Página">Próx ' + (window.OlymposIcons ? window.OlymposIcons.ui('arrowRight') : '&raquo;') + '</button>';
-
-    if (topoEl) topoEl.innerHTML = botoesHtml;
-    if (rodapeEl) rodapeEl.innerHTML = botoesHtml;
-
-    function aplicarEventoPaginacao(container) {
-      if (!container) return;
-      container.querySelectorAll('button[data-ir-pag]').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          var target = this.getAttribute('data-ir-pag');
-          if (target === 'ant') {
-            if (paginaAtual > 1) {
-              paginaAtual--;
-              atualizarViewComCache();
-            }
-          } else if (target === 'prox') {
-            if (paginaAtual < totalPaginas) {
-              paginaAtual++;
-              atualizarViewComCache();
-            }
-          } else {
-            var num = parseInt(target, 10);
-            if (!isNaN(num) && num !== paginaAtual) {
-              paginaAtual = num;
-              atualizarViewComCache();
-            }
-          }
-        });
-      });
-    }
-
-    aplicarEventoPaginacao(topoEl);
-    aplicarEventoPaginacao(rodapeEl);
   }
 
   /**
@@ -676,28 +528,23 @@ window.OlymposViews.servidores = (function() {
   }
 
   /**
-   * Re-renderiza usando os resultados cacheados para paginação rápida
+   * Re-renderiza usando os resultados cacheados para paginação rápida (modo tabela)
    */
   function atualizarViewComCache() {
-    var totalItens = listaFiltradaCache.length;
-    var inicio = (paginaAtual - 1) * itensPorPagina;
-    var fim = inicio + itensPorPagina;
-    var pagSlice = listaFiltradaCache.slice(inicio, fim);
+    var pag = (window.OlymposPagination && typeof window.OlymposPagination.paginarLista === 'function')
+      ? window.OlymposPagination.paginarLista(listaFiltradaCache, paginaAtual, itensPorPagina)
+      : {
+          items: listaFiltradaCache.slice((paginaAtual - 1) * itensPorPagina, paginaAtual * itensPorPagina),
+          paginaAtual: paginaAtual,
+          totalItens: listaFiltradaCache.length
+        };
 
-    var cardsContainer = document.getElementById('servidoresContainerCards');
+    paginaAtual = pag.paginaAtual;
     var tabContainer = document.getElementById('servidoresContainerTabela');
+    if (tabContainer) tabContainer.classList.remove('hidden');
 
-    if (modoView === 'cards') {
-      if (cardsContainer) cardsContainer.classList.remove('hidden');
-      if (tabContainer) tabContainer.classList.add('hidden');
-      renderizarCards(pagSlice);
-    } else {
-      if (cardsContainer) cardsContainer.classList.add('hidden');
-      if (tabContainer) tabContainer.classList.remove('hidden');
-      renderizarTabela(pagSlice);
-    }
-
-    renderizarPaginacao(totalItens);
+    renderizarTabela(pag.items);
+    renderizarPaginacao(pag.totalItens);
 
     // Toggle botão limpar busca
     var btnLimpar = document.getElementById('btnLimparBuscaServidores');
@@ -943,27 +790,6 @@ window.OlymposViews.servidores = (function() {
         termoBusca = '';
         if (buscaInput) buscaInput.value = '';
         atualizarConsultaCompleta();
-      });
-    }
-
-    var btnCards = document.getElementById('btnModoViewCards');
-    var btnTabela = document.getElementById('btnModoViewTabela');
-    if (btnCards && !btnCards._bound) {
-      btnCards._bound = true;
-      btnCards.addEventListener('click', function() {
-        modoView = 'cards';
-        btnCards.classList.add('active');
-        if (btnTabela) btnTabela.classList.remove('active');
-        atualizarViewComCache();
-      });
-    }
-    if (btnTabela && !btnTabela._bound) {
-      btnTabela._bound = true;
-      btnTabela.addEventListener('click', function() {
-        modoView = 'tabela';
-        btnTabela.classList.add('active');
-        if (btnCards) btnCards.classList.remove('active');
-        atualizarViewComCache();
       });
     }
 

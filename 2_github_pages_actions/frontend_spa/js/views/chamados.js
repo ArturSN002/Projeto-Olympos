@@ -1,6 +1,6 @@
 /**
  * Hub Olympos V3.0 — Página Modular 14: Central de Chamados & Pendências da SMEB
- * Conectada à tabela Supabase public.pendencias_chamados e à planilha oficial (ID 1okAey-W8s1fFJ23t-FlmSaRSvWqNUJWze8tCYS17UNE).
+ * Conectada à tabela Supabase public.pendencias_solicitacoes e à planilha de backup (ID 1PZo4Wb2CRcPWRpTvoOLe29kT2MY3dDqoB09NDbkKOIc).
  * 
  * Regras Operacionais e Arquiteturais:
  * 1. Fila de chamados ordenada da mais antiga para a mais nova (criado_em ASC / FIFO).
@@ -16,6 +16,8 @@ window.OlymposViews.chamados = (function() {
 
   let isInitialized = false;
   let unsubscribeSignals = null;
+  let paginaAtual = 1;
+  const ITENS_POR_PAGINA = 12;
 
   // Dados canônicos de contingência offline / demonstração local (limpo para produção SSOT)
   const CANONICAL_MOCK_CHAMADOS = [];
@@ -50,6 +52,7 @@ window.OlymposViews.chamados = (function() {
       buscaInput._bound = true;
       buscaInput.addEventListener('input', function(e) {
         if (window.OlymposSignals) {
+          paginaAtual = 1;
           window.OlymposSignals.searchQuery.value = e.target.value;
           renderFila();
         }
@@ -62,6 +65,7 @@ window.OlymposViews.chamados = (function() {
       setorSelect._bound = true;
       setorSelect.addEventListener('change', function(e) {
         if (window.OlymposSignals) {
+          paginaAtual = 1;
           window.OlymposSignals.filterSetor.value = e.target.value;
           renderFila();
         }
@@ -73,6 +77,7 @@ window.OlymposViews.chamados = (function() {
     if (btnAtualizar && !btnAtualizar._bound) {
       btnAtualizar._bound = true;
       btnAtualizar.addEventListener('click', function() {
+        paginaAtual = 1;
         carregarChamados(true);
       });
     }
@@ -89,6 +94,7 @@ window.OlymposViews.chamados = (function() {
           statusGroup.querySelectorAll('.filter-pill').forEach(function(p) {
             p.classList.toggle('active', p === btn);
           });
+          paginaAtual = 1;
           window.OlymposSignals.filterStatus.value = status;
           renderFila();
         }
@@ -107,6 +113,7 @@ window.OlymposViews.chamados = (function() {
           urgGroup.querySelectorAll('.filter-pill').forEach(function(p) {
             p.classList.toggle('active', p === btn);
           });
+          paginaAtual = 1;
           window.OlymposSignals.filterUrgencia.value = urg;
           renderFila();
         }
@@ -114,20 +121,93 @@ window.OlymposViews.chamados = (function() {
     }
   }
 
+  function obterSupabaseClient() {
+    if (!window.OlymposSupabase) return null;
+    if (typeof window.OlymposSupabase.getClient === 'function') {
+      return window.OlymposSupabase.getClient() || window.OlymposSupabase.client || null;
+    }
+    return window.OlymposSupabase.client || null;
+  }
+
+  function obterOperadorAtual() {
+    if (window.OlymposApp && typeof window.OlymposApp.getSession === 'function') {
+      const sess = window.OlymposApp.getSession();
+      if (sess && (sess.nome || sess.email)) {
+        return String(sess.nome || sess.email);
+      }
+    }
+    return 'Operador Hub Olympos';
+  }
+
+  function parseDataSegura(val, fallback) {
+    if (!val) return fallback || new Date();
+    if (val instanceof Date) return isNaN(val.getTime()) ? (fallback || new Date()) : val;
+    const s = String(val).trim();
+    const dmy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[\s,]+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/);
+    if (dmy) {
+      return new Date(
+        parseInt(dmy[3], 10),
+        parseInt(dmy[2], 10) - 1,
+        parseInt(dmy[1], 10),
+        dmy[4] ? parseInt(dmy[4], 10) : 8,
+        dmy[5] ? parseInt(dmy[5], 10) : 0,
+        dmy[6] ? parseInt(dmy[6], 10) : 0
+      );
+    }
+    const parsed = new Date(s);
+    return isNaN(parsed.getTime()) ? (fallback || new Date()) : parsed;
+  }
+
+  function extrairLinksAnexosSafe(ticket) {
+    if (!ticket) return [];
+    const candidatos = [];
+    if (Array.isArray(ticket.anexos_links)) {
+      ticket.anexos_links.forEach(function(item) {
+        if (item) candidatos.push(String(item));
+      });
+    }
+    if (ticket.anexos) {
+      String(ticket.anexos).split(/[\r\n,;|]+|\s+(?=https?:\/\/)/i).forEach(function(part) {
+        const trimmed = String(part || '').trim();
+        if (trimmed) candidatos.push(trimmed);
+      });
+    }
+    const vistos = {};
+    const validos = [];
+    for (let i = 0; i < candidatos.length; i++) {
+      const raw = candidatos[i].trim();
+      if (!/^https?:\/\/\S+/i.test(raw)) continue;
+      if (!vistos[raw]) {
+        vistos[raw] = true;
+        validos.push(raw);
+      }
+    }
+    return validos;
+  }
+
   function carregarChamados(forcarRecarregamento) {
+    const sessao = (window.OlymposApp && typeof window.OlymposApp.getSession === 'function')
+      ? window.OlymposApp.getSession()
+      : null;
+    if (!sessao || !sessao.perfil) {
+      armazenarNaFila([]);
+      return;
+    }
+
     const container = document.getElementById('chamadosListaContainer');
     if (container && (!window.OlymposSignals || window.OlymposSignals.tickets.peek().length === 0 || forcarRecarregamento)) {
       container.innerHTML = '<div class="empty-state-card" style="padding: 36px; text-align: center;"><div class="empty-state-icon">' + (window.OlymposIcons ? window.OlymposIcons.ui('hourglass') : '') + '</div><p>Carregando solicitações em aberto...</p></div>';
     }
 
-    // 1. Tenta carregar do Supabase SSOT
-    if (window.OlymposSupabase && window.OlymposSupabase.client) {
-      window.OlymposSupabase.client
-        .from('pendencias_chamados')
+    // 1. Tenta carregar do Supabase SSOT (pendencias_solicitacoes)
+    const sbClient = obterSupabaseClient();
+    if (sbClient) {
+      sbClient
+        .from('pendencias_solicitacoes')
         .select('*')
-        .order('created_at', { ascending: true })
+        .order('criado_em', { ascending: true })
         .then(function(res) {
-          if (res.data && res.data.length > 0) {
+          if (!res.error && res.data && res.data.length > 0) {
             armazenarNaFila(res.data);
             return;
           }
@@ -180,7 +260,7 @@ window.OlymposViews.chamados = (function() {
   }
 
   function calcularSlaCard(ticket, filaIndex) {
-    const rawDt = ticket.created_at || ticket.criado_em || new Date();
+    const rawDt = ticket.criado_em || ticket.carimbo_data_hora || ticket.created_at || new Date();
     if (window.SlaEngine && typeof window.SlaEngine.calcularSla === 'function') {
       try {
         const sla = window.SlaEngine.calcularSla(rawDt, filaIndex);
@@ -203,10 +283,12 @@ window.OlymposViews.chamados = (function() {
 
     const tickets = window.OlymposSignals.getFilteredTickets();
     const allTickets = window.OlymposSignals.tickets.value;
+    const pagBar = document.getElementById('chamadosPaginacaoBar');
 
     atualizarKpisView(allTickets);
 
     if (!tickets || tickets.length === 0) {
+      if (pagBar) pagBar.classList.add('hidden');
       container.innerHTML = `
         <div id="emptyChamadosState" class="empty-state-card" style="padding: 40px 20px; text-align: center; background: var(--bg-surface); border: 1px solid var(--border-hairline); border-radius: var(--radius-lg);">
           <div class="empty-state-icon" style="font-size: 2.2rem; margin-bottom: 8px;">${window.OlymposIcons ? window.OlymposIcons.ui('party') : ''}</div>
@@ -217,12 +299,22 @@ window.OlymposViews.chamados = (function() {
       return;
     }
 
+    const esc = (window.OlymposApp && typeof window.OlymposApp.escapeHtml === 'function')
+      ? window.OlymposApp.escapeHtml
+      : function(v) { return String(v == null ? '' : v); };
+    const iconPaperclip = window.OlymposIcons ? window.OlymposIcons.ui('paperclip') : '';
+
+    const pag = (window.OlymposPagination && typeof window.OlymposPagination.paginarLista === 'function')
+      ? window.OlymposPagination.paginarLista(tickets, paginaAtual, ITENS_POR_PAGINA)
+      : { items: tickets, paginaAtual: 1, totalPaginas: 1, totalItens: tickets.length, inicio: 1, fim: tickets.length, inicioIndice: 0 };
+    paginaAtual = pag.paginaAtual;
+
     const htmlParts = [];
-    for (let i = 0; i < tickets.length; i++) {
-      const t = tickets[i];
+    for (let i = 0; i < pag.items.length; i++) {
+      const t = pag.items[i];
       const isUrgent = !!t.urgencia_ativa;
       const isEscalated = !!t.escalonado_24h;
-      const slaFormatado = calcularSlaCard(t, i);
+      const slaFormatado = calcularSlaCard(t, pag.inicioIndice + i);
       const status = (t.status || 'ABERTO').toUpperCase();
 
       const badgeUrgente = isUrgent
@@ -231,29 +323,57 @@ window.OlymposViews.chamados = (function() {
 
       const actionsHtml = buildCardActions(t, status);
 
+      const protocoloExibir = t.numero_protocolo || t.id;
+      const solicitanteNome = t.nome || t.nome_completo || 'Solicitante SMEB';
+      const solicitanteEmail = t.email || t.email_solicitante || '';
+      const setorExibir = t.setor || 'Geral';
+      const dataLimiteExibir = t.dia_entrega || t.data_limite_entrega || t.dia_entrega_solicitado || 'Conforme fila';
+      const aberturaRaw = t.carimbo_data_hora || t.criado_em || t.created_at;
+      const assuntoTipo = t.assunto_tipo || '';
+      const justificativaExibir = t.justificativa || t.descricao || 'Sem justificativa informada.';
+      const linksAnexos = extrairLinksAnexosSafe(t);
+
+      const anexosHtml = linksAnexos.length > 0
+        ? `<div class="chamado-anexos" style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 10px; font-size: 0.82rem;">` +
+            linksAnexos.map(function(url, idx) {
+              const label = linksAnexos.length > 1 ? ('Ver Documento Anexo ' + (idx + 1) + ' ↗') : 'Ver Documento Anexo ↗';
+              return `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer" style="color: var(--accent-primary); text-decoration: underline;">${iconPaperclip} ${label}</a>`;
+            }).join('') +
+          `</div>`
+        : '';
+
+      const assuntoHtml = assuntoTipo
+        ? `<span class="badge-assunto" style="background: var(--bg-base); color: var(--text-primary); border: 1px solid var(--border-hairline); padding: 2px 8px; border-radius: 9999px; font-size: 0.72rem; font-weight: 600;">${esc(assuntoTipo)}</span>`
+        : '';
+
+      const emailHtml = solicitanteEmail
+        ? ` • <span>E-mail: <strong>${esc(solicitanteEmail)}</strong></span>`
+        : '';
+
       const card = `
         <div class="chamado-card surface-card spotlight-card ${isUrgent ? 'chamado-urgente' : ''}"
-             data-id="${window.OlymposApp ? window.OlymposApp.escapeHtml(t.id) : t.id}"
-             data-status="${status}"
+             data-id="${esc(t.id)}"
+             data-status="${esc(status)}"
              data-urgente="${isUrgent ? 'true' : 'false'}">
           <div class="chamado-header">
-            <span class="chamado-id font-mono">#${window.OlymposApp ? window.OlymposApp.escapeHtml(t.id) : t.id}</span>
+            <span class="chamado-id font-mono">#${esc(protocoloExibir)}</span>
+            ${assuntoHtml}
             ${badgeUrgente}
-            <span class="badge-sla sla-badge">Previsão: ${window.OlymposApp ? window.OlymposApp.escapeHtml(slaFormatado) : slaFormatado}</span>
-            <span class="badge-status" style="background: var(--bg-base); color: var(--text-muted); border: 1px solid var(--border-hairline);">${status}</span>
+            <span class="badge-sla sla-badge">Previsão: ${esc(slaFormatado)}</span>
+            <span class="badge-status" style="background: var(--bg-base); color: var(--text-muted); border: 1px solid var(--border-hairline);">${esc(status)}</span>
           </div>
 
           <div class="chamado-body">
-            <h4 class="text-primary">${window.OlymposApp ? window.OlymposApp.escapeHtml(t.nome_completo || 'Solicitante SMEB') : (t.nome_completo || 'Solicitante SMEB')}</h4>
+            <h4 class="text-primary">${esc(solicitanteNome)}</h4>
             <p class="text-secondary">
-              <span>Setor: <strong>${window.OlymposApp ? window.OlymposApp.escapeHtml(t.setor || 'Geral') : (t.setor || 'Geral')}</strong></span> •
-              <span>Dia solicitado: <strong>${window.OlymposApp ? window.OlymposApp.escapeHtml(t.dia_entrega_solicitado || 'Conforme fila') : (t.dia_entrega_solicitado || 'Conforme fila')}</strong></span> •
-              <span class="text-muted">Aberto em ${formatarDataHora(t.created_at || t.criado_em)} (aguardando há ${t.horas_em_aberto || 0}h)</span>
+              <span>Setor: <strong>${esc(setorExibir)}</strong></span>${emailHtml} •
+              <span>Data limite: <strong>${esc(dataLimiteExibir)}</strong></span> •
+              <span class="text-muted">Carimbo: ${esc(formatarDataHora(aberturaRaw))} (aguardando há ${esc(t.horas_em_aberto || 0)}h)</span>
             </p>
             <div class="chamado-descricao">
-              ${window.OlymposApp ? window.OlymposApp.escapeHtml(t.descricao || 'Sem descrição informada.') : (t.descricao || 'Sem descrição informada.')}
+              ${esc(justificativaExibir)}
             </div>
-            ${t.anexos ? `<div style="margin-top: 6px; font-size: 0.82rem;"><a href="${window.OlymposApp ? window.OlymposApp.escapeHtml(t.anexos) : t.anexos}" target="_blank" rel="noopener" style="color: var(--accent-primary);">${window.OlymposIcons ? window.OlymposIcons.ui('paperclip') : ''} Ver Documento Anexo ↗</a></div>` : ''}
+            ${anexosHtml}
           </div>
 
           <div class="chamado-actions">
@@ -266,6 +386,24 @@ window.OlymposViews.chamados = (function() {
 
     container.innerHTML = htmlParts.join('\n');
     bindSpotlightInteractions(container);
+
+    if (window.OlymposPagination && typeof window.OlymposPagination.renderizarControles === 'function') {
+      const resPag = window.OlymposPagination.renderizarControles({
+        barEl: 'chamadosPaginacaoBar',
+        containers: 'chamadosPaginacaoControles',
+        infoEl: 'chamadosPaginacaoInfo',
+        totalItens: pag.totalItens,
+        paginaAtual: paginaAtual,
+        itensPorPagina: ITENS_POR_PAGINA,
+        rotuloItem: 'chamados',
+        rotuloVazio: 'Nenhuma pendência encontrada',
+        onPageChange: function(novaPagina) {
+          paginaAtual = novaPagina;
+          renderFila();
+        }
+      });
+      paginaAtual = resPag.paginaAtual;
+    }
   }
 
   function buildCardActions(ticket, status) {
@@ -275,7 +413,7 @@ window.OlymposViews.chamados = (function() {
     }
 
     const parts = [];
-    if (status !== 'EM_ATENDIMENTO') {
+    if (status !== 'EM_ATENDIMENTO' && status !== 'EM_ANDAMENTO') {
       parts.push(`
         <button type="button" class="btn-atendimento-chamado"
                 onclick="window.marcarAtendimentoChamado('${idSafe}')"
@@ -324,16 +462,18 @@ window.OlymposViews.chamados = (function() {
 
     for (let i = 0; i < tickets.length; i++) {
       const t = tickets[i];
-      if (t.status === 'RESOLVIDO' || t.status === 'CONCLUIDO') {
+      const st = String(t.status || '').toUpperCase();
+      if (st === 'RESOLVIDO' || st === 'CONCLUIDO') {
         resolvidos++;
       } else {
         totalAbertos++;
-        const dt = new Date(t.created_at || t.criado_em || now);
+        const dt = parseDataSegura(t.criado_em || t.carimbo_data_hora || t.created_at, now);
         if (!earliestPending || dt < earliestPending) {
           earliestPending = dt;
         }
-        const isOrigUrgent = String(t.urgencia || t.urgente_solicitado || '').trim().toLowerCase() in { sim: 1, true: 1, '1': 1 };
-        const ageHours = (now.getTime() - dt.getTime()) / (3600 * 1000);
+        const isOrigUrgent = (t.urgencia === true || t.urgente === true ||
+          ['sim', 'true', '1'].indexOf(String(t.urgencia != null ? t.urgencia : (t.urgente_solicitado || '')).trim().toLowerCase()) !== -1);
+        const ageHours = Math.max(0, (now.getTime() - dt.getTime()) / (3600 * 1000));
         if (isOrigUrgent || (!t.lido_em && ageHours >= 24)) {
           urgentes++;
         }
@@ -369,7 +509,15 @@ window.OlymposViews.chamados = (function() {
 
   function atualizarTelemetriaHero() {
     const elHeroChamados = document.getElementById('heroTelemetryChamados');
-    if (!elHeroChamados || !window.OlymposSignals) return;
+    if (!elHeroChamados) return;
+    const sessao = (window.OlymposApp && typeof window.OlymposApp.getSession === 'function')
+      ? window.OlymposApp.getSession()
+      : null;
+    if (!sessao || !sessao.perfil) {
+      elHeroChamados.textContent = '--';
+      return;
+    }
+    if (!window.OlymposSignals) return;
     const fila = window.OlymposSignals.getActiveQueue();
     elHeroChamados.textContent = fila.length + ' demandas';
   }
@@ -379,10 +527,13 @@ window.OlymposViews.chamados = (function() {
   function marcarAtendimento(id) {
     if (!id) return;
     const nowIso = new Date().toISOString();
+    const operador = obterOperadorAtual();
+
     if (window.OlymposSignals) {
       window.OlymposSignals.updateTicket(id, {
-        status: 'EM_ATENDIMENTO',
-        lido_em: nowIso
+        status: 'EM_ANDAMENTO',
+        lido_em: nowIso,
+        atendido_por: operador
       });
     }
 
@@ -390,32 +541,41 @@ window.OlymposViews.chamados = (function() {
       window.OlymposApp.showToast('Chamado #' + id + ' em atendimento.', 'info');
     }
 
-    // Persistência assíncrona no backend
+    // Persistência assíncrona no backend GAS e Supabase (pendencias_solicitacoes)
     if (window.OlymposApi && typeof window.OlymposApi.chamar === 'function') {
       window.OlymposApi.chamar('chamados_marcar_atendimento', {
         id: id,
-        atendido_por: 'Operador Hub Olympos'
+        atendido_por: operador
       }, function() {}, function() {});
     }
 
-    if (window.OlymposSupabase && window.OlymposSupabase.client) {
-      window.OlymposSupabase.client
-        .from('pendencias_chamados')
-        .update({ status: 'EM_ATENDIMENTO', lido_em: nowIso })
+    const sbClient = obterSupabaseClient();
+    if (sbClient) {
+      sbClient
+        .from('pendencias_solicitacoes')
+        .update({ status: 'EM_ANDAMENTO', lido_em: nowIso, atendido_por: operador })
         .eq('id', id)
-        .then(function() {});
+        .then(function(res) {
+          if (res && res.error) {
+            console.warn('[Chamados] Erro ao atualizar atendimento no Supabase:', res.error);
+          }
+        });
     }
   }
 
   function finalizar(id) {
     if (!id) return;
     const nowIso = new Date().toISOString();
+    const operador = obterOperadorAtual();
+    const obsResolucao = 'Finalização confirmada via interface de usuário';
 
     // [SEGURANCA] RESTRIÇÃO ESTRITA: ZERO DISPARO DE E-MAIL AO FINALIZAR
     if (window.OlymposSignals) {
       window.OlymposSignals.updateTicket(id, {
         status: 'RESOLVIDO',
-        finalizado_em: nowIso
+        finalizado_em: nowIso,
+        resolvido_por: operador,
+        observacoes_resolucao: obsResolucao
       });
     }
 
@@ -423,21 +583,31 @@ window.OlymposViews.chamados = (function() {
       window.OlymposApp.showToast('Chamado #' + id + ' finalizado com sucesso!', 'success');
     }
 
-    // Persistência assíncrona no backend GAS e Supabase
+    // Persistência assíncrona no backend GAS e Supabase (ZERO e-mail)
     if (window.OlymposApi && typeof window.OlymposApi.chamar === 'function') {
       window.OlymposApi.chamar('chamados_finalizar', {
         id: id,
-        resolvido_por: 'Operador Hub Olympos',
-        observacoes: 'Finalização confirmada via interface de usuário'
+        resolvido_por: operador,
+        observacoes: obsResolucao
       }, function() {}, function() {});
     }
 
-    if (window.OlymposSupabase && window.OlymposSupabase.client) {
-      window.OlymposSupabase.client
-        .from('pendencias_chamados')
-        .update({ status: 'RESOLVIDO', finalizado_em: nowIso, observacoes: 'Finalização confirmada via interface de usuário' })
+    const sbClient = obterSupabaseClient();
+    if (sbClient) {
+      sbClient
+        .from('pendencias_solicitacoes')
+        .update({
+          status: 'RESOLVIDO',
+          finalizado_em: nowIso,
+          resolvido_por: operador,
+          observacoes_resolucao: obsResolucao
+        })
         .eq('id', id)
-        .then(function() {});
+        .then(function(res) {
+          if (res && res.error) {
+            console.warn('[Chamados] Erro ao finalizar chamado no Supabase:', res.error);
+          }
+        });
     }
   }
 

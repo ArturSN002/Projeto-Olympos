@@ -6,8 +6,18 @@ window.OlymposViews = window.OlymposViews || {};
 window.OlymposViews.configuracoes = (function() {
   let usuariosLista = [];
   let subtabAtiva = 'conexao';
+  let paginaUsuarios = 1;
+  const ITENS_USUARIOS_POR_PAGINA = 15;
 
   const MOCK_USUARIOS_FALLBACK = [
+    {
+      id: 'usr_moderador_00',
+      full_name: 'Artur Silva',
+      email: 'asn0373@gmail.com',
+      role: 'MODERADOR',
+      department: 'Gabinete do Secretário',
+      ativo: true
+    },
     {
       id: 'usr_gabinete_01',
       full_name: 'Gabinete Executivo SMEB',
@@ -166,9 +176,17 @@ window.OlymposViews.configuracoes = (function() {
 
   async function carregarUsuarios() {
     const container = document.getElementById('tabelaUsuariosContainer');
+    const pagBar = document.getElementById('usuariosPaginacaoBar');
     if (!container) return;
 
+    if (window.OlymposApp && typeof window.OlymposApp.isModerador === 'function' && !window.OlymposApp.isModerador()) {
+      container.innerHTML = '';
+      if (pagBar) pagBar.classList.add('hidden');
+      return;
+    }
+
     container.innerHTML = '<div style="padding: 24px; text-align: center; color: var(--text-muted);">Carregando operadores do Supabase...</div>';
+    if (pagBar) pagBar.classList.add('hidden');
 
     let lista = null;
     if (window.OlymposSupabase && typeof window.OlymposSupabase.listarPerfisUsuarios === 'function') {
@@ -184,26 +202,58 @@ window.OlymposViews.configuracoes = (function() {
     }
 
     usuariosLista = lista;
+    paginaUsuarios = 1;
+    renderizarTabelaUsuarios();
+  }
+
+  function renderizarTabelaUsuarios() {
+    const container = document.getElementById('tabelaUsuariosContainer');
+    const pagBar = document.getElementById('usuariosPaginacaoBar');
+    if (!container) return;
+
+    if (!Array.isArray(usuariosLista) || usuariosLista.length === 0) {
+      if (pagBar) pagBar.classList.add('hidden');
+      container.innerHTML = '<div style="padding: 24px; text-align: center; color: var(--text-muted);">Nenhum operador cadastrado no momento.</div>';
+      return;
+    }
 
     const session = window.OlymposApp ? window.OlymposApp.getSession() : null;
-    const currentUserId = (session && session.user && session.user.id) || (session && session.profile && session.profile.id);
+    const currentUserId = (session && (session.id || (session.user && session.user.id) || (session.profile && session.profile.id))) || '';
+    const currentEmail = String((session && (session.email || session.usuario || (session.user && session.user.email))) || '').trim().toLowerCase();
+
+    const pag = (window.OlymposPagination && typeof window.OlymposPagination.paginarLista === 'function')
+      ? window.OlymposPagination.paginarLista(usuariosLista, paginaUsuarios, ITENS_USUARIOS_POR_PAGINA)
+      : { items: usuariosLista, paginaAtual: 1, totalPaginas: 1, totalItens: usuariosLista.length, inicio: 1, fim: usuariosLista.length };
+    paginaUsuarios = pag.paginaAtual;
 
     const getRoleBadge = function(role) {
       const r = String(role || '').toUpperCase();
+      const labelOrganico = (window.OlymposApp && typeof window.OlymposApp.obterLabelPerfilOrganico === 'function')
+        ? window.OlymposApp.obterLabelPerfilOrganico(r)
+        : r;
+      const labelSafe = (window.OlymposApp && typeof window.OlymposApp.escapeHtml === 'function')
+        ? window.OlymposApp.escapeHtml(labelOrganico)
+        : labelOrganico;
+      if (r === 'MODERADOR') {
+        return '<span class="pill-badge pill-gold" style="font-size: 0.72rem;">' + labelSafe + '</span>';
+      }
       if (r === 'ADMIN_GABINETE') {
-        return '<span class="pill-badge pill-purple" style="font-size: 0.72rem;">ADMIN_GABINETE</span>';
+        return '<span class="pill-badge pill-purple" style="font-size: 0.72rem;">' + labelSafe + '</span>';
       }
       if (r === 'JURIDICO') {
-        return '<span class="pill-badge pill-blue" style="font-size: 0.72rem;">JURIDICO</span>';
+        return '<span class="pill-badge pill-blue" style="font-size: 0.72rem;">' + labelSafe + '</span>';
       }
       if (r === 'RH_COMISSAO') {
-        return '<span class="pill-badge pill-amber" style="font-size: 0.72rem;">RH_COMISSAO</span>';
+        return '<span class="pill-badge pill-amber" style="font-size: 0.72rem;">' + labelSafe + '</span>';
       }
-      return '<span class="pill-badge pill-green" style="font-size: 0.72rem;">' + r + '</span>';
+      return '<span class="pill-badge pill-green" style="font-size: 0.72rem;">' + labelSafe + '</span>';
     };
 
-    const rowsHtml = usuariosLista.map(function(u) {
-      const isSelf = currentUserId && (u.id === currentUserId || u.email === (session && session.usuario));
+    const rowsHtml = pag.items.map(function(u) {
+      const isSelf = Boolean(
+        (currentUserId && String(u.id) === String(currentUserId)) ||
+        (currentEmail && String(u.email || '').trim().toLowerCase() === currentEmail)
+      );
       const nomeSafe = window.OlymposApp ? window.OlymposApp.escapeHtml(u.full_name || u.nome || u.email) : (u.full_name || u.nome || u.email);
       const emailSafe = window.OlymposApp ? window.OlymposApp.escapeHtml(u.email || '--') : (u.email || '--');
       const deptSafe = window.OlymposApp ? window.OlymposApp.escapeHtml(u.department || u.departamento || 'Secretaria Municipal de Educacao') : (u.department || 'Secretaria Municipal de Educacao');
@@ -255,12 +305,33 @@ window.OlymposViews.configuracoes = (function() {
       </div>
     `;
 
+    if (window.OlymposPagination && typeof window.OlymposPagination.renderizarControles === 'function') {
+      const pagRes = window.OlymposPagination.renderizarControles({
+        barEl: 'usuariosPaginacaoBar',
+        containers: 'usuariosPaginacaoControles',
+        infoEl: 'usuariosPaginacaoInfo',
+        totalItens: pag.totalItens,
+        paginaAtual: paginaUsuarios,
+        itensPorPagina: ITENS_USUARIOS_POR_PAGINA,
+        rotuloItem: 'usuários',
+        onPageChange: function(novaPagina) {
+          paginaUsuarios = novaPagina;
+          renderizarTabelaUsuarios();
+        }
+      });
+      paginaUsuarios = pagRes.paginaAtual;
+    }
+
     if (window.OlymposIcons && typeof window.OlymposIcons.hydrateAll === 'function') {
       window.OlymposIcons.hydrateAll();
     }
   }
 
   function abrirModalEditarUsuario(id) {
+    if (window.OlymposApp && typeof window.OlymposApp.isModerador === 'function' && !window.OlymposApp.isModerador()) {
+      window.OlymposApp.showToast('Ação restrita ao perfil Moderador.', true);
+      return;
+    }
     const user = usuariosLista.find(function(u) { return u.id === id; });
     if (!user) return;
 
@@ -300,6 +371,10 @@ window.OlymposViews.configuracoes = (function() {
 
   async function salvarEdicaoUsuario(e) {
     if (e && typeof e.preventDefault === 'function') e.preventDefault();
+    if (window.OlymposApp && typeof window.OlymposApp.isModerador === 'function' && !window.OlymposApp.isModerador()) {
+      window.OlymposApp.showToast('Ação restrita ao perfil Moderador.', true);
+      return;
+    }
 
     const inId = document.getElementById('editarUsuarioId');
     const inNome = document.getElementById('editarUsuarioNome');
@@ -334,10 +409,10 @@ window.OlymposViews.configuracoes = (function() {
     const payload = {
       full_name: nome,
       role: role,
-      department: department,
-      ativo: ativo
+      department: department
     };
 
+    const hasClient = Boolean(window.OlymposSupabase && typeof window.OlymposSupabase.getClient === 'function' && window.OlymposSupabase.getClient());
     let sucesso = false;
     if (window.OlymposSupabase && typeof window.OlymposSupabase.atualizarPerfilUsuario === 'function') {
       try {
@@ -347,18 +422,30 @@ window.OlymposViews.configuracoes = (function() {
       }
     }
 
-    // Atualiza localmente no cache
+    if (btnSalvar) {
+      btnSalvar.disabled = false;
+      btnSalvar.textContent = 'Salvar Alterações';
+    }
+
+    if (hasClient && !sucesso) {
+      if (feedback) {
+        feedback.textContent = 'Não foi possível salvar as alterações no Supabase. Verifique permissões e tente novamente.';
+        feedback.className = 'output-panel output-error';
+        feedback.classList.remove('hidden');
+      }
+      if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+        window.OlymposApp.showToast('Falha ao atualizar perfil de usuário no Supabase.', true);
+      }
+      return;
+    }
+
+    // Atualiza localmente no cache apenas após sucesso (ou modo demo sem cliente)
     const idx = usuariosLista.findIndex(function(u) { return u.id === userId; });
     if (idx >= 0) {
       usuariosLista[idx] = Object.assign({}, usuariosLista[idx], payload);
       try {
         localStorage.setItem('olympos_usuarios_perfis_cache', JSON.stringify(usuariosLista));
       } catch (eStorage) {}
-    }
-
-    if (btnSalvar) {
-      btnSalvar.disabled = false;
-      btnSalvar.textContent = 'Salvar Alterações';
     }
 
     fecharModalEditarUsuario();
@@ -371,18 +458,29 @@ window.OlymposViews.configuracoes = (function() {
 
   async function excluirUsuario(id) {
     if (!id) return;
+    if (window.OlymposApp && typeof window.OlymposApp.isModerador === 'function' && !window.OlymposApp.isModerador()) {
+      window.OlymposApp.showToast('Ação restrita ao perfil Moderador.', true);
+      return;
+    }
 
     const session = window.OlymposApp ? window.OlymposApp.getSession() : null;
-    const currentUserId = (session && session.user && session.user.id) || (session && session.profile && session.profile.id);
+    const currentUserId = (session && (session.id || (session.user && session.user.id) || (session.profile && session.profile.id))) || '';
+    const currentEmail = String((session && (session.email || session.usuario || (session.user && session.user.email))) || '').trim().toLowerCase();
+    const user = usuariosLista.find(function(u) { return u.id === id; });
 
-    if (currentUserId && (id === currentUserId || id === (session && session.usuario))) {
+    const isSelfTarget = Boolean(
+      (currentUserId && String(id) === String(currentUserId)) ||
+      (currentEmail && String(id).trim().toLowerCase() === currentEmail) ||
+      (user && currentEmail && String(user.email || '').trim().toLowerCase() === currentEmail)
+    );
+
+    if (isSelfTarget) {
       if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
         window.OlymposApp.showToast('Ação proibida: você não pode excluir a si mesmo.', true);
       }
       return;
     }
 
-    const user = usuariosLista.find(function(u) { return u.id === id; });
     const nome = user ? (user.full_name || user.email) : id;
 
     if (!confirm('Deseja realmente revogar os acessos e excluir o operador "' + nome + '"?')) {
@@ -437,7 +535,14 @@ window.OlymposViews.configuracoes = (function() {
 
     if (session && session.perfil) {
       if (userLabel) userLabel.textContent = session.nome || session.usuario;
-      if (userRole) userRole.textContent = session.perfil.nome;
+      if (userRole) {
+        const roleId = (typeof window.OlymposApp.obterRoleIdSessao === 'function')
+          ? window.OlymposApp.obterRoleIdSessao(session)
+          : (session.perfil.id || session.perfil.nome);
+        userRole.textContent = (typeof window.OlymposApp.obterLabelPerfilOrganico === 'function')
+          ? window.OlymposApp.obterLabelPerfilOrganico(roleId)
+          : (session.perfil.nome || roleId);
+      }
       if (userTabs) userTabs.textContent = (session.perfil.abasPermitidas || []).join(', ');
     }
   }

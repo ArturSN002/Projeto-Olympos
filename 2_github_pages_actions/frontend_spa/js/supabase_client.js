@@ -878,6 +878,8 @@ window.OlymposSupabase = (function() {
     const client = getClient();
     if (client) {
       try {
+        const sess = await getSession();
+        if (!sess) return null;
         const { data, error } = await client
           .from('catalogos_json')
           .select('conteudo')
@@ -936,16 +938,38 @@ window.OlymposSupabase = (function() {
     const client = getClient();
     if (client) {
       try {
-        // 1. Tenta recuperar da tabela estruturada public.publicacoes_diario
-        const { data, error } = await client
-          .from('publicacoes_diario')
-          .select('*')
-          .order('data_publicacao', { ascending: false })
-          .limit(100);
-        if (!error && Array.isArray(data) && data.length > 0) {
-          console.log('[Olympos Supabase] Conteúdo recebido da tabela [publicacoes_diario] (' + data.length + ' atos):', data);
-          return data;
+        // 1. Tenta recuperar acervo completo da tabela public.publicacoes_diario em lotes paginados (.range)
+        const todosAtos = [];
+        const batchSize = 500;
+        const maxRows = 5000;
+        let lastError = null;
+
+        for (let from = 0; from < maxRows; from += batchSize) {
+          const to = from + batchSize - 1;
+          const { data: batch, error: batchError } = await client
+            .from('publicacoes_diario')
+            .select('*')
+            .order('data_publicacao', { ascending: false })
+            .range(from, to);
+
+          if (batchError) {
+            lastError = batchError;
+            break;
+          }
+          if (!Array.isArray(batch) || batch.length === 0) {
+            break;
+          }
+          todosAtos.push(...batch);
+          if (batch.length < batchSize) {
+            break;
+          }
         }
+
+        if (todosAtos.length > 0) {
+          console.log('[Olympos Supabase] Conteúdo recebido da tabela [publicacoes_diario] (' + todosAtos.length + ' atos):', todosAtos);
+          return todosAtos;
+        }
+        const error = lastError;
 
         // 2. Fallback de resiliência: catálogo JSON em public.catalogos_json
         const { data: catData, error: catError } = await client
@@ -1097,7 +1121,7 @@ window.OlymposSupabase = (function() {
    */
   function isRoleMfaMandatory(role) {
     const r = String(role || '').toUpperCase();
-    return r === 'ADMIN_GABINETE' || r === 'JURIDICO';
+    return r === 'MODERADOR' || r === 'ADMIN_GABINETE' || r === 'JURIDICO';
   }
 
   // =========================================================================
@@ -1157,6 +1181,81 @@ window.OlymposSupabase = (function() {
     return false;
   }
 
+  /**
+   * Atualiza o próprio perfil do usuário autenticado (apenas full_name e department, sem alterar role).
+   */
+  async function atualizarPerfilProprio(dados) {
+    const opts = dados || {};
+    const cleanName = String(opts.full_name !== undefined ? opts.full_name : (opts.nome || '')).trim();
+    const cleanDept = String(opts.department !== undefined ? opts.department : (opts.departamento || '')).trim();
+
+    if (!cleanName) {
+      throw new Error('O nome completo é obrigatório.');
+    }
+
+    const client = getClient();
+    if (!client) {
+      throw new Error('Cliente Supabase não inicializado.');
+    }
+
+    const sess = await getSession();
+    if (!sess || !sess.user || !sess.user.id) {
+      return {
+        ok: false,
+        noSupabaseSession: true,
+        full_name: cleanName,
+        department: cleanDept
+      };
+    }
+
+    const updatePayload = {
+      full_name: cleanName,
+      department: cleanDept,
+      updated_at: new Date().toISOString()
+    };
+
+    const { data, error } = await client
+      .from('profiles')
+      .update(updatePayload)
+      .eq('id', sess.user.id)
+      .select('*')
+      .maybeSingle();
+
+    if (error) {
+      throw error;
+    }
+
+    try {
+      if (client.auth && typeof client.auth.updateUser === 'function') {
+        await client.auth.updateUser({
+          data: {
+            full_name: cleanName,
+            department: cleanDept
+          }
+        });
+      }
+    } catch (eAuth) {
+      console.warn('[OlymposSupabase] Aviso ao sincronizar user_metadata:', eAuth);
+    }
+
+    const mergedProfile = Object.assign({}, cachedProfile || getCachedProfile() || {}, data || {}, {
+      id: sess.user.id,
+      email: (data && data.email) || sess.user.email,
+      full_name: cleanName,
+      department: cleanDept
+    });
+    cachedProfile = mergedProfile;
+
+    try {
+      sessionStorage.setItem('olympos_rbac_profile_cache', JSON.stringify(mergedProfile));
+    } catch (eCache) {}
+
+    return {
+      ok: true,
+      profile: mergedProfile
+    };
+  }
+
   async function excluirPerfilUsuario(id) {
     if (!id) return false;
     const client = getClient();
@@ -1213,6 +1312,7 @@ window.OlymposSupabase = (function() {
     carregarPublicacoesDiario: carregarPublicacoesDiario,
     listarPerfisUsuarios: listarPerfisUsuarios,
     atualizarPerfilUsuario: atualizarPerfilUsuario,
+    atualizarPerfilProprio: atualizarPerfilProprio,
     excluirPerfilUsuario: excluirPerfilUsuario
   };
 })();

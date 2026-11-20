@@ -118,22 +118,28 @@
   }
 
   function isUrgentOriginal(ticket) {
-    const val = ticket.urgencia || ticket.urgente_solicitado || ticket.urgente || '';
-    return String(val).trim().toLowerCase() === 'sim' ||
-           String(val).trim().toLowerCase() === 'true' ||
-           String(val).trim() === '1';
+    if (!ticket) return false;
+    if (ticket.urgencia === true || ticket.urgente_solicitado === true || ticket.urgente === true) {
+      return true;
+    }
+    const val = ticket.urgencia != null
+      ? ticket.urgencia
+      : (ticket.urgente_solicitado != null ? ticket.urgente_solicitado : (ticket.urgente || ''));
+    const norm = String(val).trim().toLowerCase();
+    return norm === 'sim' || norm === 'true' || norm === '1';
   }
 
   function computeTicketState(ticket, nowDt) {
     const item = Object.assign({}, ticket);
     const now = nowDt ? parseDateSafe(nowDt) : new Date();
-    const criadoEm = parseDateSafe(item.criado_em || item.created_at || item.data_abertura);
+    const criadoEm = parseDateSafe(item.criado_em || item.carimbo_data_hora || item.created_at || item.data_abertura);
     const diffMs = Math.max(0, now.getTime() - criadoEm.getTime());
     const idadeHoras = diffMs / (1000 * 3600);
 
     const isOrigUrgent = isUrgentOriginal(item);
-    const isLido = !!(item.lido_em || item.lido || item.status === 'EM_ATENDIMENTO' || item.status === 'RESOLVIDO');
-    const isFinalizado = !!(item.finalizado_em || item.status === 'RESOLVIDO');
+    const statusUpper = String(item.status || '').toUpperCase();
+    const isLido = !!(item.lido_em || item.lido || statusUpper === 'EM_ANDAMENTO' || statusUpper === 'EM_ATENDIMENTO' || statusUpper === 'RESOLVIDO');
+    const isFinalizado = !!(item.finalizado_em || statusUpper === 'RESOLVIDO' || statusUpper === 'CONCLUIDO');
 
     // Regra de escalonamento 24h: se passou de 24h sem leitura ou resolução -> escalona
     const escalonado = (!isOrigUrgent && !isLido && !isFinalizado && idadeHoras >= 24);
@@ -150,8 +156,8 @@
 
   function sortChronologicalAsc(list) {
     return list.slice().sort(function(a, b) {
-      const da = parseDateSafe(a.criado_em || a.created_at || a.data_abertura).getTime();
-      const db = parseDateSafe(b.criado_em || b.created_at || b.data_abertura).getTime();
+      const da = parseDateSafe(a.criado_em || a.carimbo_data_hora || a.created_at || a.data_abertura).getTime();
+      const db = parseDateSafe(b.criado_em || b.carimbo_data_hora || b.created_at || b.data_abertura).getTime();
       return da - db;
     });
   }
@@ -209,7 +215,7 @@
       if (statusFilter === 'ABERTOS') {
         if (status === 'RESOLVIDO' || status === 'CONCLUIDO') continue;
       } else if (statusFilter === 'EM_ATENDIMENTO') {
-        if (status !== 'EM_ATENDIMENTO') continue;
+        if (status !== 'EM_ATENDIMENTO' && status !== 'EM_ANDAMENTO') continue;
       } else if (statusFilter === 'CONCLUIDOS') {
         if (status !== 'RESOLVIDO' && status !== 'CONCLUIDO') continue;
       }
@@ -231,10 +237,17 @@
       if (query) {
         const haystack = [
           enriched.id,
+          enriched.numero_protocolo,
+          enriched.nome,
           enriched.nome_completo,
+          enriched.email,
           enriched.email_solicitante,
           enriched.setor,
+          enriched.assunto_tipo,
+          enriched.justificativa,
           enriched.descricao,
+          enriched.dia_entrega,
+          enriched.data_limite_entrega,
           enriched.dia_entrega_solicitado
         ].filter(Boolean).join(' ').toLowerCase();
 

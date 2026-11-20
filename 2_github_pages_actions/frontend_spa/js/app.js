@@ -42,6 +42,7 @@ window.OlymposApp = (function() {
       setHtml('closeModalBtn', uiFn('close'));
       setHtml('closeContadoresModalBtn', uiFn('close'));
       setHtml('closeLoginScreenXBtn', uiFn('close'));
+      setHtml('closeUserProfileModalBtn', uiFn('close'));
       setHtml('pincelDoneCheckSvg', uiFn('check'));
     }
 
@@ -94,11 +95,13 @@ window.OlymposApp = (function() {
       const cachedRbac = sessionStorage.getItem('olympos_session_rbac');
       if (cachedRbac) {
         const sessionObj = JSON.parse(cachedRbac);
-        if (sessionObj && sessionObj.perfil) {
+        if (sessionObj && sessionObj.perfil && obterRoleIdSessao(sessionObj) !== 'VISITANTE') {
           currentUserSession = sessionObj;
           aplicarSessaoNaInterface(currentUserSession);
           return;
         }
+        sessionStorage.removeItem('olympos_session_rbac');
+        sessionStorage.removeItem('olympos_rbac_profile_cache');
       }
     } catch (e) {
       sessionStorage.removeItem('olympos_session_rbac');
@@ -108,15 +111,23 @@ window.OlymposApp = (function() {
     const stored = localStorage.getItem('olympos_session');
     if (stored) {
       try {
-        currentUserSession = JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        if (parsed && parsed.perfil && obterRoleIdSessao(parsed) !== 'VISITANTE') {
+          currentUserSession = parsed;
+          try {
+            sessionStorage.setItem('olympos_session_rbac', JSON.stringify(currentUserSession));
+            if (currentUserSession.perfil) {
+              sessionStorage.setItem('olympos_rbac_profile_cache', JSON.stringify(currentUserSession.perfil));
+            }
+          } catch (eStore) {}
+          aplicarSessaoNaInterface(currentUserSession);
+          return;
+        }
+        localStorage.removeItem('olympos_session');
         try {
-          sessionStorage.setItem('olympos_session_rbac', JSON.stringify(currentUserSession));
-          if (currentUserSession.perfil) {
-            sessionStorage.setItem('olympos_rbac_profile_cache', JSON.stringify(currentUserSession.perfil));
-          }
-        } catch (eStore) {}
-        aplicarSessaoNaInterface(currentUserSession);
-        return;
+          sessionStorage.removeItem('olympos_session_rbac');
+          sessionStorage.removeItem('olympos_rbac_profile_cache');
+        } catch (eClean) {}
       } catch (e) {
         localStorage.removeItem('olympos_session');
       }
@@ -174,6 +185,10 @@ window.OlymposApp = (function() {
   }
 
   const RBAC_TAB_PERMISSIONS = {
+    MODERADOR: [
+      'visao-geral', 'oficios', 'portarias', 'licencas', 'certificados',
+      'diario-oficial', 'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'configuracoes'
+    ],
     ADMIN_GABINETE: [
       'visao-geral', 'oficios', 'portarias', 'licencas', 'certificados',
       'diario-oficial', 'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'configuracoes'
@@ -189,6 +204,15 @@ window.OlymposApp = (function() {
       'visao-geral', 'oficios', 'portarias', 'diario-oficial',
       'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'configuracoes'
     ]
+  };
+
+  const ROLE_LABELS = {
+    MODERADOR: 'Moderador',
+    ADMIN_GABINETE: 'Gabinete Executivo',
+    RH_COMISSAO: 'Recursos Humanos e Portarias',
+    PEDAGOGICO_EVENTOS: 'Pedagógico e Eventos',
+    JURIDICO: 'Assessoria Jurídica',
+    VISITANTE: 'Visitante'
   };
 
   function atualizarTokenSessao(novoToken) {
@@ -456,15 +480,22 @@ window.OlymposApp = (function() {
         const abas = RBAC_TAB_PERMISSIONS[role] || RBAC_TAB_PERMISSIONS.RH_COMISSAO;
 
         function concluirSessaoLogin(tokenAal) {
+          const organicRoleLabel = obterLabelPerfilOrganico(role);
           currentUserSession = {
             ok: true,
             token: tokenAal || authResult.session.access_token,
             access_token: tokenAal || authResult.session.access_token,
             usuario: authResult.user.email,
             nome: profile.full_name || authResult.user.email,
+            department: profile.department || '',
+            user: {
+              id: authResult.user.id,
+              email: authResult.user.email
+            },
+            profile: profile,
             perfil: {
               id: role,
-              nome: role,
+              nome: organicRoleLabel,
               abasPermitidas: abas
             }
           };
@@ -487,7 +518,7 @@ window.OlymposApp = (function() {
         // 1.1 Verificação de MFA GoTrue (aal1 / aal2)
         const isMfaMandatory = (typeof window.OlymposSupabase.isRoleMfaMandatory === 'function')
           ? window.OlymposSupabase.isRoleMfaMandatory(role)
-          : (role === 'ADMIN_GABINETE' || role === 'JURIDICO');
+          : (role === 'MODERADOR' || role === 'ADMIN_GABINETE' || role === 'JURIDICO');
 
         let mfaStatus = { supported: false, currentLevel: 'aal1', nextLevel: 'aal1', hasEnrolled: false, factors: [], verifiedFactors: [] };
         if (typeof window.OlymposSupabase.checkMfaStatus === 'function') {
@@ -531,6 +562,13 @@ window.OlymposApp = (function() {
       btn.textContent = 'Acessar Ambiente Olympos';
 
       if (res && res.ok) {
+        if (res.perfil) {
+          const resolvedRoleId = obterRoleIdSessao(res);
+          if (!res.perfil.id && resolvedRoleId !== 'VISITANTE') {
+            res.perfil.id = resolvedRoleId;
+          }
+          res.perfil.nome = obterLabelPerfilOrganico(resolvedRoleId);
+        }
         currentUserSession = res;
         localStorage.setItem('olympos_session', JSON.stringify(res));
         try {
@@ -572,6 +610,9 @@ window.OlymposApp = (function() {
     } catch (e) {}
     currentUserSession = null;
     aplicarModoVisitanteNaInterface();
+    if (window.OlymposViews && window.OlymposViews.visaoGeral && typeof window.OlymposViews.visaoGeral.resetarEstadoLogout === 'function') {
+      window.OlymposViews.visaoGeral.resetarEstadoLogout();
+    }
     const modalLogin = document.getElementById('loginScreen');
     if (modalLogin) modalLogin.classList.add('hidden');
     showToast('Sessão encerrada.');
@@ -581,13 +622,25 @@ window.OlymposApp = (function() {
   }
 
   function aplicarModoVisitanteNaInterface() {
+    if (document.body) {
+      document.body.classList.add('is-visitante');
+    }
+
+    const userSessionBtn = document.getElementById('userSessionBtn');
     const userBadgeName = document.getElementById('userBadgeName');
     const userBadgeRole = document.getElementById('userBadgeRole');
     const avatarInitials = document.getElementById('userAvatarInitials');
 
+    if (userSessionBtn) {
+      userSessionBtn.title = 'Entrar no Hub Olympos';
+      userSessionBtn.classList.remove('is-authenticated');
+    }
     if (userBadgeName) userBadgeName.textContent = 'Entrar';
-    if (userBadgeRole) userBadgeRole.textContent = 'Acesso Público';
+    if (userBadgeRole) userBadgeRole.textContent = obterLabelPerfilOrganico('VISITANTE');
     if (avatarInitials) avatarInitials.textContent = 'VS';
+
+    const userProfileModal = document.getElementById('userProfileModal');
+    if (userProfileModal) userProfileModal.classList.add('hidden');
 
     document.querySelectorAll('.nav-link').forEach(function(link) {
       const pageTarget = link.getAttribute('data-page');
@@ -621,9 +674,26 @@ window.OlymposApp = (function() {
 
     aplicarControleAcessoModularEDrive(null, PUBLIC_PAGES);
 
+    if (window.OlymposViews) {
+      if (window.OlymposViews.visaoGeral && typeof window.OlymposViews.visaoGeral.resetarEstadoLogout === 'function') {
+        window.OlymposViews.visaoGeral.resetarEstadoLogout();
+      }
+      if (window.OlymposViews.escolas && typeof window.OlymposViews.escolas.atualizarPermissoesMapa === 'function') {
+        window.OlymposViews.escolas.atualizarPermissoesMapa();
+      }
+      if (window.OlymposViews.papiroCadmo && typeof window.OlymposViews.papiroCadmo.atualizarPermissoesMapa === 'function') {
+        window.OlymposViews.papiroCadmo.atualizarPermissoesMapa();
+      }
+    }
+
     if (window.OlymposIcons && typeof window.OlymposIcons.hydrateAll === 'function') {
       window.OlymposIcons.hydrateAll();
     }
+  }
+
+  function normalizarTextoSemAcentos_(val) {
+    const s = String(val || '').trim();
+    return (typeof s.normalize === 'function' ? s.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : s).toUpperCase();
   }
 
   function normalizarPermissoesRbac(listaBruta, roleId) {
@@ -648,16 +718,48 @@ window.OlymposApp = (function() {
     return Array.from(set);
   }
 
+  function obterLabelPerfilOrganico(roleId) {
+    const r = normalizarTextoSemAcentos_(roleId);
+    if (!r) return ROLE_LABELS.VISITANTE;
+    if (ROLE_LABELS[r]) return ROLE_LABELS[r];
+    if (r.indexOf('MODERADOR') !== -1) return ROLE_LABELS.MODERADOR;
+    if (r.indexOf('ADMIN') !== -1 || r.indexOf('GABINETE') !== -1) return ROLE_LABELS.ADMIN_GABINETE;
+    if (r.indexOf('RH') !== -1 || r.indexOf('COMISSAO') !== -1 || r.indexOf('RECURSOS HUMANOS') !== -1) return ROLE_LABELS.RH_COMISSAO;
+    if (r.indexOf('PEDAGOG') !== -1 || r.indexOf('EVENTO') !== -1) return ROLE_LABELS.PEDAGOGICO_EVENTOS;
+    if (r.indexOf('JURID') !== -1) return ROLE_LABELS.JURIDICO;
+    if (r.indexOf('VISITANTE') !== -1 || r.indexOf('PUBLICO') !== -1) return ROLE_LABELS.VISITANTE;
+    return 'Operador';
+  }
+
   function obterRoleIdSessao(sessao) {
     const s = sessao !== undefined ? sessao : currentUserSession;
-    if (!s || !s.perfil) return null;
-    const rawId = String(s.perfil.id || s.perfil.role || s.perfil.nome || '').trim().toUpperCase();
+    if (!s || !s.perfil) return 'VISITANTE';
+    const rawId = normalizarTextoSemAcentos_(s.perfil.id || s.perfil.role || s.perfil.nome || '');
     if (RBAC_TAB_PERMISSIONS[rawId]) return rawId;
+    if (rawId.indexOf('MODERADOR') !== -1) return 'MODERADOR';
     if (rawId.indexOf('ADMIN') !== -1 || rawId.indexOf('GABINETE') !== -1) return 'ADMIN_GABINETE';
-    if (rawId.indexOf('RH') !== -1 || rawId.indexOf('COMISSAO') !== -1) return 'RH_COMISSAO';
+    if (rawId.indexOf('RH') !== -1 || rawId.indexOf('COMISSAO') !== -1 || rawId.indexOf('RECURSOS HUMANOS') !== -1) return 'RH_COMISSAO';
     if (rawId.indexOf('PEDAGOG') !== -1 || rawId.indexOf('EVENTO') !== -1) return 'PEDAGOGICO_EVENTOS';
     if (rawId.indexOf('JURID') !== -1) return 'JURIDICO';
-    return rawId || 'AUTENTICADO';
+    return 'VISITANTE';
+  }
+
+  function isModerador(sessao) {
+    return obterRoleIdSessao(sessao) === 'MODERADOR';
+  }
+
+  function podeEditarMapa(sessao) {
+    const r = obterRoleIdSessao(sessao);
+    return r === 'MODERADOR' || r === 'ADMIN_GABINETE';
+  }
+
+  function podeEditarMemorias(sessao) {
+    const s = sessao !== undefined ? sessao : currentUserSession;
+    if (!s || !s.perfil) return false;
+    if (s.perfil.podeEditarMemorias === false) return false;
+    if (s.perfil.podeEditarMemorias === true) return true;
+    const r = obterRoleIdSessao(s);
+    return r === 'MODERADOR' || r === 'ADMIN_GABINETE';
   }
 
   function getPermitidasSessao(sessao) {
@@ -684,12 +786,12 @@ window.OlymposApp = (function() {
 
   function aplicarControleAcessoModularEDrive(sessaoArg, permitidasArg) {
     const sessao = sessaoArg !== undefined ? sessaoArg : currentUserSession;
-    const isAuth = Boolean(sessao && sessao.perfil);
     const roleId = obterRoleIdSessao(sessao);
+    const isAuth = Boolean(sessao && sessao.perfil && roleId !== 'VISITANTE');
     const permitidas = Array.isArray(permitidasArg)
       ? permitidasArg
       : getPermitidasSessao(sessao);
-    const temTodos = permitidas.includes('TODOS') || roleId === 'ADMIN_GABINETE';
+    const temTodos = isAuth && (permitidas.includes('TODOS') || roleId === 'MODERADOR' || roleId === 'ADMIN_GABINETE');
 
     // 1. Filtrar cards da seção OPERAÇÕES MODULARES (.quick-module-card[data-nav-target])
     let cardsVisiveis = 0;
@@ -722,7 +824,7 @@ window.OlymposApp = (function() {
       if (rolesAttr) {
         if (!isAuth) return false;
         const allowedRoles = rolesAttr.split(',').map(function(r) { return r.trim().toUpperCase(); }).filter(Boolean);
-        if (allowedRoles.length > 0 && !temTodos && !allowedRoles.includes(roleId)) {
+        if (allowedRoles.length > 0 && roleId !== 'MODERADOR' && !allowedRoles.includes(roleId)) {
           return false;
         }
       }
@@ -739,6 +841,13 @@ window.OlymposApp = (function() {
     document.querySelectorAll('[data-requires-auth], [data-access-roles], [data-access-page]').forEach(function(el) {
       if (el.classList.contains('quick-module-card')) return;
       const visivel = avaliarElementoAcesso(el);
+      el.classList.toggle('hidden', !visivel);
+      el.style.display = visivel ? '' : 'none';
+      el.setAttribute('aria-hidden', visivel ? 'false' : 'true');
+    });
+
+    document.querySelectorAll('[data-visitante-only="true"]').forEach(function(el) {
+      const visivel = !isAuth;
       el.classList.toggle('hidden', !visivel);
       el.style.display = visivel ? '' : 'none';
       el.setAttribute('aria-hidden', visivel ? 'false' : 'true');
@@ -769,13 +878,23 @@ window.OlymposApp = (function() {
   function aplicarSessaoNaInterface(sessao) {
     if (!sessao || !sessao.perfil) return;
 
-    const nomeExibicao = sessao.nome || sessao.usuario || 'Gabinete';
+    if (document.body) {
+      document.body.classList.remove('is-visitante');
+    }
+
+    const roleId = obterRoleIdSessao(sessao);
+    const nomeExibicao = sessao.nome || sessao.usuario || obterLabelPerfilOrganico(roleId);
+    const userSessionBtn = document.getElementById('userSessionBtn');
     const userBadgeName = document.getElementById('userBadgeName');
     const userBadgeRole = document.getElementById('userBadgeRole');
     const avatarInitials = document.getElementById('userAvatarInitials');
 
+    if (userSessionBtn) {
+      userSessionBtn.title = 'Minha Conta e Perfil (Clique para visualizar ou editar)';
+      userSessionBtn.classList.add('is-authenticated');
+    }
     if (userBadgeName) userBadgeName.textContent = nomeExibicao;
-    if (userBadgeRole) userBadgeRole.textContent = sessao.perfil.nome || 'Autenticado';
+    if (userBadgeRole) userBadgeRole.textContent = obterLabelPerfilOrganico(roleId);
     if (avatarInitials) {
       const partes = nomeExibicao.split(/\s+/).filter(Boolean);
       const iniciais = partes.length >= 2
@@ -784,7 +903,6 @@ window.OlymposApp = (function() {
       avatarInitials.textContent = iniciais;
     }
 
-    const roleId = obterRoleIdSessao(sessao);
     const permitidas = normalizarPermissoesRbac(sessao.perfil.abasPermitidas, roleId);
     document.querySelectorAll('.nav-link').forEach(function(link) {
       const pageTarget = link.getAttribute('data-page');
@@ -806,14 +924,23 @@ window.OlymposApp = (function() {
       }
     });
 
-    // Controle de Visibilidade RBAC para Moderador (ADMIN_GABINETE)
-    const isAdmin = Boolean(roleId === 'ADMIN_GABINETE' || (sessao.perfil && (sessao.perfil.id === 'ADMIN_GABINETE' || sessao.perfil.nome === 'ADMIN_GABINETE')));
+    // Controle de Visibilidade RBAC exclusivo do perfil Moderador
+    const isMod = isModerador(sessao);
     const blocoGestao = document.getElementById('blocoGestaoUsuarios');
     const avisoRestrito = document.getElementById('avisoAcessoUsuariosRestrito');
-    if (blocoGestao) blocoGestao.classList.toggle('hidden', !isAdmin);
-    if (avisoRestrito) avisoRestrito.classList.toggle('hidden', isAdmin);
+    if (blocoGestao) blocoGestao.classList.toggle('hidden', !isMod);
+    if (avisoRestrito) avisoRestrito.classList.toggle('hidden', isMod);
 
     aplicarControleAcessoModularEDrive(sessao, permitidas);
+
+    if (window.OlymposViews) {
+      if (window.OlymposViews.escolas && typeof window.OlymposViews.escolas.atualizarPermissoesMapa === 'function') {
+        window.OlymposViews.escolas.atualizarPermissoesMapa();
+      }
+      if (window.OlymposViews.papiroCadmo && typeof window.OlymposViews.papiroCadmo.atualizarPermissoesMapa === 'function') {
+        window.OlymposViews.papiroCadmo.atualizarPermissoesMapa();
+      }
+    }
 
     if (window.OlymposIcons && typeof window.OlymposIcons.hydrateAll === 'function') {
       window.OlymposIcons.hydrateAll();
@@ -1054,13 +1181,38 @@ window.OlymposApp = (function() {
     const btnUser = document.getElementById('userSessionBtn');
     if (btnUser) {
       btnUser.addEventListener('click', function() {
-        if (!currentUserSession) {
+        if (!currentUserSession || !currentUserSession.perfil) {
           solicitarLogin();
         } else {
-          if (confirm('Deseja encerrar a sessão atual ou trocar de perfil setorial?')) {
-            fazerLogout();
-          }
+          abrirModalPerfilUsuario();
         }
+      });
+    }
+
+    const btnCloseProfile = document.getElementById('closeUserProfileModalBtn');
+    if (btnCloseProfile) {
+      btnCloseProfile.addEventListener('click', fecharModalPerfilUsuario);
+    }
+
+    const userProfileBackdrop = document.getElementById('userProfileModal');
+    if (userProfileBackdrop) {
+      userProfileBackdrop.addEventListener('click', function(e) {
+        if (e.target === userProfileBackdrop) {
+          fecharModalPerfilUsuario();
+        }
+      });
+    }
+
+    const formUserProfile = document.getElementById('formUserProfile');
+    if (formUserProfile) {
+      formUserProfile.addEventListener('submit', handleSalvarPerfilProprio);
+    }
+
+    const btnLogoutFromProfile = document.getElementById('btnLogoutFromProfileModal');
+    if (btnLogoutFromProfile) {
+      btnLogoutFromProfile.addEventListener('click', function() {
+        fecharModalPerfilUsuario();
+        fazerLogout();
       });
     }
 
@@ -1176,7 +1328,15 @@ window.OlymposApp = (function() {
         if (modalLogin && !modalLogin.classList.contains('hidden')) {
           fecharModalLogin();
         }
+        const modalPerfil = document.getElementById('userProfileModal');
+        if (modalPerfil && !modalPerfil.classList.contains('hidden')) {
+          fecharModalPerfilUsuario();
+        }
       }
+    });
+
+    window.addEventListener('hashchange', function() {
+      fecharModalPerfilUsuario();
     });
 
     document.querySelectorAll('[data-nav-target]').forEach(function(el) {
@@ -1235,6 +1395,16 @@ window.OlymposApp = (function() {
 
     const btnSaveMem = document.getElementById('saveMemoriaBtn');
     if (btnSaveMem) btnSaveMem.addEventListener('click', salvarMemoriaMd);
+
+    const btnReloadMem = document.getElementById('reloadMemoriaBtn');
+    if (btnReloadMem) {
+      btnReloadMem.addEventListener('click', function() {
+        recarregarMemoriaModalAoVivo(false);
+      });
+    }
+
+    const btnClearMem = document.getElementById('clearMemoriaBtn');
+    if (btnClearMem) btnClearMem.addEventListener('click', limparPendenciasMemoriaModal);
 
     // Modal de Cadastro de Novo Usuário (Exclusivo ADMIN_GABINETE)
     const btnOpenNovoUser = document.getElementById('btnAbrirModalNovoUsuario');
@@ -1344,38 +1514,202 @@ window.OlymposApp = (function() {
     });
   }
 
-  function abrirModalMemoria(memoriaObj) {
-    activeMemoriaEditando = memoriaObj;
-    const nome = memoriaObj.deus || memoriaObj.nome || memoriaObj.arquivo;
-    document.getElementById('modalMemoriaTitle').textContent = nome + ' — ' + memoriaObj.arquivo;
-    const ta = document.getElementById('modalMemoriaTextarea');
+  function atualizarContadorLinhasModal(ta) {
+    const counter = document.getElementById('modalLineCounter');
+    if (!counter || !ta) return;
+    const l = ta.value.split('\n').length;
+    counter.textContent = l + ' / 60 linhas';
+    counter.className = 'pill-badge ' + (l > 55 ? 'pill-red' : 'pill-gold');
+  }
 
-    // Recupera conteúdo com preferência para edições locais salvas no catálogo
-    let conteudo = memoriaObj.conteudoCompleto || '';
+  function recarregarMemoriaModalAoVivo(silencioso) {
+    if (!activeMemoriaEditando || !window.OlymposApi || typeof window.OlymposApi.lerMemoria !== 'function') {
+      return;
+    }
+    const alvoArq = activeMemoriaEditando.arquivo;
+    const alvoIdentificador = activeMemoriaEditando.id || alvoArq;
+    const reloadBtn = document.getElementById('reloadMemoriaBtn');
+    if (!silencioso && reloadBtn) {
+      reloadBtn.disabled = true;
+      reloadBtn.textContent = 'Sincronizando...';
+    }
+
+    window.OlymposApi.lerMemoria(alvoIdentificador, function(res) {
+      if (!silencioso && reloadBtn) {
+        reloadBtn.disabled = false;
+        reloadBtn.textContent = 'Recarregar do Docs';
+      }
+      const mem = (res && res.memoria) || (res && res.data && res.data.memoria);
+      if (!mem || !mem.conteudoCompleto) {
+        if (!silencioso) {
+          showToast((res && res.mensagem) || 'Não foi possível obter conteúdo atualizado do Google Docs.', true);
+        }
+        return;
+      }
+      if (!activeMemoriaEditando || activeMemoriaEditando.arquivo !== alvoArq) {
+        return;
+      }
+      if (!silencioso && window.OLYMPOS_MEMORIAS_CATALOGO) {
+        window.OLYMPOS_MEMORIAS_CATALOGO.removerEdicaoLocal(alvoArq);
+      }
+      activeMemoriaEditando.conteudoCompleto = mem.conteudoCompleto;
+      if (mem.id) activeMemoriaEditando.id = mem.id;
+      if (mem.url) activeMemoriaEditando.url = mem.url;
+
+      const ta = document.getElementById('modalMemoriaTextarea');
+      if (ta) {
+        ta.value = mem.conteudoCompleto;
+        atualizarContadorLinhasModal(ta);
+      }
+      if (!silencioso) {
+        showToast('Memória sincronizada diretamente do Google Docs!');
+      }
+    }, function(err) {
+      if (!silencioso && reloadBtn) {
+        reloadBtn.disabled = false;
+        reloadBtn.textContent = 'Recarregar do Docs';
+        showToast('Falha ao ler Google Docs: ' + ((err && err.message) || 'gateway indisponível'), true);
+      }
+    });
+  }
+
+  function limparPendenciasMemoriaModal() {
+    if (!activeMemoriaEditando) return;
+    if (!podeEditarMemorias()) {
+      showToast('Seu perfil possui acesso somente leitura às memórias institucionais.', true);
+      return;
+    }
+    const nome = activeMemoriaEditando.deus || activeMemoriaEditando.nome || activeMemoriaEditando.arquivo;
+    const confirma = typeof window.confirm === 'function'
+      ? window.confirm('Deseja limpar a Caixa de Entrada e Pendências Concluídas de ' + nome + ' no Google Docs?')
+      : true;
+    if (!confirma) return;
+
+    if (!window.OlymposApi || typeof window.OlymposApi.limparMemoria !== 'function') {
+      showToast('Serviço de limpeza de memória indisponível.', true);
+      return;
+    }
+
+    const arq = activeMemoriaEditando.arquivo;
+    const clearBtn = document.getElementById('clearMemoriaBtn');
+    if (clearBtn) {
+      clearBtn.disabled = true;
+      clearBtn.textContent = 'Higienizando...';
+    }
+
+    window.OlymposApi.limparMemoria(activeMemoriaEditando.id || arq, function(res) {
+      if (clearBtn) {
+        clearBtn.disabled = false;
+        clearBtn.textContent = 'Limpar Caixa/Pendências';
+      }
+      if (res && res.ok !== false) {
+        if (window.OLYMPOS_MEMORIAS_CATALOGO) {
+          window.OLYMPOS_MEMORIAS_CATALOGO.removerEdicaoLocal(arq);
+        }
+        showToast('Caixa de Entrada e pendências higienizadas no Google Docs de ' + nome + '!');
+        recarregarMemoriaModalAoVivo(true);
+        if (window.OlymposViews && window.OlymposViews.personas) {
+          window.OlymposViews.personas.recarregar(true);
+        }
+      } else {
+        showToast((res && res.mensagem) || 'Falha ao higienizar memória.', true);
+      }
+    }, function(err) {
+      if (clearBtn) {
+        clearBtn.disabled = false;
+        clearBtn.textContent = 'Limpar Caixa/Pendências';
+      }
+      showToast('Erro ao higienizar memória: ' + ((err && err.message) || 'falha de comunicação'), true);
+    });
+  }
+
+  function abrirModalMemoria(memoriaObj) {
+    let enriched = memoriaObj || {};
     if (window.OLYMPOS_MEMORIAS_CATALOGO) {
-      const local = window.OLYMPOS_MEMORIAS_CATALOGO.obterConteudoLocal(memoriaObj.arquivo);
+      const catMeta = (enriched.id && window.OLYMPOS_MEMORIAS_CATALOGO.obterPorId(enriched.id)) ||
+        window.OLYMPOS_MEMORIAS_CATALOGO.obterPorArquivo(enriched.arquivo || enriched.nome || enriched.deus);
+      if (catMeta) {
+        enriched = Object.assign({}, catMeta, enriched, {
+          id: enriched.id || catMeta.id,
+          url: enriched.url || catMeta.url,
+          arquivo: enriched.arquivo || catMeta.arquivo,
+          dominio: enriched.dominio || catMeta.dominio,
+          formato: enriched.formato || catMeta.formato || 'GOOGLE_DOCS'
+        });
+      }
+    }
+
+    activeMemoriaEditando = enriched;
+    const nome = enriched.deus || enriched.nome || enriched.arquivo;
+    const arq = enriched.arquivo || nome;
+    const docId = enriched.id || enriched.driveId || '';
+    const docUrl = enriched.url || (docId ? ('https://docs.google.com/document/d/' + docId + '/edit') : '');
+    const podeEditar = podeEditarMemorias();
+
+    const titleEl = document.getElementById('modalMemoriaTitle');
+    if (titleEl) titleEl.textContent = nome + ' — Google Docs';
+
+    const subtitleEl = document.getElementById('modalMemoriaSubtitle');
+    if (subtitleEl) {
+      subtitleEl.textContent = arq + (docId ? (' • ID ' + docId) : '') + (podeEditar ? '' : ' • Somente leitura');
+    }
+
+    const openLinkEl = document.getElementById('modalMemoriaOpenDocLink');
+    if (openLinkEl) {
+      if (docUrl) {
+        openLinkEl.href = docUrl;
+        openLinkEl.classList.remove('hidden');
+      } else {
+        openLinkEl.removeAttribute('href');
+        openLinkEl.classList.add('hidden');
+      }
+    }
+
+    const btnSave = document.getElementById('saveMemoriaBtn');
+    if (btnSave) {
+      btnSave.textContent = 'Salvar no Google Docs';
+      btnSave.classList.toggle('hidden', !podeEditar);
+    }
+    const btnClear = document.getElementById('clearMemoriaBtn');
+    if (btnClear) {
+      btnClear.classList.toggle('hidden', !podeEditar);
+    }
+
+    const ta = document.getElementById('modalMemoriaTextarea');
+    ta.readOnly = !podeEditar;
+
+    // Recupera conteúdo com preferência para edições locais pendentes no catálogo
+    let conteudo = enriched.conteudoCompleto || '';
+    let temPendenteLocal = false;
+    if (window.OLYMPOS_MEMORIAS_CATALOGO && arq) {
+      temPendenteLocal = Boolean(window.OLYMPOS_MEMORIAS_CATALOGO.temEdicaoLocalPendente(arq));
+      const local = window.OLYMPOS_MEMORIAS_CATALOGO.obterConteudoLocal(arq);
       if (local !== null && local !== undefined) {
         conteudo = local;
       }
     }
     ta.value = conteudo;
 
-    const atualizarContadorLinhas = function() {
-      const l = ta.value.split('\n').length;
-      const counter = document.getElementById('modalLineCounter');
-      counter.textContent = l + ' / 60 linhas';
-      counter.className = 'pill-badge ' + (l > 55 ? 'pill-red' : 'pill-gold');
+    atualizarContadorLinhasModal(ta);
+    ta.oninput = function() {
+      atualizarContadorLinhasModal(ta);
     };
-
-    atualizarContadorLinhas();
-    ta.oninput = atualizarContadorLinhas;
     document.getElementById('memoriaModal').classList.remove('hidden');
+
+    if (!temPendenteLocal && window.OlymposApi && typeof window.OlymposApi.lerMemoria === 'function') {
+      recarregarMemoriaModalAoVivo(true);
+    }
   }
 
   function salvarMemoriaMd() {
     if (!activeMemoriaEditando) return;
+    if (!podeEditarMemorias()) {
+      showToast('Seu perfil possui acesso somente leitura às memórias institucionais.', true);
+      return;
+    }
     const novoConteudo = document.getElementById('modalMemoriaTextarea').value;
     const arq = activeMemoriaEditando.arquivo;
+    const docId = activeMemoriaEditando.id || activeMemoriaEditando.driveId || '';
     const btn = document.getElementById('saveMemoriaBtn');
 
     // 1. Persistência local imediata no browser (localStorage e in-memory)
@@ -1385,42 +1719,42 @@ window.OlymposApp = (function() {
     activeMemoriaEditando.conteudoCompleto = novoConteudo;
 
     btn.disabled = true;
-    btn.textContent = 'Sincronizando no Drive...';
+    btn.textContent = 'Sincronizando no Google Docs...';
 
     // 2. Sincronização remota via Gateway GAS (CORS Simple Request)
     window.OlymposApi.salvarMemoria(arq, novoConteudo, function(res) {
       btn.disabled = false;
-      btn.textContent = 'Salvar no Arquivo Existente';
+      btn.textContent = 'Salvar no Google Docs';
 
       if (res && res.ok) {
         if (window.OLYMPOS_MEMORIAS_CATALOGO) {
           window.OLYMPOS_MEMORIAS_CATALOGO.removerEdicaoLocal(arq);
         }
-        showToast('Memória ' + arq + ' sincronizada com sucesso no Google Drive!');
+        showToast('Memória ' + arq + ' sincronizada com sucesso no Google Docs!');
         document.getElementById('memoriaModal').classList.add('hidden');
         if (window.OlymposViews && window.OlymposViews.personas) {
-          window.OlymposViews.personas.recarregar();
+          window.OlymposViews.personas.recarregar(true);
         }
         if (window.OlymposViews && window.OlymposViews.visaoGeral) {
           window.OlymposViews.visaoGeral.recarregar();
         }
       } else {
-        showToast('Salvo localmente no navegador! Sincronização com o Drive pendente (' + ((res && res.mensagem) || 'offline') + ').', false);
+        showToast('Salvo localmente no navegador! Sincronização com o Google Docs pendente (' + ((res && res.mensagem) || 'offline') + ').', false);
         document.getElementById('memoriaModal').classList.add('hidden');
         if (window.OlymposViews && window.OlymposViews.personas) {
-          window.OlymposViews.personas.recarregar();
+          window.OlymposViews.personas.recarregar(true);
         }
       }
     }, function() {
       btn.disabled = false;
-      btn.textContent = 'Salvar no Arquivo Existente';
+      btn.textContent = 'Salvar no Google Docs';
       // Modo offline: salvo com sucesso no localStorage, não trava nem perde a edição
-      showToast('Salvo localmente no navegador! Sincronização com o Drive ocorrerá quando o Gateway estiver online.', false);
+      showToast('Salvo localmente no navegador! Sincronização com o Google Docs ocorrerá quando o Gateway estiver online.', false);
       document.getElementById('memoriaModal').classList.add('hidden');
       if (window.OlymposViews && window.OlymposViews.personas) {
-        window.OlymposViews.personas.recarregar();
+        window.OlymposViews.personas.recarregar(true);
       }
-    });
+    }, docId);
   }
 
   // =========================================================================
@@ -1510,13 +1844,177 @@ window.OlymposApp = (function() {
   }
 
   // =========================================================================
-  // GESTÃO DE USUÁRIOS E MODAL NOVO USUÁRIO (EXCLUSIVO ADMIN_GABINETE)
+  // PERFIL DO USUÁRIO LOGADO (POPUP + AUTOEDIÇÃO DE NOME E DEPARTAMENTO)
+  // =========================================================================
+  async function atualizarPerfilProprio(dados) {
+    if (!currentUserSession || !currentUserSession.perfil) {
+      throw new Error('Sessão de usuário não autenticada.');
+    }
+
+    const opts = dados || {};
+    const cleanName = String(opts.full_name !== undefined ? opts.full_name : (opts.nome || '')).trim();
+    const cleanDept = String(opts.department !== undefined ? opts.department : (opts.departamento || '')).trim();
+
+    if (!cleanName) {
+      throw new Error('O nome completo é obrigatório.');
+    }
+
+    if (window.OlymposSupabase && typeof window.OlymposSupabase.getSession === 'function') {
+      const sbSess = await window.OlymposSupabase.getSession();
+      if (sbSess && sbSess.user && typeof window.OlymposSupabase.atualizarPerfilProprio === 'function') {
+        const resRemote = await window.OlymposSupabase.atualizarPerfilProprio({
+          full_name: cleanName,
+          department: cleanDept
+        });
+        if (resRemote && resRemote.profile) {
+          currentUserSession.profile = Object.assign({}, currentUserSession.profile || {}, resRemote.profile);
+        }
+      }
+    }
+
+    currentUserSession.nome = cleanName;
+    currentUserSession.department = cleanDept;
+    if (currentUserSession.profile) {
+      currentUserSession.profile.full_name = cleanName;
+      currentUserSession.profile.department = cleanDept;
+    }
+
+    try {
+      localStorage.setItem('olympos_session', JSON.stringify(currentUserSession));
+      sessionStorage.setItem('olympos_session_rbac', JSON.stringify(currentUserSession));
+      if (currentUserSession.profile) {
+        sessionStorage.setItem('olympos_rbac_profile_cache', JSON.stringify(currentUserSession.profile));
+      }
+    } catch (eStorage) {}
+
+    aplicarSessaoNaInterface(currentUserSession);
+
+    const cfgUserLabel = document.getElementById('configUserLabel');
+    if (cfgUserLabel) cfgUserLabel.textContent = cleanName;
+
+    return {
+      ok: true,
+      nome: cleanName,
+      department: cleanDept,
+      session: currentUserSession
+    };
+  }
+
+  function abrirModalPerfilUsuario() {
+    if (!currentUserSession || !currentUserSession.perfil) {
+      solicitarLogin();
+      return;
+    }
+
+    const modal = document.getElementById('userProfileModal');
+    if (!modal) return;
+
+    const roleId = obterRoleIdSessao(currentUserSession);
+    const roleLabel = obterLabelPerfilOrganico(roleId);
+    const nomeAtual = currentUserSession.nome || (currentUserSession.profile && currentUserSession.profile.full_name) || currentUserSession.usuario || 'Operador';
+    const emailAtual = currentUserSession.usuario || (currentUserSession.user && currentUserSession.user.email) || (currentUserSession.profile && currentUserSession.profile.email) || '--';
+    const deptAtual = currentUserSession.department || (currentUserSession.profile && currentUserSession.profile.department) || '';
+
+    const partes = nomeAtual.split(/\s+/).filter(Boolean);
+    const iniciais = partes.length >= 2
+      ? (partes[0][0] + partes[1][0]).toUpperCase()
+      : nomeAtual.substring(0, 2).toUpperCase();
+
+    const elAvatar = document.getElementById('profileModalAvatarInitials');
+    const elDisplay = document.getElementById('profileModalDisplayName');
+    const elEmail = document.getElementById('profileModalEmail');
+    const elBadge = document.getElementById('profileModalRoleBadge');
+    const inName = document.getElementById('profileInputFullName');
+    const inDept = document.getElementById('profileInputDepartment');
+    const feedback = document.getElementById('profileModalFeedback');
+
+    if (elAvatar) elAvatar.textContent = iniciais;
+    if (elDisplay) elDisplay.textContent = nomeAtual;
+    if (elEmail) elEmail.textContent = emailAtual;
+    if (elBadge) elBadge.textContent = roleLabel;
+    if (inName) inName.value = nomeAtual;
+    if (inDept) inDept.value = deptAtual;
+    if (feedback) {
+      feedback.classList.add('hidden');
+      feedback.textContent = '';
+    }
+
+    modal.classList.remove('hidden');
+    if (inName) inName.focus();
+  }
+
+  function fecharModalPerfilUsuario() {
+    const modal = document.getElementById('userProfileModal');
+    if (modal) modal.classList.add('hidden');
+  }
+
+  async function handleSalvarPerfilProprio(e) {
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
+
+    const inName = document.getElementById('profileInputFullName');
+    const inDept = document.getElementById('profileInputDepartment');
+    const btnSave = document.getElementById('btnSaveUserProfile');
+    const feedback = document.getElementById('profileModalFeedback');
+
+    const fullName = inName ? inName.value.trim() : '';
+    const department = inDept ? inDept.value.trim() : '';
+
+    if (!fullName) {
+      if (feedback) {
+        feedback.textContent = 'O nome completo é obrigatório.';
+        feedback.className = 'output-panel output-error';
+        feedback.classList.remove('hidden');
+      }
+      return;
+    }
+
+    if (btnSave) {
+      btnSave.disabled = true;
+      btnSave.textContent = 'Salvando...';
+    }
+
+    try {
+      await atualizarPerfilProprio({
+        full_name: fullName,
+        department: department
+      });
+
+      const elDisplay = document.getElementById('profileModalDisplayName');
+      const elAvatar = document.getElementById('profileModalAvatarInitials');
+      if (elDisplay) elDisplay.textContent = fullName;
+      if (elAvatar) {
+        const partes = fullName.split(/\s+/).filter(Boolean);
+        elAvatar.textContent = partes.length >= 2
+          ? (partes[0][0] + partes[1][0]).toUpperCase()
+          : fullName.substring(0, 2).toUpperCase();
+      }
+      if (feedback) {
+        feedback.textContent = 'Dados do perfil atualizados com sucesso!';
+        feedback.className = 'output-panel output-success';
+        feedback.classList.remove('hidden');
+      }
+      showToast('Perfil atualizado com sucesso!');
+    } catch (err) {
+      if (feedback) {
+        feedback.textContent = (err && err.message) || 'Não foi possível salvar as alterações.';
+        feedback.className = 'output-panel output-error';
+        feedback.classList.remove('hidden');
+      }
+      showToast((err && err.message) || 'Erro ao atualizar perfil.', true);
+    } finally {
+      if (btnSave) {
+        btnSave.disabled = false;
+        btnSave.textContent = 'Salvar Alterações';
+      }
+    }
+  }
+
+  // =========================================================================
+  // GESTÃO DE USUÁRIOS E MODAL NOVO USUÁRIO (EXCLUSIVO MODERADOR)
   // =========================================================================
   function abrirModalNovoUsuario() {
-    const sessao = currentUserSession;
-    const role = sessao && sessao.perfil && (sessao.perfil.id || sessao.perfil.nome);
-    if (role !== 'ADMIN_GABINETE') {
-      showToast('Acesso restrito ao Moderador do Gabinete (ADMIN_GABINETE).', true);
+    if (!isModerador(currentUserSession)) {
+      showToast('Acesso restrito ao perfil Moderador.', true);
       return;
     }
     const modal = document.getElementById('modalNovoUsuario');
@@ -1616,10 +2114,8 @@ window.OlymposApp = (function() {
 
   async function handleNovoUsuarioSubmit(e) {
     if (e && e.preventDefault) e.preventDefault();
-    const sessao = currentUserSession;
-    const role = sessao && sessao.perfil && (sessao.perfil.id || sessao.perfil.nome);
-    if (role !== 'ADMIN_GABINETE') {
-      showToast('Ação restrita ao Moderador do Gabinete.', true);
+    if (!isModerador(currentUserSession)) {
+      showToast('Ação restrita ao perfil Moderador.', true);
       return;
     }
 
@@ -1769,6 +2265,15 @@ window.OlymposApp = (function() {
     hydrateVectorIcons: hydrateVectorIcons,
     PUBLIC_PAGES: PUBLIC_PAGES,
     RBAC_TAB_PERMISSIONS: RBAC_TAB_PERMISSIONS,
+    ROLE_LABELS: ROLE_LABELS,
+    obterLabelPerfilOrganico: obterLabelPerfilOrganico,
+    obterRoleIdSessao: obterRoleIdSessao,
+    isModerador: isModerador,
+    podeEditarMapa: podeEditarMapa,
+    podeEditarMemorias: podeEditarMemorias,
+    atualizarPerfilProprio: atualizarPerfilProprio,
+    abrirModalPerfilUsuario: abrirModalPerfilUsuario,
+    fecharModalPerfilUsuario: fecharModalPerfilUsuario,
     aplicarModoVisitanteNaInterface: aplicarModoVisitanteNaInterface,
     aplicarSessaoNaInterface: aplicarSessaoNaInterface,
     aplicarControleAcessoModularEDrive: aplicarControleAcessoModularEDrive,

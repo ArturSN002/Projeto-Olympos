@@ -15,11 +15,51 @@ window.OlymposViews.papiroCadmo = (function() {
   let markersLayer = null;
   let routeLayer = null;
   let observerCadmo = null;
+  let hasInitializedMapaCollapse = false;
   let abaAtiva = 'vigentes'; // 'vigentes', 'permutas', 'vinculos' ou 'docentes'
   let termoBuscaServidor = '';
   let filtroEnteVigente = 'TODOS';
   let filtroFluxoVigente = 'TODOS';
   let filtroStatusVigente = 'TODOS';
+  let paginaVigentes = 1;
+  let paginaDocentes = 1;
+  let paginaMatches = 1;
+  let paginaVinculos = 1;
+  const ITENS_VIGENTES_POR_PAGINA = 20;
+  const ITENS_DOCENTES_POR_PAGINA = 20;
+  const ITENS_MATCHES_POR_PAGINA = 12;
+  const ITENS_VINCULOS_POR_PAGINA = 15;
+
+  function resetarPaginacaoCadmo(abaEspecifica) {
+    if (!abaEspecifica || abaEspecifica === 'vigentes') paginaVigentes = 1;
+    if (!abaEspecifica || abaEspecifica === 'docentes') paginaDocentes = 1;
+    if (!abaEspecifica || abaEspecifica === 'permutas') paginaMatches = 1;
+    if (!abaEspecifica || abaEspecifica === 'vinculos') paginaVinculos = 1;
+  }
+
+  function aplicarPaginacaoCadmo(pagAtual, totalItens, porPagina, rotulo, onPageChange) {
+    if (window.OlymposPagination && typeof window.OlymposPagination.renderizarControles === 'function') {
+      return window.OlymposPagination.renderizarControles({
+        barEl: 'cadmoPaginacaoBar',
+        containers: 'cadmoPaginacaoControles',
+        infoEl: 'cadmoPaginacaoInfo',
+        totalItens: totalItens,
+        paginaAtual: pagAtual,
+        itensPorPagina: porPagina,
+        rotuloItem: rotulo,
+        onPageChange: onPageChange
+      });
+    }
+    return { paginaAtual: pagAtual };
+  }
+
+  function podeEditar() {
+    return Boolean(
+      window.OlymposApp &&
+      typeof window.OlymposApp.podeEditarMapa === 'function' &&
+      window.OlymposApp.podeEditarMapa()
+    );
+  }
 
   const BANCO_STORAGE_KEY = 'olympos_permutas_banco';
 
@@ -123,12 +163,17 @@ window.OlymposViews.papiroCadmo = (function() {
         municipio: 'Ceará-Mirim',
         regiao: 'Ceará-Mirim • ' + (esc.zona || 'Urbana'),
         tipo: esc.categoria || 'Escola Municipal',
+        rede: esc.rede || 'Municipal',
+        categoria: esc.categoria || 'Escola',
+        zona: esc.zona || 'Urbana',
+        segmentos: Array.isArray(esc.segmentos) ? esc.segmentos : [],
         coords: [esc.lat, esc.lng],
         cor: esc.cor || corPadrao,
-        icone: (esc.icone === 'C' && !ehCei) ? (esc.zona === 'Rural' ? 'R' : 'U') : (esc.icone || (esc.zona === 'Rural' ? 'R' : (ehCei ? 'C' : 'U'))),
+        icone: ehCei ? 'schoolCei' : 'school',
         endereco: esc.endereco || '',
         inep: esc.inep || '',
-        isEscolaDinamica: true
+        isEscolaDinamica: true,
+        escolaOriginal: esc
       });
     });
 
@@ -833,7 +878,13 @@ window.OlymposViews.papiroCadmo = (function() {
     alternarAbaResultados('vigentes');
     observarVisibilidadePagina();
     alternarColapsoHera(true);
-    alternarColapsoMapa(true);
+    if (!hasInitializedMapaCollapse) {
+      hasInitializedMapaCollapse = true;
+      alternarColapsoMapa(true);
+    } else {
+      sincronizarEstadoBotaoMapa();
+    }
+    atualizarPermissoesMapa();
     sincronizarServidoresUnificados(false);
     const totalServidoresSincronizados = obterColecaoServidoresCadmo().length;
     console.log('[Olympos Permutas] Bases carregadas: ' + totalServidoresSincronizados + ' servidores sincronizados (5 Entes), ' + (VINCULOS_TRANSPARENCIA || []).length + ' cruzamentos de vínculos.');
@@ -979,6 +1030,7 @@ window.OlymposViews.papiroCadmo = (function() {
       inBuscaServidor._bound = true;
       inBuscaServidor.addEventListener('input', function(e) {
         termoBuscaServidor = (e.target.value || '').trim();
+        resetarPaginacaoCadmo();
         if (termoBuscaServidor) {
           console.log('[Olympos Permutas] Pesquisa de servidor disparada para: "' + termoBuscaServidor + '"');
         }
@@ -1062,7 +1114,8 @@ window.OlymposViews.papiroCadmo = (function() {
     const btnGerenciarSec = document.getElementById('btnGerenciarSecretarias');
     if (btnGerenciarSec && !btnGerenciarSec._bound) {
       btnGerenciarSec._bound = true;
-      btnGerenciarSec.addEventListener('click', function() {
+      btnGerenciarSec.addEventListener('click', function(e) {
+        if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
         abrirModalEdicaoSecretaria();
       });
     }
@@ -1142,6 +1195,7 @@ window.OlymposViews.papiroCadmo = (function() {
 
   function alternarAbaResultados(aba) {
     abaAtiva = aba;
+    resetarPaginacaoCadmo(aba);
     const tabP = document.getElementById('tabAbaPermutas');
     const tabV = document.getElementById('tabAbaVinculos');
     const tabD = document.getElementById('tabAbaDocentesGeral');
@@ -1336,21 +1390,35 @@ window.OlymposViews.papiroCadmo = (function() {
 
     const todosPontos = obterTodosPontosMapa();
 
+    const canEdit = podeEditar();
+    const escolasHelper = (window.OlymposViews && window.OlymposViews.escolas && typeof window.OlymposViews.escolas.obterIconeEscola === 'function')
+      ? window.OlymposViews.escolas
+      : null;
+
     todosPontos.forEach(function(ponto) {
       const isSede = ponto.tipo.includes('Sede');
+      const isSeec = ponto.id === 'seec_rn' || ponto.tipo.includes('SEEC');
       const isSecretaria = ponto.tipo.includes('Secretaria Municipal') || (ponto.id && ponto.id.startsWith('sme_'));
-      const iconeDisplay = (window.OlymposIcons ? window.OlymposIcons.fromEmojiOrKey(ponto.icone || (isSede ? 'star' : (isSecretaria ? 'olymposLogo' : 'school'))) : (isSede ? 'S' : 'E'));
 
-      const markerHtml =
-        '<div style="background:' + ponto.cor + '; width: 24px; height: 24px; border-radius: 50%; border: 2.5px solid #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; font-size: ' + (isSecretaria && !isSede ? '11px' : '10px') + '; color: #fff; font-weight: bold;">' +
-        iconeDisplay +
-        '</div>';
+      let markerHtml = '';
+      if (ponto.isEscolaDinamica && escolasHelper) {
+        markerHtml = escolasHelper.obterIconeEscola(ponto.escolaOriginal || ponto, 26);
+      } else {
+        const iconKey = isSede ? 'hestia' : (isSeec ? 'globe' : (isSecretaria ? 'olymposLogo' : (ponto.icone || 'school')));
+        const iconeDisplay = window.OlymposIcons
+          ? window.OlymposIcons.ui(iconKey, 14)
+          : (isSede ? 'S' : 'E');
+        markerHtml =
+          '<div class="cadmo-marker-badge" style="background:' + (ponto.cor || '#10B981') + '; width: 26px; height: 26px; border-radius: ' + (isSede ? '8px' : '50%') + '; border: 2px solid #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; color: #fff;">' +
+          iconeDisplay +
+          '</div>';
+      }
 
       const customIcon = window.L.divIcon({
         className: 'cadmo-leaflet-divicon',
         html: markerHtml,
-        iconSize: [24, 24],
-        iconAnchor: [12, 12],
+        iconSize: [26, 26],
+        iconAnchor: [13, 13],
         popupAnchor: [0, -14]
       });
 
@@ -1360,7 +1428,7 @@ window.OlymposViews.papiroCadmo = (function() {
           ? '<span class="pill-badge pill-green" style="font-size:10px;">' + (window.OlymposIcons ? window.OlymposIcons.ui('olymposLogo', 11) : '') + ' Secretaria Parceira</span>'
           : '<span class="pill-badge pill-blue" style="font-size:10px;">' + (window.OlymposIcons ? window.OlymposIcons.ui('school', 11) : '') + ' Rede Municipal</span>');
 
-      const btnEditarSec = (isSecretaria || isSede)
+      const btnEditarSec = (canEdit && (isSecretaria || isSede))
         ? '<button type="button" class="btn btn-secondary btn-sm" style="font-size:10.5px; padding:3px 8px; border-color: var(--brand-gold, #D4AF37); color: var(--brand-gold, #D4AF37);" onclick="window.OlymposViews.papiroCadmo.abrirModalEdicaoSecretaria(\'' + window.OlymposApp.escapeHtml(ponto.id) + '\')">' + (window.OlymposIcons ? window.OlymposIcons.ui('edit', 11) : '') + ' Editar Polo</button>'
         : '';
 
@@ -1464,11 +1532,23 @@ window.OlymposViews.papiroCadmo = (function() {
     if (label) label.textContent = newStateCollapsed ? 'Expandir' : 'Recolher';
   }
 
-  function alternarColapsoMapa(forcado) {
+  function sincronizarEstadoBotaoMapa() {
     const body = document.getElementById('cadmoMapCollapsibleBody');
     const header = document.getElementById('cadmoMapCollapsibleHeader');
     const btnToggle = document.getElementById('btnToggleMapaCadmo');
-    const label = document.getElementById('cadmoMapToggleLabel');
+    const label = document.getElementById('mapaCadmoToggleLabel');
+    const chevron = document.getElementById('mapaCadmoChevronIcon');
+    if (!body) return;
+
+    const isCollapsed = body.classList.contains('is-collapsed') || body.style.display === 'none';
+    if (header) header.setAttribute('aria-expanded', String(!isCollapsed));
+    if (btnToggle) btnToggle.classList.remove('hera-chevron-rotated');
+    if (chevron) chevron.classList.toggle('hera-chevron-rotated', !isCollapsed);
+    if (label) label.textContent = isCollapsed ? 'Expandir Mapa' : 'Recolher Mapa';
+  }
+
+  function alternarColapsoMapa(forcado) {
+    const body = document.getElementById('cadmoMapCollapsibleBody');
     if (!body) return;
 
     const isCurrentlyCollapsed = body.classList.contains('is-collapsed') || body.style.display === 'none';
@@ -1485,12 +1565,32 @@ window.OlymposViews.papiroCadmo = (function() {
         }
       }, 150);
     }
-    if (header) header.setAttribute('aria-expanded', String(!newStateCollapsed));
-    if (btnToggle) btnToggle.classList.toggle('hera-chevron-rotated', newStateCollapsed);
-    if (label) label.textContent = newStateCollapsed ? 'Expandir' : 'Recolher';
+    sincronizarEstadoBotaoMapa();
+  }
+
+  function atualizarPermissoesMapa() {
+    const canEdit = podeEditar();
+    const btnGerenciar = document.getElementById('btnGerenciarSecretarias');
+    if (btnGerenciar) {
+      btnGerenciar.classList.toggle('hidden', !canEdit);
+      btnGerenciar.style.display = canEdit ? '' : 'none';
+      btnGerenciar.setAttribute('aria-hidden', canEdit ? 'false' : 'true');
+    }
+    if (!canEdit) {
+      fecharModalEdicaoSecretaria();
+    }
+    if (leafletMap && markersLayer) {
+      plotarMarcadores();
+    }
   }
 
   function prepararNovaSecretaria() {
+    if (!podeEditar()) {
+      if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+        window.OlymposApp.showToast('Edição do mapa restrita ao Gabinete Executivo e Moderador.', true);
+      }
+      return;
+    }
     const inputId = document.getElementById('editSecId');
     const inputNome = document.getElementById('editSecNome');
     const inputMun = document.getElementById('editSecMunicipio');
@@ -1512,6 +1612,12 @@ window.OlymposViews.papiroCadmo = (function() {
   }
 
   function excluirSecretariaSelecionada() {
+    if (!podeEditar()) {
+      if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+        window.OlymposApp.showToast('Edição do mapa restrita ao Gabinete Executivo e Moderador.', true);
+      }
+      return;
+    }
     const inputId = document.getElementById('editSecId');
     if (!inputId || !inputId.value) return;
     const pontoId = inputId.value;
@@ -1550,6 +1656,12 @@ window.OlymposViews.papiroCadmo = (function() {
   }
 
   function abrirModalEdicaoSecretaria(pontoId) {
+    if (!podeEditar()) {
+      if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+        window.OlymposApp.showToast('Edição do mapa restrita ao Gabinete Executivo e Moderador.', true);
+      }
+      return;
+    }
     const modal = document.getElementById('modalEdicaoSecretaria');
     if (!modal) return;
 
@@ -1604,6 +1716,12 @@ window.OlymposViews.papiroCadmo = (function() {
 
   function salvarEdicaoSecretaria(e) {
     if (e && typeof e.preventDefault === 'function') e.preventDefault();
+    if (!podeEditar()) {
+      if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+        window.OlymposApp.showToast('Edição do mapa restrita ao Gabinete Executivo e Moderador.', true);
+      }
+      return;
+    }
 
     const inputId = document.getElementById('editSecId');
     const inputNome = document.getElementById('editSecNome');
@@ -1683,6 +1801,12 @@ window.OlymposViews.papiroCadmo = (function() {
   }
 
   function restaurarPadraoSecretarias() {
+    if (!podeEditar()) {
+      if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+        window.OlymposApp.showToast('Edição do mapa restrita ao Gabinete Executivo e Moderador.', true);
+      }
+      return;
+    }
     try {
       localStorage.removeItem(STORAGE_KEY_SECRETARIAS);
     } catch (err) {
@@ -1900,6 +2024,7 @@ window.OlymposViews.papiroCadmo = (function() {
 
   function limparBuscaServidor() {
     termoBuscaServidor = '';
+    resetarPaginacaoCadmo();
     const inBusca = document.getElementById('cadmoBuscaServidorInput');
     const btnLimpar = document.getElementById('btnLimparBuscaServidor');
     if (inBusca) inBusca.value = '';
@@ -1999,8 +2124,13 @@ window.OlymposViews.papiroCadmo = (function() {
       return;
     }
 
+    const pag = (window.OlymposPagination && typeof window.OlymposPagination.paginarLista === 'function')
+      ? window.OlymposPagination.paginarLista(matchesFiltrados, paginaMatches, ITENS_MATCHES_POR_PAGINA)
+      : { items: matchesFiltrados, paginaAtual: 1, totalPaginas: 1, totalItens: matchesFiltrados.length, inicio: 1, fim: matchesFiltrados.length };
+    paginaMatches = pag.paginaAtual;
+
     let html = '<div class="hera-matches-grid">';
-    matchesFiltrados.forEach(function(m, idx) {
+    pag.items.forEach(function(m, idx) {
       const res = m.resultado;
       const cA = m.candidatoA;
       const cB = m.candidatoB;
@@ -2070,8 +2200,15 @@ window.OlymposViews.papiroCadmo = (function() {
         '</div>';
     });
     html += '</div>';
+    html += '<div id="cadmoPaginacaoBar" class="olympos-pagination-bar"><span id="cadmoPaginacaoInfo" class="olympos-pagination-info"></span><div id="cadmoPaginacaoControles" class="olympos-pagination-controls"></div></div>';
 
     container.innerHTML = html;
+
+    const pagRes = aplicarPaginacaoCadmo(paginaMatches, pag.totalItens, ITENS_MATCHES_POR_PAGINA, 'oportunidades de permuta', function(novaPagina) {
+      paginaMatches = novaPagina;
+      executarMatchingHera();
+    });
+    paginaMatches = pagRes.paginaAtual;
   }
 
   function executarCruzamentoVinculosHera() {
@@ -2118,8 +2255,13 @@ window.OlymposViews.papiroCadmo = (function() {
       return;
     }
 
+    const pag = (window.OlymposPagination && typeof window.OlymposPagination.paginarLista === 'function')
+      ? window.OlymposPagination.paginarLista(vinculosFiltrados, paginaVinculos, ITENS_VINCULOS_POR_PAGINA)
+      : { items: vinculosFiltrados, paginaAtual: 1, totalPaginas: 1, totalItens: vinculosFiltrados.length, inicio: 1, fim: vinculosFiltrados.length };
+    paginaVinculos = pag.paginaAtual;
+
     let html = '<div class="hera-matches-grid">';
-    vinculosFiltrados.forEach(function(v, idx) {
+    pag.items.forEach(function(v, idx) {
       const sr = v.servidor_referencia;
       const ve = v.vinculo_externo_detectado;
       const ac = v.auditoria_constitucional;
@@ -2179,8 +2321,15 @@ window.OlymposViews.papiroCadmo = (function() {
         '</div>';
     });
     html += '</div>';
+    html += '<div id="cadmoPaginacaoBar" class="olympos-pagination-bar"><span id="cadmoPaginacaoInfo" class="olympos-pagination-info"></span><div id="cadmoPaginacaoControles" class="olympos-pagination-controls"></div></div>';
 
     container.innerHTML = html;
+
+    const pagRes = aplicarPaginacaoCadmo(paginaVinculos, pag.totalItens, ITENS_VINCULOS_POR_PAGINA, 'vínculos externos', function(novaPagina) {
+      paginaVinculos = novaPagina;
+      executarCruzamentoVinculosHera();
+    });
+    paginaVinculos = pagRes.paginaAtual;
   }
 
   function preencherFormComVinculo(nome, matricula, cargo, ch, destino) {
@@ -2791,12 +2940,14 @@ window.OlymposViews.papiroCadmo = (function() {
       return;
     }
 
-    const limiteExibicao = 80;
-    const exibidos = docentesFiltrados.slice(0, limiteExibicao);
+    const pag = (window.OlymposPagination && typeof window.OlymposPagination.paginarLista === 'function')
+      ? window.OlymposPagination.paginarLista(docentesFiltrados, paginaDocentes, ITENS_DOCENTES_POR_PAGINA)
+      : { items: docentesFiltrados, paginaAtual: 1, totalPaginas: 1, totalItens: docentesFiltrados.length, inicio: 1, fim: docentesFiltrados.length };
+    paginaDocentes = pag.paginaAtual;
 
     let html = '<div style="margin-bottom: 8px; font-size: 12px; color: var(--text-muted); display:flex; justify-content:space-between; align-items:center;">' +
-      '<span>Exibindo <strong>' + exibidos.length + '</strong> de <strong>' + docentesFiltrados.length + '</strong> servidores ativos (5 Entes Monitorados)</span>' +
-      (docentesFiltrados.length > limiteExibicao ? '<span class="pill-badge pill-gold" style="font-size:11px;">Refine a busca para ver resultados específicos</span>' : '') +
+      '<span>Exibindo <strong>' + pag.inicio + '–' + pag.fim + '</strong> de <strong>' + docentesFiltrados.length + '</strong> servidores ativos (5 Entes Monitorados)</span>' +
+      '<span class="pill-badge pill-gold" style="font-size:11px;">Navegação Paginada • ' + ITENS_DOCENTES_POR_PAGINA + ' por página</span>' +
       '</div>';
 
     html += '<div class="table-responsive" style="max-height: 480px; overflow-y: auto;">' +
@@ -2814,7 +2965,7 @@ window.OlymposViews.papiroCadmo = (function() {
         '</thead>' +
         '<tbody>';
 
-    exibidos.forEach(function(d) {
+    pag.items.forEach(function(d) {
       const nomeSrv = d.n || d.nome;
       const matSrv = d.m || d.matricula;
       const cargoSrv = d.g || d.cargo;
@@ -2854,21 +3005,31 @@ window.OlymposViews.papiroCadmo = (function() {
     });
 
     html += '</tbody></table></div>';
+    html += '<div id="cadmoPaginacaoBar" class="olympos-pagination-bar"><span id="cadmoPaginacaoInfo" class="olympos-pagination-info"></span><div id="cadmoPaginacaoControles" class="olympos-pagination-controls"></div></div>';
     container.innerHTML = html;
+
+    const pagRes = aplicarPaginacaoCadmo(paginaDocentes, pag.totalItens, ITENS_DOCENTES_POR_PAGINA, 'docentes da base ativa', function(novaPagina) {
+      paginaDocentes = novaPagina;
+      executarListagemDocentesGeral();
+    });
+    paginaDocentes = pagRes.paginaAtual;
   }
 
   function definirFiltroEnteVigente(val) {
     filtroEnteVigente = val;
+    paginaVigentes = 1;
     executarServidoresEmPermuta();
   }
 
   function definirFiltroFluxoVigente(val) {
     filtroFluxoVigente = val;
+    paginaVigentes = 1;
     executarServidoresEmPermuta();
   }
 
   function definirFiltroStatusVigente(val) {
     filtroStatusVigente = val;
+    paginaVigentes = 1;
     executarServidoresEmPermuta();
   }
 
@@ -2877,6 +3038,7 @@ window.OlymposViews.papiroCadmo = (function() {
     filtroFluxoVigente = 'TODOS';
     filtroStatusVigente = 'TODOS';
     termoBuscaServidor = '';
+    paginaVigentes = 1;
     const inBusca = document.getElementById('cadmoBuscaServidorInput');
     const btnLimpar = document.getElementById('btnLimparBuscaServidor');
     if (inBusca) inBusca.value = '';
@@ -3214,8 +3376,13 @@ window.OlymposViews.papiroCadmo = (function() {
       return;
     }
 
+    const pag = (window.OlymposPagination && typeof window.OlymposPagination.paginarLista === 'function')
+      ? window.OlymposPagination.paginarLista(filtrados, paginaVigentes, ITENS_VIGENTES_POR_PAGINA)
+      : { items: filtrados, paginaAtual: 1, totalPaginas: 1, totalItens: filtrados.length, inicio: 1, fim: filtrados.length };
+    paginaVigentes = pag.paginaAtual;
+
     html += '<div style="margin-bottom: 8px; font-size: 12px; color: var(--text-muted); display:flex; justify-content:space-between; align-items:center;">' +
-      '<span>Exibindo <strong>' + filtrados.length + '</strong> de <strong>' + todos.length + '</strong> servidores em permuta ativa</span>' +
+      '<span>Exibindo <strong>' + pag.inicio + '–' + pag.fim + '</strong> de <strong>' + filtrados.length + '</strong> servidores em permuta ativa (Acervo total: ' + todos.length + ')</span>' +
       '<span class="pill-badge pill-gold" style="font-size:11px;">Termos de Cooperação Intermunicipais</span>' +
       '</div>';
 
@@ -3236,7 +3403,7 @@ window.OlymposViews.papiroCadmo = (function() {
         '</thead>' +
         '<tbody>';
 
-    filtrados.forEach(function(s) {
+    pag.items.forEach(function(s) {
       const isCedido = s.fluxo === 'CEDIDO_POR_CM';
       const fluxoPill = isCedido
         ? '<span class="pill-badge pill-purple" style="font-size:10.5px; white-space:nowrap;">' + (window.OlymposIcons ? window.OlymposIcons.ui('external', 10) : '') + ' Cedido p/ CM</span>'
@@ -3287,7 +3454,14 @@ window.OlymposViews.papiroCadmo = (function() {
     });
 
     html += '</tbody></table></div>';
+    html += '<div id="cadmoPaginacaoBar" class="olympos-pagination-bar"><span id="cadmoPaginacaoInfo" class="olympos-pagination-info"></span><div id="cadmoPaginacaoControles" class="olympos-pagination-controls"></div></div>';
     container.innerHTML = html;
+
+    const pagRes = aplicarPaginacaoCadmo(paginaVigentes, pag.totalItens, ITENS_VIGENTES_POR_PAGINA, 'servidores em permuta ativa', function(novaPagina) {
+      paginaVigentes = novaPagina;
+      executarServidoresEmPermuta();
+    });
+    paginaVigentes = pagRes.paginaAtual;
   }
 
   function tracarRotaPermuta(origemA, origemB, score) {
@@ -3516,6 +3690,7 @@ window.OlymposViews.papiroCadmo = (function() {
     processarArquivoCsv: processarArquivoCsv,
     alternarColapsoHera: alternarColapsoHera,
     alternarColapsoMapa: alternarColapsoMapa,
+    atualizarPermissoesMapa: atualizarPermissoesMapa,
     prepararNovaSecretaria: prepararNovaSecretaria,
     excluirSecretariaSelecionada: excluirSecretariaSelecionada,
     obterEscolasDinamicasCadmo: obterEscolasDinamicasCadmo,

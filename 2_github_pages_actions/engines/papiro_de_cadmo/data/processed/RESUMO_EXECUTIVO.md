@@ -4,7 +4,7 @@
 
 | 📅 Data/Hora (UTC) | 🏛️ Entes Monitorados | 👥 Servidores Consolidados | 🔄 Cruzamentos Detectados | 🗄️ Supabase (`folha_intermunicipal`) | 📁 Google Drive (`1dcc...`) |
 |:---:|:---:|:---:|:---:|:---:|:---:|
-| **18/11/2026 19:35:08 UTC** | **16** | **47,270** | **551** | 🟢 Sincronizado | 🟡 Aguardando SA Key |
+| **20/11/2026 04:12:09 UTC** | **16** | **47,270** | **551** | 🟢 Sincronizado | 🟡 Aguardando SA Key |
 
 ---
 

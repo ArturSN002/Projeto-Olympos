@@ -8,6 +8,59 @@ window.OlymposViews.portarias = (function() {
   let pollTimer = null;
   let isCatalogLoaded = false;
   let lastGeneratedFiles = [];
+  let dryRunPreviewState = null;
+  const ITENS_DRYRUN_POR_PAGINA = 15;
+
+  function renderizarDryRunComPaginacao(out) {
+    if (!out || !dryRunPreviewState) return;
+    const linhas = dryRunPreviewState.linhas || [];
+    const pag = (window.OlymposPagination && typeof window.OlymposPagination.paginarLista === 'function')
+      ? window.OlymposPagination.paginarLista(linhas, dryRunPreviewState.paginaAtual, ITENS_DRYRUN_POR_PAGINA)
+      : { items: linhas, paginaAtual: 1, totalPaginas: 1, totalItens: linhas.length, inicio: 1, fim: linhas.length };
+    dryRunPreviewState.paginaAtual = pag.paginaAtual;
+
+    let html = dryRunPreviewState.headerHtml || '';
+    if (linhas.length > 0) {
+      html += '<div style="margin-top:14px; font-weight:700; font-size:13px; color:var(--text-main); margin-bottom:6px;">Registros Identificados na Planilha (' + linhas.length + ' linhas)</div>';
+      html += '<div class="table-wrapper" style="max-height:320px; overflow-y:auto;">';
+      html += '<table class="clean-table table-responsive-cards" style="font-size:12px;">';
+      html += '<thead><tr><th>Linha</th><th>Servidor(a)</th><th>Matrícula</th><th>Cargo / Função</th><th>Portaria</th><th>Status</th></tr></thead>';
+      html += '<tbody>';
+      pag.items.forEach(function(item) {
+        const badgeClass = item.status === 'DOCUMENTO GERADO' ? 'pill-green' : (item.valida ? 'pill-gold' : 'pill-red');
+        html += '<tr>' +
+          '<td data-label="Linha"><strong>' + item.linha + '</strong></td>' +
+          '<td data-label="Servidor(a)">' + window.OlymposApp.escapeHtml(item.servidor) + '</td>' +
+          '<td data-label="Matrícula">' + window.OlymposApp.escapeHtml(item.matricula || '—') + '</td>' +
+          '<td data-label="Cargo / Função">' + window.OlymposApp.escapeHtml(item.cargo || '—') + '</td>' +
+          '<td data-label="Portaria">' + window.OlymposApp.escapeHtml(item.portaria || 'Automática') + '</td>' +
+          '<td data-label="Status"><span class="pill-badge ' + badgeClass + '" style="font-size:11px; padding:2px 8px;">' + window.OlymposApp.escapeHtml(item.status) + '</span></td>' +
+        '</tr>';
+      });
+      html += '</tbody></table></div>';
+      html += '<div id="portariasDryRunPaginacaoBar" class="olympos-pagination-bar' + (linhas.length <= ITENS_DRYRUN_POR_PAGINA ? ' hidden' : '') + '"><span id="portariasDryRunPaginacaoInfo" class="olympos-pagination-info"></span><div id="portariasDryRunPaginacaoControles" class="olympos-pagination-controls"></div></div>';
+    }
+
+    out.innerHTML = html;
+
+    if (linhas.length > ITENS_DRYRUN_POR_PAGINA && window.OlymposPagination && typeof window.OlymposPagination.renderizarControles === 'function') {
+      const pagRes = window.OlymposPagination.renderizarControles({
+        barEl: 'portariasDryRunPaginacaoBar',
+        containers: 'portariasDryRunPaginacaoControles',
+        infoEl: 'portariasDryRunPaginacaoInfo',
+        totalItens: pag.totalItens,
+        paginaAtual: dryRunPreviewState.paginaAtual,
+        itensPorPagina: ITENS_DRYRUN_POR_PAGINA,
+        rotuloItem: 'registros na prévia',
+        ocultarSePaginaUnica: true,
+        onPageChange: function(novaPagina) {
+          dryRunPreviewState.paginaAtual = novaPagina;
+          renderizarDryRunComPaginacao(out);
+        }
+      });
+      dryRunPreviewState.paginaAtual = pagRes.paginaAtual;
+    }
+  }
 
   function init() {
     bindEvents();
@@ -241,28 +294,12 @@ window.OlymposViews.portarias = (function() {
         html += '<div style="font-size:13px; color:var(--success); font-weight:600; margin-bottom:12px;">Nenhum erro de preenchimento encontrado! Clique em "Gerar Portarias Pendentes" para emitir os documentos.</div>';
       }
 
-      // Tabela de Valores Reais lidos da Planilha Oficial
-      if (res.amostraLinhas && res.amostraLinhas.length > 0) {
-        html += '<div style="margin-top:14px; font-weight:700; font-size:13px; color:var(--text-main); margin-bottom:6px;">Registros Identificados na Planilha (' + res.amostraLinhas.length + ' linhas)</div>';
-        html += '<div class="table-wrapper" style="max-height:260px; overflow-y:auto;">';
-        html += '<table class="clean-table table-responsive-cards" style="font-size:12px;">';
-        html += '<thead><tr><th>Linha</th><th>Servidor(a)</th><th>Matrícula</th><th>Cargo / Função</th><th>Portaria</th><th>Status</th></tr></thead>';
-        html += '<tbody>';
-        res.amostraLinhas.forEach(function(item) {
-          const badgeClass = item.status === 'DOCUMENTO GERADO' ? 'pill-green' : (item.valida ? 'pill-gold' : 'pill-red');
-          html += '<tr>' +
-            '<td data-label="Linha"><strong>' + item.linha + '</strong></td>' +
-            '<td data-label="Servidor(a)">' + window.OlymposApp.escapeHtml(item.servidor) + '</td>' +
-            '<td data-label="Matrícula">' + window.OlymposApp.escapeHtml(item.matricula || '—') + '</td>' +
-            '<td data-label="Cargo / Função">' + window.OlymposApp.escapeHtml(item.cargo || '—') + '</td>' +
-            '<td data-label="Portaria">' + window.OlymposApp.escapeHtml(item.portaria || 'Automática') + '</td>' +
-            '<td data-label="Status"><span class="pill-badge ' + badgeClass + '" style="font-size:11px; padding:2px 8px;">' + window.OlymposApp.escapeHtml(item.status) + '</span></td>' +
-          '</tr>';
-        });
-        html += '</tbody></table></div>';
-      }
-
-      out.innerHTML = html;
+      dryRunPreviewState = {
+        headerHtml: html,
+        linhas: Array.isArray(res.amostraLinhas) ? res.amostraLinhas : [],
+        paginaAtual: 1
+      };
+      renderizarDryRunComPaginacao(out);
     }, function(err) {
       out.innerHTML = '<span class="text-danger">Erro no diagnóstico: ' + window.OlymposApp.escapeHtml(err.message) + '</span>';
     });

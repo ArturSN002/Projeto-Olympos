@@ -20,6 +20,8 @@ window.OlymposViews.certificados = (function() {
   let isCatalogLoaded = false;
   let currentParticipants = [];
   let currentMetadata = {};
+  let paginaParticipantes = 1;
+  const ITENS_PARTICIPANTES_POR_PAGINA = 20;
 
   function init() {
     bindEvents();
@@ -290,25 +292,35 @@ window.OlymposViews.certificados = (function() {
     });
   }
 
-  function renderizarTabelaParticipantes(participantes) {
+  function renderizarPaginaParticipantes() {
     const tbody = document.getElementById('liraTabelaParticipantesBody');
     const contagem = document.getElementById('liraParticipantesContagem');
+    const pagBar = document.getElementById('certificadosPaginacaoBar');
     if (!tbody) return;
 
-    const lista = participantes || [];
-    if (contagem) {
-      contagem.textContent = lista.length + ' participante(s) cadastrado(s)' + (currentMetadata.eventName ? ' • Evento: ' + currentMetadata.eventName : '');
-    }
-
+    const lista = currentParticipants || [];
     if (lista.length === 0) {
+      if (contagem) {
+        contagem.textContent = '0 participante(s) cadastrado(s)' + (currentMetadata.eventName ? ' • Evento: ' + currentMetadata.eventName : '');
+      }
+      if (pagBar) pagBar.classList.add('hidden');
       tbody.innerHTML = '<tr><td colspan="7" class="text-muted text-center" style="padding: 24px;">Nenhum participante cadastrado nesta aba. Use o formulário acima ou "Colar em Lote".</td></tr>';
       return;
+    }
+
+    const pag = (window.OlymposPagination && typeof window.OlymposPagination.paginarLista === 'function')
+      ? window.OlymposPagination.paginarLista(lista, paginaParticipantes, ITENS_PARTICIPANTES_POR_PAGINA)
+      : { items: lista, paginaAtual: 1, totalPaginas: 1, totalItens: lista.length, inicio: 1, fim: lista.length };
+    paginaParticipantes = pag.paginaAtual;
+
+    if (contagem) {
+      contagem.textContent = 'Exibindo ' + pag.inicio + '–' + pag.fim + ' de ' + lista.length + ' participante(s)' + (currentMetadata.eventName ? ' • Evento: ' + currentMetadata.eventName : '');
     }
 
     const escape = window.OlymposApp && window.OlymposApp.escapeHtml ? window.OlymposApp.escapeHtml : function(s) { return s || ''; };
 
     let html = '';
-    lista.forEach(function(p) {
+    pag.items.forEach(function(p) {
       let pdfCell = '<span class="text-muted">Pendente</span>';
       if (p.pdfUrl) {
         pdfCell = '<a href="' + escape(p.pdfUrl) + '" target="_blank" rel="noopener" class="folder-chip" style="font-size:11px; padding:3px 8px;">PDF Oficial ↗</a>';
@@ -335,6 +347,29 @@ window.OlymposViews.certificados = (function() {
     });
 
     tbody.innerHTML = html;
+
+    if (window.OlymposPagination && typeof window.OlymposPagination.renderizarControles === 'function') {
+      const pagRes = window.OlymposPagination.renderizarControles({
+        barEl: 'certificadosPaginacaoBar',
+        containers: 'certificadosPaginacaoControles',
+        infoEl: 'certificadosPaginacaoInfo',
+        totalItens: pag.totalItens,
+        paginaAtual: paginaParticipantes,
+        itensPorPagina: ITENS_PARTICIPANTES_POR_PAGINA,
+        rotuloItem: 'participantes',
+        onPageChange: function(novaPagina) {
+          paginaParticipantes = novaPagina;
+          renderizarPaginaParticipantes();
+        }
+      });
+      paginaParticipantes = pagRes.paginaAtual;
+    }
+  }
+
+  function renderizarTabelaParticipantes(participantes) {
+    currentParticipants = Array.isArray(participantes) ? participantes : [];
+    paginaParticipantes = 1;
+    renderizarPaginaParticipantes();
   }
 
   function adicionarParticipanteRapido(e) {

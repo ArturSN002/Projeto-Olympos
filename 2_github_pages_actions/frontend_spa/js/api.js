@@ -322,19 +322,86 @@ window.OlymposApi = (function() {
       });
   }
 
+  function buildMemoriaTargetPayload(identificador) {
+    if (identificador && typeof identificador === 'object') {
+      const p = {};
+      if (identificador.id) p.id = identificador.id;
+      if (identificador.arquivo) p.arquivo = identificador.arquivo;
+      if (identificador.slug) p.slug = identificador.slug;
+      if (identificador.persona || identificador.deus) {
+        p.persona = identificador.persona || identificador.deus;
+      }
+      return p;
+    }
+    const raw = String(identificador || '').trim();
+    if (!raw) return {};
+    if (/^_memoria_|\.md$/i.test(raw)) return { arquivo: raw };
+    if (/^[a-zA-Z0-9_-]{20,}$/.test(raw)) return { id: raw };
+    return { slug: raw, persona: raw, arquivo: raw };
+  }
+
   /**
-   * Atualiza o conteúdo Markdown de uma memória existente no Google Drive via Gateway GAS.
-   * Modifica in-place sem gerar duplicatas no Drive.
-   * @param {string} arquivo Nome do arquivo canônico (ex: _memoria_hera.md).
-   * @param {string} conteudo Texto consolidado em Markdown.
+   * Lista todas as 22 memórias canônicas (Google Docs) e personas anfitriãs via Gateway GAS.
    * @param {Function} [onSuccess] Callback de sucesso.
    * @param {Function} [onError] Callback de erro.
    */
-  function salvarMemoria(arquivo, conteudo, onSuccess, onError) {
-    return chamar('memorias_salvar', {
+  function listarMemorias(onSuccess, onError) {
+    return chamar('memorias_listar', {}, onSuccess, onError);
+  }
+
+  /**
+   * Lê o conteúdo consolidado de uma memória específica (Google Docs) via Gateway GAS.
+   * @param {string|Object} identificador ID do Doc, nome canônico (_memoria_*.md), nome da persona ou objeto alvo.
+   * @param {Function} [onSuccess] Callback de sucesso.
+   * @param {Function} [onError] Callback de erro.
+   */
+  function lerMemoria(identificador, onSuccess, onError) {
+    return chamar('memorias_ler', buildMemoriaTargetPayload(identificador), onSuccess, onError);
+  }
+
+  /**
+   * Atualiza o conteúdo consolidado de uma memória existente (Google Docs) via Gateway GAS.
+   * Modifica in-place mantendo o ID canônico do documento.
+   * @param {string} arquivo Nome do arquivo canônico (ex: _memoria_hera.md).
+   * @param {string} conteudo Texto consolidado.
+   * @param {Function} [onSuccess] Callback de sucesso.
+   * @param {Function} [onError] Callback de erro.
+   * @param {string} [docId] ID canônico opcional do Google Docs.
+   */
+  function salvarMemoria(arquivo, conteudo, onSuccess, onError, docId) {
+    const payload = {
       arquivo: arquivo,
       conteudo: conteudo
-    }, onSuccess, onError);
+    };
+    if (docId) payload.id = docId;
+    return chamar('memorias_salvar', payload, onSuccess, onError);
+  }
+
+  /**
+   * Arquiva/limpa pendências concluídas da memória Google Docs de uma persona via Gateway GAS.
+   * @param {string|Object} identificador ID do Doc, nome canônico (_memoria_*.md), nome da persona ou objeto alvo.
+   * @param {Function} [onSuccess] Callback de sucesso.
+   * @param {Function} [onError] Callback de erro.
+   */
+  function limparMemoria(identificador, onSuccess, onError) {
+    return chamar('memorias_limpar', buildMemoriaTargetPayload(identificador), onSuccess, onError);
+  }
+
+  /**
+   * Registra um recado operacional / pendência na memória Google Docs de uma persona.
+   * @param {string|Object} identificador Nome canônico (_memoria_*.md) ou ID do Doc.
+   * @param {string} linha Texto do recado / pendência.
+   * @param {Function} [onSuccess] Callback de sucesso.
+   * @param {Function} [onError] Callback de erro.
+   * @param {string} [autor] Identificação opcional do remetente.
+   */
+  function registrarRecadoMemoria(identificador, linha, onSuccess, onError, autor) {
+    const payload = buildMemoriaTargetPayload(identificador);
+    if (payload.arquivo && !payload.arquivo_md) payload.arquivo_md = payload.arquivo;
+    if (!payload.arquivo_md && typeof identificador === 'string') payload.arquivo_md = identificador;
+    payload.linha = linha;
+    if (autor) payload.autor = autor;
+    return chamar('registrar_recado_md', payload, onSuccess, onError);
   }
 
   /**
@@ -365,7 +432,11 @@ window.OlymposApi = (function() {
     getJwtToken: getJwtToken,
     chamar: chamar,
     criarUsuario: criarUsuario,
+    listarMemorias: listarMemorias,
+    lerMemoria: lerMemoria,
     salvarMemoria: salvarMemoria,
+    limparMemoria: limparMemoria,
+    registrarRecadoMemoria: registrarRecadoMemoria,
     testarConexao: testarConexao
   };
 })();

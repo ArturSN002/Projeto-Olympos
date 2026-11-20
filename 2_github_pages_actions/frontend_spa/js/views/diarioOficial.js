@@ -6,6 +6,8 @@ window.OlymposViews = window.OlymposViews || {};
 window.OlymposViews.diarioOficial = (function() {
   let publicacoesUnificadas = [];
   let isLoaded = false;
+  let paginaAtual = 1;
+  const ITENS_POR_PAGINA = 20;
 
   function init() {
     bindEvents();
@@ -23,13 +25,18 @@ window.OlymposViews.diarioOficial = (function() {
       }
     };
 
+    const filtrarERenderizar = function() {
+      paginaAtual = 1;
+      renderizarTabela();
+    };
+
     bind('prometheusSyncBtn', 'click', sincronizarMemoriaManual);
     bind('prometheusChatSummaryBtn', 'click', dispararResumoChat);
     bind('prometheusTriggerActionBtn', 'click', dispararColetaGitHubActions);
-    bind('prometheusPeriodFilter', 'change', renderizarTabela);
-    bind('prometheusSectorFilter', 'change', renderizarTabela);
-    bind('prometheusSortFilter', 'change', renderizarTabela);
-    bind('prometheusSearchInput', 'input', renderizarTabela);
+    bind('prometheusPeriodFilter', 'change', filtrarERenderizar);
+    bind('prometheusSectorFilter', 'change', filtrarERenderizar);
+    bind('prometheusSortFilter', 'change', filtrarERenderizar);
+    bind('prometheusSearchInput', 'input', filtrarERenderizar);
 
     // Ordenação por clique nos cabeçalhos da tabela
     const thData = document.getElementById('thDiarioData');
@@ -39,6 +46,7 @@ window.OlymposViews.diarioOficial = (function() {
         const sortSelect = document.getElementById('prometheusSortFilter');
         if (!sortSelect) return;
         sortSelect.value = (sortSelect.value === 'DATA_DESC') ? 'DATA_ASC' : 'DATA_DESC';
+        paginaAtual = 1;
         renderizarTabela();
       });
     }
@@ -50,6 +58,7 @@ window.OlymposViews.diarioOficial = (function() {
         const sortSelect = document.getElementById('prometheusSortFilter');
         if (!sortSelect) return;
         sortSelect.value = (sortSelect.value === 'NOME_AZ') ? 'NOME_ZA' : 'NOME_AZ';
+        paginaAtual = 1;
         renderizarTabela();
       });
     }
@@ -344,16 +353,19 @@ window.OlymposViews.diarioOficial = (function() {
 
     const activeBadge = document.getElementById('prometheusActivePeriodBadge');
     const countSummary = document.getElementById('prometheusCountSummary');
+    const pagBar = document.getElementById('diarioPaginacaoBar');
     if (activeBadge && periodSelect) {
       const opt = periodSelect.options[periodSelect.selectedIndex];
       activeBadge.textContent = opt ? opt.text.replace(/^[^\wÀ-ÿ]+/g, '').trim() : 'Esta Semana';
     }
-    if (countSummary) {
-      countSummary.textContent = 'Exibindo ' + filtered.length + ' ato(s) • Total no acervo: ' + publicacoesUnificadas.length + ' ato(s)';
-    }
 
     tbody.innerHTML = '';
     if (filtered.length === 0) {
+      if (countSummary) {
+        countSummary.textContent = 'Exibindo 0 ato(s) • Total no acervo: ' + publicacoesUnificadas.length + ' ato(s)';
+      }
+      if (pagBar) pagBar.classList.add('hidden');
+
       const isPeriodoRestrito = (periodFilter === 'SEMANA' || periodFilter === '15DIAS' || periodFilter === 'MES');
       const mensagemVazia = isPeriodoRestrito && !termFilter && sectorFilter === 'TODOS'
         ? 'Nenhuma publicação localizada no período selecionado (' + (activeBadge ? activeBadge.textContent : 'Esta Semana') + '). O acervo monitorado conta com ' + publicacoesUnificadas.length + ' ato(s) de edições anteriores.'
@@ -379,6 +391,7 @@ window.OlymposViews.diarioOficial = (function() {
       if (btnVerTudo) {
         btnVerTudo.addEventListener('click', function() {
           if (periodSelect) periodSelect.value = 'TODOS';
+          paginaAtual = 1;
           renderizarTabela();
         });
       }
@@ -391,6 +404,7 @@ window.OlymposViews.diarioOficial = (function() {
           const srch = document.getElementById('prometheusSearchInput');
           if (sec) sec.value = 'TODOS';
           if (srch) srch.value = '';
+          paginaAtual = 1;
           renderizarTabela();
         });
       }
@@ -404,7 +418,16 @@ window.OlymposViews.diarioOficial = (function() {
       return;
     }
 
-    filtered.forEach(function(item) {
+    const pag = (window.OlymposPagination && typeof window.OlymposPagination.paginarLista === 'function')
+      ? window.OlymposPagination.paginarLista(filtered, paginaAtual, ITENS_POR_PAGINA)
+      : { items: filtered, paginaAtual: 1, totalPaginas: 1, totalItens: filtered.length, inicio: 1, fim: filtered.length, inicioIndice: 0 };
+    paginaAtual = pag.paginaAtual;
+
+    if (countSummary) {
+      countSummary.textContent = 'Exibindo ' + pag.inicio + '–' + pag.fim + ' de ' + filtered.length + ' ato(s) • Total no acervo: ' + publicacoesUnificadas.length + ' ato(s)';
+    }
+
+    pag.items.forEach(function(item) {
       const tr = document.createElement('tr');
       const nerBadges = [];
       if (item.codigo) nerBadges.push('Cód. ' + window.OlymposApp.escapeHtml(item.codigo));
@@ -434,6 +457,23 @@ window.OlymposViews.diarioOficial = (function() {
 
       tbody.appendChild(tr);
     });
+
+    if (window.OlymposPagination && typeof window.OlymposPagination.renderizarControles === 'function') {
+      const pagRes = window.OlymposPagination.renderizarControles({
+        barEl: 'diarioPaginacaoBar',
+        containers: 'diarioPaginacaoControles',
+        infoEl: 'diarioPaginacaoInfo',
+        totalItens: pag.totalItens,
+        paginaAtual: paginaAtual,
+        itensPorPagina: ITENS_POR_PAGINA,
+        rotuloItem: 'atos oficiais',
+        onPageChange: function(novaPagina) {
+          paginaAtual = novaPagina;
+          renderizarTabela();
+        }
+      });
+      paginaAtual = pagRes.paginaAtual;
+    }
   }
 
   function sincronizarMemoriaManual() {

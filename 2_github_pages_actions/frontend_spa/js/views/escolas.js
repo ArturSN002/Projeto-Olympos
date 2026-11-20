@@ -26,12 +26,43 @@ window.OlymposViews.escolas = (function() {
   var activeRedeFilter = 'todas';
   var activeSegmentFilter = 'todos';
   var currentSearchTerm = '';
+  var paginaTabelaAtual = 1;
+  var ITENS_TABELA_POR_PAGINA = 15;
 
   var CATEGORIAS_INSTITUCIONAIS = [
     'Escola',
     'Centro de Educação Infantil',
     'Instituição'
   ];
+
+  function podeEditar() {
+    return Boolean(
+      window.OlymposApp &&
+      typeof window.OlymposApp.podeEditarMapa === 'function' &&
+      window.OlymposApp.podeEditarMapa()
+    );
+  }
+
+  function atualizarPermissoesMapa() {
+    var canEdit = podeEditar();
+    ['btnNovaEscola', 'btnImportarEscolasJson', 'btnRestaurarEscolasPadrao', 'escolasCoordLiveDisplay'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.classList.toggle('hidden', !canEdit);
+      el.style.display = canEdit ? '' : 'none';
+      el.setAttribute('aria-hidden', canEdit ? 'false' : 'true');
+    });
+    if (!canEdit) {
+      fecharModal();
+    }
+    if (leafletMap && markersLayer) {
+      renderizarMarcadores();
+    }
+    var tbody = document.getElementById('tabelaEscolasBody');
+    if (tbody) {
+      renderizarTabela();
+    }
+  }
 
   // Bounding box territorial aproximada de Ceará-Mirim/RN (do litoral de Muriú/Jacumã ao extremo norte em São Miguel/Riachão)
   var BOUNDS_CEARA_MIRIM = {
@@ -113,6 +144,7 @@ window.OlymposViews.escolas = (function() {
     garantirBancoInicial();
     bindEvents();
     inicializarMapa();
+    atualizarPermissoesMapa();
     renderizarInterface();
     observarVisibilidadePagina();
     sincronizarInicialComSupabase();
@@ -190,6 +222,17 @@ window.OlymposViews.escolas = (function() {
     try {
       var gravado = localStorage.getItem(STORAGE_KEY);
       if (!gravado || gravado === '[]') {
+        var legado = localStorage.getItem('olympos_escolas_ceara_mirim_v1') || localStorage.getItem('olympos_escolas_ceara_mirim');
+        if (legado && legado !== '[]') {
+          try {
+            var arrLeg = JSON.parse(legado);
+            if (Array.isArray(arrLeg) && arrLeg.length > 0) {
+              var saneadoLeg = arrLeg.filter(Boolean).map(sanitizarRegistroEscola);
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(saneadoLeg));
+              return;
+            }
+          } catch (eLeg) {}
+        }
         var semente = (typeof window.BANCO_SEMENTE_ESCOLAS !== 'undefined' && Array.isArray(window.BANCO_SEMENTE_ESCOLAS))
           ? window.BANCO_SEMENTE_ESCOLAS.map(sanitizarRegistroEscola)
           : [];
@@ -221,7 +264,7 @@ window.OlymposViews.escolas = (function() {
    */
   function obterEscolas() {
     try {
-      var raw = localStorage.getItem(STORAGE_KEY);
+      var raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('olympos_escolas_ceara_mirim_v1') || localStorage.getItem('olympos_escolas_ceara_mirim');
       if (raw) {
         var arr = JSON.parse(raw);
         if (Array.isArray(arr) && arr.length > 0) {
@@ -374,6 +417,9 @@ window.OlymposViews.escolas = (function() {
    * Trata clique interativo no mapa
    */
   function tratarCliqueMapa(e) {
+    if (!podeEditar()) {
+      return;
+    }
     var lat = e.latlng.lat;
     var lng = e.latlng.lng;
 
@@ -558,6 +604,116 @@ window.OlymposViews.escolas = (function() {
     return 'I';
   }
 
+  var MAP_GLYPHS_SVGS = {
+    cei: '<svg viewBox="0 0 24 24" width="__SZ__" height="__SZ__" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="8" height="9" rx="1.5"/><rect x="13" y="13" width="8" height="7" rx="1.5"/><path d="M8 11V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v7"/><circle cx="12" cy="7.5" r="1"/></svg>',
+    inst_sede: '<svg viewBox="0 0 24 24" width="__SZ__" height="__SZ__" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10L12 4l9 6"/><path d="M5 10h14M6 20h12M7.5 10v10M12 10v10M16.5 10v10"/></svg>',
+    inst_especial: '<svg viewBox="0 0 24 24" width="__SZ__" height="__SZ__" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-4.5-9-9.5C1.5 7.5 4.5 4 8 4c1.9 0 3.2 1 4 2.2C12.8 5 14.1 4 16 4c3.5 0 6.5 3.5 5 7.5-2 5-9 9.5-9 9.5z"/><path d="M12 9v4M10 11h4"/></svg>',
+    inst_tecnico: '<svg viewBox="0 0 24 24" width="__SZ__" height="__SZ__" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1L7 17M17 7l2.1-2.1"/></svg>',
+    inst_generic: '<svg viewBox="0 0 24 24" width="__SZ__" height="__SZ__" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><circle cx="12" cy="11" r="2.2"/></svg>',
+    seg_infantil: '<svg viewBox="0 0 24 24" width="__SZ__" height="__SZ__" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c2 2.5 4 4.5 4 7a4 4 0 0 1-8 0c0-2.5 2-4.5 4-7z"/><path d="M12 14v7M8 18h8"/></svg>',
+    seg_fund1: '<svg viewBox="0 0 24 24" width="__SZ__" height="__SZ__" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M12 7v6"/></svg>',
+    seg_fund2: '<svg viewBox="0 0 24 24" width="__SZ__" height="__SZ__" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M10 7v6M14 7v6"/></svg>',
+    seg_medio: '<svg viewBox="0 0 24 24" width="__SZ__" height="__SZ__" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>',
+    seg_eja: '<svg viewBox="0 0 24 24" width="__SZ__" height="__SZ__" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 8.5 8.5A9 9 0 1 1 12 3z"/><path d="M15 7h4M17 5v4"/></svg>',
+    seg_especial: '<svg viewBox="0 0 24 24" width="__SZ__" height="__SZ__" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-6.5-4-8.5-8.5A5 5 0 0 1 12 6.5a5 5 0 0 1 8.5 6C18.5 17 12 21 12 21z"/></svg>',
+    seg_tecnico: '<svg viewBox="0 0 24 24" width="__SZ__" height="__SZ__" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 19 6 19 18 12 22 5 18 5 6"/><circle cx="12" cy="12" r="2.5"/></svg>',
+    combo_infantil_fund1: '<svg viewBox="0 0 24 24" width="__SZ__" height="__SZ__" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10l9-6 9 6v10H3V10z"/><circle cx="9.5" cy="14" r="1.5"/><path d="M14.5 12v4"/></svg>',
+    combo_infantil_fund1_fund2: '<svg viewBox="0 0 24 24" width="__SZ__" height="__SZ__" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16M6 15h12M8 10h8M10 5h4"/></svg>',
+    combo_fund1_fund2: '<svg viewBox="0 0 24 24" width="__SZ__" height="__SZ__" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="8" height="16" rx="1"/><rect x="13" y="4" width="8" height="16" rx="1"/><path d="M7 9v6M17 9v6"/></svg>',
+    combo_fund2_medio: '<svg viewBox="0 0 24 24" width="__SZ__" height="__SZ__" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-4 9 4-9 4-9-4z"/><path d="M7 13v5h10v-5"/><path d="M10 15.5h4"/></svg>',
+    combo_eja_fund1_fund2: '<svg viewBox="0 0 24 24" width="__SZ__" height="__SZ__" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4a5 5 0 0 0 6 7A7 7 0 1 1 9 4z"/><path d="M14 14h7v6h-7z"/></svg>',
+    combo_multi: '<svg viewBox="0 0 24 24" width="__SZ__" height="__SZ__" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg>'
+  };
+
+  function normalizarChaveSegmento_(seg) {
+    var s = String(seg || '').toLowerCase();
+    if (s.includes('sede')) return 'sede';
+    if (s.includes('especial') || s.includes('inclus')) return 'especial';
+    if (s.includes('infantil') || s.includes('creche') || s.includes('cei')) return 'infantil';
+    if (s.includes('fundamental ii') || s.includes('anos finais')) return 'fund2';
+    if (s.includes('fundamental i') || s.includes('anos iniciais')) return 'fund1';
+    if (s.includes('técnico') || s.includes('tecnico')) return 'tecnico';
+    if (s.includes('médio') || s.includes('medio')) return 'medio';
+    if (s.includes('eja')) return 'eja';
+    return 'fund1';
+  }
+
+  function resolverGlyphKeyEscola_(escola, catInst, segmentos) {
+    var nLow = String((escola && escola.nome) || '').toLowerCase();
+    if (catInst === 'Centro de Educação Infantil') return { key: 'cei', sig: 'cei' };
+    if (nLow.includes('smeb sede') || segmentos.some(function(s) { return s.toLowerCase().includes('sede'); })) {
+      return { key: 'inst_sede', sig: 'inst_sede' };
+    }
+    if (nLow.includes('cemai') || (catInst === 'Instituição' && segmentos.some(function(s) { return s.toLowerCase().includes('especial'); }))) {
+      return { key: 'inst_especial', sig: 'inst_especial' };
+    }
+    if (catInst === 'Instituição') {
+      if (segmentos.some(function(s) { var l = s.toLowerCase(); return l.includes('técnico') || l.includes('tecnico'); })) {
+        return { key: 'inst_tecnico', sig: 'inst_tecnico' };
+      }
+      return { key: 'inst_generic', sig: 'inst_generic' };
+    }
+
+    var uniq = [];
+    segmentos.forEach(function(s) {
+      var k = normalizarChaveSegmento_(s);
+      if (uniq.indexOf(k) === -1) uniq.push(k);
+    });
+    uniq.sort();
+    var sig = uniq.join('+');
+
+    if (uniq.length <= 1) {
+      var single = uniq[0] || 'fund1';
+      return { key: 'seg_' + single, sig: sig || 'fund1' };
+    }
+    if (sig === 'fund1+infantil') return { key: 'combo_infantil_fund1', sig: sig };
+    if (sig === 'fund1+fund2+infantil') return { key: 'combo_infantil_fund1_fund2', sig: sig };
+    if (sig === 'fund1+fund2') return { key: 'combo_fund1_fund2', sig: sig };
+    if (sig === 'fund2+medio') return { key: 'combo_fund2_medio', sig: sig };
+    if (sig === 'eja+fund1+fund2') return { key: 'combo_eja_fund1_fund2', sig: sig };
+    return { key: 'combo_multi', sig: sig };
+  }
+
+  /**
+   * Gera emblema SVG específico e delimitado (<= 32px) para cada combinação de Categoria, Rede, Zona e Segmentos.
+   */
+  function obterIconeEscola(escola, sizePx) {
+    var esc = escola || {};
+    var redeRaw = String(esc.rede || 'Municipal').trim();
+    var redeNorm = ['Municipal', 'Estadual', 'Federal', 'Privada'].includes(redeRaw) ? redeRaw : 'Municipal';
+    var zonaNorm = String(esc.zona || 'Urbana').toLowerCase().includes('rural') ? 'Rural' : 'Urbana';
+    var catInst = normalizarCategoriaInstitucional(esc.categoria, esc.nome);
+    var segs = Array.isArray(esc.segmentos) && esc.segmentos.length > 0
+      ? esc.segmentos
+      : normalizarSegmentosDeCategoria(catInst, esc.nome);
+
+    var cor = obterCorPorRedeECategoria(redeNorm, catInst, zonaNorm, esc.nome);
+    var ink = (cor === '#FACC15') ? '#1E293B' : '#FFFFFF';
+    var sz = (typeof sizePx === 'number' && sizePx >= 18 && sizePx <= 32) ? sizePx : 28;
+    var svgSz = Math.max(12, Math.round(sz * 0.54));
+
+    var resolved = resolverGlyphKeyEscola_(esc, catInst, segs);
+    var rawSvg = MAP_GLYPHS_SVGS[resolved.key] || MAP_GLYPHS_SVGS.seg_fund1;
+    var svgHtml = rawSvg.replace(/__SZ__/g, String(svgSz));
+
+    var radius = (catInst === 'Centro de Educação Infantil')
+      ? '8px'
+      : (catInst === 'Instituição' ? '6px' : '50%');
+    var borderStyle = zonaNorm === 'Rural'
+      ? ('border: 2px dashed #FFFFFF; outline: 1.5px solid ' + cor + ';')
+      : 'border: 2.5px solid #FFFFFF;';
+    var ringShadow = catInst === 'Instituição'
+      ? 'box-shadow: 0 0 0 1.5px #D4AF37, 0 2px 6px rgba(0,0,0,0.4);'
+      : 'box-shadow: 0 2px 6px rgba(0,0,0,0.38);';
+
+    var titleText = escapeHtml(catInst + ' • ' + redeNorm + ' (' + zonaNorm + ') — ' + segs.join(', '));
+    return (
+      '<div class="escola-marker-badge" data-cat="' + escapeHtml(catInst) + '" data-rede="' + escapeHtml(redeNorm) + '" data-zona="' + escapeHtml(zonaNorm) + '" data-combo="' + escapeHtml(resolved.sig) + '" title="' + titleText + '" style="background:' + cor + '; width:' + sz + 'px; height:' + sz + 'px; border-radius:' + radius + '; ' + borderStyle + ' ' + ringShadow + ' color:' + ink + '; cursor:pointer;">' +
+        svgHtml +
+      '</div>'
+    );
+  }
+
   /**
    * Renderiza todos os marcadores no mapa Leaflet
    */
@@ -567,6 +723,7 @@ window.OlymposViews.escolas = (function() {
     markerMap = {};
 
     var escolas = obterEscolasFiltradas();
+    var canEdit = podeEditar();
 
     escolas.forEach(function(escola) {
       var lat = parseFloat(escola.lat);
@@ -575,26 +732,14 @@ window.OlymposViews.escolas = (function() {
 
       var rede = escola.rede || 'Municipal';
       var catInst = normalizarCategoriaInstitucional(escola.categoria, escola.nome);
-      var corCalculada = obterCorPorRedeECategoria(rede, catInst, escola.zona, escola.nome);
-      var iconeCalculado = obterIconePorRedeECategoria(rede, catInst, escola.zona, escola.nome, escola.segmentos);
-
-      var cor = escola.cor || corCalculada;
-      var icone = escola.icone || iconeCalculado;
-
-      var textCor = (cor === '#FACC15') ? '#1E293B' : '#FFFFFF';
-      var fontSize = (icone === 'II') ? '10px' : '11px';
-
-      var markerHtml =
-        '<div style="background:' + cor + '; width: 24px; height: 24px; border-radius: 50%; border: 2.5px solid #FFFFFF; box-shadow: 0 2px 6px rgba(0,0,0,0.38); display: flex; align-items: center; justify-content: center; font-size: ' + fontSize + '; color: ' + textCor + '; font-weight: 800; cursor: pointer; transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);">' +
-        icone +
-        '</div>';
+      var markerHtml = obterIconeEscola(escola, 28);
 
       var divIcon = window.L.divIcon({
         className: 'cadmo-leaflet-divicon escola-leaflet-divicon',
         html: markerHtml,
-        iconSize: [24, 24],
-        iconAnchor: [12, 12],
-        popupAnchor: [0, -14]
+        iconSize: [28, 28],
+        iconAnchor: [14, 14],
+        popupAnchor: [0, -15]
       });
 
       var marker = window.L.marker([lat, lng], { icon: divIcon });
@@ -617,6 +762,13 @@ window.OlymposViews.escolas = (function() {
       var icCompass = window.OlymposIcons ? window.OlymposIcons.fromEmojiOrKey('compass') : '';
       var icCopy = window.OlymposIcons ? window.OlymposIcons.fromEmojiOrKey('copyClip') : '';
 
+      var editActionsHtml = canEdit
+        ? (
+            '<button type="button" class="btn-map-action" onclick="window.OlymposViews.escolas.abrirModalEdicao(\'' + escapeHtml(escola.id) + '\')">' + icEdit + ' Editar</button>' +
+            '<button type="button" class="btn-map-action" onclick="window.OlymposViews.escolas.excluirEscola(\'' + escapeHtml(escola.id) + '\')">' + icTrash + ' Excluir</button>'
+          )
+        : '';
+
       var popupHtml =
         '<div class="cadmo-map-popup escola-map-popup">' +
           '<div class="escola-popup-header">' +
@@ -633,8 +785,7 @@ window.OlymposViews.escolas = (function() {
             lat.toFixed(6) + ', ' + lng.toFixed(6) +
           '</div>' +
           '<div class="escola-popup-actions">' +
-            '<button type="button" class="btn-map-action" onclick="window.OlymposViews.escolas.abrirModalEdicao(\'' + escola.id + '\')">' + icEdit + ' Editar</button>' +
-            '<button type="button" class="btn-map-action" onclick="window.OlymposViews.escolas.excluirEscola(\'' + escola.id + '\')">' + icTrash + ' Excluir</button>' +
+            editActionsHtml +
             '<a href="' + rotaUrl + '" target="_blank" rel="noopener" class="btn-map-action">' + icCompass + ' Rota</a>' +
             '<button type="button" class="btn-map-action" onclick="window.OlymposViews.escolas.copiarCoordenadas(' + lat + ', ' + lng + ')">' + icCopy + ' Copiar</button>' +
           '</div>' +
@@ -807,26 +958,37 @@ window.OlymposViews.escolas = (function() {
   function renderizarTabela() {
     var tbody = document.getElementById('tabelaEscolasBody');
     var contagem = document.getElementById('escolasContagemExibida');
+    var pagBar = document.getElementById('escolasPaginacaoBar');
     if (!tbody) return;
 
     var lista = obterEscolasFiltradas();
-    if (contagem) {
-      contagem.textContent = 'Exibindo ' + lista.length + ' de ' + obterEscolas().length + ' unidades cadastradas';
-    }
+    var totalAcervo = obterEscolas().length;
 
     if (lista.length === 0) {
+      if (contagem) {
+        contagem.textContent = 'Exibindo 0 de ' + totalAcervo + ' unidades cadastradas';
+      }
+      if (pagBar) pagBar.classList.add('hidden');
       tbody.innerHTML = '<tr><td colspan="7" class="text-muted text-center" style="padding: 32px;">Nenhuma unidade escolar encontrada com os filtros aplicados.</td></tr>';
       return;
     }
 
+    var pag = (window.OlymposPagination && typeof window.OlymposPagination.paginarLista === 'function')
+      ? window.OlymposPagination.paginarLista(lista, paginaTabelaAtual, ITENS_TABELA_POR_PAGINA)
+      : { items: lista, paginaAtual: 1, totalPaginas: 1, totalItens: lista.length, inicio: 1, fim: lista.length };
+    paginaTabelaAtual = pag.paginaAtual;
+
+    if (contagem) {
+      contagem.textContent = 'Exibindo ' + pag.inicio + '–' + pag.fim + ' de ' + lista.length + ' escolas filtradas (Total acervo: ' + totalAcervo + ')';
+    }
+
+    var canEdit = podeEditar();
     var html = '';
-    lista.forEach(function(escola) {
+    pag.items.forEach(function(escola) {
       var lat = parseFloat(escola.lat);
       var lng = parseFloat(escola.lng);
       var rede = escola.rede || 'Municipal';
       var catInst = normalizarCategoriaInstitucional(escola.categoria, escola.nome);
-      var corCalc = obterCorPorRedeECategoria(rede, catInst, escola.zona, escola.nome);
-      var cor = (catInst === 'Escola' && escola.cor === '#F59E0B') ? corCalc : (escola.cor || corCalc);
       var redeClass = 'pill-rede-' + (rede.toLowerCase());
       var segmentos = Array.isArray(escola.segmentos) && escola.segmentos.length > 0
         ? escola.segmentos
@@ -834,11 +996,12 @@ window.OlymposViews.escolas = (function() {
       var segsHtml = segmentos.map(function(s) {
         return '<span class="pill-segmento">' + escapeHtml(s) + '</span>';
       }).join('');
+      var iconBadgeHtml = obterIconeEscola(escola, 22);
 
-      html += '<tr data-escola-id="' + escola.id + '">';
+      html += '<tr data-escola-id="' + escapeHtml(escola.id) + '">';
       html += '<td data-label="Unidade Escolar">';
       html +=   '<div style="display: flex; align-items: center; gap: 8px;">';
-      html +=     '<span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; background: ' + cor + ';"></span>';
+      html +=     iconBadgeHtml;
       html +=     '<div>';
       html +=       '<strong style="color: var(--text-main); font-size: 13px;">' + escapeHtml(escola.nome) + '</strong>';
       html +=       '<div style="font-size: 11px; color: var(--text-muted);">' + escapeHtml(catInst) + (escola.inep ? ' • INEP: <code>' + escapeHtml(escola.inep) + '</code>' : '') + '</div>';
@@ -859,15 +1022,34 @@ window.OlymposViews.escolas = (function() {
       var icTrashRow = window.OlymposIcons ? window.OlymposIcons.fromEmojiOrKey('trash') : '';
       html += '<td data-label="Ações" class="text-right" style="white-space: nowrap;">';
       html +=   '<div class="escola-row-actions" style="display: inline-flex; gap: 6px; flex-wrap: wrap;">';
-      html +=     '<button type="button" class="btn btn-secondary btn-mini" title="Visualizar e centralizar no mapa" onclick="window.OlymposViews.escolas.centralizarEscola(' + lat + ', ' + lng + ', \'' + escola.id + '\')">' + icPinRow + ' Mapa</button>';
-      html +=     '<button type="button" class="btn btn-secondary btn-mini" title="Editar informações cadastrais" onclick="window.OlymposViews.escolas.abrirModalEdicao(\'' + escola.id + '\')">' + icEditRow + ' Editar</button>';
-      html +=     '<button type="button" class="btn btn-ghost btn-mini" style="color: #EF4444;" title="Excluir escola" onclick="window.OlymposViews.escolas.excluirEscola(\'' + escola.id + '\')">' + icTrashRow + '</button>';
+      html +=     '<button type="button" class="btn btn-secondary btn-mini" title="Visualizar e centralizar no mapa" onclick="window.OlymposViews.escolas.centralizarEscola(' + lat + ', ' + lng + ', \'' + escapeHtml(escola.id) + '\')">' + icPinRow + ' Mapa</button>';
+      if (canEdit) {
+        html +=   '<button type="button" class="btn btn-secondary btn-mini" title="Editar informações cadastrais" onclick="window.OlymposViews.escolas.abrirModalEdicao(\'' + escapeHtml(escola.id) + '\')">' + icEditRow + ' Editar</button>';
+        html +=   '<button type="button" class="btn btn-ghost btn-mini" style="color: #EF4444;" title="Excluir escola" onclick="window.OlymposViews.escolas.excluirEscola(\'' + escapeHtml(escola.id) + '\')">' + icTrashRow + '</button>';
+      }
       html +=   '</div>';
       html += '</td>';
       html += '</tr>';
     });
 
     tbody.innerHTML = html;
+
+    if (window.OlymposPagination && typeof window.OlymposPagination.renderizarControles === 'function') {
+      var pagRes = window.OlymposPagination.renderizarControles({
+        barEl: 'escolasPaginacaoBar',
+        containers: 'escolasPaginacaoControles',
+        infoEl: 'escolasPaginacaoInfo',
+        totalItens: pag.totalItens,
+        paginaAtual: paginaTabelaAtual,
+        itensPorPagina: ITENS_TABELA_POR_PAGINA,
+        rotuloItem: 'unidades escolares',
+        onPageChange: function(novaPagina) {
+          paginaTabelaAtual = novaPagina;
+          renderizarTabela();
+        }
+      });
+      paginaTabelaAtual = pagRes.paginaAtual;
+    }
   }
 
   /**
@@ -879,6 +1061,7 @@ window.OlymposViews.escolas = (function() {
       inBusca._bound = true;
       inBusca.addEventListener('input', function() {
         currentSearchTerm = inBusca.value;
+        paginaTabelaAtual = 1;
         renderizarInterface();
       });
     }
@@ -889,6 +1072,7 @@ window.OlymposViews.escolas = (function() {
       selCat._bound = true;
       selCat.addEventListener('change', function() {
         activeCategoryFilter = selCat.value || 'todas';
+        paginaTabelaAtual = 1;
         renderizarInterface();
       });
     }
@@ -898,6 +1082,7 @@ window.OlymposViews.escolas = (function() {
       selRede._bound = true;
       selRede.addEventListener('change', function() {
         activeRedeFilter = selRede.value || 'todas';
+        paginaTabelaAtual = 1;
         renderizarInterface();
       });
     }
@@ -907,6 +1092,7 @@ window.OlymposViews.escolas = (function() {
       selSeg._bound = true;
       selSeg.addEventListener('change', function() {
         activeSegmentFilter = selSeg.value || 'todos';
+        paginaTabelaAtual = 1;
         renderizarInterface();
       });
     }
@@ -916,6 +1102,7 @@ window.OlymposViews.escolas = (function() {
       selZona._bound = true;
       selZona.addEventListener('change', function() {
         activeZonaFilter = selZona.value || 'todas';
+        paginaTabelaAtual = 1;
         renderizarInterface();
       });
     }
@@ -930,6 +1117,7 @@ window.OlymposViews.escolas = (function() {
           });
           btn.classList.add('active');
           activeRedeFilter = btn.getAttribute('data-filtro-rede') || 'todas';
+          paginaTabelaAtual = 1;
           renderizarInterface();
         });
       }
@@ -944,6 +1132,7 @@ window.OlymposViews.escolas = (function() {
           });
           btn.classList.add('active');
           activeSegmentFilter = btn.getAttribute('data-filtro-segmento') || 'todos';
+          paginaTabelaAtual = 1;
           renderizarInterface();
         });
       }
@@ -958,6 +1147,7 @@ window.OlymposViews.escolas = (function() {
           });
           btn.classList.add('active');
           activeCategoryFilter = btn.getAttribute('data-filtro-categoria') || 'todas';
+          paginaTabelaAtual = 1;
           renderizarInterface();
         });
       }
@@ -972,6 +1162,7 @@ window.OlymposViews.escolas = (function() {
           });
           btn.classList.add('active');
           activeZonaFilter = btn.getAttribute('data-filtro-zona') || 'todas';
+          paginaTabelaAtual = 1;
           renderizarInterface();
         });
       }
@@ -1062,6 +1253,12 @@ window.OlymposViews.escolas = (function() {
    * Abre modal em modo de inclusão (Create)
    */
   function abrirModalCadastro(lat, lng) {
+    if (!podeEditar()) {
+      if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+        window.OlymposApp.showToast('Edição do mapa restrita ao Gabinete Executivo e Moderador.', true);
+      }
+      return;
+    }
     var modal = document.getElementById('modalCadastroEscola') || document.getElementById('modalEscola');
     var titulo = document.getElementById('modalCadastroEscolaTitulo') || document.getElementById('modalEscolaTitulo');
     var form = document.getElementById('formCadastroEscola') || document.getElementById('formEscola');
@@ -1107,6 +1304,12 @@ window.OlymposViews.escolas = (function() {
    * Abre modal em modo de edição (Update)
    */
   function abrirModalEdicao(id) {
+    if (!podeEditar()) {
+      if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+        window.OlymposApp.showToast('Edição do mapa restrita ao Gabinete Executivo e Moderador.', true);
+      }
+      return;
+    }
     var modal = document.getElementById('modalCadastroEscola') || document.getElementById('modalEscola');
     var titulo = document.getElementById('modalCadastroEscolaTitulo') || document.getElementById('modalEscolaTitulo');
     var form = document.getElementById('formCadastroEscola') || document.getElementById('formEscola');
@@ -1184,6 +1387,12 @@ window.OlymposViews.escolas = (function() {
    */
   function salvarEscolaSubmit(e) {
     if (e && e.preventDefault) e.preventDefault();
+    if (!podeEditar()) {
+      if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+        window.OlymposApp.showToast('Edição do mapa restrita ao Gabinete Executivo e Moderador.', true);
+      }
+      return;
+    }
 
     var inId = document.getElementById('escolaId');
     var inNome = document.getElementById('escolaNome');
@@ -1230,7 +1439,7 @@ window.OlymposViews.escolas = (function() {
     var id = (inId ? inId.value : '').trim();
     var escolas = obterEscolas();
     var cor = obterCorPorRedeECategoria(rede, categoria, zona, nome);
-    var icone = obterIconePorRedeECategoria(rede, categoria, zona, nome);
+    var icone = obterIconePorRedeECategoria(rede, categoria, zona, nome, segmentos);
 
     var escolaObjeto = null;
 
@@ -1302,6 +1511,12 @@ window.OlymposViews.escolas = (function() {
    * Exclui uma unidade escolar com confirmação amigável e sincroniza com Supabase
    */
   function excluirEscola(id) {
+    if (!podeEditar()) {
+      if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+        window.OlymposApp.showToast('Edição do mapa restrita ao Gabinete Executivo e Moderador.', true);
+      }
+      return;
+    }
     var escolas = obterEscolas();
     var escola = escolas.find(function(e) { return e.id === id; });
     var nome = escola ? escola.nome : 'esta unidade';
@@ -1404,6 +1619,12 @@ window.OlymposViews.escolas = (function() {
    * Importa arquivo JSON com validação de formato e sincronização com Supabase
    */
   function importarJson(file) {
+    if (!podeEditar()) {
+      if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+        window.OlymposApp.showToast('Importação restrita ao Gabinete Executivo e Moderador.', true);
+      }
+      return;
+    }
     if (!file) return;
 
     var reader = new FileReader();
@@ -1455,6 +1676,12 @@ window.OlymposViews.escolas = (function() {
    * Restaura o catálogo semente oficial de 25 unidades
    */
   function restaurarPadroes() {
+    if (!podeEditar()) {
+      if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
+        window.OlymposApp.showToast('Restauração restrita ao Gabinete Executivo e Moderador.', true);
+      }
+      return;
+    }
     if (confirm('Deseja restaurar o catálogo oficial de unidades de Ceará-Mirim? Modificações manuais serão redefinidas.')) {
       if (typeof window.BANCO_SEMENTE_ESCOLAS !== 'undefined' && Array.isArray(window.BANCO_SEMENTE_ESCOLAS)) {
         var padrao = window.BANCO_SEMENTE_ESCOLAS.map(sanitizarRegistroEscola);
@@ -1561,6 +1788,8 @@ window.OlymposViews.escolas = (function() {
     obterIconePorCategoria: obterIconePorCategoria,
     obterCorPorRedeECategoria: obterCorPorRedeECategoria,
     obterIconePorRedeECategoria: obterIconePorRedeECategoria,
+    obterIconeEscola: obterIconeEscola,
+    atualizarPermissoesMapa: atualizarPermissoesMapa,
     setFiltroRede: setFiltroRede,
     setFiltroSegmento: setFiltroSegmento,
     setFiltroCategoria: setFiltroCategoria,

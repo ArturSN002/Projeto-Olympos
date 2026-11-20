@@ -136,12 +136,13 @@
             <span>Gemini</span>
           </button>
 
-          <button id="userSessionBtn" class="user-capsule-btn" title="Perfil de Acesso Ativo (Clique para trocar de conta ou sair)">
-            <span class="user-avatar-dot" id="userAvatarInitials">GB</span>
+          <button id="userSessionBtn" class="user-capsule-btn" title="Entrar no Hub Olympos" aria-label="Conta e Perfil do Usuário">
+            <span class="user-avatar-dot" id="userAvatarInitials">VS</span>
             <span class="user-capsule-meta">
-              <span id="userBadgeName" class="user-capsule-name">Gabinete</span>
-              <span id="userBadgeRole" class="user-capsule-role">Governança Total</span>
+              <span id="userBadgeName" class="user-capsule-name">Entrar</span>
+              <span id="userBadgeRole" class="user-capsule-role">Visitante</span>
             </span>
+            <span class="user-capsule-caret svg-icon-inline" data-icon="chevronDown" aria-hidden="true"></span>
           </button>
         </div>
       </div>
@@ -218,12 +219,12 @@
       <!-- ATALHOS DRIVE NO MENU LATERAL MOBILE -->
       <div class="mobile-drawer-drive-section" id="mobileDrawerDriveSection">
         <span class="drawer-section-title">Atalhos Drive</span>
-        <a href="https://drive.google.com/drive/folders/1W9mGmQCrX8BRPsGcK_vqUwfXw1dRmSya" target="_blank" rel="noopener" class="drawer-drive-item" data-requires-auth="true" data-access-roles="ADMIN_GABINETE">
+        <a href="https://drive.google.com/drive/folders/1W9mGmQCrX8BRPsGcK_vqUwfXw1dRmSya" target="_blank" rel="noopener" class="drawer-drive-item" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE">
           <span class="drive-icon svg-icon-inline" data-icon="folderDrive"></span>
           <span>Pasta Central Olympo</span>
           <span class="drive-arrow">↗</span>
         </a>
-        <a href="https://drive.google.com/drive/folders/1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu" target="_blank" rel="noopener" class="drawer-drive-item" data-requires-auth="true" data-access-roles="ADMIN_GABINETE">
+        <a href="https://drive.google.com/drive/folders/1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu" target="_blank" rel="noopener" class="drawer-drive-item" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE">
           <span class="drive-icon svg-icon-inline" data-icon="edit"></span>
           <span>Memórias Operacionais</span>
           <span class="drive-arrow">↗</span>
@@ -238,12 +239,12 @@
           <span>Ofícios 2026</span>
           <span class="drive-arrow">↗</span>
         </a>
-        <a href="https://docs.google.com/spreadsheets/d/1tU6rvgB2jNGaGqHK1oecNMQX7-5QcB8Q-1fNgzWcZqs/edit" target="_blank" rel="noopener" class="drawer-drive-item" data-requires-auth="true" data-access-page="diario-oficial">
+        <a id="drawerLinkPlanilhaDiario" href="https://docs.google.com/spreadsheets/d/1tU6rvgB2jNGaGqHK1oecNMQX7-5QcB8Q-1fNgzWcZqs/edit" target="_blank" rel="noopener" class="drawer-drive-item hidden" data-requires-auth="true" data-access-page="diario-oficial" style="display: none !important;">
           <span class="drive-icon svg-icon-inline" data-icon="clipboard"></span>
           <span>Planilha Diário Oficial</span>
           <span class="drive-arrow">↗</span>
         </a>
-        <a href="https://drive.google.com/drive/folders/1aj514v29gytXH9j5LY_V76ap9XIblwHS" target="_blank" rel="noopener" class="drawer-drive-item" data-requires-auth="true" data-access-roles="ADMIN_GABINETE,RH_COMISSAO,JURIDICO">
+        <a id="drawerLinkBackupDiario" href="https://drive.google.com/drive/folders/1aj514v29gytXH9j5LY_V76ap9XIblwHS" target="_blank" rel="noopener" class="drawer-drive-item hidden" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE,RH_COMISSAO,JURIDICO" style="display: none !important;">
           <span class="drive-icon svg-icon-inline" data-icon="chart"></span>
           <span>Backup Diário Oficial</span>
           <span class="drive-arrow">↗</span>
@@ -286,8 +287,12 @@
 
         <!-- Dual Pill Actions -->
         <div id="heroDualActions" class="hero-dual-actions" style="display: flex; gap: 12px; align-items: center; margin: 18px 0 20px; flex-wrap: wrap;">
-          <a href="#chamados" class="btn btn-primary" style="border-radius: 9999px; padding: 10px 22px; display: inline-flex; align-items: center; gap: 8px;">
+          <a href="#chamados" id="heroBtnCentralChamados" class="btn btn-primary" data-requires-auth="true" style="border-radius: 9999px; padding: 10px 22px; display: inline-flex; align-items: center; gap: 8px;">
             <span>Abrir Central de Chamados</span>
+            <span class="arrow-shift">↗</span>
+          </a>
+          <a href="#escolas" id="heroBtnMapaEscolas" class="btn btn-primary" data-visitante-only="true" style="border-radius: 9999px; padding: 10px 22px; display: inline-flex; align-items: center; gap: 8px;">
+            <span>Consultar Mapa de Escolas</span>
             <span class="arrow-shift">↗</span>
           </a>
           <a href="#diario-oficial" class="btn btn-ghost" style="border-radius: 9999px; padding: 10px 22px; display: inline-flex; align-items: center; gap: 8px;">
@@ -298,12 +303,12 @@
 
         <!-- Faixa de Telemetria Científica Exclusiva da Visão Geral -->
         <div id="heroTelemetryStrip" class="telemetry-strip grid grid-cols-2" style="margin-top: 20px;">
-          <div class="telemetry-card spotlight-card col-1">
+          <div class="telemetry-card spotlight-card col-1" id="heroTelemetryChamadosCard" data-requires-auth="true">
             <span class="telemetry-label">Chamados SMEB • Fila Ativa</span>
             <div class="telemetry-metric" id="heroTelemetryChamados">--</div>
             <span class="telemetry-meta" id="heroTelemetryChamadosMeta">Demandas aguardando atendimento</span>
           </div>
-          <div class="telemetry-card spotlight-card col-2">
+          <div class="telemetry-card spotlight-card col-2" id="heroTelemetryAgendaCard">
             <span class="telemetry-label">Eventos Externos • Calendário SMEB</span>
             <div class="telemetry-metric" id="heroTelemetryAgenda">--</div>
             <span class="telemetry-meta" id="heroTelemetryAgendaMeta">Compromissos e audiências agendadas</span>
@@ -324,35 +329,35 @@
              ========================================================================= -->
         <section class="page-view active" id="page-visao-geral">
           <div class="stats-grid">
-            <div class="stat-card">
+            <div class="stat-card" id="statCardProximoOficio" data-requires-auth="true">
               <div class="stat-top">
                 <span class="stat-label">Olho de Apolo • Próximo Ofício</span>
                 <div class="stat-actions">
                   <button id="copyOficioBtn" class="btn-mini" title="Copiar número">Copiar</button>
                   <button id="reserveOficioBtn" class="btn-mini btn-mini-accent" title="Reservar número atual e avançar +1" data-requires-auth="true" data-access-page="oficios">+1 Reservar</button>
-                  <button id="editOficioBtn" class="btn-mini" title="Ajustar contador oficial" data-requires-auth="true" data-access-roles="ADMIN_GABINETE">Ajustar</button>
+                  <button id="editOficioBtn" class="btn-mini" title="Ajustar contador oficial" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE">Ajustar</button>
                 </div>
               </div>
               <div class="stat-value" id="kpiProximoOficio">--</div>
               <div class="stat-meta" id="kpiUltimoOficio">
                 <span>Último emitido: --</span>
-                <a href="https://drive.google.com/file/d/1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_/view" target="_blank" rel="noopener noreferrer" class="folder-chip" data-requires-auth="true" data-access-roles="ADMIN_GABINETE,RH_COMISSAO,PEDAGOGICO_EVENTOS,JURIDICO">Memória de Apolo ↗</a>
+                <a href="https://docs.google.com/document/d/1ZXTlg2Wk5IKZ2Sg84HOnlePCOihccPFcYTd67wHUgkM/edit" target="_blank" rel="noopener noreferrer" class="folder-chip" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE,RH_COMISSAO,PEDAGOGICO_EVENTOS,JURIDICO">Memória de Apolo ↗</a>
               </div>
             </div>
 
-            <div class="stat-card">
+            <div class="stat-card" id="statCardProximaPortaria" data-requires-auth="true">
               <div class="stat-top">
                 <span class="stat-label">Olho de Apolo • Próxima Portaria</span>
                 <div class="stat-actions">
                   <button id="copyPortariaBtn" class="btn-mini" title="Copiar número">Copiar</button>
                   <button id="reservePortariaBtn" class="btn-mini btn-mini-accent" title="Reservar número atual e avançar +1" data-requires-auth="true" data-access-page="portarias">+1 Reservar</button>
-                  <button id="editPortariaBtn" class="btn-mini" title="Ajustar contador oficial" data-requires-auth="true" data-access-roles="ADMIN_GABINETE">Ajustar</button>
+                  <button id="editPortariaBtn" class="btn-mini" title="Ajustar contador oficial" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE">Ajustar</button>
                 </div>
               </div>
               <div class="stat-value" id="kpiProximaPortaria">--</div>
               <div class="stat-meta" id="kpiUltimaPortaria">
                 <span>Última emitida: --</span>
-                <a href="https://drive.google.com/file/d/1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_/view" target="_blank" rel="noopener noreferrer" class="folder-chip" data-requires-auth="true" data-access-roles="ADMIN_GABINETE,RH_COMISSAO,PEDAGOGICO_EVENTOS,JURIDICO">Memória de Apolo ↗</a>
+                <a href="https://docs.google.com/document/d/1ZXTlg2Wk5IKZ2Sg84HOnlePCOihccPFcYTd67wHUgkM/edit" target="_blank" rel="noopener noreferrer" class="folder-chip" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE,RH_COMISSAO,PEDAGOGICO_EVENTOS,JURIDICO">Memória de Apolo ↗</a>
               </div>
             </div>
 
@@ -389,6 +394,32 @@
             </div>
           </div>
 
+          <!-- NOTÍCIAS OFICIAIS DE CEARÁ-MIRIM (VISITANTES & OPERADORES) -->
+          <div class="surface-card municipal-news-section" id="municipalNewsSection">
+            <div class="municipal-news-header">
+              <div>
+                <span class="section-eyebrow">PORTAIS OFICIAIS DO MUNICÍPIO</span>
+                <h2 class="section-title">Notícias Oficiais de Ceará-Mirim</h2>
+              </div>
+              <div class="municipal-news-controls">
+                <div id="municipalNewsFilters" class="filter-pills-inline" role="tablist" aria-label="Filtrar notícias por fonte">
+                  <button type="button" class="filter-pill active" data-news-source="todas">Todas</button>
+                  <button type="button" class="filter-pill" data-news-source="prefeitura">Prefeitura</button>
+                  <button type="button" class="filter-pill" data-news-source="camara">Câmara Municipal</button>
+                </div>
+                <button type="button" id="btnRefreshMunicipalNews" class="btn btn-secondary btn-sm">
+                  <span class="svg-icon-inline" data-icon="refreshSync"></span><span>Atualizar</span>
+                </button>
+              </div>
+            </div>
+            <div id="municipalNewsStatus" class="municipal-news-status">Carregando matérias oficiais...</div>
+            <div id="municipalNewsGrid" class="municipal-news-grid"></div>
+            <div class="municipal-news-footer-links">
+              <a href="https://cearamirim.rn.gov.br/" target="_blank" rel="noopener noreferrer" class="folder-chip" data-news-footer-source="prefeitura">Portal da Prefeitura ↗</a>
+              <a href="https://www.cearamirim.rn.leg.br/" target="_blank" rel="noopener noreferrer" class="folder-chip" data-news-footer-source="camara">Portal da Câmara Municipal ↗</a>
+            </div>
+          </div>
+
           <!-- FRENTES OPERACIONAIS EM DESTAQUE -->
           <div class="surface-card" id="operacoesModularesSection">
             <div class="card-header-row">
@@ -398,8 +429,8 @@
                 <p class="section-desc">Cada módulo opera em página dedicada para redação oficial, gestão funcional e acompanhamento documental da SMEB.</p>
               </div>
               <div class="header-actions" id="operacoesModularesDriveActions" style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <a href="https://drive.google.com/drive/folders/1W9mGmQCrX8BRPsGcK_vqUwfXw1dRmSya" target="_blank" rel="noopener" class="folder-chip" data-requires-auth="true" data-access-roles="ADMIN_GABINETE"><span class="svg-icon-inline" data-icon="folderDrive"></span> Pasta Central Olympo <span class="external-arrow">↗</span></a>
-                <a href="https://drive.google.com/drive/folders/1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu" target="_blank" rel="noopener" class="folder-chip" data-requires-auth="true" data-access-roles="ADMIN_GABINETE"><span class="svg-icon-inline" data-icon="edit"></span> Memórias Operacionais <span class="external-arrow">↗</span></a>
+                <a href="https://drive.google.com/drive/folders/1W9mGmQCrX8BRPsGcK_vqUwfXw1dRmSya" target="_blank" rel="noopener" class="folder-chip" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE"><span class="svg-icon-inline" data-icon="folderDrive"></span> Pasta Central Olympo <span class="external-arrow">↗</span></a>
+                <a href="https://drive.google.com/drive/folders/1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu" target="_blank" rel="noopener" class="folder-chip" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE"><span class="svg-icon-inline" data-icon="edit"></span> Memórias Operacionais <span class="external-arrow">↗</span></a>
               </div>
             </div>
 
@@ -495,6 +526,21 @@
               </div>
             </div>
           </div>
+
+          <div id="homeMemoriasPanel" class="surface-card" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE,RH_COMISSAO,PEDAGOGICO_EVENTOS,JURIDICO" style="margin-top: 20px;">
+            <div class="card-header-row" style="margin-bottom: 14px;">
+              <div>
+                <span class="section-eyebrow">MEMÓRIAS OPERACIONAIS • GOOGLE DOCS (22 DOCUMENTOS)</span>
+                <h3 class="section-title" style="font-size: 1.15rem;">Constelação das 22 Memórias Olympos</h3>
+                <p class="section-desc" style="margin-bottom: 0;">Clique em qualquer card para visualizar/editar no painel ou abra diretamente o Documento padrão do Google Docs.</p>
+              </div>
+              <div class="header-actions" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                <a href="https://drive.google.com/drive/folders/1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu" target="_blank" rel="noopener noreferrer" class="folder-chip">Pasta Memórias ↗</a>
+                <button type="button" id="homeOpenAllMemoriasBtn" class="btn btn-secondary btn-sm">Gerenciar Memórias →</button>
+              </div>
+            </div>
+            <div id="homePersonasConstellation" class="home-personas-grid"></div>
+          </div>
         </section>
 
         <!-- =========================================================================
@@ -512,7 +558,7 @@
                 <a href="https://drive.google.com/drive/folders/1H4bJXClx66Mr5PmRmSQBQLHDpAaKwdab" target="_blank" rel="noopener" class="folder-chip">
                   <span class="svg-icon-inline" data-icon="folderDrive"></span> Pasta Ofícios 2026 <span class="external-arrow">↗</span>
                 </a>
-                <a href="https://drive.google.com/file/d/1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_/view" target="_blank" rel="noopener noreferrer" class="folder-chip">
+                <a href="https://docs.google.com/document/d/1ZXTlg2Wk5IKZ2Sg84HOnlePCOihccPFcYTd67wHUgkM/edit" target="_blank" rel="noopener noreferrer" class="folder-chip">
                   <span class="svg-icon-inline" data-icon="olymposLogo"></span> Memória de Apolo <span class="external-arrow">↗</span>
                 </a>
               </div>
@@ -857,6 +903,10 @@
                   </tbody>
                 </table>
               </div>
+              <div id="certificadosPaginacaoBar" class="olympos-pagination-bar hidden">
+                <span id="certificadosPaginacaoInfo" class="olympos-pagination-info"></span>
+                <div id="certificadosPaginacaoControles" class="olympos-pagination-controls"></div>
+              </div>
             </div>
           </div>
         </section>
@@ -873,15 +923,15 @@
                 <p class="section-desc">Acompanhamento contínuo dos atos da FEMURN e do Diário Oficial de interesse da educação municipal, com registro consolidado na planilha oficial (aba <code>Publicações</code>).</p>
               </div>
               <div class="button-group">
-                <a id="promSheetLinkBtn" href="https://docs.google.com/spreadsheets/d/1tU6rvgB2jNGaGqHK1oecNMQX7-5QcB8Q-1fNgzWcZqs/edit" target="_blank" rel="noopener" class="folder-chip">
+                <a id="promSheetLinkBtn" href="https://docs.google.com/spreadsheets/d/1tU6rvgB2jNGaGqHK1oecNMQX7-5QcB8Q-1fNgzWcZqs/edit" target="_blank" rel="noopener" class="folder-chip hidden" style="display: none !important;" aria-hidden="true">
                   <span class="svg-icon-inline" data-icon="chart"></span> Planilha Diário Oficial <span class="external-arrow">↗</span>
                 </a>
-                <a href="https://drive.google.com/drive/folders/1aj514v29gytXH9j5LY_V76ap9XIblwHS" target="_blank" rel="noopener" class="folder-chip">
+                <a id="promBackupLinkBtn" href="https://drive.google.com/drive/folders/1aj514v29gytXH9j5LY_V76ap9XIblwHS" target="_blank" rel="noopener" class="folder-chip hidden" style="display: none !important;" aria-hidden="true">
                   <span class="svg-icon-inline" data-icon="disk"></span> Backup Diário Oficial <span class="external-arrow">↗</span>
                 </a>
-                <button id="prometheusTriggerActionBtn" class="btn btn-accent btn-sm">Atualizar Publicações Agora</button>
-                <button id="prometheusChatSummaryBtn" class="btn btn-secondary btn-sm">Enviar Resumo ao Chat</button>
-                <button id="prometheusSyncBtn" class="btn btn-primary btn-sm">Sincronizar Memória de Hélio</button>
+                <button id="prometheusTriggerActionBtn" class="btn btn-accent btn-sm hidden" style="display: none !important;" aria-hidden="true">Atualizar Publicações Agora</button>
+                <button id="prometheusChatSummaryBtn" class="btn btn-secondary btn-sm hidden" style="display: none !important;" aria-hidden="true">Enviar Resumo ao Chat</button>
+                <button id="prometheusSyncBtn" class="btn btn-primary btn-sm hidden" style="display: none !important;" aria-hidden="true">Sincronizar Memória de Hélio</button>
               </div>
             </div>
 
@@ -900,7 +950,7 @@
             </div>
 
             <!-- CONFIGURAÇÃO DE DESTINATÁRIOS DO BOLETIM EXECUTIVO FEMURN -->
-            <div class="surface-card" style="margin-bottom: 18px; padding: 14px 18px; border: 1px solid var(--border-hairline); background: var(--bg-surface);">
+            <div id="diarioDestinatariosCard" class="surface-card hidden" style="display: none !important; margin-bottom: 18px; padding: 14px 18px; border: 1px solid var(--border-hairline); background: var(--bg-surface);" aria-hidden="true">
               <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
                 <div>
                   <div style="font-weight: 600; font-size: 13.5px; color: var(--text-main);"><span class="svg-icon-inline" data-icon="mail"></span> Destinatários do Informativo Diário</div>
@@ -960,6 +1010,10 @@
                   <tr><td colspan="4" class="text-muted text-center" style="padding: 26px;">Carregando publicações monitoradas...</td></tr>
                 </tbody>
               </table>
+            </div>
+            <div id="diarioPaginacaoBar" class="olympos-pagination-bar hidden">
+              <span id="diarioPaginacaoInfo" class="olympos-pagination-info"></span>
+              <div id="diarioPaginacaoControles" class="olympos-pagination-controls"></div>
             </div>
           </div>
         </section>
@@ -1078,11 +1132,12 @@
                   <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #D4AF37;"></span> SMEB Sede</span>
                   <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #38BDF8;"></span> Escolas Ceará-Mirim</span>
                   <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10B981;"></span> Polos Parceiros</span>
-                  <button type="button" id="btnGerenciarSecretarias" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 2px 8px; margin-left: 6px;" title="Gerenciar secretarias municipais parceiras" onclick="event.stopPropagation(); window.OlymposViews.papiroCadmo.abrirModalEdicaoSecretaria()">
+                  <button type="button" id="btnGerenciarSecretarias" class="btn btn-secondary btn-sm" style="font-size: 11px; padding: 2px 8px; margin-left: 6px;" title="Gerenciar secretarias municipais parceiras" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE">
                     <span class="svg-icon-inline" data-icon="olymposLogo"></span> <span>Secretarias Parceiras</span>
                   </button>
-                  <button type="button" id="btnToggleMapaCadmo" class="btn btn-ghost btn-sm" style="font-size: 11px; padding: 2px 8px;" onclick="event.stopPropagation(); window.OlymposViews.papiroCadmo.alternarColapsoMapa()">
-                    <span id="mapaCadmoToggleLabel">Expandir Mapa <span class="svg-icon-inline" data-icon="chevronDown"></span></span>
+                  <button type="button" id="btnToggleMapaCadmo" class="btn btn-ghost btn-sm" style="font-size: 11px; padding: 2px 8px; display: inline-flex; align-items: center; gap: 4px;">
+                    <span id="mapaCadmoToggleLabel">Expandir Mapa</span>
+                    <span id="mapaCadmoChevronIcon" class="svg-icon-inline" data-icon="chevronDown"></span>
                   </button>
                 </div>
               </div>
@@ -1498,11 +1553,6 @@
                 </div>
                 <div class="button-group" style="align-items: center;">
                   <button type="button" id="btnLimparBuscaServidores" class="btn btn-secondary btn-sm hidden"><span class="svg-icon-inline" data-icon="close"></span> Limpar</button>
-                  <!-- Alternador de Visualização (Cards vs Tabela) -->
-                  <div class="filter-pills-inline" role="group" aria-label="Modo de Visualização">
-                    <button type="button" id="btnModoViewCards" class="btn-mini active" title="Visualização em Cards Dossiê"><span class="svg-icon-inline" data-icon="folderDrive"></span> Cards</button>
-                    <button type="button" id="btnModoViewTabela" class="btn-mini" title="Visualização em Tabela Sintética"><span class="svg-icon-inline" data-icon="clipboard"></span> Tabela</button>
-                  </div>
                 </div>
               </div>
 
@@ -1571,11 +1621,8 @@
               <div id="servidoresPaginacaoTopo" class="pagination-controls" style="display: flex; gap: 6px; align-items: center;"></div>
             </div>
 
-            <!-- ÁREA 1: VISUALIZAÇÃO EM CARDS DOSSIÊ -->
-            <div id="servidoresContainerCards" class="servidor-dossie-list"></div>
-
-            <!-- ÁREA 2: VISUALIZAÇÃO EM TABELA SINTÉTICA -->
-            <div id="servidoresContainerTabela" class="table-wrapper table-responsive hidden">
+            <!-- VISUALIZAÇÃO EM TABELA SINTÉTICA -->
+            <div id="servidoresContainerTabela" class="table-wrapper table-responsive">
               <table class="clean-table table-responsive-cards" id="tabelaServidoresGeral">
                 <thead>
                   <tr>
@@ -1949,7 +1996,7 @@
                 <p class="section-desc">Mapeamento cartográfico interativo (Leaflet.js), catálogo georreferenciado com latitude e longitude, cadastro, edição e exclusão de unidades diretamente no mapa com persistência local e backup JSON.</p>
               </div>
               <div class="button-group">
-                <button type="button" id="btnNovaEscola" class="btn btn-primary btn-sm">
+                <button type="button" id="btnNovaEscola" class="btn btn-primary btn-sm" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE">
                   <span>+ Nova Unidade Escolar</span>
                 </button>
                 <button type="button" id="btnRecentralizarMapaEscolas" class="btn btn-secondary btn-sm" title="Centralizar mapa em Ceará-Mirim">
@@ -1958,11 +2005,11 @@
                 <button type="button" id="btnExportarEscolasJson" class="btn btn-secondary btn-sm" title="Exportar catálogo em arquivo JSON">
                   <span class="svg-icon-inline" data-icon="download"></span> <span>Exportar JSON</span>
                 </button>
-                <button type="button" id="btnImportarEscolasJson" class="btn btn-secondary btn-sm" title="Importar catálogo a partir de arquivo JSON">
+                <button type="button" id="btnImportarEscolasJson" class="btn btn-secondary btn-sm" title="Importar catálogo a partir de arquivo JSON" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE">
                   <span class="svg-icon-inline" data-icon="upload"></span> <span>Importar JSON</span>
                 </button>
                 <input type="file" id="escolasImportFileInput" accept=".json" style="display: none;" />
-                <button type="button" id="btnRestaurarEscolasPadrao" class="btn btn-ghost btn-sm" title="Restaurar catálogo inicial oficial com 20 escolas">
+                <button type="button" id="btnRestaurarEscolasPadrao" class="btn btn-ghost btn-sm" title="Restaurar catálogo inicial oficial com 20 escolas" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE">
                   <span class="svg-icon-inline" data-icon="refresh"></span> <span>Restaurar Padrão</span>
                 </button>
               </div>
@@ -2020,7 +2067,7 @@
                   <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #10B981;"></span>
                   Mapa Georreferenciado das Unidades Escolares — Ceará-Mirim/RN
                 </span>
-                <span id="escolasCoordLiveDisplay" style="font-family: var(--font-mono); font-size: 11.5px; color: var(--text-muted);">
+                <span id="escolasCoordLiveDisplay" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE" style="font-family: var(--font-mono); font-size: 11.5px; color: var(--text-muted);">
                   Clique no mapa para capturar latitude e longitude
                 </span>
                 <div style="display: flex; gap: 12px; font-size: 11.5px; color: var(--text-secondary); flex-wrap: wrap; align-items: center;">
@@ -2034,14 +2081,16 @@
                   <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #EF4444;"></span> Priv. Urbana</span>
                   <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #EC4899;"></span> Priv. Rural</span>
                 </div>
-                <div style="width: 100%; display: flex; gap: 14px; font-size: 11px; color: var(--text-muted); padding-top: 6px; border-top: 1px dashed var(--border-hairline); flex-wrap: wrap;">
-                  <span style="font-weight: 700; color: var(--text-main);">Símbolos de Segmentos:</span>
-                  <span><strong>C</strong> = Ed. Infantil / CEI</span>
-                  <span><strong>I</strong> = Ens. Fundamental I</span>
-                  <span><strong>II</strong> = Ens. Fundamental II</span>
-                  <span><strong>M</strong> = Ensino Médio / Técnico</span>
-                  <span><strong>X</strong> = Mais de um Segmento</span>
-                  <span><span class="svg-icon-inline" data-icon="star"></span> = Sede / CEMAI</span>
+                <div style="width: 100%; display: flex; gap: 14px; font-size: 11px; color: var(--text-muted); padding-top: 6px; border-top: 1px dashed var(--border-hairline); flex-wrap: wrap; align-items: center;">
+                  <span style="font-weight: 700; color: var(--text-main);">Ícones por Categoria &amp; Combinação:</span>
+                  <span><span class="svg-icon-inline" data-icon="schoolCei"></span> CEI (Creche)</span>
+                  <span><span class="svg-icon-inline" data-icon="school"></span> Escola / Fund. I–II</span>
+                  <span><span class="svg-icon-inline" data-icon="graduationCap"></span> Ensino Médio</span>
+                  <span><span class="svg-icon-inline" data-icon="schoolTecnico"></span> Técnico / IFRN</span>
+                  <span><span class="svg-icon-inline" data-icon="schoolEspecial"></span> Inclusão / CEMAI</span>
+                  <span><span class="svg-icon-inline" data-icon="schoolMulti"></span> Múltiplos Segmentos</span>
+                  <span><span class="svg-icon-inline" data-icon="olymposLogo"></span> SMEB Sede</span>
+                  <span>• Borda sólida = Urbana | Borda tracejada = Rural</span>
                 </div>
               </div>
               <div id="mapaEscolasCearaMirim" style="height: 480px; width: 100%; border-radius: var(--radius-lg); position: relative; z-index: 1;"></div>
@@ -2120,6 +2169,10 @@
                 </tbody>
               </table>
             </div>
+            <div id="escolasPaginacaoBar" class="olympos-pagination-bar hidden">
+              <span id="escolasPaginacaoInfo" class="olympos-pagination-info"></span>
+              <div id="escolasPaginacaoControles" class="olympos-pagination-controls"></div>
+            </div>
           </div>
         </section>
 
@@ -2182,6 +2235,10 @@
                   <tr><td colspan="5" class="text-muted text-center" style="padding: 28px;">Nenhuma pesquisa executada nesta sessão.</td></tr>
                 </tbody>
               </table>
+            </div>
+            <div id="buscaPaginacaoBar" class="olympos-pagination-bar hidden">
+              <span id="buscaPaginacaoInfo" class="olympos-pagination-info"></span>
+              <div id="buscaPaginacaoControles" class="olympos-pagination-controls"></div>
             </div>
           </div>
         </section>
@@ -2298,19 +2355,19 @@
               </div>
             </div>
 
-            <!-- SUB-ABA 3: USUÁRIOS & RBAC (GESTÃO COMPLETA MODERADOR) -->
+            <!-- SUB-ABA 3: USUÁRIOS & RBAC (GESTÃO EXCLUSIVA MODERADOR) -->
             <div id="subpaneAjustesUsuarios" class="subtab-pane">
-              <!-- Aviso para operadores que não possuem perfil ADMIN_GABINETE -->
+              <!-- Aviso para operadores que não possuem perfil MODERADOR -->
               <div id="avisoAcessoUsuariosRestrito" class="surface-card hidden" style="border: 1px solid var(--border-hairline); padding: 32px 24px; text-align: center; margin-bottom: 16px;">
                 <div class="svg-icon-inline" data-icon="lock" style="width: 36px; height: 36px; margin-bottom: 12px; color: var(--text-muted); display: inline-flex;"></div>
                 <h4 style="margin: 0 0 8px; font-size: 1.1rem; color: var(--text-primary);">Acesso Restrito ao Moderador</h4>
-                <p class="section-desc" style="max-width: 480px; margin: 0 auto; color: var(--text-secondary);">Apenas administradores do Gabinete possuem permissão para gerenciar operadores e perfis de acesso do Hub Olympos.</p>
+                <p class="section-desc" style="max-width: 480px; margin: 0 auto; color: var(--text-secondary);">Apenas usuários com perfil Moderador possuem permissão para gerenciar operadores e perfis de acesso do Hub Olympos.</p>
               </div>
 
               <div id="blocoGestaoUsuarios" class="surface-card" style="border: 1px solid var(--border-hairline); background: var(--bg-surface);">
                 <div class="card-header-row" style="margin-bottom: 16px;">
                   <div>
-                    <span class="section-eyebrow">MODERAÇÃO DE ACESSOS • GABINETE</span>
+                    <span class="section-eyebrow">MODERAÇÃO DE ACESSOS • PERFIL MODERADOR</span>
                     <h3 class="section-title" style="font-size: 1.15rem;">Gerenciamento de Usuários e Permissões</h3>
                     <p class="section-desc" style="margin-bottom: 0;">Consulte, cadastre, edite perfis e gerencie operadores autorizados do Hub Olympos.</p>
                   </div>
@@ -2340,6 +2397,10 @@
                     </tbody>
                   </table>
                 </div>
+                <div id="usuariosPaginacaoBar" class="olympos-pagination-bar hidden">
+                  <span id="usuariosPaginacaoInfo" class="olympos-pagination-info"></span>
+                  <div id="usuariosPaginacaoControles" class="olympos-pagination-controls"></div>
+                </div>
               </div>
             </div>
 
@@ -2347,40 +2408,63 @@
             <div id="subpaneAjustesPersonas" class="subtab-pane">
               <div class="card-header-row" style="margin-bottom: 14px;">
                 <div>
-                  <span class="section-eyebrow">DIRETRIZES SETORIAIS E MEMÓRIAS DA SMEB</span>
-                  <h3 class="section-title" style="font-size: 1.15rem;">As 17 Personas Olympos &amp; 11 Memórias Operacionais</h3>
-                  <p class="section-desc" style="margin-bottom: 0;">Consulte personas setoriais e memórias canônicas sincronizadas no Google Drive.</p>
+                  <span class="section-eyebrow">DIRETRIZES SETORIAIS E MEMÓRIAS GOOGLE DOCS DA SMEB</span>
+                  <h3 class="section-title" style="font-size: 1.15rem;">As 22 Memórias Google Docs &amp; Ecossistema Olympos (26 Personas)</h3>
+                  <p class="section-desc" style="margin-bottom: 6px;">Consulte, edite em tempo real e abra os documentos canônicos no formato padrão do Google Docs sincronizados no Google Drive.</p>
+                  <span id="memoriasSyncStatus" class="memorias-sync-status" data-status="local">22 memórias Google Docs conectadas</span>
                 </div>
                 <div class="button-group">
-                  <button id="snapshotDedaloBtn" class="btn btn-secondary btn-sm">Snapshot (Dédalo)</button>
-                  <button id="copyGeminiContextBtn" class="btn btn-secondary btn-sm">Copiar p/ Gemini</button>
-                  <button id="syncApoloBtn" class="btn btn-primary btn-sm">Sincronizar Drive + .md</button>
+                  <button id="refreshMemoriasBtn" type="button" class="btn btn-ghost btn-sm">Atualizar Docs</button>
+                  <button id="snapshotDedaloBtn" type="button" class="btn btn-secondary btn-sm">Snapshot (Dédalo)</button>
+                  <button id="copyGeminiContextBtn" type="button" class="btn btn-secondary btn-sm">Copiar p/ Gemini</button>
+                  <button id="syncApoloBtn" type="button" class="btn btn-primary btn-sm">Sincronizar Apolo (Docs)</button>
                 </div>
               </div>
 
+              <div id="memoriasFilterBar" class="memorias-filter-bar" role="group" aria-label="Filtrar memórias por perfil ou tipo">
+                <button type="button" class="memoria-filter-pill active" data-filter="TODAS">Todas (26)</button>
+                <button type="button" class="memoria-filter-pill" data-filter="GOOGLE_DOCS">Google Docs (22)</button>
+                <button type="button" class="memoria-filter-pill" data-filter="ADMIN_GABINETE">Gabinete</button>
+                <button type="button" class="memoria-filter-pill" data-filter="RH_COMISSAO">RH &amp; Comissão</button>
+                <button type="button" class="memoria-filter-pill" data-filter="PEDAGOGICO_EVENTOS">Pedagógico</button>
+                <button type="button" class="memoria-filter-pill" data-filter="JURIDICO">Jurídico</button>
+                <button type="button" class="memoria-filter-pill" data-filter="ANFITRIAS">Anfitriãs (4)</button>
+              </div>
+
               <div style="display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; align-items: center;">
-                <input type="search" id="memoriaSearchInput" class="input-clean" style="max-width: 260px;" placeholder="Filtrar persona ou domínio..." autocomplete="off" />
+                <input type="search" id="memoriaSearchInput" class="input-clean" style="max-width: 260px;" placeholder="Filtrar persona, domínio ou ID..." autocomplete="off" />
                 <div class="quick-alert-bar quick-alert-bar-responsive" style="display: flex; gap: 8px; flex: 1; min-width: 0; width: 100%; flex-wrap: wrap;">
-                  <select id="quickAlertTargetSelect" class="input-clean" style="max-width: 200px;" aria-label="Destinatário do Alerta">
-                    <option value="_memoria_helio.md">Hélio (Diário FEMURN)</option>
+                  <select id="quickAlertTargetSelect" class="input-clean" style="max-width: 220px;" aria-label="Destinatário do Alerta">
+                    <option value="_memoria_afrodite.md">Afrodite (Clima &amp; RH)</option>
                     <option value="_memoria_apolo.md">Apolo (Numeração 2026)</option>
-                    <option value="_memoria_hera.md">Hera (RH &amp; Permutas)</option>
-                    <option value="_memoria_nike.md">Nike (Seletivos PSS)</option>
-                    <option value="_memoria_temis.md">Têmis (Jurídico)</option>
-                    <option value="_memoria_orfeu.md">Orfeu (Certificados)</option>
-                    <option value="_memoria_homero.md">Homero (Portarias)</option>
-                    <option value="_memoria_hestia.md">Héstia (Gabinete)</option>
-                    <option value="_memoria_dedalo.md">Dédalo (Infra/Backups)</option>
+                    <option value="_memoria_ares.md">Ares (Sindicâncias)</option>
+                    <option value="_memoria_artemis.md">Ártemis (Licitações &amp; Fiscalização)</option>
                     <option value="_memoria_atena.md">Atena (Pedagógico)</option>
+                    <option value="_memoria_cronos.md">Cronos (Prazos &amp; Agendas)</option>
+                    <option value="_memoria_dedalo.md">Dédalo (Infra/Backups)</option>
+                    <option value="_memoria_demeter.md">Deméter (Alimentação &amp; Logística)</option>
+                    <option value="_memoria_dionisio.md">Dionísio (Cultura &amp; Eventos)</option>
+                    <option value="_memoria_hades.md">Hades (Auditoria &amp; Acervo)</option>
+                    <option value="_memoria_hefesto.md">Hefesto (Automações DevOps)</option>
+                    <option value="_memoria_helio.md">Hélio (Diário FEMURN)</option>
+                    <option value="_memoria_hera.md">Hera (RH &amp; Permutas)</option>
                     <option value="_memoria_hermes.md">Hermes (Transporte)</option>
+                    <option value="_memoria_hestia.md">Héstia (Gabinete)</option>
+                    <option value="_memoria_homero.md">Homero (Portarias)</option>
+                    <option value="_memoria_nike.md">Niké (Seletivos PSS)</option>
+                    <option value="_memoria_orfeu.md">Orfeu (Certificados)</option>
+                    <option value="_memoria_poseidon.md">Poseidon (Rede Escolar)</option>
+                    <option value="_memoria_prometeu.md">Prometeu (Fogo de Prometheus)</option>
+                    <option value="_memoria_temis.md">Têmis (Jurídico)</option>
+                    <option value="_memoria_zeus.md">Zeus (Direção Executiva)</option>
                   </select>
-                  <input type="text" id="quickAlertMessageInput" class="input-clean" style="flex: 1; min-width: min(100%, 180px);" placeholder="Despachar alerta oficial no Correio do Olimpo..." autocomplete="off" aria-label="Mensagem do Alerta" />
+                  <input type="text" id="quickAlertMessageInput" class="input-clean" style="flex: 1; min-width: min(100%, 180px);" placeholder="Despachar alerta oficial no Correio do Olimpo (Google Docs)..." autocomplete="off" aria-label="Mensagem do Alerta" />
                   <button id="quickAlertSendBtn" class="btn btn-primary btn-sm">Registrar Recado</button>
                 </div>
               </div>
 
               <div id="memoriasGrid" class="memorias-grid">
-                <div class="output-panel">Carregando ecossistema de personas e memórias...</div>
+                <div class="output-panel">Carregando ecossistema de personas e memórias Google Docs...</div>
               </div>
             </div>
 
@@ -2416,7 +2500,7 @@
         <section class="page-view hidden" id="page-chamados" aria-labelledby="chamadosSectionTitle">
           <div class="chamados-view-container">
             <!-- Hero & Métricas da Fila -->
-            <div class="stats-grid">
+            <div class="stats-grid chamados-kpi-grid">
               <div class="stat-card spotlight-card">
                 <div class="stat-top">
                   <span class="stat-label">Fila de Chamados • Pendentes</span>
@@ -2512,6 +2596,10 @@
                 <p>Carregando fila de chamados...</p>
               </div>
             </div>
+            <div id="chamadosPaginacaoBar" class="olympos-pagination-bar hidden">
+              <span id="chamadosPaginacaoInfo" class="olympos-pagination-info"></span>
+              <div id="chamadosPaginacaoControles" class="olympos-pagination-controls"></div>
+            </div>
           </div>
         </section>
         <section class="page-view hidden" id="page-pendencias" aria-hidden="true"></section>
@@ -2519,21 +2607,27 @@
     </div>
 
     <!-- =========================================================================
-         MODAL DE EDIÇÃO DE MEMÓRIA .MD (TETO ESTRITO DE 60 LINHAS)
+         MODAL DE EDIÇÃO DE MEMÓRIA GOOGLE DOCS (TETO ESTRITO DE 60 LINHAS)
          ========================================================================= -->
     <div id="memoriaModal" class="modal-backdrop hidden">
       <div class="modal-card">
-        <div class="modal-header">
-          <h3 id="modalMemoriaTitle" style="font-size: 1.08rem;">Memória Operacional</h3>
+        <div class="modal-header" style="gap: 10px;">
+          <div style="min-width: 0;">
+            <h3 id="modalMemoriaTitle" style="font-size: 1.08rem; margin: 0;">Memória Operacional</h3>
+            <div id="modalMemoriaSubtitle" class="modal-memoria-subtitle">Documento Google Docs canônico</div>
+          </div>
+          <a id="modalMemoriaOpenDocLink" href="#" target="_blank" rel="noopener noreferrer" class="folder-chip" style="margin-left: auto;">Abrir no Google Docs ↗</a>
           <button id="closeModalBtn" class="icon-capsule-btn" type="button" aria-label="Fechar"><span class="svg-icon-inline" data-icon="close"></span></button>
         </div>
         <div class="modal-body">
           <textarea id="modalMemoriaTextarea" rows="16" class="input-clean" style="font-family: var(--font-mono); font-size: 12.5px; line-height: 1.55;"></textarea>
         </div>
-        <div class="modal-footer">
+        <div class="modal-footer" style="flex-wrap: wrap; gap: 8px;">
           <span class="pill-badge pill-gold" id="modalLineCounter">0 / 60 linhas</span>
-          <div class="button-group">
-            <button id="saveMemoriaBtn" class="btn btn-primary btn-sm">Salvar no Arquivo Existente</button>
+          <div class="button-group" style="flex-wrap: wrap;">
+            <button id="reloadMemoriaBtn" type="button" class="btn btn-ghost btn-sm">Recarregar do Docs</button>
+            <button id="clearMemoriaBtn" type="button" class="btn btn-secondary btn-sm">Limpar Caixa/Pendências</button>
+            <button id="saveMemoriaBtn" type="button" class="btn btn-primary btn-sm">Salvar no Google Docs</button>
           </div>
         </div>
       </div>
@@ -2574,7 +2668,7 @@
           </div>
         </div>
         <div class="modal-footer">
-          <a href="https://drive.google.com/file/d/1DOt17v7gf3WD_380rYNnFX0j3IdWZaH_/view" target="_blank" rel="noopener noreferrer" class="folder-chip">Abrir Memória no Drive ↗</a>
+          <a href="https://docs.google.com/document/d/1ZXTlg2Wk5IKZ2Sg84HOnlePCOihccPFcYTd67wHUgkM/edit" target="_blank" rel="noopener noreferrer" class="folder-chip">Abrir Memória no Google Docs ↗</a>
           <button id="saveContadoresMdBtn" class="btn btn-primary btn-sm">Gravar Numeração</button>
         </div>
       </div>
@@ -2632,7 +2726,7 @@
       <div class="modal-card" style="max-width: 560px; width: 92%;">
         <div class="modal-header">
           <div class="modal-title-wrap">
-            <span class="badge badge-purple" style="font-size: 0.72rem; margin-bottom: 4px;">Moderação de Acessos • Gabinete</span>
+            <span class="badge badge-purple" style="font-size: 0.72rem; margin-bottom: 4px;">Moderação de Acessos • Perfil Moderador</span>
             <h3 id="modalNovoUsuarioTitulo" style="margin: 0; font-size: 1.22rem; font-weight: 700;">Adicionar Novo Usuário</h3>
           </div>
           <button id="closeModalNovoUsuarioBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal"><span class="svg-icon-inline" data-icon="close"></span></button>
@@ -2660,10 +2754,11 @@
             <div class="field-group" style="margin-bottom: 14px;">
               <label for="novoUsuarioRole">Perfil de Acesso *</label>
               <select id="novoUsuarioRole" class="input-clean" required>
-                <option value="RH_COMISSAO">RH_COMISSAO (RH &amp; Comissão de Portarias)</option>
-                <option value="PEDAGOGICO_EVENTOS">PEDAGOGICO_EVENTOS (Pedagógico &amp; Eventos)</option>
-                <option value="JURIDICO">JURIDICO (Assessoria Jurídica)</option>
-                <option value="ADMIN_GABINETE">ADMIN_GABINETE (Gabinete &amp; Governança Total - Moderador)</option>
+                <option value="RH_COMISSAO">Recursos Humanos e Portarias</option>
+                <option value="PEDAGOGICO_EVENTOS">Pedagógico e Eventos</option>
+                <option value="JURIDICO">Assessoria Jurídica</option>
+                <option value="ADMIN_GABINETE">Gabinete Executivo</option>
+                <option value="MODERADOR">Moderador (Acesso Máximo)</option>
               </select>
             </div>
 
@@ -2705,7 +2800,7 @@
       <div class="modal-card" style="max-width: 560px; width: 92%;">
         <div class="modal-header">
           <div class="modal-title-wrap">
-            <span class="badge badge-purple" style="font-size: 0.72rem; margin-bottom: 4px;">Moderação de Acessos • Perfis</span>
+            <span class="badge badge-purple" style="font-size: 0.72rem; margin-bottom: 4px;">Moderação de Acessos • Perfil Moderador</span>
             <h3 id="modalEditarUsuarioTitulo" style="margin: 0; font-size: 1.22rem; font-weight: 700;">Editar Usuário</h3>
           </div>
           <button id="closeModalEditarUsuarioBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal"><span class="svg-icon-inline" data-icon="close"></span></button>
@@ -2734,10 +2829,11 @@
             <div class="field-group" style="margin-bottom: 14px;">
               <label for="editarUsuarioRole">Perfil de Acesso *</label>
               <select id="editarUsuarioRole" class="input-clean" required>
-                <option value="RH_COMISSAO">RH_COMISSAO (RH &amp; Comissão de Portarias)</option>
-                <option value="PEDAGOGICO_EVENTOS">PEDAGOGICO_EVENTOS (Pedagógico &amp; Eventos)</option>
-                <option value="JURIDICO">JURIDICO (Assessoria Jurídica)</option>
-                <option value="ADMIN_GABINETE">ADMIN_GABINETE (Gabinete &amp; Governança Total - Moderador)</option>
+                <option value="RH_COMISSAO">Recursos Humanos e Portarias</option>
+                <option value="PEDAGOGICO_EVENTOS">Pedagógico e Eventos</option>
+                <option value="JURIDICO">Assessoria Jurídica</option>
+                <option value="ADMIN_GABINETE">Gabinete Executivo</option>
+                <option value="MODERADOR">Moderador (Acesso Máximo)</option>
               </select>
             </div>
 
@@ -3138,6 +3234,56 @@
     </div>
 
     <!-- =========================================================================
+         MODAL DE PERFIL DO USUÁRIO LOGADO (#userProfileModal)
+         ========================================================================= -->
+    <div id="userProfileModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="userProfileModalTitle">
+      <div class="modal-card" style="max-width: 480px; width: 92%;">
+        <div class="modal-header">
+          <div class="modal-title-wrap">
+            <span class="eyebrow-pill" style="margin-bottom: 4px; display: inline-block;">CONTA INSTITUCIONAL • SMEB</span>
+            <h3 id="userProfileModalTitle" style="margin: 0; font-size: 1.22rem; font-weight: 700;">Perfil do Usuário</h3>
+          </div>
+          <button id="closeUserProfileModalBtn" class="icon-capsule-btn" type="button" aria-label="Fechar perfil"><span class="svg-icon-inline" data-icon="close"></span></button>
+        </div>
+
+        <div class="modal-body" style="padding: 20px 24px;">
+          <div class="user-profile-summary">
+            <div class="user-profile-avatar-lg" id="profileModalAvatarInitials">--</div>
+            <div class="user-profile-summary-meta">
+              <div class="user-profile-display-name" id="profileModalDisplayName">--</div>
+              <div class="user-profile-email" id="profileModalEmail">--</div>
+              <span class="pill-badge pill-gold" id="profileModalRoleBadge" style="margin-top: 6px; font-size: 0.72rem;">--</span>
+            </div>
+          </div>
+
+          <form id="formUserProfile">
+            <div class="field-group" style="margin-bottom: 14px;">
+              <label for="profileInputFullName">Nome completo *</label>
+              <input type="text" id="profileInputFullName" class="input-clean" placeholder="Seu nome completo" required autocomplete="name" />
+            </div>
+
+            <div class="field-group" style="margin-bottom: 14px;">
+              <label for="profileInputDepartment">Departamento / Lotação</label>
+              <input type="text" id="profileInputDepartment" class="input-clean" placeholder="Ex: Gabinete do Secretário" autocomplete="organization" />
+            </div>
+
+            <div id="profileModalFeedback" class="output-panel hidden" style="margin-bottom: 14px; font-size: 12.5px;"></div>
+
+            <button type="submit" id="btnSaveUserProfile" class="btn btn-primary" style="width: 100%; justify-content: center;">
+              Salvar Alterações
+            </button>
+          </form>
+
+          <div class="user-profile-footer-danger">
+            <button type="button" id="btnLogoutFromProfileModal" class="btn btn-danger" style="width: 100%; justify-content: center;">
+              Sair (Encerrar acesso)
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =========================================================================
          INSPETOR 60-30-10 & ALTERNADOR DE TEMA EDITORIAL
          ========================================================================= -->
     <!-- Supabase JS v2 CDN — Fixado em v2.119.0 com Proteção Subresource Integrity (SRI) -->
@@ -3160,6 +3306,7 @@
     <script src="js/supabase_client.js"></script>
     <script src="js/api.js"></script>
     <script src="js/signals.js"></script>
+    <script src="js/pagination.js"></script>
     <script src="js/router.js"></script>
     <script src="js/views/visaoGeral.js"></script>
     <script src="js/views/oficios.js"></script>

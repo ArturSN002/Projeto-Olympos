@@ -22,28 +22,52 @@ const PROMETHEUS_CONFIG = {
   FOLDER_PLANILHAS_DIARIO: '1aj514v29gytXH9j5LY_V76ap9XIblwHS',
   ABA_DESTINO: 'Publicações',
   MAPA_MEMORIAS_ID: {
-    '_memoria_apolo': '1wGlcqqTuWAyy-2VRO_QqyyMcKHb4AmRn',
-    '_memoria_apolo.md': '1wGlcqqTuWAyy-2VRO_QqyyMcKHb4AmRn',
-    '_memoria_atena': '1gIpOIxV0Ll823taKf2rOR_pdeymhTk5g',
-    '_memoria_atena.md': '1gIpOIxV0Ll823taKf2rOR_pdeymhTk5g',
-    '_memoria_dedalo': '1fLV4Fv_-omsYMYpqOnJbSgIofj7CP6DH',
-    '_memoria_dedalo.md': '1fLV4Fv_-omsYMYpqOnJbSgIofj7CP6DH',
-    '_memoria_helio': '1DUJWolZjrEwFkWZdadoxPkoqesdk33xN',
-    '_memoria_helio.md': '1DUJWolZjrEwFkWZdadoxPkoqesdk33xN',
-    '_memoria_hera': '1Kjz_pf3agZu3SiEonizLlMJogjmoNa5N',
-    '_memoria_hera.md': '1Kjz_pf3agZu3SiEonizLlMJogjmoNa5N',
-    '_memoria_hermes': '1SKm7QmOcPWZqVqk3nchO96TOS-0mHJ-Y',
-    '_memoria_hermes.md': '1SKm7QmOcPWZqVqk3nchO96TOS-0mHJ-Y',
-    '_memoria_hestia': '1h60ezPEWsLtiQ34BA1V3GrNAZDtwBZqj',
-    '_memoria_hestia.md': '1h60ezPEWsLtiQ34BA1V3GrNAZDtwBZqj',
-    '_memoria_homero': '1inxLvsP8ID3rWPcGGeGDkUZJiNVBTcOG',
-    '_memoria_homero.md': '1inxLvsP8ID3rWPcGGeGDkUZJiNVBTcOG',
-    '_memoria_nike': '1Sr0Qinqa2p5l0ikG-72YjRsPsaaGS4Fi',
-    '_memoria_nike.md': '1Sr0Qinqa2p5l0ikG-72YjRsPsaaGS4Fi',
-    '_memoria_orfeu': '1JNd8AjGoDAweU9mw9VNhgWEJpPPwgz6d',
-    '_memoria_orfeu.md': '1JNd8AjGoDAweU9mw9VNhgWEJpPPwgz6d',
-    '_memoria_temis': '1wqPlMFoVoxoIJvHXRNCuX5smXltGW1mh',
-    '_memoria_temis.md': '1wqPlMFoVoxoIJvHXRNCuX5smXltGW1mh'
+    '_memoria_afrodite': '1c-CTMKdpQQ0k1vhSpGL-3ZH9WptM59pUDYt0HYI5SyI',
+    '_memoria_afrodite.md': '1c-CTMKdpQQ0k1vhSpGL-3ZH9WptM59pUDYt0HYI5SyI',
+    '_memoria_apolo': '1ZXTlg2Wk5IKZ2Sg84HOnlePCOihccPFcYTd67wHUgkM',
+    '_memoria_apolo.md': '1ZXTlg2Wk5IKZ2Sg84HOnlePCOihccPFcYTd67wHUgkM',
+    '_memoria_ares': '1gH3XxSOZ_KmAJIxvgfTM04b45YefcK4Y23hWVdOdgOE',
+    '_memoria_ares.md': '1gH3XxSOZ_KmAJIxvgfTM04b45YefcK4Y23hWVdOdgOE',
+    '_memoria_artemis': '1q3TCb_0CxEGsKINR9oQiFbPA-ugynDqihQaAiyZxNc4',
+    '_memoria_artemis.md': '1q3TCb_0CxEGsKINR9oQiFbPA-ugynDqihQaAiyZxNc4',
+    '_memoria_atena': '1L_VJ4xwZIT3KaSOsLnImeORgjmiDjSuBhPavRzh0tHg',
+    '_memoria_atena.md': '1L_VJ4xwZIT3KaSOsLnImeORgjmiDjSuBhPavRzh0tHg',
+    '_memoria_cronos': '1g3mqrS_Op1h7ZjO30mzc6pVCioV985Zr4oH1wOd6Wbo',
+    '_memoria_cronos.md': '1g3mqrS_Op1h7ZjO30mzc6pVCioV985Zr4oH1wOd6Wbo',
+    '_memoria_dedalo': '1odtXhXWeio4g7UY3Sis-sMGZoDLr1BwJwffJ2SNAGdg',
+    '_memoria_dedalo.md': '1odtXhXWeio4g7UY3Sis-sMGZoDLr1BwJwffJ2SNAGdg',
+    '_memoria_demeter': '1J_xIwY2d027oIXWmHvr1Hm2_W5QVMgu0KhY4OXpgImw',
+    '_memoria_demeter.md': '1J_xIwY2d027oIXWmHvr1Hm2_W5QVMgu0KhY4OXpgImw',
+    '_memoria_dionisio': '1VJgWX03Z4qpS6jW8Zf-NsektuaEeT2QL2uwjTUajK6E',
+    '_memoria_dionisio.md': '1VJgWX03Z4qpS6jW8Zf-NsektuaEeT2QL2uwjTUajK6E',
+    '_memoria_hades': '1hA5GXqIN0M_PTTxTZlZanICSjk7Xjc1_J_WIfP46JA0',
+    '_memoria_hades.md': '1hA5GXqIN0M_PTTxTZlZanICSjk7Xjc1_J_WIfP46JA0',
+    '_memoria_hefesto': '1Zzjp9NNhRSKka773EoVj6s9NcrTu2m3XnPL63GLBQcg',
+    '_memoria_hefesto.md': '1Zzjp9NNhRSKka773EoVj6s9NcrTu2m3XnPL63GLBQcg',
+    '_memoria_helio': '1JUrOsacYDgF5X1H5DUdYXhOalGoUBUPatli8xp39SU8',
+    '_memoria_helio.md': '1JUrOsacYDgF5X1H5DUdYXhOalGoUBUPatli8xp39SU8',
+    '_memoria_hera': '1x3TO_H3TXbnjFqsTq3rEyOXL0cbeQmD5n_nu0GD44G4',
+    '_memoria_hera.md': '1x3TO_H3TXbnjFqsTq3rEyOXL0cbeQmD5n_nu0GD44G4',
+    '_memoria_hermes': '1_7WJSZ0D2tbP1sHWH32pjkDZfmcVUBGJXLUtRWMrlEo',
+    '_memoria_hermes.md': '1_7WJSZ0D2tbP1sHWH32pjkDZfmcVUBGJXLUtRWMrlEo',
+    '_memoria_hestia': '1gj0U051uTCjl3oh_X_kqnxtVQQHae0nvlFa62c2N91Q',
+    '_memoria_hestia.md': '1gj0U051uTCjl3oh_X_kqnxtVQQHae0nvlFa62c2N91Q',
+    '_memoria_homero': '1JgCEpBhJC07zjt1TkZvmgzfG00US4FgwwDn-DvgCx8c',
+    '_memoria_homero.md': '1JgCEpBhJC07zjt1TkZvmgzfG00US4FgwwDn-DvgCx8c',
+    '_memoria_nike': '18wyqKRmpVpcNgIHPB2Vg-akLWyGBTLvrkEUwz5bWOW4',
+    '_memoria_nike.md': '18wyqKRmpVpcNgIHPB2Vg-akLWyGBTLvrkEUwz5bWOW4',
+    '_memoria_orfeu': '18a_OUyL4tgIN_NkHzStSWOVZS_krGz_B8Z7uVGQfRK8',
+    '_memoria_orfeu.md': '18a_OUyL4tgIN_NkHzStSWOVZS_krGz_B8Z7uVGQfRK8',
+    '_memoria_poseidon': '1P6H0MChQZyoHAXxFEhO6W60jYuEac-_VYdD95PTOicw',
+    '_memoria_poseidon.md': '1P6H0MChQZyoHAXxFEhO6W60jYuEac-_VYdD95PTOicw',
+    '_memoria_prometeu': '1Rp10RyJTyt5qxzTNacFv2lQysJAhzS6Cz5PU3Y-Hg4w',
+    '_memoria_prometeu.md': '1Rp10RyJTyt5qxzTNacFv2lQysJAhzS6Cz5PU3Y-Hg4w',
+    '_memoria_prometheus': '1Rp10RyJTyt5qxzTNacFv2lQysJAhzS6Cz5PU3Y-Hg4w',
+    '_memoria_prometheus.md': '1Rp10RyJTyt5qxzTNacFv2lQysJAhzS6Cz5PU3Y-Hg4w',
+    '_memoria_temis': '11Veph2HxedUA6O0NoMMzB87C1X1lGAexyt8pmZRdx2A',
+    '_memoria_temis.md': '11Veph2HxedUA6O0NoMMzB87C1X1lGAexyt8pmZRdx2A',
+    '_memoria_zeus': '1qi_H4oKokFDEmXiNuGRYsh6kM4YxgJAQuFirDzOVkdM',
+    '_memoria_zeus.md': '1qi_H4oKokFDEmXiNuGRYsh6kM4YxgJAQuFirDzOVkdM'
   }
 };
 
@@ -154,8 +178,8 @@ function registrarIndicePlanilhaDiarioOficial2026(resultadosSalvos) {
 }
 
 /**
- * Grava alerta nos arquivos _memoria_<deus>.md acessando exclusivamente pelos IDs fixos.
- * VEDAÇÃO ABSOLUTA: Jamais cria arquivos .md órfãos. Mantém o Rolling Buffer de 60 linhas e a seção ## 0. Caixa de Entrada.
+ * Grava alerta nos documentos _memoria_<deus> (Google Docs) acessando exclusivamente pelos IDs fixos.
+ * VEDAÇÃO ABSOLUTA: Jamais cria arquivos órfãos. Mantém o Rolling Buffer de 60 linhas e a seção ## 0. Caixa de Entrada.
  */
 function registrarAlertaMemoriaOlympos(nomeArquivoMd, novaLinha) {
   try {
@@ -171,11 +195,19 @@ function registrarAlertaMemoriaOlympos(nomeArquivoMd, novaLinha) {
     }
 
     if (!file) {
-      console.warn(`Arquivo de memória ${nomeArquivoMd} (ID: ${idFixo}) não pôde ser aberto. Bloqueada a criação de arquivo avulso.`);
+      console.warn(`Documento de memória ${nomeArquivoMd} (ID: ${idFixo}) não pôde ser aberto. Bloqueada a criação de arquivo avulso.`);
       return { status: 'BLOQUEADO', motivo: 'Arquivo não localizado por ID fixo. Criação desativada.' };
     }
 
-    const conteudo = file.getBlob().getDataAsString('UTF-8') || '';
+    const mime = typeof file.getMimeType === 'function' ? file.getMimeType() : '';
+    const isGoogleDocs = mime === 'application/vnd.google-apps.document' || (typeof MimeType !== 'undefined' && mime === MimeType.GOOGLE_DOCS) || !!idFixo;
+    let conteudo = '';
+    if (isGoogleDocs && typeof DocumentApp !== 'undefined' && DocumentApp.openById) {
+      conteudo = DocumentApp.openById(idFixo).getBody().getText() || '';
+    } else {
+      conteudo = file.getBlob().getDataAsString('UTF-8') || '';
+    }
+
     const linhas = conteudo.split('\n');
     const novasLinhas = [];
     const agora = Utilities.formatDate(new Date(), 'America/Fortaleza', 'yyyy-MM-dd HH:mm');
@@ -201,9 +233,15 @@ function registrarAlertaMemoriaOlympos(nomeArquivoMd, novaLinha) {
     }
 
     const textoFinal = novasLinhas.slice(0, 60).join('\n');
-    file.setContent(textoFinal);
+    if (isGoogleDocs && typeof DocumentApp !== 'undefined' && DocumentApp.openById) {
+      const doc = DocumentApp.openById(idFixo);
+      doc.getBody().setText(textoFinal);
+      doc.saveAndClose();
+    } else {
+      file.setContent(textoFinal);
+    }
 
-    return { status: 'OK', arquivo: nomeArquivoMd, totalLinhas: Math.min(novasLinhas.length, 60) };
+    return { status: 'OK', arquivo: nomeArquivoMd, id: idFixo, totalLinhas: Math.min(novasLinhas.length, 60) };
   } catch (e) {
     console.warn('Aviso ao gravar memória ' + nomeArquivoMd + ':', e);
     return { status: 'AVISO', erro: e.message };

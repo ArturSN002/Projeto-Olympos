@@ -67,9 +67,9 @@ window.OlymposRouter = (function() {
       category: 'gestao'
     },
     'personas': {
-      eyebrow: 'ARQUITETURA COGNITIVA • 17 PERSONAS & 11 MEMÓRIAS',
-      title: 'Ecossistema Olympos e Memórias .md.',
-      subtitle: 'Painel de diretrizes operacionais, memórias institucionais e assistentes especializados da SMEB.',
+      eyebrow: 'ARQUITETURA COGNITIVA • 26 PERSONAS & 22 MEMÓRIAS GOOGLE DOCS',
+      title: 'Ecossistema Olympos e Memórias Google Docs.',
+      subtitle: 'Painel de diretrizes operacionais, 22 memórias canônicas em Google Docs e assistentes especializados da SMEB.',
       category: 'inteligencia'
     },
     'busca': {
