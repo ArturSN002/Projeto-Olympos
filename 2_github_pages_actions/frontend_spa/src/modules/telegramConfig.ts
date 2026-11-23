@@ -24,7 +24,7 @@ export interface TelegramVinculoRow {
   vinculado_em: string;
 }
 
-export const TELEGRAM_BOT_USERNAME = 'OlymposSMEBBot';
+export const TELEGRAM_BOT_USERNAME = 'HubOlympos_bot';
 
 const DEFAULT_PREFS: TelegramPreferencias = {
   pendencias: true,
