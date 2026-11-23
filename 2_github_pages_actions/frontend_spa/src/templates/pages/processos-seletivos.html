@@ -1,0 +1,37 @@
+        <section class="page-view hidden" id="page-processos-seletivos">
+          <div class="surface-card pss-header-bar">
+            <div class="pss-edital-picker">
+              <div style="flex: 1 1 260px;">
+                <label for="pssEditalSelect" style="font-size: 0.78rem; font-weight: 600; display: block; margin-bottom: 4px;">Edital PSS Ativo (Motor Niké)</label>
+                <select id="pssEditalSelect" class="input-clean">
+                  <option value="">Carregando editais...</option>
+                </select>
+              </div>
+              <div id="pssEditalStatusBadge" class="pill-badge">Sem edital selecionado</div>
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+              <button type="button" id="btnPssAtualizarTudo" class="btn btn-secondary btn-sm">Atualizar Painel</button>
+              <button type="button" id="btnPssToggleNovoEdital" class="btn btn-primary btn-sm">+ Novo Edital PSS</button>
+            </div>
+          </div>
+
+          <div id="pssSubtabsNav" class="pss-subtabs-nav" role="tablist" aria-label="Etapas do Processo Seletivo">
+            <button type="button" class="pss-subtab-btn is-active" role="tab" aria-selected="true" data-pss-tab="editais">1. Editais &amp; Etapas</button>
+            <button type="button" class="pss-subtab-btn" role="tab" aria-selected="false" data-pss-tab="mapeamento">2. Mapeador Forms</button>
+            <button type="button" class="pss-subtab-btn" role="tab" aria-selected="false" data-pss-tab="triagem">3. Desduplicação &amp; Quarentena</button>
+            <button type="button" class="pss-subtab-btn" role="tab" aria-selected="false" data-pss-tab="checkin">4. Check-in &amp; Certificações</button>
+            <button type="button" class="pss-subtab-btn" role="tab" aria-selected="false" data-pss-tab="notas">5. 1ª Fase (N Notas)</button>
+            <button type="button" class="pss-subtab-btn" role="tab" aria-selected="false" data-pss-tab="segunda-fase">6. 2ª Fase (Entrevista/Prática)</button>
+            <button type="button" class="pss-subtab-btn" role="tab" aria-selected="false" data-pss-tab="recursos">7. Recursos &amp; Snapshots</button>
+            <button type="button" class="pss-subtab-btn" role="tab" aria-selected="false" data-pss-tab="publicacoes">8. Publicações &amp; Fila Viva</button>
+          </div>
+
+          <div id="pssTabEditais" class="pss-panel" role="tabpanel"></div>
+          <div id="pssTabMapeamento" class="pss-panel hidden" role="tabpanel"></div>
+          <div id="pssTabTriagem" class="pss-panel hidden" role="tabpanel"></div>
+          <div id="pssTabCheckin" class="pss-panel hidden" role="tabpanel"></div>
+          <div id="pssTabNotas" class="pss-panel hidden" role="tabpanel"></div>
+          <div id="pssTabSegundaFase" class="pss-panel hidden" role="tabpanel"></div>
+          <div id="pssTabRecursos" class="pss-panel hidden" role="tabpanel"></div>
+          <div id="pssTabPublicacoes" class="pss-panel hidden" role="tabpanel"></div>
+        </section>

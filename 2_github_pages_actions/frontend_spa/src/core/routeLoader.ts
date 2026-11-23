@@ -24,9 +24,10 @@ const ROUTE_IMPORTERS: Record<string, () => Promise<RouteModule>> = {
   'busca':          () => import('../modules/busca'),
   'configuracoes':  () => import('../modules/configuracoes'),
   'chamados':       () => import('../modules/chamados'),
-  'auditoria':      () => import('../modules/auditoria'),
-  'kiosk':          () => import('../modules/kiosk'),
-  'oraculo':        () => import('../modules/oraculo')
+  'auditoria':           () => import('../modules/auditoria'),
+  'kiosk':               () => import('../modules/kiosk'),
+  'oraculo':             () => import('../modules/oraculo'),
+  'processos-seletivos': () => import('../modules/processos-seletivos')
 };
 
 const MODAL_IMPORTERS: Record<string, { id: string; loader: () => Promise<{ default: string }> }> = {
@@ -51,6 +52,7 @@ function normalizeRouteKey(pageId: string): string {
   if (p === 'permutas') return 'papiro-cadmo';
   if (p === 'ajustes' || p === 'personas') return 'configuracoes';
   if (p === 'consulta-servidores') return 'servidores';
+  if (p === 'pss') return 'processos-seletivos';
   return ROUTE_IMPORTERS[p] ? p : 'visao-geral';
 }
 

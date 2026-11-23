@@ -289,22 +289,22 @@ window.OlymposApp = (function() {
   const RBAC_TAB_PERMISSIONS = {
     MODERADOR: [
       'visao-geral', 'oficios', 'portarias', 'licencas', 'certificados', 'relatorios',
-      'diario-oficial', 'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'oraculo', 'auditoria', 'kiosk', 'configuracoes'
+      'diario-oficial', 'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'oraculo', 'processos-seletivos', 'pss', 'auditoria', 'kiosk', 'configuracoes'
     ],
     ADMIN_GABINETE: [
       'visao-geral', 'oficios', 'portarias', 'licencas', 'certificados', 'relatorios',
-      'diario-oficial', 'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'oraculo', 'kiosk', 'configuracoes'
+      'diario-oficial', 'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'oraculo', 'processos-seletivos', 'pss', 'kiosk', 'configuracoes'
     ],
     RH_COMISSAO: [
       'visao-geral', 'oficios', 'portarias', 'licencas', 'relatorios',
-      'diario-oficial', 'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'oraculo', 'kiosk', 'configuracoes'
+      'diario-oficial', 'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'oraculo', 'processos-seletivos', 'pss', 'kiosk', 'configuracoes'
     ],
     PEDAGOGICO_EVENTOS: [
       'visao-geral', 'oficios', 'certificados', 'relatorios', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'oraculo', 'kiosk', 'configuracoes'
     ],
     JURIDICO: [
       'visao-geral', 'oficios', 'portarias', 'relatorios', 'diario-oficial',
-      'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'oraculo', 'kiosk', 'configuracoes'
+      'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'oraculo', 'processos-seletivos', 'pss', 'kiosk', 'configuracoes'
     ]
   };
 

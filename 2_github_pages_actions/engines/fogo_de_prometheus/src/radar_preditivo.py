@@ -648,6 +648,77 @@ def _atualizar_publicacao_diario_supabase(
         return False
 
 
+def conciliar_publicacao_pss_femurn(
+    texto_ato: str,
+    codigo_femurn: str,
+    data_circulacao: str,
+    supabase_url: str,
+    service_role_key: str,
+    *,
+    http_fn: Any = None,
+) -> list[str]:
+    """
+    Cruza atos FEMURN contendo numero de edital PSS (ex: 001/2026) contra
+    public.pss_editais / public.pss_publicacoes preenchendo codigo_femurn automaticamente.
+    """
+    if not texto_ato or not codigo_femurn or not supabase_url or not service_role_key:
+        return []
+
+    req_fn = http_fn or _http_request
+    base_url = supabase_url.rstrip("/")
+    headers = {
+        "apikey": service_role_key,
+        "Authorization": f"Bearer {service_role_key}",
+        "Content-Type": "application/json",
+    }
+
+    matches = re.findall(r"\b(\d{1,4}/\d{4})\b", normalizar_nfd(texto_ato))
+    if not matches:
+        return []
+
+    conciliados: list[str] = []
+    for num_ed in dict.fromkeys(matches):
+        num_enc = urllib.parse.quote(num_ed, safe="")
+        try:
+            res_ed = req_fn(
+                "GET",
+                f"{base_url}/rest/v1/pss_editais?numero_edital=eq.{num_enc}&select=id,numero_edital&limit=3",
+                headers=headers,
+                timeout=15,
+            )
+            if not (200 <= getattr(res_ed, "status_code", 0) < 300):
+                continue
+            editais = res_ed.json() if hasattr(res_ed, "json") else json.loads(getattr(res_ed, "text", "[]") or "[]")
+            if not isinstance(editais, list):
+                continue
+
+            for ed in editais:
+                ed_id = str(ed.get("id") or "").strip()
+                if not ed_id:
+                    continue
+                patch_url = (
+                    f"{base_url}/rest/v1/pss_publicacoes"
+                    f"?edital_id=eq.{urllib.parse.quote(ed_id, safe='')}&codigo_femurn=is.null"
+                )
+                patch_headers = dict(headers)
+                patch_headers["Prefer"] = "return=minimal"
+                res_patch = req_fn(
+                    "PATCH",
+                    patch_url,
+                    json_body={
+                        "codigo_femurn": codigo_femurn,
+                        "data_circulacao_femurn": data_circulacao or None,
+                    },
+                    headers=patch_headers,
+                    timeout=15,
+                )
+                if 200 <= getattr(res_patch, "status_code", 0) < 300:
+                    conciliados.append(num_ed)
+        except Exception:
+            continue
+    return conciliados
+
+
 def _despachar_recado_persona_gas(
     persona_slug: str,
     codigo_femurn: str,
@@ -918,6 +989,16 @@ def executar_radar_diario(
                 supabase_url,
                 service_role_key,
             )
+            if pss_pub:
+                conciliados = conciliar_publicacao_pss_femurn(
+                    texto_pub,
+                    cod_femurn,
+                    str(pub.get("data_publicacao") or dt_ref),
+                    supabase_url,
+                    service_role_key,
+                )
+                if conciliados:
+                    alerta_item["pss_conciliados"] = conciliados
 
         if eh_acionavel:
             detalhes_msg: list[str] = [f"Persona: {persona_nome}"]

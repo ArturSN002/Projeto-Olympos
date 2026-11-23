@@ -90,6 +90,12 @@ window.OlymposRouter = (function() {
       subtitle: 'Pesquisa em linguagem natural nas normas, atos FEMURN, portarias, ofícios e memórias autorizadas com zero alucinação.',
       category: 'inteligencia'
     },
+    'processos-seletivos': {
+      eyebrow: 'MOTOR NIKÉ • SELEÇÃO PÚBLICA & FILA VIVA',
+      title: 'Processos Seletivos Simplificados (PSS).',
+      subtitle: 'Mapeamento condicional de formulários, desduplicação pela última inscrição, avaliação multi-fase, recursos e fila viva de convocações.',
+      category: 'gestao'
+    },
     'chamados': {
       eyebrow: 'CENTRAL DE ATENDIMENTO • SMEB 2026',
       title: 'Chamados e Pendências Operacionais.',
@@ -155,6 +161,9 @@ window.OlymposRouter = (function() {
     if (pageId === 'licencas') {
       pageId = 'portarias';
       targetSubtab = 'licencas';
+    }
+    if (pageId === 'pss') {
+      pageId = 'processos-seletivos';
     }
 
     if (!PAGES[pageId]) {

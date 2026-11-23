@@ -257,6 +257,39 @@ def collect_documents_from_supabase(
                     }
                 )
 
+    # 4. Publicacoes Oficiais Homologadas de PSS (Onda 5 — somente texto publico sanitizado)
+    st_pss, pss_rows = http_fn(
+        "GET",
+        f"{supabase_url}/rest/v1/pss_publicacoes"
+        "?select=id,titulo,tipo_publicacao,codigo_femurn,texto_publico_sanitizado,publicado_em"
+        "&texto_publico_sanitizado=not.is.null&order=publicado_em.desc&limit=100",
+        headers=hdrs,
+        timeout=25,
+    )
+    if st_pss == 200 and isinstance(pss_rows, list):
+        for r in pss_rows:
+            fid = str(r.get("id") or "").strip()
+            titulo = str(r.get("titulo") or f"Publicacao PSS {fid}").strip()
+            texto_pub = str(r.get("texto_publico_sanitizado") or "").strip()
+            if not fid or not texto_pub:
+                continue
+            cod_fem = str(r.get("codigo_femurn") or "").strip()
+            docs.append(
+                {
+                    "fonte_tipo": "PSS_PUBLICO",
+                    "fonte_id": fid,
+                    "titulo": titulo[:220],
+                    "url_fonte": "#processos-seletivos",
+                    "persona_tag": "nike",
+                    "rbac_min_role": "VISITANTE",
+                    "texto": (
+                        f"{titulo} ({r.get('tipo_publicacao') or 'PSS'})\n"
+                        + (f"Codigo FEMURN: {cod_fem}\n" if cod_fem else "")
+                        + f"\n{texto_pub}"
+                    ),
+                }
+            )
+
     return docs
 
 
