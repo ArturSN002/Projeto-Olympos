@@ -35,6 +35,8 @@ window.OlymposViews.calendario = (function() {
   var activeSector = 'todos';
   var selectedDate = null;
   var eventsBound = false;
+  var agendaCloudLoaded = false;
+  var agendaCloudLoading = false;
 
   // Nomes canônicos em Português
   var MESES_NOMES = [
@@ -1311,8 +1313,11 @@ window.OlymposViews.calendario = (function() {
     renderizar();
 
     // Sincronização em segundo plano da agenda do Supabase
-    if (window.OlymposSupabase && typeof window.OlymposSupabase.carregarAgendaEventos === 'function') {
+    if (!agendaCloudLoaded && !agendaCloudLoading && window.OlymposSupabase && typeof window.OlymposSupabase.carregarAgendaEventos === 'function') {
+      agendaCloudLoading = true;
       window.OlymposSupabase.carregarAgendaEventos(selectedYear).then(function(eventosSup) {
+        agendaCloudLoading = false;
+        agendaCloudLoaded = true;
         if (Array.isArray(eventosSup) && eventosSup.length > 0) {
           var locais = obterEventosAgendaCustom();
           var mapLocais = {};
@@ -1323,7 +1328,16 @@ window.OlymposViews.calendario = (function() {
           salvarListaAgendaCustom(Object.keys(mapLocais).map(function(k) { return mapLocais[k]; }));
           renderizar();
         }
+        if (window.OlymposViews && window.OlymposViews.visaoGeral) {
+          if (typeof window.OlymposViews.visaoGeral.renderizarWidgetEventosAgenda === 'function') {
+            window.OlymposViews.visaoGeral.renderizarWidgetEventosAgenda();
+          }
+          if (typeof window.OlymposViews.visaoGeral.atualizarTelemetriaCientifica === 'function') {
+            window.OlymposViews.visaoGeral.atualizarTelemetriaCientifica();
+          }
+        }
       }).catch(function(err) {
+        agendaCloudLoading = false;
         console.warn('[Calendario] Carregamento inicial do Supabase em background:', err);
       });
     }
@@ -1402,7 +1416,7 @@ window.OlymposViews.calendario = (function() {
     var filterContainer = document.getElementById('calFilterPillsContainer');
     if (filterContainer) {
       filterContainer.addEventListener('click', function(e) {
-        var pill = e.target.closest('.cal-pill');
+        var pill = (e.target && typeof e.target.closest === 'function') ? e.target.closest('.cal-pill') : null;
         if (!pill) return;
         var cat = pill.getAttribute('data-category');
         if (cat) setFiltro(cat);

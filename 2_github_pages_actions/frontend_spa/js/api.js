@@ -92,7 +92,11 @@ window.OlymposApi = (function() {
     if (data && data.code === 'MFA_REQUIRED') {
       console.warn('[Olympos Zero-Trust] MFA (aal2) obrigatório para [' + (action || 'ação') + '].');
       if (window.OlymposApp && typeof window.OlymposApp.solicitarMfaObrigatorio === 'function') {
-        window.OlymposApp.solicitarMfaObrigatorio(data);
+        window.OlymposApp.solicitarMfaObrigatorio(function() {
+          if (action === 'overview_get' && window.OlymposViews && window.OlymposViews.visaoGeral) {
+            window.OlymposViews.visaoGeral.recarregar();
+          }
+        });
       }
       if (onError) onError(new Error(data.mensagem || 'Autenticação em dois fatores (MFA) obrigatória para este perfil.'));
       return;

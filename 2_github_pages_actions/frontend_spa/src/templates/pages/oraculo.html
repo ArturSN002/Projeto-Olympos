@@ -1,0 +1,68 @@
+        <section class="page-view hidden" id="page-oraculo">
+          <div class="surface-card oraculo-hero-card">
+            <div class="card-header-row" style="align-items: flex-start; gap: 14px; flex-wrap: wrap;">
+              <div>
+                <span class="section-eyebrow">ORÁCULO VETORIAL • GEMINI EMBEDDING 2 ($0) • ALUCINAÇÃO ZERO</span>
+                <h2 class="section-title" style="margin: 4px 0 6px;">Oráculo Institucional Olympos</h2>
+                <p class="section-desc" style="margin: 0; max-width: 720px;">
+                  Pesquise em linguagem natural nos atos da FEMURN, portarias, ofícios, modelos institucionais, normas municipais e memórias autorizadas. Retorna trechos literais ranqueados e roteamento automático para a persona especialista.
+                </p>
+              </div>
+              <div class="oraculo-badges-col">
+                <span class="pill-badge pill-green" id="oraculoCostBadge">Operação $0 • Zero Flash</span>
+                <span class="pill-badge pill-gold" id="oraculoModeBadge">Pronto para consulta</span>
+              </div>
+            </div>
+
+            <form id="oraculoSearchForm" class="oraculo-search-form" role="search" aria-label="Pesquisa semântica no Oráculo Olympos">
+              <div class="oraculo-search-input-wrap">
+                <label for="oraculoQueryInput" class="sr-only">Pergunta ou termo de pesquisa institucional</label>
+                <input
+                  type="search"
+                  id="oraculoQueryInput"
+                  class="input-clean oraculo-query-input"
+                  placeholder="Ex.: qual o prazo de prorrogação de licença-prêmio ou regras de permuta intermunicipal?"
+                  autocomplete="off"
+                  required
+                />
+                <button type="submit" id="oraculoSubmitBtn" class="btn btn-primary">Consultar Oráculo</button>
+              </div>
+
+              <div class="oraculo-filter-row" id="oraculoFonteFilters" role="tablist" aria-label="Filtrar por tipo de fonte">
+                <button type="button" class="filter-pill active" data-oraculo-fonte="">Todas as Fontes</button>
+                <button type="button" class="filter-pill" data-oraculo-fonte="FEMURN">FEMURN</button>
+                <button type="button" class="filter-pill" data-oraculo-fonte="MEMORIA_DOC">Memórias Docs</button>
+                <button type="button" class="filter-pill" data-oraculo-fonte="PORTARIA">Portarias</button>
+                <button type="button" class="filter-pill" data-oraculo-fonte="OFICIO">Ofícios</button>
+                <button type="button" class="filter-pill" data-oraculo-fonte="NORMA_MUNICIPAL">Normas Municipais</button>
+                <button type="button" class="filter-pill" data-oraculo-fonte="MODELO_SNIPPET">Minutas</button>
+              </div>
+            </form>
+
+            <div id="oraculoPiiAlert" class="output-panel output-warning hidden" role="status" style="margin-top: 12px;"></div>
+          </div>
+
+          <div id="oraculoPersonaContainer" class="hidden" style="margin-top: 16px;"></div>
+
+          <div id="oraculoResultsContainer" class="oraculo-results-grid" style="margin-top: 16px;">
+            <div class="surface-card" style="padding: 28px; text-align: center;">
+              <span class="section-eyebrow">BUSCA HÍBRIDA PGVECTOR + FULL-TEXT PORTUGUÊS</span>
+              <h3 style="margin: 6px 0 8px;">Consulte com Citação Literal Verificada</h3>
+              <p class="section-desc" style="max-width: 580px; margin: 0 auto;">
+                Digite sua dúvida acima para recuperar trechos oficiais filtrados automaticamente pelo seu perfil RBAC, com pontuação de similaridade e link direto para o documento fonte.
+              </p>
+            </div>
+          </div>
+
+          <div class="surface-card oraculo-incubated-footer" style="margin-top: 16px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+              <div>
+                <strong style="font-size: 0.86rem;">Síntese Conversacional Generativa (Gemini Flash)</strong>
+                <p style="margin: 2px 0 0; font-size: 0.78rem; color: var(--text-muted);">
+                  Módulo formalmente incubado (<code>ENABLE_GENERATIVE_LLM=false</code>) por diretriz de custo zero (\$0) e mitigação de alucinações jurídicas. Apenas evidências literais são exibidas.
+                </p>
+              </div>
+              <span class="pill-badge pill-purple">Incubado • Contrato Pronto</span>
+            </div>
+          </div>
+        </section>

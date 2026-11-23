@@ -5,6 +5,7 @@ window.OlymposViews = window.OlymposViews || {};
 
 window.OlymposViews.visaoGeral = (function() {
   let isLoaded = false;
+  let isLoadingOverview = false;
   let lastOverviewData = null;
   let newsLoaded = false;
   let newsLoading = false;
@@ -414,9 +415,15 @@ window.OlymposViews.visaoGeral = (function() {
     if (!sessao || !sessao.perfil) {
       lastOverviewData = null;
       isLoaded = false;
+      isLoadingOverview = false;
       definirEstadoInicialNumeracao();
       return;
     }
+
+    if (isLoadingOverview) {
+      return;
+    }
+    isLoadingOverview = true;
 
     if (!lastOverviewData) {
       definirEstadoInicialNumeracao();
@@ -425,6 +432,7 @@ window.OlymposViews.visaoGeral = (function() {
     // 1. Consulta prioritária à fonte oficial (_memoria_apolo.md no Drive via Gateway GAS).
     // Enquanto a resposta não chega, os contadores permanecem com "--" (zero números estáticos).
     window.OlymposApi.chamar('overview_get', {}, function(res) {
+      isLoadingOverview = false;
       const data = (res && res.data) ? res.data : res;
       if (data && (data.numeracao || data.memorias)) {
         lastOverviewData = data;
@@ -439,6 +447,7 @@ window.OlymposViews.visaoGeral = (function() {
         consultarFallbackSupabase();
       }
     }, function() {
+      isLoadingOverview = false;
       consultarFallbackSupabase();
     });
   }
@@ -595,6 +604,7 @@ window.OlymposViews.visaoGeral = (function() {
 
   function resetarEstadoLogout() {
     isLoaded = false;
+    isLoadingOverview = false;
     lastOverviewData = null;
     definirEstadoInicialNumeracao();
     atualizarTelemetriaCientifica();

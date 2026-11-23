@@ -5,6 +5,7 @@
 const HIGH_CONTRAST_STORAGE_KEY = 'olympos_high_contrast';
 
 const ALT_ROUTE_MAP: Record<string, string> = {
+  '0': 'oraculo',
   '1': 'visao-geral',
   '2': 'oficios',
   '3': 'portarias',
@@ -101,8 +102,8 @@ export function openHelpModal(): void {
           '<table class="clean-table" style="font-size: 13px;">' +
             '<thead><tr><th>Atalho</th><th>Ação no Sistema</th></tr></thead>' +
             '<tbody>' +
-              '<tr><td><code>/</code></td><td>Ir para a Busca Global ou focar campo de pesquisa ativo</td></tr>' +
-              '<tr><td><code>Alt + 1</code></td><td>Visão Geral do Gabinete</td></tr>' +
+              '<tr><td><code>/</code></td><td>Focar pesquisa ativa ou abrir o Oráculo Semântico</td></tr>' +
+              '<tr><td><code>Alt + 0</code> / <code>Alt + 1</code></td><td>Oráculo Vetorial / Visão Geral do Gabinete</td></tr>' +
               '<tr><td><code>Alt + 2</code> / <code>Alt + 3</code></td><td>Ofícios / Portarias e Acervo 2026</td></tr>' +
               '<tr><td><code>Alt + 4</code> / <code>Alt + 5</code></td><td>Certificados / Diário Oficial FEMURN</td></tr>' +
               '<tr><td><code>Alt + 6</code> / <code>Alt + 7</code></td><td>Permutas / Consulta de Servidores</td></tr>' +
@@ -146,11 +147,12 @@ function focarCampoBusca(): void {
     return;
   }
 
-  const podeBusca = window.OlymposApp?.podeAcessarPagina?.('busca');
-  const destino = podeBusca ? 'busca' : 'servidores';
+  const podeBusca = window.OlymposApp?.podeAcessarPagina?.('oraculo') !== false;
+  const destino = podeBusca ? 'oraculo' : 'servidores';
   window.OlymposRouter?.navegarPara?.(destino);
   setTimeout(() => {
-    const targetInput = (document.getElementById('pageBuscaInput') ||
+    const targetInput = (document.getElementById('oraculoQueryInput') ||
+      document.getElementById('pageBuscaInput') ||
       document.getElementById('servidoresSearchInput')) as HTMLInputElement | null;
     targetInput?.focus?.();
   }, 180);

@@ -302,8 +302,8 @@ function bindKanbanInteractions(root: HTMLElement): void {
   (root as any)._boundKanbanRoot = true;
 
   root.addEventListener('click', (ev) => {
-    const target = ev.target as HTMLElement | null;
-    if (!target) return;
+    const target = ev.target as Element | null;
+    if (!target || typeof target.closest !== 'function') return;
 
     if (target.closest('[data-stop-card-open]')) {
       return;
@@ -334,7 +334,8 @@ function bindKanbanInteractions(root: HTMLElement): void {
   });
 
   root.addEventListener('dragstart', (ev) => {
-    const card = (ev.target as HTMLElement | null)?.closest('[data-kanban-card-id]') as HTMLElement | null;
+    const raw = ev.target as Element | null;
+    const card = raw && typeof raw.closest === 'function' ? (raw.closest('[data-kanban-card-id]') as HTMLElement | null) : null;
     if (!card) return;
     draggedTicketId = card.getAttribute('data-kanban-card-id');
     card.classList.add('is-dragging');
@@ -345,14 +346,16 @@ function bindKanbanInteractions(root: HTMLElement): void {
   });
 
   root.addEventListener('dragend', (ev) => {
-    const card = (ev.target as HTMLElement | null)?.closest('[data-kanban-card-id]') as HTMLElement | null;
+    const raw = ev.target as Element | null;
+    const card = raw && typeof raw.closest === 'function' ? (raw.closest('[data-kanban-card-id]') as HTMLElement | null) : null;
     if (card) card.classList.remove('is-dragging');
     root.querySelectorAll('.kanban-column.is-drag-over').forEach((c) => c.classList.remove('is-drag-over'));
     draggedTicketId = null;
   });
 
   root.addEventListener('dragover', (ev) => {
-    const col = (ev.target as HTMLElement | null)?.closest('[data-kanban-col]') as HTMLElement | null;
+    const raw = ev.target as Element | null;
+    const col = raw && typeof raw.closest === 'function' ? (raw.closest('[data-kanban-col]') as HTMLElement | null) : null;
     if (!col) return;
     ev.preventDefault();
     if (ev.dataTransfer) ev.dataTransfer.dropEffect = 'move';
@@ -360,7 +363,8 @@ function bindKanbanInteractions(root: HTMLElement): void {
   });
 
   root.addEventListener('dragleave', (ev) => {
-    const col = (ev.target as HTMLElement | null)?.closest('[data-kanban-col]') as HTMLElement | null;
+    const raw = ev.target as Element | null;
+    const col = raw && typeof raw.closest === 'function' ? (raw.closest('[data-kanban-col]') as HTMLElement | null) : null;
     if (!col) return;
     const related = ev.relatedTarget as Node | null;
     if (!related || !col.contains(related)) {
@@ -369,7 +373,8 @@ function bindKanbanInteractions(root: HTMLElement): void {
   });
 
   root.addEventListener('drop', (ev) => {
-    const col = (ev.target as HTMLElement | null)?.closest('[data-kanban-col]') as HTMLElement | null;
+    const raw = ev.target as Element | null;
+    const col = raw && typeof raw.closest === 'function' ? (raw.closest('[data-kanban-col]') as HTMLElement | null) : null;
     if (!col) return;
     ev.preventDefault();
     col.classList.remove('is-drag-over');

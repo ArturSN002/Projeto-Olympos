@@ -722,7 +722,8 @@ export function mountBatchImporter(opts: BatchImporterOptions): void {
   });
 
   tbody?.addEventListener('click', (ev) => {
-    const btn = (ev.target as HTMLElement | null)?.closest('[data-batch-remove]') as HTMLElement | null;
+    const raw = ev.target as Element | null;
+    const btn = raw && typeof raw.closest === 'function' ? (raw.closest('[data-batch-remove]') as HTMLElement | null) : null;
     if (!btn) return;
     const idx = parseInt(btn.getAttribute('data-batch-remove') || '', 10);
     if (!Number.isFinite(idx)) return;

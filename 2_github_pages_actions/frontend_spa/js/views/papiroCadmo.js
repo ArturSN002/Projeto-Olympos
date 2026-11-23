@@ -1066,7 +1066,7 @@ window.OlymposViews.papiroCadmo = (function() {
     if (mapHeader && !mapHeader._bound) {
       mapHeader._bound = true;
       mapHeader.addEventListener('click', function(e) {
-        if (e.target.closest('#btnGerenciarSecretarias') || e.target.closest('#btnToggleMapaCadmo')) return;
+        if (e.target && typeof e.target.closest === 'function' && (e.target.closest('#btnGerenciarSecretarias') || e.target.closest('#btnToggleMapaCadmo'))) return;
         alternarColapsoMapa();
       });
       mapHeader.addEventListener('keydown', function(e) {

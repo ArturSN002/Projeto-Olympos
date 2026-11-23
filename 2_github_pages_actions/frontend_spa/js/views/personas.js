@@ -132,7 +132,7 @@ window.OlymposViews.personas = (function() {
     if (filterBar && !filterBar._bound) {
       filterBar._bound = true;
       filterBar.addEventListener('click', function(e) {
-        const btn = e.target.closest('.memoria-filter-pill[data-filter]');
+        const btn = (e.target && typeof e.target.closest === 'function') ? e.target.closest('.memoria-filter-pill[data-filter]') : null;
         if (!btn) return;
         activeCategoryFilter = btn.getAttribute('data-filter') || 'TODAS';
         filterBar.querySelectorAll('.memoria-filter-pill').forEach(function(pill) {

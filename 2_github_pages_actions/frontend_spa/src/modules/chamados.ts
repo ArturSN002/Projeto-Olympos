@@ -53,8 +53,8 @@ function bindChamadosOnda2Events(): void {
   if (lista && !lista._boundTimelineClick) {
     lista._boundTimelineClick = true;
     lista.addEventListener('click', (ev: MouseEvent) => {
-      const target = ev.target as HTMLElement | null;
-      if (!target) return;
+      const target = ev.target as Element | null;
+      if (!target || typeof target.closest !== 'function') return;
       if (target.closest('button, a, input, select, .chamado-actions, .chamado-anexos')) {
         return;
       }

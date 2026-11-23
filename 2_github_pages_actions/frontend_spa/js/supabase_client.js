@@ -92,6 +92,46 @@ window.OlymposSupabase = (function() {
     return Boolean(cfg.url && cfg.anonKey && cfg.url.startsWith('https://') && cfg.anonKey.length > 20);
   }
 
+  function limparAuthTokensLocais() {
+    cachedProfile = null;
+    try {
+      localStorage.removeItem('olympos_session');
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const k = localStorage.key(i);
+        if (k && /^sb-[a-z0-9]+-auth-token$/i.test(k)) {
+          localStorage.removeItem(k);
+        }
+      }
+    } catch (eLs) {}
+    try {
+      sessionStorage.removeItem('olympos_rbac_profile_cache');
+      sessionStorage.removeItem('olympos_session_rbac');
+    } catch (eSs) {}
+  }
+
+  function sanitizarAuthStorageAntesInit() {
+    try {
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const k = localStorage.key(i);
+        if (!k || !/^sb-[a-z0-9]+-auth-token$/i.test(k)) continue;
+        const raw = localStorage.getItem(k);
+        if (!raw) {
+          localStorage.removeItem(k);
+          continue;
+        }
+        try {
+          const parsed = JSON.parse(raw);
+          const sessObj = (parsed && parsed.currentSession) ? parsed.currentSession : parsed;
+          if (!sessObj || typeof sessObj !== 'object' || !sessObj.refresh_token || !sessObj.access_token) {
+            localStorage.removeItem(k);
+          }
+        } catch (eParse) {
+          localStorage.removeItem(k);
+        }
+      }
+    } catch (eSan) {}
+  }
+
   function init(force) {
     const cfg = getConfig();
 
@@ -128,6 +168,7 @@ window.OlymposSupabase = (function() {
     }
 
     try {
+      sanitizarAuthStorageAntesInit();
       supabaseInstance = window.supabase.createClient(cfg.url, cfg.anonKey, {
         auth: {
           persistSession: true,
@@ -142,7 +183,11 @@ window.OlymposSupabase = (function() {
       // Escuta renovação automática de token e sincroniza sessão do app
       if (supabaseInstance.auth && typeof supabaseInstance.auth.onAuthStateChange === 'function') {
         supabaseInstance.auth.onAuthStateChange(function(event, session) {
-          if (event === 'TOKEN_REFRESHED' && session && window.OlymposApp && typeof window.OlymposApp.atualizarTokenSessao === 'function') {
+          if (event === 'SIGNED_OUT') {
+            cachedProfile = null;
+            return;
+          }
+          if ((event === 'TOKEN_REFRESHED' || event === 'MFA_CHALLENGE_VERIFIED' || event === 'SIGNED_IN') && session && session.access_token && window.OlymposApp && typeof window.OlymposApp.atualizarTokenSessao === 'function') {
             window.OlymposApp.atualizarTokenSessao(session.access_token);
           }
         });
@@ -226,14 +271,19 @@ window.OlymposSupabase = (function() {
     cachedProfile = profile;
 
     // Cache RBAC de alta performance em sessionStorage para navegação veloz
+    // Não persiste token aal1 em olympos_session_rbac caso o perfil exija MFA (evita chamadas paralelas com token aal1)
     try {
       sessionStorage.setItem('olympos_rbac_profile_cache', JSON.stringify(profile));
-      sessionStorage.setItem('olympos_session_rbac', JSON.stringify({
-        user: data.user,
-        profile: profile,
-        role: profile.role,
-        token: data.session ? data.session.access_token : null
-      }));
+      if (!isRoleMfaMandatory(profile.role)) {
+        sessionStorage.setItem('olympos_session_rbac', JSON.stringify({
+          user: data.user,
+          profile: profile,
+          role: profile.role,
+          token: data.session ? data.session.access_token : null
+        }));
+      } else {
+        sessionStorage.removeItem('olympos_session_rbac');
+      }
     } catch (eStorage) {
       console.warn('[OlymposSupabase] Aviso ao persistir RBAC no sessionStorage:', eStorage);
     }
@@ -267,19 +317,22 @@ window.OlymposSupabase = (function() {
    */
   async function logout() {
     const client = getClient();
-    if (client) {
-      try {
-        await client.auth.signOut();
-      } catch (e) {
-        console.warn('[OlymposSupabase] Erro ao executar signOut:', e);
-      }
-    }
-    cachedProfile = null;
-    localStorage.removeItem('olympos_session');
     try {
-      sessionStorage.removeItem('olympos_rbac_profile_cache');
-      sessionStorage.removeItem('olympos_session_rbac');
-    } catch (e) {}
+      if (client) {
+        try {
+          await client.auth.signOut();
+        } catch (e) {
+          console.warn('[OlymposSupabase] Erro ao executar signOut:', e);
+        }
+      }
+    } finally {
+      if (client) {
+        try {
+          await client.auth.signOut({ scope: 'local' });
+        } catch (eLoc) {}
+      }
+      limparAuthTokensLocais();
+    }
   }
 
   /**
@@ -289,9 +342,18 @@ window.OlymposSupabase = (function() {
     const client = getClient();
     if (!client) return null;
     try {
-      const { data } = await client.auth.getSession();
+      const { data, error } = await client.auth.getSession();
+      if (error) {
+        console.warn('[OlymposSupabase] Sessão ou refresh token inválido detectado; limpando tokens locais:', error.message || error);
+        limparAuthTokensLocais();
+        try {
+          await client.auth.signOut({ scope: 'local' });
+        } catch (eOut) {}
+        return null;
+      }
       return data ? data.session : null;
     } catch (e) {
+      limparAuthTokensLocais();
       return null;
     }
   }
@@ -1095,11 +1157,26 @@ window.OlymposSupabase = (function() {
 
     if (error) throw error;
 
-    if (data && data.session && window.OlymposApp && typeof window.OlymposApp.atualizarTokenSessao === 'function') {
-      window.OlymposApp.atualizarTokenSessao(data.session.access_token);
+    let aal2Token = (data && data.access_token) || (data && data.session && data.session.access_token) || null;
+    let liveSession = (data && data.session) || null;
+    if (!aal2Token || !liveSession) {
+      try {
+        const sessRes = await client.auth.getSession();
+        if (sessRes && sessRes.data && sessRes.data.session) {
+          liveSession = sessRes.data.session;
+          if (!aal2Token) aal2Token = sessRes.data.session.access_token || null;
+        }
+      } catch (eSess) {}
     }
 
-    return data;
+    if (aal2Token && window.OlymposApp && typeof window.OlymposApp.atualizarTokenSessao === 'function') {
+      window.OlymposApp.atualizarTokenSessao(aal2Token);
+    }
+
+    return Object.assign({}, data || {}, {
+      access_token: aal2Token,
+      session: liveSession || (aal2Token ? { access_token: aal2Token, user: (data && data.user) || null } : null)
+    });
   }
 
   /**

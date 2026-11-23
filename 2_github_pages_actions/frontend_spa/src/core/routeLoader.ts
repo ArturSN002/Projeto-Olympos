@@ -25,7 +25,8 @@ const ROUTE_IMPORTERS: Record<string, () => Promise<RouteModule>> = {
   'configuracoes':  () => import('../modules/configuracoes'),
   'chamados':       () => import('../modules/chamados'),
   'auditoria':      () => import('../modules/auditoria'),
-  'kiosk':          () => import('../modules/kiosk')
+  'kiosk':          () => import('../modules/kiosk'),
+  'oraculo':        () => import('../modules/oraculo')
 };
 
 const MODAL_IMPORTERS: Record<string, { id: string; loader: () => Promise<{ default: string }> }> = {
@@ -106,10 +107,122 @@ export async function ensureModal(modalKey: string): Promise<void> {
   }
 }
 
+const PRELOAD_VIEW_KEYS: Record<string, string> = {
+  'visao-geral': 'visaoGeral',
+  'oficios': 'oficios',
+  'portarias': 'portarias',
+  'certificados': 'certificados',
+  'relatorios': 'relatorios',
+  'diario-oficial': 'diarioOficial',
+  'papiro-cadmo': 'papiroCadmo',
+  'servidores': 'servidores',
+  'calendario': 'calendario',
+  'escolas': 'escolas',
+  'busca': 'busca',
+  'chamados': 'chamados',
+  'auditoria': 'auditoria',
+  'configuracoes': 'configuracoes',
+  'oraculo': 'oraculo'
+};
+
+const preloadedInFlight = new Map<string, Promise<void>>();
+
 export function prefetchRoute(pageId: string): void {
   const key = normalizeRouteKey(pageId);
   if (!loadedRoutes.has(key) && ROUTE_IMPORTERS[key]) {
     ROUTE_IMPORTERS[key]().catch(() => {});
+  }
+}
+
+export async function preloadRoute(pageId: string, options?: { initView?: boolean }): Promise<void> {
+  const key = normalizeRouteKey(pageId);
+  if (!ROUTE_IMPORTERS[key]) return;
+
+  const inflight = preloadedInFlight.get(key);
+  if (inflight) return inflight;
+
+  const task = (async () => {
+    let modPromise = loadedRoutes.get(key);
+    if (!modPromise) {
+      modPromise = ROUTE_IMPORTERS[key]();
+      loadedRoutes.set(key, modPromise);
+    }
+
+    try {
+      const mod = await modPromise;
+      const viewRoot = document.getElementById('view-root') || document.querySelector('main.app-main');
+      const existingSection = document.getElementById(`page-${key}`);
+
+      if (viewRoot && !existingSection) {
+        const tpl = document.createElement('template');
+        tpl.innerHTML = mod.htmlTemplate.trim();
+        const currentPage = window.OlymposRouter?.getPaginaAtual?.() || 'visao-geral';
+        const isCurrentlyActive = currentPage === key;
+        tpl.content.querySelectorAll('.page-view').forEach((sec) => {
+          sec.classList.toggle('active', isCurrentlyActive);
+          sec.classList.toggle('hidden', !isCurrentlyActive);
+        });
+        viewRoot.appendChild(tpl.content);
+      }
+
+      if (Array.isArray(mod.modalTemplates)) {
+        for (const m of mod.modalTemplates) {
+          appendModalTemplate(m.id, m.html);
+        }
+      }
+
+      await mod.mount();
+
+      if (window.OlymposApp) {
+        if (typeof window.OlymposApp.hydrateVectorIcons === 'function') {
+          window.OlymposApp.hydrateVectorIcons();
+        }
+        if (typeof window.OlymposApp.bindDynamicControls === 'function') {
+          window.OlymposApp.bindDynamicControls();
+        }
+        const sess = typeof window.OlymposApp.getSession === 'function' ? window.OlymposApp.getSession() : null;
+        if (typeof window.OlymposApp.aplicarControleAcessoModularEDrive === 'function') {
+          window.OlymposApp.aplicarControleAcessoModularEDrive(sess);
+        }
+      }
+
+      if (options?.initView && window.OlymposViews) {
+        const viewKey = PRELOAD_VIEW_KEYS[key];
+        if (viewKey && window.OlymposViews[viewKey] && typeof window.OlymposViews[viewKey].init === 'function') {
+          window.OlymposViews[viewKey].init();
+        }
+      }
+    } catch (err) {
+      loadedRoutes.delete(key);
+      console.warn(`[RouteLoader] Pré-carregamento silencioso falhou para "${key}":`, err);
+    } finally {
+      preloadedInFlight.delete(key);
+    }
+  })();
+
+  preloadedInFlight.set(key, task);
+  return task;
+}
+
+export function preloadInitialRoutes(isAuthenticated: boolean): void {
+  if (typeof window === 'undefined') return;
+  const runPreloads = () => {
+    void preloadRoute('calendario', { initView: true });
+    if (isAuthenticated) {
+      const canChamados = window.OlymposApp?.podeAcessarPagina
+        ? window.OlymposApp.podeAcessarPagina('chamados')
+        : true;
+      if (canChamados) {
+        void preloadRoute('chamados', { initView: true });
+      }
+    }
+  };
+
+  const ric = (window as any).requestIdleCallback;
+  if (typeof ric === 'function') {
+    ric(runPreloads, { timeout: 1200 });
+  } else {
+    setTimeout(runPreloads, 120);
   }
 }
 
@@ -181,7 +294,9 @@ export async function loadRoute(pageId: string): Promise<void> {
 export function bindNavPrefetch(): void {
   if (typeof document === 'undefined') return;
   const handler = (e: Event) => {
-    const target = (e.target as HTMLElement | null)?.closest('[data-page], [data-nav-target]') as HTMLElement | null;
+    const raw = e.target as Element | null;
+    if (!raw || typeof raw.closest !== 'function') return;
+    const target = raw.closest('[data-page], [data-nav-target]') as HTMLElement | null;
     if (!target) return;
     const page = target.getAttribute('data-page') || target.getAttribute('data-nav-target');
     if (page) prefetchRoute(page);
@@ -193,6 +308,8 @@ export function bindNavPrefetch(): void {
 export const OlymposRouteLoader = {
   loadRoute,
   prefetchRoute,
+  preloadRoute,
+  preloadInitialRoutes,
   ensureModal,
   bindNavPrefetch
 };

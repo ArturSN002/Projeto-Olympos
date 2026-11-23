@@ -1,0 +1,124 @@
+/* Onda 4 — Estilos do Oráculo Vetorial ($0) e Banner de Triagem Assistiva */
+
+.oraculo-hero-card {
+  padding: 24px;
+}
+
+.oraculo-badges-col {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.oraculo-search-form {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.oraculo-search-input-wrap {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.oraculo-query-input {
+  flex: 1 1 320px;
+  min-height: 44px;
+  font-size: 0.95rem;
+}
+
+.oraculo-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.oraculo-persona-card {
+  padding: 18px 20px;
+  border-left: 4px solid var(--accent-primary, #f59e0b);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.oraculo-results-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.oraculo-evidence-card {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.oraculo-evidence-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.oraculo-evidence-snippet {
+  margin: 0;
+  font-size: 0.89rem;
+  line-height: 1.55;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+}
+
+.oraculo-evidence-snippet mark {
+  background: rgba(245, 158, 11, 0.25);
+  color: inherit;
+  padding: 0 3px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.oraculo-evidence-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.oraculo-incubated-footer {
+  padding: 14px 18px;
+  border-style: dashed;
+}
+
+/* Sprint 4.3 — Banner Assistivo de Triagem no Drawer de Pendências */
+.triagem-assistiva-banner {
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border-hairline);
+  background: var(--bg-tonal, rgba(245, 158, 11, 0.08));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.triagem-assistiva-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.triagem-assistiva-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}

@@ -15,6 +15,7 @@ window.OlymposViews.chamados = (function() {
   'use strict';
 
   let isInitialized = false;
+  let isFetchingChamados = false;
   let unsubscribeSignals = null;
   let paginaAtual = 1;
   const ITENS_POR_PAGINA = 12;
@@ -87,7 +88,7 @@ window.OlymposViews.chamados = (function() {
     if (statusGroup && !statusGroup._bound) {
       statusGroup._bound = true;
       statusGroup.addEventListener('click', function(e) {
-        const btn = e.target.closest('.filter-pill');
+        const btn = (e.target && typeof e.target.closest === 'function') ? e.target.closest('.filter-pill') : null;
         if (!btn) return;
         const status = btn.getAttribute('data-status');
         if (status && window.OlymposSignals) {
@@ -106,7 +107,7 @@ window.OlymposViews.chamados = (function() {
     if (urgGroup && !urgGroup._bound) {
       urgGroup._bound = true;
       urgGroup.addEventListener('click', function(e) {
-        const btn = e.target.closest('.filter-pill');
+        const btn = (e.target && typeof e.target.closest === 'function') ? e.target.closest('.filter-pill') : null;
         if (!btn) return;
         const urg = btn.getAttribute('data-urgencia');
         if (urg && window.OlymposSignals) {
@@ -194,6 +195,11 @@ window.OlymposViews.chamados = (function() {
       return;
     }
 
+    if (isFetchingChamados && !forcarRecarregamento) {
+      return;
+    }
+    isFetchingChamados = true;
+
     const container = document.getElementById('chamadosListaContainer');
     if (container && (!window.OlymposSignals || window.OlymposSignals.tickets.peek().length === 0 || forcarRecarregamento)) {
       container.innerHTML = '<div class="empty-state-card" style="padding: 36px; text-align: center;"><div class="empty-state-icon">' + (window.OlymposIcons ? window.OlymposIcons.ui('hourglass') : '') + '</div><p>Carregando solicitações em aberto...</p></div>';
@@ -208,6 +214,7 @@ window.OlymposViews.chamados = (function() {
         .order('criado_em', { ascending: true })
         .then(function(res) {
           if (!res.error && res.data && res.data.length > 0) {
+            isFetchingChamados = false;
             armazenarNaFila(res.data);
             return;
           }
@@ -225,6 +232,7 @@ window.OlymposViews.chamados = (function() {
   function consultarFallbackGas() {
     if (window.OlymposApi && typeof window.OlymposApi.chamar === 'function') {
       window.OlymposApi.chamar('chamados_listar', {}, function(res) {
+        isFetchingChamados = false;
         const dados = (res && res.chamados) ? res.chamados : (res && res.data ? res.data : res);
         if (Array.isArray(dados) && dados.length > 0) {
           armazenarNaFila(dados);
@@ -232,9 +240,11 @@ window.OlymposViews.chamados = (function() {
           armazenarNaFila(CANONICAL_MOCK_CHAMADOS);
         }
       }, function() {
+        isFetchingChamados = false;
         armazenarNaFila(CANONICAL_MOCK_CHAMADOS);
       });
     } else {
+      isFetchingChamados = false;
       armazenarNaFila(CANONICAL_MOCK_CHAMADOS);
     }
   }
@@ -520,6 +530,9 @@ window.OlymposViews.chamados = (function() {
     if (!window.OlymposSignals) return;
     const fila = window.OlymposSignals.getActiveQueue();
     elHeroChamados.textContent = fila.length + ' demandas';
+    if (window.OlymposViews && window.OlymposViews.visaoGeral && typeof window.OlymposViews.visaoGeral.atualizarTelemetriaCientifica === 'function') {
+      window.OlymposViews.visaoGeral.atualizarTelemetriaCientifica();
+    }
   }
 
   // --- Ações Operacionais Expostas ---

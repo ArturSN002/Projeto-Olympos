@@ -39,6 +39,7 @@ interface Window {
   OlymposMemoriasGovernanca?: any;
   OlymposChamadosKanban?: any;
   OlymposChamadosTimeline?: any;
+  OlymposOraculo?: any;
   OLYMPOS_MEMORIAS_CATALOGO?: any;
   BANCO_SEMENTE_ESCOLAS?: any[];
   DADOS_PERMUTAS_VIGENTES?: any;

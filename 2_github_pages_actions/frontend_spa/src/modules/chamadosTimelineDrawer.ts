@@ -6,6 +6,7 @@
  */
 
 import '../styles/onda2.css';
+import '../styles/onda4.css';
 import { openSnippetsDrawer } from '../core/snippetsDrawer';
 
 export interface PendingDispatchContext {
@@ -339,7 +340,170 @@ function renderDetalhesTicket(): void {
     }
   }
 
+  renderTriagemAssistivaBanner();
   renderResponsavelSelect();
+}
+
+function renderTriagemAssistivaBanner(): void {
+  const bannerEl = document.getElementById('timelineTriagemBanner');
+  if (!bannerEl || !activeTicket) return;
+
+  const setorSug = activeTicket.triagem_setor_sugerido ? String(activeTicket.triagem_setor_sugerido) : '';
+  const confiancaNum = Number(activeTicket.triagem_confianca);
+  const confiancaPct = Number.isFinite(confiancaNum) && confiancaNum > 0 ? Math.round(confiancaNum * 100) : null;
+  const coerente = activeTicket.triagem_urgencia_coerente;
+  const motivo = String(activeTicket.triagem_urgencia_motivo || '').trim();
+  const snippetId = activeTicket.triagem_snippet_sugerido_id ? String(activeTicket.triagem_snippet_sugerido_id) : '';
+  const snippetTitulo = String(activeTicket.triagem_snippet_sugerido_titulo || 'Minuta Recomendada');
+
+  if (!setorSug) {
+    bannerEl.innerHTML =
+      '<div class="triagem-assistiva-head">' +
+        '<div>' +
+          '<strong style="font-size:0.8rem;">Triagem Assistiva ($0 — Vetorial + Determinística)</strong>' +
+          '<p style="margin:2px 0 0; font-size:0.75rem; color:var(--text-muted);">Classifique setor, valide coerência de urgência e localize minuta pronta sem enviar dados pessoais.</p>' +
+        '</div>' +
+        '<button type="button" id="timelineExecutarTriagemBtn" class="btn btn-secondary btn-sm">Executar Triagem Assistiva ($0)</button>' +
+      '</div>';
+    document.getElementById('timelineExecutarTriagemBtn')?.addEventListener('click', () => {
+      void executarTriagemAssistiva();
+    });
+    return;
+  }
+
+  const urgBadgeClass = coerente === false ? 'pill-amber' : 'pill-green';
+  const urgBadgeText = coerente === false ? 'Revisar Urgência' : 'Urgência Coerente';
+
+  bannerEl.innerHTML =
+    '<div class="triagem-assistiva-head">' +
+      `<div style="font-size:0.8rem;"><strong>Sugestão de Triagem:</strong> Setor ${esc(setorSug)}${confiancaPct ? ` (${confiancaPct}%)` : ''}</div>` +
+      `<span class="pill-badge ${urgBadgeClass}" style="font-size:0.7rem;">${esc(urgBadgeText)}</span>` +
+    '</div>' +
+    (motivo ? `<div style="font-size:0.76rem; color:var(--text-secondary);">${esc(motivo)}</div>` : '') +
+    '<div class="triagem-assistiva-actions">' +
+      `<button type="button" id="timelineAplicarSetorTriagemBtn" class="btn btn-secondary btn-sm">Aplicar Setor (${esc(setorSug)})</button>` +
+      (snippetId ? `<button type="button" id="timelineAplicarMinutaTriagemBtn" class="btn btn-primary btn-sm">Aplicar ${esc(snippetTitulo)}</button>` : '') +
+      '<button type="button" id="timelineExecutarTriagemBtn" class="btn btn-ghost btn-sm">Reanalisar</button>' +
+    '</div>';
+
+  document.getElementById('timelineExecutarTriagemBtn')?.addEventListener('click', () => {
+    void executarTriagemAssistiva();
+  });
+  document.getElementById('timelineAplicarSetorTriagemBtn')?.addEventListener('click', () => {
+    void aplicarSetorSugeridoTriagem(setorSug);
+  });
+  if (snippetId) {
+    document.getElementById('timelineAplicarMinutaTriagemBtn')?.addEventListener('click', () => {
+      void aplicarMinutaRecomendadaTriagem(snippetId);
+    });
+  }
+}
+
+async function executarTriagemAssistiva(): Promise<void> {
+  if (!activeTicket) return;
+  const btn = document.getElementById('timelineExecutarTriagemBtn') as HTMLButtonElement | null;
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Analisando...';
+  }
+
+  try {
+    const supa = (window as any).OlymposSupabase;
+    const cfg = supa?.getConfig?.();
+    const baseUrl = String(cfg?.url || 'https://rbwizevjvbvjwtbwwyif.supabase.co').replace(/\/+$/, '');
+    const anonKey = String(cfg?.anonKey || '');
+    const appSess = (window as any).OlymposApp?.getSession?.();
+    const sbSess = await supa?.getSession?.();
+    const jwt = String(sbSess?.access_token || appSess?.access_token || appSess?.token || '');
+
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (anonKey) headers['apikey'] = anonKey;
+    if (jwt) headers['Authorization'] = `Bearer ${jwt}`;
+
+    const resp = await fetch(`${baseUrl}/functions/v1/triagem-vetorial`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        pendencia_id: activeTicket.id,
+        assunto_tipo: activeTicket.assunto_tipo || '',
+        justificativa: activeTicket.justificativa || activeTicket.descricao || '',
+        setor: activeTicket.setor || 'SMEB',
+        data_limite_entrega: activeTicket.data_limite_entrega || '',
+        urgencia: Boolean(activeTicket.urgencia || activeTicket.urgencia_ativa)
+      })
+    });
+    const data = await resp.json();
+    if (!resp.ok || !data || data.ok === false) {
+      throw new Error(data?.mensagem || `HTTP ${resp.status}`);
+    }
+
+    const patch: Record<string, any> = {
+      triagem_setor_sugerido: data.setor_sugerido,
+      triagem_confianca: data.confianca,
+      triagem_urgencia_coerente: data.urgencia_coerente,
+      triagem_urgencia_motivo: data.urgencia_motivo,
+      triagem_snippet_sugerido_id: data.snippet_sugerido_id,
+      triagem_snippet_sugerido_titulo: data.snippet_sugerido_titulo,
+      triagem_executada_em: data.triagem_executada_em
+    };
+    Object.assign(activeTicket, patch);
+    (window as any).OlymposSignals?.updateTicket?.(activeTicket.id, patch);
+    renderTriagemAssistivaBanner();
+    (window as any).OlymposApp?.showToast?.('Triagem assistiva ($0) concluída!');
+  } catch (err: any) {
+    (window as any).OlymposApp?.showToast?.(`Não foi possível executar triagem: ${err?.message || 'erro'}`, true);
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Executar Triagem Assistiva ($0)';
+    }
+  }
+}
+
+async function aplicarSetorSugeridoTriagem(setorSug: string): Promise<void> {
+  if (!activeTicket || !setorSug) return;
+  if (typeof window.confirm === 'function' && !window.confirm(`Confirmar alteração do setor da pendência para "${setorSug}"?`)) {
+    return;
+  }
+  const client = getSupabaseClient();
+  if (!client) return;
+  try {
+    const { error } = await client
+      .from('pendencias_solicitacoes')
+      .update({ setor: setorSug })
+      .eq('id', activeTicket.id);
+    if (error) throw error;
+    activeTicket.setor = setorSug;
+    (window as any).OlymposSignals?.updateTicket?.(activeTicket.id, { setor: setorSug });
+    await registrarComentarioEvento(activeTicket.id, 'COMENTARIO', `Setor atualizado via Triagem Assistiva para: ${setorSug}.`);
+    renderDetalhesTicket();
+    await carregarComentariosPendencia(activeTicket.id);
+    renderTimelineFeed();
+    (window as any).OlymposApp?.showToast?.(`Setor atualizado para ${setorSug}.`);
+  } catch (err: any) {
+    (window as any).OlymposApp?.showToast?.(`Falha ao aplicar setor: ${err?.message || 'erro'}`, true);
+  }
+}
+
+async function aplicarMinutaRecomendadaTriagem(snippetId: string): Promise<void> {
+  const client = getSupabaseClient();
+  const ta = document.getElementById('timelineNovoComentarioInput') as HTMLTextAreaElement | null;
+  if (!client || !ta) return;
+  try {
+    const { data, error } = await client
+      .from('modelos_snippets')
+      .select('titulo, corpo_texto')
+      .eq('id', snippetId)
+      .maybeSingle();
+    if (error || !data?.corpo_texto) {
+      throw new Error('Minuta recomendada não encontrada na Biblioteca.');
+    }
+    const prefix = ta.value.trim() ? `${ta.value.trim()}\n\n` : '';
+    ta.value = `${prefix}${String(data.corpo_texto)}`;
+    ta.focus();
+    (window as any).OlymposApp?.showToast?.(`Minuta "${String(data.titulo || 'Recomendada')}" inserida para revisão humana!`);
+  } catch (err: any) {
+    (window as any).OlymposApp?.showToast?.(err?.message || 'Erro ao carregar minuta recomendada.', true);
+  }
 }
 
 async function handleAtribuirResponsavel(): Promise<void> {
@@ -562,6 +726,7 @@ function ensureTimelineDrawerDom(): HTMLElement {
           '<div id="timelineDrawerDescricao" style="font-size:0.84rem; line-height:1.45; white-space:pre-wrap;"></div>' +
           '<div id="timelineDrawerDocVinculado" class="hidden" style="margin-top:8px;"></div>' +
         '</div>' +
+        '<div id="timelineTriagemBanner" class="triagem-assistiva-banner"></div>' +
         '<div style="display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap;">' +
           '<div class="field-group" style="flex:1; min-width:200px; margin:0;">' +
             '<label for="timelineResponsavelSelect">Responsável pelo Atendimento</label>' +

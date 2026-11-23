@@ -3,7 +3,7 @@
  * Cada bloco funcional opera em sua própria página independente e navegável.
  */
 window.OlymposRouter = (function() {
-  const PUBLIC_PAGES = ['visao-geral', 'diario-oficial', 'escolas'];
+  const PUBLIC_PAGES = ['visao-geral', 'diario-oficial', 'escolas', 'oraculo'];
 
   const PAGES = {
     'visao-geral': {
@@ -82,6 +82,12 @@ window.OlymposRouter = (function() {
       eyebrow: 'ÍNDICE RECURSIVO • EXERCÍCIOS 2025–2026',
       title: 'Busca Global no Acervo SMEB.',
       subtitle: 'Localização rápida de documentos, ofícios e portarias nas pastas setoriais de 2026 e no acervo de 2025.',
+      category: 'inteligencia'
+    },
+    'oraculo': {
+      eyebrow: 'ORÁCULO VETORIAL • GEMINI EMBEDDING 2 ($0)',
+      title: 'Oráculo Semântico & Citação Oficial.',
+      subtitle: 'Pesquisa em linguagem natural nas normas, atos FEMURN, portarias, ofícios e memórias autorizadas com zero alucinação.',
       category: 'inteligencia'
     },
     'chamados': {
@@ -295,6 +301,7 @@ window.OlymposRouter = (function() {
       'calendario': 'calendario',
       'personas': 'personas',
       'busca': 'busca',
+      'oraculo': 'oraculo',
       'chamados': 'chamados',
       'auditoria': 'auditoria',
       'configuracoes': 'configuracoes'
