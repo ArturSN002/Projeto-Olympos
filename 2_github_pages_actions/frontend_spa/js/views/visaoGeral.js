@@ -245,6 +245,7 @@ window.OlymposViews.visaoGeral = (function() {
       statusEl.textContent = statusMsg || 'Acesse diretamente os portais oficiais de Ceará-Mirim.';
     }
     if (!gridEl) return;
+    gridEl.setAttribute('data-item-count', '2');
     gridEl.innerHTML =
       '<article class="municipal-news-card">' +
         '<div class="municipal-news-body">' +
@@ -284,6 +285,7 @@ window.OlymposViews.visaoGeral = (function() {
     });
 
     if (filtradas.length === 0) {
+      gridEl.setAttribute('data-item-count', '0');
       if (municipalNewsCache.length === 0) {
         renderizarNoticiasFallback('Não há matérias disponíveis no momento. Utilize os links diretos abaixo.');
       } else {
@@ -295,7 +297,13 @@ window.OlymposViews.visaoGeral = (function() {
       return;
     }
 
-    const htmlCards = filtradas.map(function(item) {
+    let exibidas = filtradas;
+    if (filtradas.length > 6 && filtradas.length !== 8 && filtradas.length % 3 !== 0) {
+      exibidas = filtradas.slice(0, Math.floor(filtradas.length / 3) * 3);
+    }
+    gridEl.setAttribute('data-item-count', String(exibidas.length));
+
+    const htmlCards = exibidas.map(function(item) {
       const safeUrl = sanitizarUrlHttp(item.url || '');
       const safeImg = sanitizarUrlHttp(item.imageUrl || '');
       const isCamara = String(item.source || '').toLowerCase() === 'camara';

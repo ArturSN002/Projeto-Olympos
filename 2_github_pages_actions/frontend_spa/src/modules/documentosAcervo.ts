@@ -22,6 +22,14 @@ export interface DocumentoEmitidoRow {
   sincronizado_em: string;
 }
 
+export type AcervoSortKey =
+  | 'data_desc'
+  | 'data_asc'
+  | 'nome_asc'
+  | 'nome_desc'
+  | 'numero_desc'
+  | 'numero_asc';
+
 export interface AcervoMountConfig {
   containerId: string;
   tipo: 'OFICIO' | 'PORTARIA';
@@ -36,6 +44,7 @@ interface AcervoInstanceState {
   searchTerm: string;
   subcategoria: string;
   mesFiltro: string;
+  sortBy: AcervoSortKey;
   loading: boolean;
   syncing: boolean;
   errorMsg: string;
@@ -99,6 +108,14 @@ function montarShellAcervo(root: HTMLElement, st: AcervoInstanceState): void {
             '</select>'
           : '') +
         `<input type="month" id="${prefix}-month" class="input-clean acervo-month-input" aria-label="Filtrar por mês e ano" title="Filtrar por mês de emissão" />` +
+        `<select id="${prefix}-sort" class="input-clean acervo-select acervo-sort-select" aria-label="Ordenar documentos" title="Ordenar acervo">` +
+          '<option value="data_desc">Data (mais recentes)</option>' +
+          '<option value="data_asc">Data (mais antigos)</option>' +
+          '<option value="nome_asc">Nome (A → Z)</option>' +
+          '<option value="nome_desc">Nome (Z → A)</option>' +
+          '<option value="numero_desc">Número (maior → menor)</option>' +
+          '<option value="numero_asc">Número (menor → maior)</option>' +
+        '</select>' +
       '</div>' +
       '<div class="acervo-actions-bar">' +
         `<button type="button" id="${prefix}-refresh-btn" class="btn btn-ghost btn-sm">Atualizar</button>` +
@@ -117,6 +134,7 @@ function montarShellAcervo(root: HTMLElement, st: AcervoInstanceState): void {
   const searchEl = document.getElementById(`${prefix}-search`) as HTMLInputElement | null;
   const subcatEl = document.getElementById(`${prefix}-subcat`) as HTMLSelectElement | null;
   const monthEl = document.getElementById(`${prefix}-month`) as HTMLInputElement | null;
+  const sortEl = document.getElementById(`${prefix}-sort`) as HTMLSelectElement | null;
   const refreshBtn = document.getElementById(`${prefix}-refresh-btn`);
   const syncBtn = document.getElementById(`${prefix}-sync-btn`);
   const tableWrap = document.getElementById(`${prefix}-table-wrap`);
@@ -151,6 +169,15 @@ function montarShellAcervo(root: HTMLElement, st: AcervoInstanceState): void {
     });
   }
 
+  if (sortEl) {
+    sortEl.value = st.sortBy;
+    sortEl.addEventListener('change', () => {
+      st.sortBy = (sortEl.value as AcervoSortKey) || 'data_desc';
+      st.page = 1;
+      void consultarDocumentos(st);
+    });
+  }
+
   if (refreshBtn) {
     refreshBtn.addEventListener('click', () => {
       void consultarDocumentos(st);
@@ -166,6 +193,22 @@ function montarShellAcervo(root: HTMLElement, st: AcervoInstanceState): void {
   if (tableWrap) {
     tableWrap.addEventListener('click', (ev) => {
       const target = ev.target as HTMLElement | null;
+      const sortBtn = target?.closest?.('[data-acervo-sort-col]') as HTMLElement | null;
+      if (sortBtn) {
+        const col = sortBtn.getAttribute('data-acervo-sort-col');
+        if (col === 'numero') {
+          st.sortBy = st.sortBy === 'numero_desc' ? 'numero_asc' : 'numero_desc';
+        } else if (col === 'nome') {
+          st.sortBy = st.sortBy === 'nome_asc' ? 'nome_desc' : 'nome_asc';
+        } else if (col === 'data') {
+          st.sortBy = st.sortBy === 'data_desc' ? 'data_asc' : 'data_desc';
+        }
+        if (sortEl) sortEl.value = st.sortBy;
+        st.page = 1;
+        void consultarDocumentos(st);
+        return;
+      }
+
       const copyBtn = target?.closest?.('[data-copy-doc-url]') as HTMLElement | null;
       if (copyBtn) {
         const url = copyBtn.getAttribute('data-copy-doc-url') || '';
@@ -222,12 +265,18 @@ function renderizarTabela(st: AcervoInstanceState): void {
   }
 
   const showSubcat = st.config.tipo === 'PORTARIA';
+  const sortArrow = (col: 'numero' | 'nome' | 'data'): string => {
+    if (st.sortBy === `${col}_asc`) return ' ↑';
+    if (st.sortBy === `${col}_desc`) return ' ↓';
+    return '';
+  };
+
   let html = '<table class="clean-table table-responsive-cards" style="font-size: 13px;">';
   html += '<thead><tr>' +
-    '<th style="width: 96px;">Nº / Ano</th>' +
+    `<th style="width: 104px;"><button type="button" class="acervo-sort-th-btn" data-acervo-sort-col="numero" title="Ordenar por número">Nº / Ano${sortArrow('numero')}</button></th>` +
     (showSubcat ? '<th style="width: 150px;">Pasta</th>' : '') +
-    '<th>Documento &amp; Destinatário / Assunto</th>' +
-    '<th style="width: 110px;">Data</th>' +
+    `<th><button type="button" class="acervo-sort-th-btn" data-acervo-sort-col="nome" title="Ordenar por nome">Documento &amp; Destinatário / Assunto${sortArrow('nome')}</button></th>` +
+    `<th style="width: 118px;"><button type="button" class="acervo-sort-th-btn" data-acervo-sort-col="data" title="Ordenar por data">Data${sortArrow('data')}</button></th>` +
     '<th class="text-right" style="width: 245px;">Ações</th>' +
   '</tr></thead><tbody>';
 
@@ -346,9 +395,41 @@ async function consultarDocumentos(st: AcervoInstanceState): Promise<void> {
         'id,drive_file_id,tipo,subcategoria,pasta_drive_id,numero,ano,nome_arquivo,assunto_ou_titulo,destinatario_ou_servidor,mime_type,drive_url,pdf_export_url,criado_em,modificado_em,sincronizado_em',
         { count: 'exact' }
       )
-      .eq('tipo', st.config.tipo)
-      .order('modificado_em', { ascending: false, nullsFirst: false })
-      .order('numero', { ascending: false, nullsFirst: false });
+      .eq('tipo', st.config.tipo);
+
+    switch (st.sortBy) {
+      case 'data_asc':
+        query = query
+          .order('modificado_em', { ascending: true, nullsFirst: false })
+          .order('numero', { ascending: true, nullsFirst: false });
+        break;
+      case 'nome_asc':
+        query = query
+          .order('nome_arquivo', { ascending: true, nullsFirst: false })
+          .order('modificado_em', { ascending: false, nullsFirst: false });
+        break;
+      case 'nome_desc':
+        query = query
+          .order('nome_arquivo', { ascending: false, nullsFirst: false })
+          .order('modificado_em', { ascending: false, nullsFirst: false });
+        break;
+      case 'numero_desc':
+        query = query
+          .order('numero', { ascending: false, nullsFirst: false })
+          .order('ano', { ascending: false, nullsFirst: false });
+        break;
+      case 'numero_asc':
+        query = query
+          .order('numero', { ascending: true, nullsFirst: false })
+          .order('ano', { ascending: true, nullsFirst: false });
+        break;
+      case 'data_desc':
+      default:
+        query = query
+          .order('modificado_em', { ascending: false, nullsFirst: false })
+          .order('numero', { ascending: false, nullsFirst: false });
+        break;
+    }
 
     if (st.subcategoria && st.subcategoria !== 'TODAS') {
       query = query.eq('subcategoria', st.subcategoria);
@@ -453,6 +534,7 @@ export function mountDocumentosAcervo(config: AcervoMountConfig): void {
       searchTerm: '',
       subcategoria: 'TODAS',
       mesFiltro: '',
+      sortBy: 'data_desc',
       loading: false,
       syncing: false,
       errorMsg: '',

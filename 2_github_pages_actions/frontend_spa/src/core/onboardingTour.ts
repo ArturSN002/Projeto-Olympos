@@ -165,10 +165,10 @@ export const ONBOARDING_ROTEIROS: Record<OnboardingRoleId, OnboardingTourStepDef
       side: 'bottom'
     },
     {
-      selector: '#btnModoKiosk',
+      selector: '.masthead-nav-rail a[data-page="configuracoes"], #btnModoKiosk',
       title: 'Modo TV / Painel de Gabinete',
-      description: 'Exiba prazos SLA (sem PII), atos da FEMURN e telemetria do expediente em tela cheia 16:9 no gabinete.',
-      side: 'left'
+      description: 'Disponível na página Ajustes: exiba prazos SLA (sem PII), atos da FEMURN e telemetria do expediente em tela cheia 16:9 no gabinete.',
+      side: 'bottom'
     },
     {
       selector: '#dropdownDocsBtn',

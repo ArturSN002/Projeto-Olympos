@@ -24,12 +24,12 @@
               <button type="button" id="btnLimparOficioDispatchCtx" class="btn btn-ghost btn-sm">Desvincular Pendência</button>
             </div>
 
-            <div class="controls-grid">
+            <div class="controls-grid oficio-meta-grid">
               <div class="field-group">
                 <label for="oficioNumeroInput">Nº do Ofício (Sugerido por Apolo)</label>
                 <input type="text" id="oficioNumeroInput" class="input-clean" placeholder="--" />
               </div>
-              <div class="field-group">
+              <div class="field-group oficio-destinatario-field">
                 <label for="oficioDestinatarioInput">Destinatário / Cargo e Órgão</label>
                 <input type="text" id="oficioDestinatarioInput" class="input-clean" placeholder="Ex: Ao Senhor Secretário Municipal de Infraestrutura" />
               </div>
@@ -42,7 +42,7 @@
               </div>
             </div>
 
-            <div class="controls-grid" style="grid-template-columns: 1fr; margin-top: 16px;">
+            <div class="controls-grid oficio-body-grid">
               <div class="field-group">
                 <label for="oficioAssuntoInput">Assunto do Expediente</label>
                 <input type="text" id="oficioAssuntoInput" class="input-clean" placeholder="Ex: Solicitação de manutenção predial na Escola Municipal..." />
@@ -74,7 +74,7 @@
             </div>
           </div>
 
-          <section id="oficiosAcervoCard" class="surface-card" style="margin-top: 22px;">
+          <section id="oficiosAcervoCard" class="surface-card oficios-acervo-card">
             <div class="card-header-row">
               <div>
                 <span class="section-eyebrow">ÍNDICE DRIVE 2026 • OFÍCIOS GERADOS</span>

@@ -8,6 +8,7 @@ window.OlymposViews.configuracoes = (function() {
   let subtabAtiva = 'conexao';
   let paginaUsuarios = 1;
   const ITENS_USUARIOS_POR_PAGINA = 15;
+  const pingHistory = [];
 
   const MOCK_USUARIOS_FALLBACK = [
     {
@@ -70,33 +71,12 @@ window.OlymposViews.configuracoes = (function() {
       }
     };
 
-    bind('configSalvarApiBtn', 'click', salvarUrlApi);
     bind('configTestarApiBtn', 'click', testarConexaoApi);
-    bind('configResetApiBtn', 'click', function() {
-      window.OlymposApi.setApiUrl(window.OlymposApi.DEFAULT_API_URL);
-      carregarValoresAtuais();
-      window.OlymposApp.showToast('Endereço do serviço restaurado para o padrão oficial!');
-    });
     bind('configLogoutBtn', 'click', function() {
       window.OlymposApp.fazerLogout();
     });
     bind('configTemaSelect', 'change', function(e) {
       window.OlymposApp.definirTema(e.target.value);
-    });
-    bind('configSalvarCartoKeyBtn', 'click', function() {
-      const inKey = document.getElementById('configCartoApiKeyInput');
-      if (inKey && window.OlymposCarto) {
-        window.OlymposCarto.setApiKey(inKey.value);
-        atualizarStatusCartoUi();
-        window.OlymposApp.showToast('CARTO_API_KEY atualizada para os mapas MapLibre GL + Carto!');
-      }
-    });
-    bind('configLimparCartoKeyBtn', 'click', function() {
-      if (window.OlymposCarto) {
-        window.OlymposCarto.setApiKey('');
-        carregarValoresAtuais();
-        window.OlymposApp.showToast('Restaurado para a CARTO_API_KEY injetada pelo GitHub Actions!');
-      }
     });
 
     // Sub-abas de Ajustes
@@ -145,6 +125,7 @@ window.OlymposViews.configuracoes = (function() {
     // Mapeamento das seções
     const mapSubpanes = {
       'conexao': 'subpaneAjustesConexao',
+      'oraculo': 'subpaneAjustesOraculo',
       'aparencia': 'subpaneAjustesAparencia',
       'usuarios': 'subpaneAjustesUsuarios',
       'personas': 'subpaneAjustesPersonas',
@@ -161,11 +142,19 @@ window.OlymposViews.configuracoes = (function() {
       }
     });
 
-    if (subtabId === 'usuarios') {
+    if (subtabId === 'conexao') {
+      if (pingHistory.length === 0) {
+        testarConexaoApi();
+      }
+    } else if (subtabId === 'usuarios') {
       carregarUsuarios();
     } else if (subtabId === 'personas') {
       if (window.OlymposViews && window.OlymposViews.personas && typeof window.OlymposViews.personas.init === 'function') {
         window.OlymposViews.personas.init();
+      }
+    } else if (subtabId === 'oraculo') {
+      if (typeof window.OlymposConfigOraculoMount === 'function') {
+        window.OlymposConfigOraculoMount();
       }
     }
 
@@ -507,26 +496,9 @@ window.OlymposViews.configuracoes = (function() {
     }
   }
 
-  function atualizarStatusCartoUi() {
-    const inKey = document.getElementById('configCartoApiKeyInput');
-    const badge = document.getElementById('configCartoKeyStatusBadge');
-    if (!window.OlymposCarto) return;
-    const key = window.OlymposCarto.getApiKey();
-    if (inKey) inKey.value = key;
-    if (badge) {
-      badge.textContent = key ? 'CARTO_API_KEY Ativa' : 'CARTO Basemaps Padrão';
-      badge.className = key ? 'pill-badge pill-green' : 'pill-badge pill-blue';
-    }
-  }
-
   function carregarValoresAtuais() {
-    const inUrl = document.getElementById('configGasUrlInput');
-    if (inUrl) inUrl.value = window.OlymposApi.getApiUrl();
-
     const selTema = document.getElementById('configTemaSelect');
     if (selTema) selTema.value = document.documentElement.getAttribute('data-theme') || 'light';
-
-    atualizarStatusCartoUi();
 
     const session = window.OlymposApp.getSession();
     const userLabel = document.getElementById('configUserLabel');
@@ -547,43 +519,87 @@ window.OlymposViews.configuracoes = (function() {
     }
   }
 
-  function salvarUrlApi() {
-    const val = document.getElementById('configGasUrlInput').value.trim();
-    try {
-      window.OlymposApi.setApiUrl(val);
-      window.OlymposApp.showToast('URL do Gateway Google Apps Script salva!');
-      testarConexaoApi();
-    } catch (e) {
-      window.OlymposApp.showToast(e.message, true);
-    }
+  function classificarEstabilidade(ok, latency) {
+    if (!ok) return 'Instável / Offline';
+    if (typeof latency !== 'number' || isNaN(latency)) return 'Estável';
+    if (latency < 400) return 'Excelente';
+    if (latency < 1200) return 'Estável';
+    return 'Lenta (Alta Latência)';
   }
 
   function testarConexaoApi() {
     const btn = document.getElementById('configTestarApiBtn');
     const resBox = document.getElementById('configTestResult');
+    const elStatus = document.getElementById('configGwStatusMetric');
+    const elLat = document.getElementById('configGwLatencyMetric');
+    const elStab = document.getElementById('configGwStabilityMetric');
+    const elRoute = document.getElementById('configGwRouteMetric');
 
-    btn.disabled = true;
-    btn.textContent = 'Verificando...';
-    resBox.innerHTML = 'Verificando conexão com o serviço Google Apps Script...';
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Aferindo...';
+    }
+    if (resBox) {
+      resBox.innerHTML = 'Verificando estabilidade e tempo de resposta do Edge Gateway...';
+    }
 
     window.OlymposApi.testarConexao(function(res) {
-      btn.disabled = false;
-      btn.textContent = 'Testar Conexão';
-
-      if (res.ok) {
-        resBox.innerHTML =
-          '<div style="color:var(--success); font-weight:700;">Conexão Estabelecida com Sucesso</div>' +
-          '<div style="margin-top:4px; font-family:var(--font-mono); font-size:11.5px;">' +
-            'Tempo de resposta: ' + res.latency + ' ms • Sistema: ' + window.OlymposApp.escapeHtml((res.data && res.data.sistema) || 'Hub Olympos') +
-            ' • Versão: ' + window.OlymposApp.escapeHtml((res.data && res.data.versao) || '2.0.3') +
-          '</div>';
-        window.OlymposApp.atualizarStatusConexao(true);
-      } else {
-        resBox.innerHTML =
-          '<div style="color:var(--danger); font-weight:700;">Falha de Conectividade</div>' +
-          '<div style="margin-top:4px; font-size:12px;">' + window.OlymposApp.escapeHtml(res.error || 'Verifique a URL /exec.') + '</div>';
-        window.OlymposApp.atualizarStatusConexao(false);
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Verificar Estabilidade';
       }
+
+      const ok = Boolean(res && res.ok);
+      const latency = (res && typeof res.latency === 'number') ? res.latency : null;
+      pingHistory.push({ ok: ok, latency: latency });
+      if (pingHistory.length > 5) pingHistory.shift();
+
+      const validPings = pingHistory.filter(function(p) { return p.ok && typeof p.latency === 'number'; });
+      const okCount = pingHistory.filter(function(p) { return p.ok; }).length;
+      const uptimePct = Math.round((okCount / pingHistory.length) * 100);
+      const avgLat = validPings.length > 0
+        ? Math.round(validPings.reduce(function(acc, p) { return acc + p.latency; }, 0) / validPings.length)
+        : null;
+
+      const estabilidade = classificarEstabilidade(ok, latency);
+      const horaAtual = new Date().toLocaleTimeString('pt-BR');
+      const via = (res && res.via) ? res.via : 'Edge Gateway Supabase';
+
+      if (elStatus) {
+        elStatus.textContent = ok ? 'Online' : 'Offline';
+        elStatus.style.color = ok ? 'var(--success)' : 'var(--danger)';
+      }
+      if (elLat) {
+        elLat.textContent = latency !== null ? (latency + ' ms') : '-- ms';
+      }
+      if (elStab) {
+        elStab.textContent = estabilidade + ' (' + uptimePct + '%)';
+      }
+      if (elRoute) {
+        elRoute.textContent = via;
+      }
+
+      if (resBox) {
+        if (ok) {
+          resBox.innerHTML =
+            '<div style="color:var(--success); font-weight:700;">Gateway Estável e Operacional</div>' +
+            '<div style="margin-top:4px; font-family:var(--font-mono); font-size:11.5px;">' +
+              'Último RTT: ' + (latency !== null ? latency : '--') + ' ms' +
+              (avgLat !== null ? (' • Média (' + pingHistory.length + ' teste(s)): ' + avgLat + ' ms') : '') +
+              ' • Estabilidade: ' + uptimePct + '%' +
+              ' • Sistema: ' + window.OlymposApp.escapeHtml((res.data && res.data.sistema) || 'Projeto Olympos Gateway') +
+              ' • Verificado às ' + horaAtual +
+            '</div>';
+        } else {
+          resBox.innerHTML =
+            '<div style="color:var(--danger); font-weight:700;">Falha de Conectividade no Gateway</div>' +
+            '<div style="margin-top:4px; font-size:12px;">' +
+              window.OlymposApp.escapeHtml((res && res.error) || 'Gateway indisponível no momento.') +
+              ' (' + horaAtual + ')' +
+            '</div>';
+        }
+      }
+      window.OlymposApp.atualizarStatusConexao(ok);
     });
   }
 

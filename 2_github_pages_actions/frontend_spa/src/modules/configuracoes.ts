@@ -56,6 +56,52 @@ async function atualizarPainelSegurancaMfaSessoes(): Promise<void> {
   }
 }
 
+let oraculoLoadPromise: Promise<void> | null = null;
+
+async function mountOraculoEmAjustes(): Promise<void> {
+  const host = document.getElementById('configOraculoHost');
+  if (!host) return;
+
+  if (host.dataset.oraculoMounted === '1') {
+    await import('./oraculo').then((mod) => mod.mount());
+    return;
+  }
+
+  if (oraculoLoadPromise) return oraculoLoadPromise;
+
+  oraculoLoadPromise = (async () => {
+    const mod = await import('./oraculo');
+    // Remove instância standalone caso #oraculo tenha sido montado diretamente antes
+    const standalone = document.getElementById('page-oraculo');
+    if (standalone && !host.contains(standalone)) {
+      standalone.remove();
+    }
+
+    const tpl = document.createElement('template');
+    tpl.innerHTML = String(mod.htmlTemplate || '').trim();
+    const section = tpl.content.querySelector('#page-oraculo');
+    host.innerHTML = section ? section.innerHTML : tpl.innerHTML;
+    host.dataset.oraculoMounted = '1';
+
+    await mod.mount();
+    if (window.OlymposIcons && typeof window.OlymposIcons.hydrateAll === 'function') {
+      window.OlymposIcons.hydrateAll();
+    }
+  })();
+
+  try {
+    await oraculoLoadPromise;
+  } finally {
+    oraculoLoadPromise = null;
+  }
+}
+
+if (typeof window !== 'undefined') {
+  (window as any).OlymposConfigOraculoMount = () => {
+    void mountOraculoEmAjustes();
+  };
+}
+
 function bindSecurityPanelEvents(): void {
   const bindOnce = (id: string, fn: () => void) => {
     const el = document.getElementById(id) as any;
@@ -64,6 +110,10 @@ function bindSecurityPanelEvents(): void {
       el.addEventListener('click', fn);
     }
   };
+
+  bindOnce('btnModoKiosk', () => {
+    window.OlymposRouter?.navegarPara?.('kiosk');
+  });
 
   bindOnce('btnAtivarMfaConfig', () => {
     if (window.OlymposApp && typeof window.OlymposApp.solicitarMfaObrigatorio === 'function') {
@@ -88,6 +138,10 @@ function bindSecurityPanelEvents(): void {
     void reverTourGuiado();
   });
 
+  bindOnce('subtabBtnAjustesOraculo', () => {
+    void mountOraculoEmAjustes();
+  });
+
   bindOnce('subtabBtnAjustesPersonas', () => {
     mountMemoriasGovernanca();
   });
@@ -104,12 +158,14 @@ export async function mount(): Promise<void> {
   atualizarPainelSegurancaMfaSessoes();
   mountMemoriasGovernanca();
   mountTelegramConfig('configTelegramRoot');
+  window.OlymposApp?.aplicarControleAcessoModularEDrive?.();
 
   if (!authListenerBound && typeof window !== 'undefined') {
     authListenerBound = true;
     window.addEventListener('olympos:auth-changed', () => {
       atualizarPainelSegurancaMfaSessoes();
       mountTelegramConfig('configTelegramRoot');
+      window.OlymposApp?.aplicarControleAcessoModularEDrive?.();
     });
   }
 }

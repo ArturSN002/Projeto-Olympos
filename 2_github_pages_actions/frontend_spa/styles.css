@@ -940,8 +940,16 @@ body.nav-drawer-open .sidebar-backdrop,
 .dropdown-caret {
   width: 12px;
   height: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transition: transform 0.2s ease;
   flex-shrink: 0;
+}
+
+.dropdown-caret svg {
+  width: 12px;
+  height: 12px;
 }
 
 .nav-dropdown.open .dropdown-caret,
@@ -7798,4 +7806,309 @@ button.btn-mini:disabled {
 .oficio-editor-surface .ProseMirror th {
   background: var(--bg-tonal);
   font-weight: 700;
+}
+
+/* ==========================================================================
+   WORKSpace DROPDOWN HEADER, RESPONSIVIDADE HOME/OFÍCIOS & ORDENAÇÃO ACERVO
+   ========================================================================== */
+.header-workspace-dropdown {
+  position: relative;
+}
+
+.btn-workspace-companion {
+  background: linear-gradient(135deg, rgba(26, 115, 232, 0.10), rgba(245, 158, 11, 0.14));
+  border: 1px solid var(--accent-gold-border);
+  color: var(--text-main);
+  padding: 5px 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.btn-workspace-companion:hover {
+  background: linear-gradient(135deg, rgba(26, 115, 232, 0.18), rgba(245, 158, 11, 0.22));
+  border-color: var(--accent-gold);
+}
+
+[data-theme="dark"] .btn-workspace-companion {
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.16), rgba(245, 158, 11, 0.18));
+  border-color: rgba(245, 158, 11, 0.35);
+  color: var(--text-main);
+}
+
+.header-workspace-dropdown .dropdown-menu-right {
+  left: auto;
+  right: 0;
+  min-width: 190px;
+}
+
+.dropdown-menu .btn-gemini-companion {
+  width: 100%;
+  justify-content: flex-start;
+  border: 0;
+  background: transparent;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: var(--radius-pill);
+  box-shadow: none;
+  color: var(--text-secondary);
+}
+
+.dropdown-menu .btn-gemini-companion:hover {
+  transform: none;
+  box-shadow: none;
+  color: var(--text-main);
+  background: var(--bg-tonal);
+  padding-left: 17px;
+}
+
+[data-theme="dark"] .dropdown-menu .btn-gemini-companion:hover {
+  color: #D4AF37;
+  background: #1E293B;
+}
+
+.dropdown-item .external-arrow {
+  margin-left: auto;
+  opacity: 0.65;
+  font-size: 11px;
+}
+
+@media (max-width: 480px) {
+  .btn-workspace-companion {
+    padding: 5px 9px;
+    font-size: 0.72rem;
+    gap: 4px;
+  }
+}
+
+/* Home (#visao-geral): Fileiras completas de cards em todos os viewports */
+#page-visao-geral .stats-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 768px) {
+  body:not(.is-visitante) #page-visao-geral .stats-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+#page-visao-geral .quick-modules-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+#page-visao-geral .quick-module-card,
+#page-visao-geral .municipal-news-card,
+#page-visao-geral .home-persona-tile,
+#page-visao-geral .stat-card {
+  min-width: 0;
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  #page-visao-geral .quick-modules-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  #page-visao-geral .quick-modules-grid[data-visible-count="1"] {
+    grid-template-columns: 1fr;
+  }
+  #page-visao-geral .quick-modules-grid[data-visible-count="3"] .quick-module-card[data-vis-order="3"],
+  #page-visao-geral .quick-modules-grid[data-visible-count="5"] .quick-module-card[data-vis-order="5"],
+  #page-visao-geral .quick-modules-grid[data-visible-count="7"] .quick-module-card[data-vis-order="7"],
+  #page-visao-geral .quick-modules-grid[data-visible-count="9"] .quick-module-card[data-vis-order="9"] {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 1024px) {
+  #page-visao-geral .quick-modules-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  #page-visao-geral .quick-modules-grid[data-visible-count="1"] {
+    grid-template-columns: 1fr;
+  }
+  #page-visao-geral .quick-modules-grid[data-visible-count="2"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  #page-visao-geral .quick-modules-grid[data-visible-count="4"],
+  #page-visao-geral .quick-modules-grid[data-visible-count="8"] {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  #page-visao-geral .quick-modules-grid[data-visible-count="5"] {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  #page-visao-geral .quick-modules-grid[data-visible-count="5"] .quick-module-card[data-vis-order="1"],
+  #page-visao-geral .quick-modules-grid[data-visible-count="5"] .quick-module-card[data-vis-order="2"],
+  #page-visao-geral .quick-modules-grid[data-visible-count="5"] .quick-module-card[data-vis-order="3"] {
+    grid-column: span 2;
+  }
+  #page-visao-geral .quick-modules-grid[data-visible-count="5"] .quick-module-card[data-vis-order="4"],
+  #page-visao-geral .quick-modules-grid[data-visible-count="5"] .quick-module-card[data-vis-order="5"] {
+    grid-column: span 3;
+  }
+  #page-visao-geral .quick-modules-grid[data-visible-count="7"] {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+  #page-visao-geral .quick-modules-grid[data-visible-count="7"] .quick-module-card[data-vis-order="1"],
+  #page-visao-geral .quick-modules-grid[data-visible-count="7"] .quick-module-card[data-vis-order="2"],
+  #page-visao-geral .quick-modules-grid[data-visible-count="7"] .quick-module-card[data-vis-order="3"],
+  #page-visao-geral .quick-modules-grid[data-visible-count="7"] .quick-module-card[data-vis-order="4"] {
+    grid-column: span 3;
+  }
+  #page-visao-geral .quick-modules-grid[data-visible-count="7"] .quick-module-card[data-vis-order="5"],
+  #page-visao-geral .quick-modules-grid[data-visible-count="7"] .quick-module-card[data-vis-order="6"],
+  #page-visao-geral .quick-modules-grid[data-visible-count="7"] .quick-module-card[data-vis-order="7"] {
+    grid-column: span 4;
+  }
+}
+
+#page-visao-geral .municipal-news-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  #page-visao-geral .municipal-news-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  #page-visao-geral .municipal-news-grid[data-item-count="1"] {
+    grid-template-columns: 1fr;
+  }
+  #page-visao-geral .municipal-news-grid[data-item-count="3"] .municipal-news-card:last-child,
+  #page-visao-geral .municipal-news-grid[data-item-count="5"] .municipal-news-card:last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 1024px) {
+  #page-visao-geral .municipal-news-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  #page-visao-geral .municipal-news-grid[data-item-count="1"] {
+    grid-template-columns: 1fr;
+  }
+  #page-visao-geral .municipal-news-grid[data-item-count="2"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  #page-visao-geral .municipal-news-grid[data-item-count="4"] {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  #page-visao-geral .municipal-news-grid[data-item-count="8"] {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  #page-visao-geral .municipal-news-grid[data-item-count="5"] {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+  #page-visao-geral .municipal-news-grid[data-item-count="5"] > .municipal-news-card:nth-child(-n+3) {
+    grid-column: span 2;
+  }
+  #page-visao-geral .municipal-news-grid[data-item-count="5"] > .municipal-news-card:nth-child(n+4) {
+    grid-column: span 3;
+  }
+}
+
+#page-visao-geral .home-personas-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+@media (min-width: 640px) and (max-width: 1023px) {
+  #page-visao-geral .home-personas-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  #page-visao-geral .home-personas-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  #page-visao-geral .home-personas-grid > .home-persona-tile:nth-child(21),
+  #page-visao-geral .home-personas-grid > .home-persona-tile:nth-child(22) {
+    grid-column: span 2;
+  }
+}
+
+/* Ofícios (#page-oficios) Responsivo & Ultra-Wide */
+#page-oficios .surface-card {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#page-oficios .surface-card .controls-grid,
+#page-oficios .surface-card form {
+  max-width: 100%;
+}
+
+.oficio-body-grid {
+  grid-template-columns: 1fr;
+  margin-top: 16px;
+}
+
+.oficios-acervo-card {
+  margin-top: 22px;
+}
+
+@media (min-width: 769px) and (max-width: 1099px) {
+  .oficio-meta-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .oficio-meta-grid .oficio-destinatario-field {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 1100px) {
+  .oficio-meta-grid {
+    grid-template-columns: minmax(160px, 220px) minmax(0, 1fr) minmax(240px, 320px);
+  }
+}
+
+#oficioRichEditorHost,
+.oficio-editor-shell,
+.oficio-editor-surface .ProseMirror {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 2200px) {
+  #page-oficios.active:not(.hidden) {
+    display: grid;
+    grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+  }
+  #page-oficios.active:not(.hidden) .oficios-acervo-card {
+    margin-top: 0;
+  }
+}
+
+/* Acervo Emitido — Ordenação */
+.acervo-sort-select {
+  flex: 0 1 215px;
+}
+
+.acervo-sort-th-btn {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  font-weight: 700;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.acervo-sort-th-btn:hover {
+  color: var(--accent-gold);
 }

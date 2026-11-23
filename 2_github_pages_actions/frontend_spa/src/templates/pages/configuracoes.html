@@ -4,9 +4,10 @@
               <div>
                 <span class="section-eyebrow">SISTEMA &amp; GOVERNANÇA</span>
                 <h2 class="section-title">Ajustes &amp; Configurações do Hub Olympos</h2>
-                <p class="section-desc">Gerencie a conexão do sistema, o tema visual, os usuários autorizados, as personas da equipe e as notificações.</p>
+                <p class="section-desc">Gerencie a estabilidade da conexão, Oráculo semântico, tema visual, Modo TV, usuários autorizados, personas e notificações.</p>
               </div>
-              <div class="header-actions" style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <div class="header-actions" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                <button type="button" id="btnModoKiosk" class="btn btn-primary btn-sm hidden" data-requires-auth="true" title="Painel de Gabinete (Modo TV)" aria-label="Abrir Modo Painel de Gabinete TV">Modo TV</button>
                 <a href="https://drive.google.com/drive/folders/1W9mGmQCrX8BRPsGcK_vqUwfXw1dRmSya" target="_blank" rel="noopener" class="folder-chip"><span class="svg-icon-inline" data-icon="folderDrive"></span> Pasta Central Olympo <span class="external-arrow">↗</span></a>
                 <a href="https://drive.google.com/drive/folders/1ObCWTjpzrT06n5gIW2Px8QM9nQ0SoQdu" target="_blank" rel="noopener" class="folder-chip"><span class="svg-icon-inline" data-icon="fileText"></span> Memórias Operacionais <span class="external-arrow">↗</span></a>
               </div>
@@ -16,6 +17,9 @@
             <div class="subnav-tabs-bar" role="tablist" aria-label="Navegação interna de Ajustes">
               <button type="button" class="subnav-tab active" id="subtabBtnAjustesConexao" data-subtab="conexao">
                 <span class="svg-icon-inline" data-icon="settingsGear"></span><span>Conectividade &amp; Gateway</span>
+              </button>
+              <button type="button" class="subnav-tab" id="subtabBtnAjustesOraculo" data-subtab="oraculo">
+                <span class="svg-icon-inline" data-icon="sparkles"></span><span>Oráculo Semântico</span>
               </button>
               <button type="button" class="subnav-tab" id="subtabBtnAjustesAparencia" data-subtab="aparencia">
                 <span class="svg-icon-inline" data-icon="sliders"></span><span>Aparência &amp; Tema</span>
@@ -33,45 +37,44 @@
 
             <!-- SUB-ABA 1: CONECTIVIDADE & GATEWAY -->
             <div id="subpaneAjustesConexao" class="subtab-pane">
-              <div class="controls-grid config-grid-responsive" style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 24px;">
-                <div class="surface-card" style="border: 1px solid var(--border-hairline);">
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-                    <h3 style="font-size: 1.05rem; margin: 0;">Servidor de Integração (Google Apps Script)</h3>
-                    <div id="apiStatusPill" class="status-pill status-online" title="Conectividade com o Gateway Google Apps Script">
-                      <span>Gateway Online</span>
-                    </div>
+              <div class="surface-card" style="border: 1px solid var(--border-hairline);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                  <div>
+                    <span class="section-eyebrow" style="font-size: 10px;">DIAGNÓSTICO DE COMUNICAÇÃO • SUPABASE &amp; GAS</span>
+                    <h3 style="font-size: 1.05rem; margin: 0;">Estabilidade &amp; Tempo de Resposta do Gateway</h3>
                   </div>
-                  <div class="field-group" style="margin-bottom: 14px;">
-                    <label for="configGasUrlInput">Endereço do Serviço Web App (<code>/exec</code>)</label>
-                    <input type="url" id="configGasUrlInput" class="input-clean" style="font-family: var(--font-mono); font-size: 12px;" placeholder="https://script.google.com/macros/s/.../exec" />
+                  <div id="apiStatusPill" class="status-pill status-online" title="Conectividade com o Edge Gateway Olympos">
+                    <span>Gateway Online</span>
                   </div>
-                  <div class="button-group" style="margin-bottom: 14px;">
-                    <button id="configTestarApiBtn" class="btn btn-secondary btn-sm">Testar Conexão</button>
-                    <button id="configSalvarApiBtn" class="btn btn-primary btn-sm">Salvar Endpoint</button>
-                    <button id="configResetApiBtn" class="btn btn-ghost btn-sm">Restaurar Padrão</button>
+                </div>
+                <p class="section-desc" style="font-size: 13px; margin-bottom: 16px;">
+                  Monitoramento em tempo real da estabilidade e latência do Edge Gateway seguro (Supabase → Google Apps Script).
+                </p>
+
+                <div class="controls-grid config-gateway-metrics" style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr)); gap: 12px; margin-bottom: 16px;">
+                  <div class="output-panel" style="padding: 12px 14px;">
+                    <div class="stat-label" style="font-size: 10px; margin-bottom: 4px;">Status Atual</div>
+                    <strong id="configGwStatusMetric" style="font-size: 0.95rem;">Aguardando verificação</strong>
                   </div>
-                  <div id="configTestResult" class="output-panel" style="font-size: 12.5px;">
-                    Pronto para verificar conectividade com o Gateway GAS.
+                  <div class="output-panel" style="padding: 12px 14px;">
+                    <div class="stat-label" style="font-size: 10px; margin-bottom: 4px;">Tempo de Resposta</div>
+                    <strong id="configGwLatencyMetric" style="font-size: 0.95rem; font-family: var(--font-mono);">-- ms</strong>
+                  </div>
+                  <div class="output-panel" style="padding: 12px 14px;">
+                    <div class="stat-label" style="font-size: 10px; margin-bottom: 4px;">Estabilidade</div>
+                    <strong id="configGwStabilityMetric" style="font-size: 0.95rem;">Não aferida</strong>
+                  </div>
+                  <div class="output-panel" style="padding: 12px 14px;">
+                    <div class="stat-label" style="font-size: 10px; margin-bottom: 4px;">Rota Segura</div>
+                    <strong id="configGwRouteMetric" style="font-size: 0.92rem;">Edge Gateway Supabase</strong>
                   </div>
                 </div>
 
-                <!-- Painel CARTO integrado em Conexão -->
-                <div class="surface-card" style="border: 1px solid var(--border-hairline);">
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
-                    <div>
-                      <span class="section-eyebrow" style="font-size: 10px;">GEORREFERENCIAMENTO VETORIAL</span>
-                      <h3 style="font-size: 1.05rem; margin: 0;">Chave de API CARTO</h3>
-                    </div>
-                    <span id="configCartoKeyStatusBadge" class="pill-badge pill-blue">CARTO Ativo</span>
-                  </div>
-                  <div class="field-group" style="margin-bottom: 14px;">
-                    <label for="configCartoApiKeyInput">Chave do Mapa Interativo (CARTO)</label>
-                    <input type="text" id="configCartoApiKeyInput" class="input-clean" style="font-family: var(--font-mono); font-size: 12px;" placeholder="cb1_59be_1_e706175c142a6271abaac593" />
-                  </div>
-                  <div class="button-group">
-                    <button type="button" id="configSalvarCartoKeyBtn" class="btn btn-primary btn-sm">Salvar Chave</button>
-                    <button type="button" id="configLimparCartoKeyBtn" class="btn btn-ghost btn-sm">Restaurar Padrão</button>
-                  </div>
+                <div class="button-group" style="margin-bottom: 14px;">
+                  <button type="button" id="configTestarApiBtn" class="btn btn-primary btn-sm">Verificar Estabilidade</button>
+                </div>
+                <div id="configTestResult" class="output-panel" style="font-size: 12.5px;">
+                  Clique em <strong>Verificar Estabilidade</strong> para aferir o tempo de resposta do Gateway.
                 </div>
               </div>
             </div>
@@ -289,6 +292,13 @@
               </div>
 
               <div id="configTelegramRoot"></div>
+            </div>
+
+            <!-- SUB-ABA 6: ORÁCULO SEMÂNTICO -->
+            <div id="subpaneAjustesOraculo" class="subtab-pane">
+              <div id="configOraculoHost">
+                <div class="output-panel">Carregando Oráculo Semântico...</div>
+              </div>
             </div>
           </div>
         </section>

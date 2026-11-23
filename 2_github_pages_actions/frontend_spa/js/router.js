@@ -174,6 +174,11 @@ window.OlymposRouter = (function() {
       ? window.OlymposApp.getSession()
       : null;
 
+    if (pageId === 'oraculo' && sessaoAtiva) {
+      pageId = 'configuracoes';
+      targetSubtab = 'oraculo';
+    }
+
     if (!sessaoAtiva && !PUBLIC_PAGES.includes(pageId)) {
       if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
         window.OlymposApp.showToast('Faça login para acessar este módulo restrito.', true);
@@ -234,13 +239,14 @@ window.OlymposRouter = (function() {
       }
     });
 
-    // Destaque ativo para container e trigger do dropdown Documentos
-    const isDocPage = ['oficios', 'portarias', 'certificados', 'relatorios'].includes(pageId);
+    // Destaque ativo dinâmico para dropdowns com itens navegáveis (Documentos, Agenda, Pessoal)
     document.querySelectorAll('.nav-dropdown').forEach(function(dd) {
-      dd.classList.toggle('active', isDocPage);
-    });
-    document.querySelectorAll('.nav-dropdown-trigger').forEach(function(trigger) {
-      trigger.classList.toggle('active', isDocPage);
+      const hasActiveChild = Array.from(dd.querySelectorAll('.dropdown-item[data-page]')).some(function(item) {
+        return item.getAttribute('data-page') === pageId;
+      });
+      dd.classList.toggle('active', hasActiveChild);
+      const trigger = dd.querySelector('.nav-dropdown-trigger');
+      if (trigger) trigger.classList.toggle('active', hasActiveChild);
     });
 
     // Fechar dropdowns de navegação ao navegar

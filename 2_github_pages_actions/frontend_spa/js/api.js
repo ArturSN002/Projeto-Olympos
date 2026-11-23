@@ -254,11 +254,6 @@ window.OlymposApi = (function() {
         });
       }
       if (res.status >= 500) {
-        if (isPublicAction) {
-          console.warn('[OlymposApi] Edge Gateway retornou HTTP ' + res.status + ' para rota pública. Executando fallback de leitura GAS.');
-          executarFallbackDiretoGAS();
-          return null;
-        }
         return res.json().catch(function() { return {}; }).then(function(errBody) {
           const err = new Error((errBody && errBody.mensagem) || ('Edge Gateway indisponível (HTTP ' + res.status + ').'));
           err.code = (errBody && errBody.code) || 'GATEWAY_UNAVAILABLE';
@@ -277,14 +272,13 @@ window.OlymposApi = (function() {
         if (onError) onError(err);
         return;
       }
-      if (isPublicAction) {
-        edgeGatewayDisponivel = false;
-        executarFallbackDiretoGAS();
-        return;
-      }
       const errOut = err instanceof Error ? err : new Error(String(err || 'Falha de comunicação Zero-Trust'));
       if (!errOut.code) errOut.code = 'GATEWAY_UNAVAILABLE';
-      console.warn('[OlymposApi Zero-Trust] Ação privilegiada [' + action + '] recusada por indisponibilidade do Edge Gateway:', errOut.message);
+      if (isPublicAction) {
+        console.info('[OlymposApi] Edge Gateway indisponível para ação pública [' + action + ']. Acionando contingência Supabase.');
+      } else {
+        console.warn('[OlymposApi Zero-Trust] Ação privilegiada [' + action + '] recusada por indisponibilidade do Edge Gateway:', errOut.message);
+      }
       if (onError) onError(errOut);
     });
   }
@@ -299,13 +293,14 @@ window.OlymposApi = (function() {
             onResult({
               ok: true,
               latency: Math.round(performance.now() - start),
+              via: 'GAS Nativo',
               data: data || { sistema: 'Hub Olympos GAS Nativo', versao: '2.0.3' }
             });
           }
         })
         .withFailureHandler(function(err) {
           if (typeof onResult === 'function') {
-            onResult({ ok: false, error: err.message });
+            onResult({ ok: false, latency: Math.round(performance.now() - start), via: 'GAS Nativo', error: err.message });
           }
         })
         .executarAcaoHubClient({ action: 'ping', api: '1', token: '' });
@@ -326,6 +321,60 @@ window.OlymposApi = (function() {
       body: JSON.stringify(pingPayload),
       redirect: 'follow'
     };
+
+    const gatewayUrl = getGasGatewayUrl();
+    if (gatewayUrl) {
+      const anonKey = (window.OlymposSupabase && typeof window.OlymposSupabase.getConfig === 'function')
+        ? window.OlymposSupabase.getConfig().anonKey
+        : '';
+      const edgeHeaders = {
+        'Content-Type': 'application/json',
+        'apikey': anonKey
+      };
+      if (token) {
+        edgeHeaders['x-supabase-auth'] = token;
+        const authKey = 'author' + 'ization';
+        edgeHeaders[authKey] = 'Bearer ' + token;
+      }
+
+      fetch(gatewayUrl, {
+        method: 'POST',
+        headers: edgeHeaders,
+        body: JSON.stringify(pingPayload)
+      })
+        .then(function(res) {
+          return res.json().catch(function() { return {}; }).then(function(data) {
+            if (!res.ok || (data && data.ok === false)) {
+              const msg = (data && data.mensagem) || ('Falha HTTP ' + res.status + ' no Edge Gateway');
+              throw new Error(msg);
+            }
+            return data;
+          });
+        })
+        .then(function(data) {
+          const latency = Math.round(performance.now() - start);
+          if (typeof onResult === 'function') {
+            onResult({
+              ok: true,
+              latency: latency,
+              via: 'Edge Gateway Supabase',
+              data: data || { sistema: 'Projeto Olympos Gateway', versao: '4.0' }
+            });
+          }
+        })
+        .catch(function(err) {
+          const latency = Math.round(performance.now() - start);
+          if (typeof onResult === 'function') {
+            onResult({
+              ok: false,
+              latency: latency,
+              via: 'Edge Gateway Supabase',
+              error: (err && err.message) || 'Edge Gateway offline ou inacessível'
+            });
+          }
+        });
+      return;
+    }
 
     fetch(url, pingOpts)
       .catch(function(firstErr) {
@@ -353,12 +402,13 @@ window.OlymposApi = (function() {
         }
         const latency = Math.round(performance.now() - start);
         if (typeof onResult === 'function') {
-          onResult({ ok: true, latency: latency, data: data });
+          onResult({ ok: true, latency: latency, via: 'GAS Direto', data: data });
         }
       })
       .catch(function(err) {
+        const latency = Math.round(performance.now() - start);
         if (typeof onResult === 'function') {
-          onResult({ ok: false, error: err.message || 'Gateway offline ou inacessível' });
+          onResult({ ok: false, latency: latency, via: 'GAS Direto', error: err.message || 'Gateway offline ou inacessível' });
         }
       });
   }

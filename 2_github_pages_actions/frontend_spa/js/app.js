@@ -1081,12 +1081,21 @@ window.OlymposApp = (function() {
       card.classList.toggle('hidden', !permitido);
       card.style.display = permitido ? '' : 'none';
       card.setAttribute('aria-hidden', permitido ? 'false' : 'true');
-      if (permitido) cardsVisiveis++;
+      if (permitido) {
+        cardsVisiveis++;
+        card.setAttribute('data-vis-order', String(cardsVisiveis));
+      } else {
+        card.removeAttribute('data-vis-order');
+      }
     });
 
     const secModular = document.getElementById('operacoesModularesSection');
     if (secModular) {
       secModular.classList.toggle('hidden', cardsVisiveis === 0);
+      const gridModular = secModular.querySelector('.quick-modules-grid');
+      if (gridModular) {
+        gridModular.setAttribute('data-visible-count', String(cardsVisiveis));
+      }
     }
 
     // 2. Filtrar Atalhos para o Drive e elementos com data-requires-auth / data-access-roles / data-access-page
@@ -1454,7 +1463,17 @@ window.OlymposApp = (function() {
     const btnGemini = document.getElementById('topGeminiBtn');
     if (btnGemini) {
       btnGemini.addEventListener('click', function() {
+        fecharDropdowns();
         abrirJanelaGeminiCompanion();
+      });
+    }
+
+    const dropdownWorkspaceMenu = document.getElementById('dropdownWorkspaceMenu');
+    if (dropdownWorkspaceMenu) {
+      dropdownWorkspaceMenu.querySelectorAll('a.dropdown-item').forEach(function(link) {
+        link.addEventListener('click', function() {
+          fecharDropdowns();
+        });
       });
     }
 
@@ -1649,6 +1668,13 @@ window.OlymposApp = (function() {
         document.body.classList.remove('nav-drawer-open');
         if (target) window.OlymposRouter.navegarPara(target);
       });
+    });
+
+    const btnModoKioskDyn = document.getElementById('btnModoKiosk');
+    bindOnce(btnModoKioskDyn, 'click', function() {
+      if (window.OlymposRouter && typeof window.OlymposRouter.navegarPara === 'function') {
+        window.OlymposRouter.navegarPara('kiosk');
+      }
     });
 
     const btnCloseProfile = document.getElementById('closeUserProfileModalBtn');

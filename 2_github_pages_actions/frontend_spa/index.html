@@ -15,48 +15,13 @@
     <meta name="apple-mobile-web-app-title" content="Olympos" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <link rel="apple-touch-icon" href="assets/favicon.svg" />
-    <script>
-      (function() {
-        try {
-          var CANONICAL_GAS_URL = 'https://script.google.com/macros/s/AKfycby-59CN4EBKgQxjQgWHKtvorXsT1O5e0ZAt2DD42NRdf6cuXo-AnbvrVZdLBZqO538PCA/exec';
-          var u1 = localStorage.getItem('olympos_api_url') || '';
-          var u2 = localStorage.getItem('olympos_gas_api_url') || '';
-          if (u1.indexOf('AKfycbwM8M-L4QzDmsT3SGSUyuAAwwYri5McqL6HI2AGutVd7ZzXn5mQMfZj1O4eBs-ci2Ub7Q') !== -1 || u1.indexOf('AKfycbw-zKUdYJO6Zw1_XHo12a49p2wpgNtfii-2CJOq1838f6S1-L0SYM6iI9A2PS2ZPjYdmQ') !== -1) {
-            localStorage.setItem('olympos_api_url', CANONICAL_GAS_URL);
-          }
-          if (u2.indexOf('AKfycbwM8M-L4QzDmsT3SGSUyuAAwwYri5McqL6HI2AGutVd7ZzXn5mQMfZj1O4eBs-ci2Ub7Q') !== -1 || u2.indexOf('AKfycbw-zKUdYJO6Zw1_XHo12a49p2wpgNtfii-2CJOq1838f6S1-L0SYM6iI9A2PS2ZPjYdmQ') !== -1) {
-            localStorage.setItem('olympos_gas_api_url', CANONICAL_GAS_URL);
-          }
-          if ('caches' in window) {
-            caches.keys().then(function(keys) {
-              var stale = keys.filter(function(k) { return k !== 'olympos-shell-v4.0.0'; });
-              if (stale.length > 0) {
-                Promise.all(stale.map(function(k) { return caches.delete(k); })).then(function() {
-                  if (!sessionStorage.getItem('olympos_sw_purged_v400')) {
-                    sessionStorage.setItem('olympos_sw_purged_v400', '1');
-                    if ('serviceWorker' in navigator) {
-                      navigator.serviceWorker.getRegistrations().then(function(regs) {
-                        regs.forEach(function(r) { r.update(); });
-                        window.location.reload();
-                      });
-                    } else {
-                      window.location.reload();
-                    }
-                  }
-                });
-              }
-            });
-          }
-        } catch (e) {}
-      })();
-    </script>
+    <script>try{'caches'in window&&caches.keys().then(function(k){k.forEach(function(n){n!=='olympos-shell-v4.0.0'&&caches.delete(n);});});}catch(e){}</script>
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   </head>
   <body>
     <a href="#view-root" class="skip-to-content">Pular para o conteúdo principal</a>
     <div id="srLivePolite" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
     <div id="srLiveAssertive" class="sr-only" role="alert" aria-live="assertive" aria-atomic="true"></div>
-    <!-- TELA DE LOGIN EDITORIAL -->
     <div id="loginScreen" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
       <div class="modal-card" style="max-width: 450px; position: relative;">
         <div class="modal-body" style="padding: 34px 32px 28px;">
@@ -110,28 +75,28 @@
         </div>
 
         <div class="masthead-controls">
-          <div class="quick-search-pill hidden" style="display: none !important;">
-            <button id="topQuickSearchBtn" class="btn-search-trigger" title="Pesquisar no acervo" aria-label="Pesquisar"></button>
-            <input type="search" id="topQuickSearchInput" placeholder="Pesquisar ato, servidor ou portaria..." autocomplete="off" />
-            <span class="kbd-hint">/</span>
-          </div>
-
           <button id="themeToggleBtn" class="icon-capsule-btn hidden" style="display: none !important;" title="Alternar Modo Claro / Modo Escuro" aria-label="Alternar Tema"></button>
 
           <button type="button" id="btnAltoContrasteHeader" class="icon-capsule-btn" title="Alternar Modo Alto Contraste (WCAG 2.2)" aria-label="Alternar modo alto contraste" aria-pressed="false">◐</button>
-
-          <button type="button" id="btnModoKiosk" class="btn btn-ghost btn-sm hidden" data-requires-auth="true" title="Painel de Gabinete (Modo TV)" aria-label="Abrir Modo Painel de Gabinete TV">Modo TV</button>
 
           <button type="button" id="btnNotificacoesSino" class="icon-capsule-btn notif-bell-btn hidden" data-requires-auth="true" title="Central de Notificações" aria-label="Central de notificações" aria-expanded="false" aria-controls="notificacoesDrawer">
             <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
             <span id="notificacoesBadge" class="notif-badge hidden">0</span>
           </button>
 
-          <button id="topGeminiBtn" class="btn btn-sm btn-gemini-companion" title="Abrir Assistente Gemini SMEB (Janela Lateral Desktop)" aria-label="Abrir Assistente Gemini">
-            <span class="gemini-sparkle svg-icon-inline" data-icon="sparkles" aria-hidden="true"></span>
-            <span class="sr-only">✨</span>
-            <span>Gemini</span>
-          </button>
+          <div class="nav-dropdown header-workspace-dropdown" id="navDropdownWorkspace">
+            <button type="button" id="topWorkspaceBtn" class="btn btn-sm btn-workspace-companion nav-dropdown-trigger" aria-haspopup="true" aria-expanded="false" aria-controls="dropdownWorkspaceMenu" title="Atalhos Google Workspace e Gemini">
+              <span class="svg-icon-inline" data-icon="sparkles" aria-hidden="true"></span>
+              <span>Workspace</span>
+              <span class="dropdown-caret svg-icon-inline" data-icon="chevronDown" aria-hidden="true"></span>
+            </button>
+            <div class="dropdown-menu dropdown-menu-right" id="dropdownWorkspaceMenu" role="menu" aria-labelledby="topWorkspaceBtn">
+              <button type="button" id="topGeminiBtn" class="dropdown-item btn-gemini-companion" role="menuitem" title="Abrir Assistente Gemini SMEB (Janela Lateral Desktop)" aria-label="Abrir Assistente Gemini"><span class="gemini-sparkle svg-icon-inline" data-icon="sparkles" aria-hidden="true"></span><span class="sr-only">✨</span><span>Gemini</span></button>
+              <a href="https://docs.google.com/document/" target="_blank" rel="noopener noreferrer" class="dropdown-item" role="menuitem"><span>Docs</span><span class="external-arrow">↗</span></a>
+              <a href="https://docs.google.com/spreadsheets/" target="_blank" rel="noopener noreferrer" class="dropdown-item" role="menuitem"><span>Sheets</span><span class="external-arrow">↗</span></a>
+              <a href="https://docs.google.com/forms/" target="_blank" rel="noopener noreferrer" class="dropdown-item" role="menuitem"><span>Forms</span><span class="external-arrow">↗</span></a>
+            </div>
+          </div>
 
           <button id="userSessionBtn" class="user-capsule-btn" title="Entrar no Hub Olympos" aria-label="Conta e Perfil do Usuário">
             <span class="user-avatar-dot" id="userAvatarInitials">VS</span>
@@ -144,18 +109,12 @@
         </div>
       </div>
 
-      <!-- TRILHO DE NAVEGAÇÃO MODULAR (DESKTOP) -->
       <nav class="masthead-nav-rail" aria-label="Navegação modular do Hub Olympos">
         <div class="nav-rail-inner">
           <a href="#visao-geral" class="nav-link active" data-page="visao-geral">Visão Geral</a>
           <span class="nav-divider-dot" aria-hidden="true"></span>
           <div class="nav-dropdown" id="navDropdownDocumentos">
-            <button type="button" class="nav-link nav-dropdown-trigger" id="dropdownDocsBtn" aria-haspopup="true" aria-expanded="false" aria-controls="dropdownDocsMenu">
-              <span>Documentos</span>
-              <svg class="dropdown-caret" viewBox="0 0 20 20" width="12" height="12" fill="currentColor" aria-hidden="true">
-                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
-              </svg>
-            </button>
+            <button type="button" class="nav-link nav-dropdown-trigger" id="dropdownDocsBtn" aria-haspopup="true" aria-expanded="false" aria-controls="dropdownDocsMenu"><span>Documentos</span><span class="dropdown-caret svg-icon-inline" data-icon="chevronDown" aria-hidden="true"></span></button>
             <div class="dropdown-menu" id="dropdownDocsMenu" role="menu" aria-labelledby="dropdownDocsBtn">
               <a href="#oficios" class="nav-link dropdown-item" role="menuitem" data-page="oficios">Ofícios</a>
               <a href="#portarias" class="nav-link dropdown-item" role="menuitem" data-page="portarias">Portarias</a>
@@ -164,14 +123,23 @@
             </div>
           </div>
           <span class="nav-divider-dot" aria-hidden="true"></span>
-          <a href="#chamados" class="nav-link" data-page="chamados">Pendências</a>
+          <div class="nav-dropdown" id="navDropdownAgenda">
+            <button type="button" class="nav-link nav-dropdown-trigger" id="dropdownAgendaBtn" aria-haspopup="true" aria-expanded="false" aria-controls="dropdownAgendaMenu"><span>Agenda</span><span class="dropdown-caret svg-icon-inline" data-icon="chevronDown" aria-hidden="true"></span></button>
+            <div class="dropdown-menu" id="dropdownAgendaMenu" role="menu" aria-labelledby="dropdownAgendaBtn">
+              <a href="#chamados" class="nav-link dropdown-item" role="menuitem" data-page="chamados">Pendências</a>
+              <a href="#calendario" class="nav-link dropdown-item" role="menuitem" data-page="calendario">Calendário</a>
+            </div>
+          </div>
+          <div class="nav-dropdown" id="navDropdownPessoal">
+            <button type="button" class="nav-link nav-dropdown-trigger" id="dropdownPessoalBtn" aria-haspopup="true" aria-expanded="false" aria-controls="dropdownPessoalMenu"><span>Pessoal</span><span class="dropdown-caret svg-icon-inline" data-icon="chevronDown" aria-hidden="true"></span></button>
+            <div class="dropdown-menu" id="dropdownPessoalMenu" role="menu" aria-labelledby="dropdownPessoalBtn">
+              <a href="#papiro-cadmo" class="nav-link dropdown-item" role="menuitem" data-page="papiro-cadmo">Permutas</a>
+              <a href="#servidores" class="nav-link dropdown-item" role="menuitem" data-page="servidores">Servidores</a>
+              <a href="#processos-seletivos" class="nav-link dropdown-item hidden" role="menuitem" data-page="processos-seletivos" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE,RH_COMISSAO,JURIDICO">PSS</a>
+            </div>
+          </div>
           <a href="#diario-oficial" class="nav-link" data-page="diario-oficial">Diário Oficial</a>
-          <a href="#papiro-cadmo" class="nav-link" data-page="papiro-cadmo">Permutas</a>
-          <a href="#servidores" class="nav-link" data-page="servidores">Servidores</a>
-          <a href="#calendario" class="nav-link" data-page="calendario">Calendário</a>
           <a href="#escolas" class="nav-link" data-page="escolas">Escolas</a>
-          <a href="#processos-seletivos" class="nav-link hidden" data-page="processos-seletivos" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE,RH_COMISSAO,JURIDICO">PSS</a>
-          <a href="#oraculo" class="nav-link" data-page="oraculo">Oráculo</a>
           <a href="#busca" class="nav-link hidden" data-page="busca" style="display: none !important;">Busca no Acervo</a>
           <a href="#auditoria" class="nav-link hidden" data-page="auditoria" data-access-roles="MODERADOR">Auditoria</a>
           <span class="nav-divider-dot" aria-hidden="true"></span>
@@ -180,7 +148,6 @@
       </nav>
     </header>
 
-    <!-- GAVETA LATERAL DE NAVEGAÇÃO MOBILE -->
     <div id="sidebarBackdrop" class="sidebar-backdrop" onclick="document.body.classList.remove('nav-drawer-open')" aria-hidden="true"></div>
 
     <aside id="mobileSidebar" class="sidebar mobile-drawer" aria-label="Navegação móvel Olympos">
@@ -193,12 +160,7 @@
       <div class="nav-rail-inner mobile-nav-inner">
         <a href="#visao-geral" class="nav-link active" data-page="visao-geral">Visão Geral</a>
         <div class="nav-dropdown mobile-nav-dropdown" id="mobileNavDropdownDocumentos">
-          <button type="button" class="nav-link nav-dropdown-trigger" id="mobileDropdownDocsBtn" aria-haspopup="true" aria-expanded="false" aria-controls="mobileDropdownDocsMenu">
-            <span>Documentos</span>
-            <svg class="dropdown-caret" viewBox="0 0 20 20" width="12" height="12" fill="currentColor" aria-hidden="true">
-              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
-            </svg>
-          </button>
+          <button type="button" class="nav-link nav-dropdown-trigger" id="mobileDropdownDocsBtn" aria-haspopup="true" aria-expanded="false" aria-controls="mobileDropdownDocsMenu"><span>Documentos</span><span class="dropdown-caret svg-icon-inline" data-icon="chevronDown" aria-hidden="true"></span></button>
           <div class="dropdown-menu mobile-dropdown-menu" id="mobileDropdownDocsMenu" role="menu" aria-labelledby="mobileDropdownDocsBtn">
             <a href="#oficios" class="nav-link dropdown-item" role="menuitem" data-page="oficios">Ofícios</a>
             <a href="#portarias" class="nav-link dropdown-item" role="menuitem" data-page="portarias">Portarias</a>
@@ -206,14 +168,23 @@
             <a href="#relatorios" class="nav-link dropdown-item" role="menuitem" data-page="relatorios">Relatórios</a>
           </div>
         </div>
-        <a href="#chamados" class="nav-link" data-page="chamados">Pendências</a>
+        <div class="nav-dropdown mobile-nav-dropdown" id="mobileNavDropdownAgenda">
+          <button type="button" class="nav-link nav-dropdown-trigger" id="mobileDropdownAgendaBtn" aria-haspopup="true" aria-expanded="false" aria-controls="mobileDropdownAgendaMenu"><span>Agenda</span><span class="dropdown-caret svg-icon-inline" data-icon="chevronDown" aria-hidden="true"></span></button>
+          <div class="dropdown-menu mobile-dropdown-menu" id="mobileDropdownAgendaMenu" role="menu" aria-labelledby="mobileDropdownAgendaBtn">
+            <a href="#chamados" class="nav-link dropdown-item" role="menuitem" data-page="chamados">Pendências</a>
+            <a href="#calendario" class="nav-link dropdown-item" role="menuitem" data-page="calendario">Calendário</a>
+          </div>
+        </div>
+        <div class="nav-dropdown mobile-nav-dropdown" id="mobileNavDropdownPessoal">
+          <button type="button" class="nav-link nav-dropdown-trigger" id="mobileDropdownPessoalBtn" aria-haspopup="true" aria-expanded="false" aria-controls="mobileDropdownPessoalMenu"><span>Pessoal</span><span class="dropdown-caret svg-icon-inline" data-icon="chevronDown" aria-hidden="true"></span></button>
+          <div class="dropdown-menu mobile-dropdown-menu" id="mobileDropdownPessoalMenu" role="menu" aria-labelledby="mobileDropdownPessoalBtn">
+            <a href="#papiro-cadmo" class="nav-link dropdown-item" role="menuitem" data-page="papiro-cadmo">Permutas</a>
+            <a href="#servidores" class="nav-link dropdown-item" role="menuitem" data-page="servidores">Servidores</a>
+            <a href="#processos-seletivos" class="nav-link dropdown-item hidden" role="menuitem" data-page="processos-seletivos" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE,RH_COMISSAO,JURIDICO">PSS</a>
+          </div>
+        </div>
         <a href="#diario-oficial" class="nav-link" data-page="diario-oficial">Diário Oficial</a>
-        <a href="#papiro-cadmo" class="nav-link" data-page="papiro-cadmo">Permutas</a>
-        <a href="#servidores" class="nav-link" data-page="servidores">Servidores</a>
-        <a href="#calendario" class="nav-link" data-page="calendario">Calendário</a>
         <a href="#escolas" class="nav-link" data-page="escolas">Escolas</a>
-        <a href="#processos-seletivos" class="nav-link hidden" data-page="processos-seletivos" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE,RH_COMISSAO,JURIDICO">PSS</a>
-        <a href="#oraculo" class="nav-link" data-page="oraculo">Oráculo</a>
         <a href="#busca" class="nav-link hidden" data-page="busca" style="display: none !important;">Busca no Acervo</a>
         <a href="#auditoria" class="nav-link hidden" data-page="auditoria" data-access-roles="MODERADOR">Auditoria</a>
         <a href="#configuracoes" class="nav-link" data-page="configuracoes">Ajustes</a>
@@ -352,22 +323,7 @@
     <!-- Supabase JS v2 CDN — Fixado em v2.119.0 com Proteção Subresource Integrity (SRI) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.js" integrity="sha384-uteMfOloLDGt042uDz+xHGF3ym63/WQ6rFq7murQRG8Ih7QrXGEGNtWd8688sb4O" crossorigin="anonymous"></script>
 
-    <!-- Entry Point Modular Vite (Code Splitting Sob Demanda) -->
     <script type="module" src="./src/main.ts"></script>
-
-    <!-- Registro Oficial do Service Worker PWA Olympos SMEB -->
-    <script>
-      if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
-        window.addEventListener('load', function() {
-          navigator.serviceWorker.register('./sw.js')
-            .then(function(reg) {
-              console.log('[PWA] Service Worker registrado com sucesso:', reg.scope);
-            })
-            .catch(function(err) {
-              console.warn('[PWA] Erro ao registrar Service Worker:', err);
-            });
-        });
-      }
-    </script>
+    <script>if('serviceWorker'in navigator&&(location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1'))addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));</script>
   </body>
 </html>
