@@ -80,6 +80,7 @@ window.OlymposViews.portarias = (function() {
 
     bind('subtabBtnPortariasLote', 'click', function() { alternarSubtab('lote'); });
     bind('subtabBtnPortariasLicencas', 'click', function() { alternarSubtab('licencas'); });
+    bind('subtabBtnPortariasAcervo', 'click', function() { alternarSubtab('acervo'); });
     bind('pincelOperacaoSelect', 'change', carregarCatalogo);
     bind('pincelPlanilhaSelect', 'change', handlePlanilhaChange);
     bind('pincelDryRunBtn', 'click', executarDryRun);
@@ -92,19 +93,32 @@ window.OlymposViews.portarias = (function() {
   }
 
   function alternarSubtab(tabKey) {
-    const paneLote = document.getElementById('subpanePortariasLote');
-    const paneLic = document.getElementById('subpanePortariasLicencas');
-    const btnLote = document.getElementById('subtabBtnPortariasLote');
-    const btnLic = document.getElementById('subtabBtnPortariasLicencas');
+    const key = (tabKey === 'licencas' || tabKey === 'acervo') ? tabKey : 'lote';
+    const mapTabs = [
+      { id: 'lote', btn: document.getElementById('subtabBtnPortariasLote'), pane: document.getElementById('subpanePortariasLote') },
+      { id: 'licencas', btn: document.getElementById('subtabBtnPortariasLicencas'), pane: document.getElementById('subpanePortariasLicencas') },
+      { id: 'acervo', btn: document.getElementById('subtabBtnPortariasAcervo'), pane: document.getElementById('subpanePortariasAcervo') }
+    ];
 
-    const isLic = (tabKey === 'licencas');
-    if (btnLote) btnLote.classList.toggle('active', !isLic);
-    if (btnLic) btnLic.classList.toggle('active', isLic);
-    if (paneLote) paneLote.classList.toggle('hidden', isLic);
-    if (paneLic) paneLic.classList.toggle('hidden', !isLic);
+    mapTabs.forEach(function(item) {
+      const ativo = item.id === key;
+      if (item.btn) {
+        item.btn.classList.toggle('active', ativo);
+        item.btn.setAttribute('aria-selected', ativo ? 'true' : 'false');
+      }
+      if (item.pane) {
+        item.pane.classList.toggle('hidden', !ativo);
+      }
+    });
 
-    if (isLic && window.OlymposViews.licencas && typeof window.OlymposViews.licencas.init === 'function') {
+    if (key === 'licencas' && window.OlymposViews.licencas && typeof window.OlymposViews.licencas.init === 'function') {
       window.OlymposViews.licencas.init();
+    } else if (key === 'acervo' && window.OlymposDocumentosAcervo && typeof window.OlymposDocumentosAcervo.mount === 'function') {
+      window.OlymposDocumentosAcervo.mount({
+        containerId: 'portariasAcervoRoot',
+        tipo: 'PORTARIA',
+        showSubcategoriaFilter: true
+      });
     }
   }
 
@@ -382,6 +396,9 @@ window.OlymposViews.portarias = (function() {
 
         const consolidado = status.ultimoLoteConcluido || status;
         exibirResultadoConclusao(consolidado);
+        if (window.OlymposDocumentosAcervo && typeof window.OlymposDocumentosAcervo.recarregar === 'function') {
+          window.OlymposDocumentosAcervo.recarregar('PORTARIA');
+        }
         if (window.OlymposViews && window.OlymposViews.visaoGeral) {
           window.OlymposViews.visaoGeral.recarregar();
         }

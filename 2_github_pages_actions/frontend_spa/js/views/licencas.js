@@ -180,6 +180,9 @@ window.OlymposViews.licencas = (function() {
 
         document.getElementById('licNomeInput').value = '';
         document.getElementById('licMatriculaInput').value = '';
+        if (urlDoc && window.OlymposDocumentosAcervo && typeof window.OlymposDocumentosAcervo.recarregar === 'function') {
+          window.OlymposDocumentosAcervo.recarregar('PORTARIA');
+        }
         if (window.OlymposViews && window.OlymposViews.visaoGeral) {
           window.OlymposViews.visaoGeral.recarregar();
         }

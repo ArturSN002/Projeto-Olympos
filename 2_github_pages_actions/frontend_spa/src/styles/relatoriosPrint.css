@@ -1,0 +1,147 @@
+/* ==========================================================================
+   ONDA 3 — Regras de Impressão Oficial (PDF 1-Clique) para #page-relatorios
+   ========================================================================== */
+
+@page {
+  size: A4 portrait;
+  margin: 14mm 12mm;
+}
+
+@media print {
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 11.5pt !important;
+    line-height: 1.45 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Oculta chrome do SPA, navegação, botões, drawers e widget cromático */
+  .top-masthead,
+  .masthead-nav-rail,
+  .editorial-hero,
+  .sidebar,
+  #mobileSidebar,
+  #sidebarBackdrop,
+  #inspectorWidget,
+  #toastContainer,
+  .toast,
+  .modal-backdrop,
+  #routeSkeletonLoader,
+  .skip-to-content,
+  .relatorios-toolbar,
+  .relatorios-actions-bar,
+  .no-print,
+  button,
+  .btn,
+  .folder-chip {
+    display: none !important;
+  }
+
+  /* Garante que somente a rota ativa de relatórios seja impressa quando visível */
+  .page-view.hidden {
+    display: none !important;
+  }
+
+  body.printing-relatorio .page-view:not(#page-relatorios) {
+    display: none !important;
+  }
+
+  .editorial-shell,
+  .app-main,
+  #view-root,
+  #page-relatorios,
+  #page-relatorios .surface-card {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+
+  /* Cabeçalho Institucional SMEB Ceará-Mirim com nitidez vetorial */
+  #page-relatorios .relatorios-print-header {
+    display: flex !important;
+    color: #0f172a !important;
+    border-bottom: 2px solid #0f172a !important;
+  }
+
+  #page-relatorios .relatorios-print-brand h1,
+  #page-relatorios .relatorios-print-brand p,
+  #page-relatorios .relatorios-print-meta {
+    color: #0f172a !important;
+  }
+
+  #page-relatorios .relatorios-kpi-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    margin-bottom: 14px !important;
+  }
+
+  #page-relatorios .relatorios-kpi-card,
+  #page-relatorios .relatorios-chart-card {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: none !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    padding: 12px 14px !important;
+  }
+
+  #page-relatorios .relatorios-kpi-label,
+  #page-relatorios .relatorios-kpi-sub,
+  #page-relatorios .section-desc,
+  #page-relatorios .text-muted {
+    color: #475569 !important;
+  }
+
+  #page-relatorios .relatorios-kpi-value,
+  #page-relatorios .relatorios-chart-title,
+  #page-relatorios .section-title {
+    color: #0f172a !important;
+  }
+
+  #page-relatorios .relatorios-charts-grid,
+  #page-relatorios .relatorios-breakdown-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+  }
+
+  #page-relatorios svg text {
+    fill: #0f172a !important;
+  }
+
+  #page-relatorios table.clean-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    font-size: 9.5pt !important;
+  }
+
+  #page-relatorios table.clean-table th,
+  #page-relatorios table.clean-table td {
+    border: 1px solid #cbd5e1 !important;
+    padding: 6px 8px !important;
+    color: #0f172a !important;
+    background: #ffffff !important;
+  }
+
+  #page-relatorios table.clean-table th {
+    background: #f1f5f9 !important;
+    font-weight: 700 !important;
+  }
+
+  #page-relatorios tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}

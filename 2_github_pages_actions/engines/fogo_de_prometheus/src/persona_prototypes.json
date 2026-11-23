@@ -1,0 +1,192 @@
+{
+  "version": "1.0.0",
+  "embedding_model_default": "gemini-embedding-2-preview",
+  "embedding_dimensions": 768,
+  "personas": {
+    "nike": {
+      "nome": "Niké",
+      "arquivo_memoria": "_memoria_nike.md",
+      "roles_notificacao": ["MODERADOR", "ADMIN_GABINETE", "RH_COMISSAO"],
+      "descricao": "Processos Seletivos Simplificados (PSS), editais, convocações e contratos temporários.",
+      "prototipos_textuais": [
+        "Edital de Processo Seletivo Simplificado (PSS) da Secretaria Municipal de Educação Básica para contratação temporária de professores, cuidadores e monitores.",
+        "Convocação de candidatos classificados em PSS com prazo legal de apresentação de documentos, homologação de resultado final e cadastro de reserva.",
+        "Prorrogação de vigência de contrato temporário de prestação de serviços educacionais originado de processo seletivo."
+      ],
+      "keywords": [
+        "pss",
+        "processo seletivo",
+        "processo seletivo simplificado",
+        "edital",
+        "contrato temporario",
+        "contratacao temporaria",
+        "vigencia",
+        "prorrogacao",
+        "convocacao",
+        "classificados",
+        "cadastro de reserva",
+        "resultado preliminar",
+        "resultado final",
+        "homologacao",
+        "inscricoes"
+      ],
+      "regex_patterns": [
+        "\\bpss\\b",
+        "processo\\s+seletivo(?:\\s+simplificado)?",
+        "edital\\s*(?:de\\s+[a-z\\s]{3,40})?(?:n[o°.]?\\s*\\d{1,4}(?:[./-]\\d{2,4})?)?",
+        "contrat(?:o|acao|acoes)\\s+temporari[ao]s?",
+        "prorrogacao\\s+(?:de\\s+)?(?:vigencia|prazo|contrato)",
+        "vigencia\\s+ate"
+      ],
+      "peso_base": 1.15
+    },
+    "temis": {
+      "nome": "Têmis",
+      "arquivo_memoria": "_memoria_temis.md",
+      "roles_notificacao": ["MODERADOR", "ADMIN_GABINETE", "JURIDICO"],
+      "descricao": "Assessoria jurídica, pareceres, prazos legais, TCE/MP, notificações, decisões e sindicâncias.",
+      "prototipos_textuais": [
+        "Parecer jurídico, notificação oficial, despacho decisório e controle de legalidade de atos administrativos da SMEB.",
+        "Recomendação, inquérito, requisição ou prazo legal determinado pelo Tribunal de Contas do Estado (TCE) ou Ministério Público (MPRN).",
+        "Instauração ou conclusão de sindicância, processo administrativo disciplinar (PAD), termo de ajustamento de conduta e decisão administrativa."
+      ],
+      "keywords": [
+        "parecer juridico",
+        "parecer",
+        "tce",
+        "tribunal de contas",
+        "ministerio publico",
+        "mprn",
+        "prazo legal",
+        "notificacao",
+        "decisao",
+        "sindicancia",
+        "processo administrativo",
+        "recomendacao",
+        "procuradoria",
+        "intimacao",
+        "tac",
+        "termo de ajustamento",
+        "inquerito"
+      ],
+      "regex_patterns": [
+        "parecer\\s+juridico",
+        "\\btce(?:/rn)?\\b",
+        "ministerio\\s+publico|\\bmprn\\b",
+        "prazo\\s+legal",
+        "\\bnotificacao\\b",
+        "\\bdecisao\\b",
+        "\\bsindicancia\\b",
+        "processo\\s+administrativo(?:\\s+disciplinar)?"
+      ],
+      "peso_base": 1.1
+    },
+    "hera": {
+      "nome": "Hera",
+      "arquivo_memoria": "_memoria_hera.md",
+      "roles_notificacao": ["MODERADOR", "ADMIN_GABINETE", "RH_COMISSAO"],
+      "descricao": "Recursos Humanos, permutas, cessões, relotações, remoções e licenças de servidores.",
+      "prototipos_textuais": [
+        "Termo de permuta e cessão funcional de professores e servidores da educação entre municípios ou secretarias.",
+        "Portaria de relotação, remoção, redistribuição ou lotação provisória de servidor em unidade escolar da rede municipal.",
+        "Concessão de licença prêmio, licença médica, licença maternidade, afastamento ou readaptação funcional de servidor da SMEB."
+      ],
+      "keywords": [
+        "permuta",
+        "cessao",
+        "cedido",
+        "cedida",
+        "relotacao",
+        "remocao",
+        "licenca",
+        "licenca premio",
+        "readaptacao",
+        "afastamento",
+        "redistribuicao",
+        "junta medica",
+        "lotacao"
+      ],
+      "regex_patterns": [
+        "\\bpermuta\\b",
+        "\\bcessao\\b",
+        "\\brelotacao\\b",
+        "\\bremocao\\b",
+        "\\blicenca(?:\\s+(?:premio|medica|especial|sem\\s+vencimentos|maternidade|saude))?\\b",
+        "\\breadaptacao\\b"
+      ],
+      "peso_base": 1.1
+    },
+    "apolo": {
+      "nome": "Apolo",
+      "arquivo_memoria": "_memoria_apolo.md",
+      "roles_notificacao": ["MODERADOR", "ADMIN_GABINETE"],
+      "descricao": "Expedição oficial de atos administrativos: portarias, nomeações, exonerações, ofícios e decretos.",
+      "prototipos_textuais": [
+        "Portaria municipal de nomeação ou exoneração de servidor para cargo em comissão ou função gratificada na Secretaria Municipal de Educação.",
+        "Designação de diretor escolar, vice-diretor ou coordenador pedagógico em escola municipal de Ceará-Mirim.",
+        "Publicação de decreto municipal, ofício circular, resolução administrativa e retificação de atos oficiais do Executivo."
+      ],
+      "keywords": [
+        "portaria",
+        "nomeacao",
+        "nomear",
+        "nomeia",
+        "exoneracao",
+        "exonerar",
+        "exonera",
+        "oficio",
+        "decreto",
+        "designar",
+        "designa",
+        "cargo em comissao",
+        "funcao gratificada",
+        "diretor escolar"
+      ],
+      "regex_patterns": [
+        "\\bportaria\\s*(?:n[o°.]?\\s*\\d+)?",
+        "\\bnomea(?:cao|r|ia)\\b",
+        "\\bexonera(?:cao|r|a)?\\b",
+        "\\boficio\\b",
+        "\\bdecreto\\b"
+      ],
+      "peso_base": 1.0
+    },
+    "demeter": {
+      "nome": "Deméter",
+      "arquivo_memoria": "_memoria_demeter.md",
+      "roles_notificacao": ["MODERADOR", "ADMIN_GABINETE"],
+      "descricao": "Alimentação escolar, PNAE, PDDE, licitações, pregões e contratos de fornecimento.",
+      "prototipos_textuais": [
+        "Aquisição de gêneros alimentícios para alimentação escolar no âmbito do Programa Nacional de Alimentação Escolar (PNAE) e agricultura familiar.",
+        "Repasse e prestação de contas de recursos do Programa Dinheiro Direto na Escola (PDDE) para unidades escolares.",
+        "Aviso de licitação, pregão eletrônico, dispensa, ata de registro de preços e extrato de contrato de fornecimento para a educação."
+      ],
+      "keywords": [
+        "pnae",
+        "alimentacao escolar",
+        "merenda escolar",
+        "pdde",
+        "licitacao",
+        "pregao",
+        "pregao eletronico",
+        "contrato fornecimento",
+        "contrato de fornecimento",
+        "fornecimento",
+        "generos alimenticios",
+        "agricultura familiar",
+        "ata de registro de precos",
+        "dispensa de licitacao",
+        "extrato de contrato"
+      ],
+      "regex_patterns": [
+        "\\bpnae\\b",
+        "alimentacao\\s+escolar|merenda\\s+escolar",
+        "\\bpdde\\b",
+        "\\blicitacao\\b",
+        "\\bpregao(?:\\s+(?:eletronico|presencial))?\\b",
+        "contrato\\s+(?:de\\s+)?fornecimento"
+      ],
+      "peso_base": 1.1
+    }
+  }
+}

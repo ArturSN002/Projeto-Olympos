@@ -1,0 +1,204 @@
+        <section class="page-view hidden" id="page-relatorios" aria-labelledby="relatoriosSectionTitle">
+          <div class="surface-card">
+            <!-- CABEÇALHO VETORIAL EXCLUSIVO DE IMPRESSÃO (1-CLIQUE PDF) -->
+            <header class="relatorios-print-header" aria-hidden="true">
+              <div class="relatorios-print-brand">
+                <svg viewBox="0 0 40 40" width="38" height="38" fill="none" stroke="#0f172a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="3" y="3" width="34" height="34" rx="8" fill="#f8fafc" stroke="#0f172a" />
+                  <path d="M10 28h20M13 28V16m4.5 12V16m5 12V16m4.5 12V16M9 16l11-7 11 7H9z" />
+                </svg>
+                <div>
+                  <h1>Prefeitura Municipal de Ceará-Mirim/RN — SMEB</h1>
+                  <p>Secretaria Municipal de Educação Básica • Prestação de Contas Executiva Mensal</p>
+                </div>
+              </div>
+              <div class="relatorios-print-meta">
+                <div>Competência: <strong id="relatoriosPrintCompetencia">--/----</strong></div>
+                <div>Emitido em: <span id="relatoriosPrintTimestamp">--</span></div>
+              </div>
+            </header>
+
+            <div class="card-header-row no-print">
+              <div>
+                <span class="section-eyebrow">PRESTAÇÃO DE CONTAS • GABINETE SMEB</span>
+                <h2 id="relatoriosSectionTitle" class="section-title">Relatórios Executivos Mensais</h2>
+                <p class="section-desc">Consolidação automática de ofícios, portarias, licenças, SLA das pendências e publicações FEMURN com exportação vetorial em PDF e planilha multi-abas.</p>
+              </div>
+              <div class="button-group no-print">
+                <span id="relatoriosCompetenciaBadge" class="pill-badge pill-gold">Competência --/----</span>
+              </div>
+            </div>
+
+            <!-- BARRA DE FILTROS E EXPORTAÇÃO -->
+            <div class="relatorios-toolbar no-print">
+              <div class="relatorios-filters-group">
+                <div class="field-group">
+                  <label for="relatoriosAnoSelect">Ano de Exercício</label>
+                  <select id="relatoriosAnoSelect" class="input-clean">
+                    <option value="2025">2025</option>
+                    <option value="2026" selected>2026</option>
+                    <option value="2027">2027</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label for="relatoriosMesSelect">Mês de Competência</label>
+                  <select id="relatoriosMesSelect" class="input-clean">
+                    <option value="1">01 — Janeiro</option>
+                    <option value="2">02 — Fevereiro</option>
+                    <option value="3">03 — Março</option>
+                    <option value="4">04 — Abril</option>
+                    <option value="5">05 — Maio</option>
+                    <option value="6">06 — Junho</option>
+                    <option value="7">07 — Julho</option>
+                    <option value="8">08 — Agosto</option>
+                    <option value="9">09 — Setembro</option>
+                    <option value="10">10 — Outubro</option>
+                    <option value="11">11 — Novembro</option>
+                    <option value="12">12 — Dezembro</option>
+                  </select>
+                </div>
+                <button type="button" id="btnGerarRelatorioMensal" class="btn btn-primary btn-sm">
+                  Gerar Prestação de Contas
+                </button>
+              </div>
+
+              <div class="relatorios-actions-bar">
+                <button type="button" id="btnExportarRelatorioPdf" class="btn btn-secondary btn-sm">
+                  <span class="svg-icon-inline" data-icon="printer"></span>
+                  <span>Exportar PDF (1 Clique)</span>
+                </button>
+                <button type="button" id="btnExportarRelatorioXlsx" class="btn btn-accent btn-sm">
+                  <span class="svg-icon-inline" data-icon="download"></span>
+                  <span>Exportar XLSX Multi-Abas</span>
+                </button>
+              </div>
+            </div>
+
+            <div id="relatoriosStatusBanner" class="relatorios-status-banner no-print" aria-live="polite">
+              Selecione o ano e o mês e clique em <strong>Gerar Prestação de Contas</strong> para consolidar os indicadores oficiais do período.
+            </div>
+
+            <!-- KPIS CONSOLIDADOS -->
+            <div class="relatorios-kpi-grid" id="relatoriosKpiGrid">
+              <article class="relatorios-kpi-card">
+                <div class="relatorios-kpi-top">
+                  <span class="relatorios-kpi-label">Ofícios Emitidos</span>
+                  <span class="pill-badge pill-blue">Expediente</span>
+                </div>
+                <div class="relatorios-kpi-value" id="kpiRelOficios">--</div>
+                <div class="relatorios-kpi-sub" id="kpiRelOficiosSub">Aguardando consulta</div>
+              </article>
+
+              <article class="relatorios-kpi-card">
+                <div class="relatorios-kpi-top">
+                  <span class="relatorios-kpi-label">Portarias Emitidas</span>
+                  <span class="pill-badge pill-gold">Atos Normativos</span>
+                </div>
+                <div class="relatorios-kpi-value" id="kpiRelPortarias">--</div>
+                <div class="relatorios-kpi-sub" id="kpiRelPortariasSub">Por subcategoria 2026</div>
+              </article>
+
+              <article class="relatorios-kpi-card">
+                <div class="relatorios-kpi-top">
+                  <span class="relatorios-kpi-label">Licenças Funcionais</span>
+                  <span class="pill-badge pill-purple">Gestão RH</span>
+                </div>
+                <div class="relatorios-kpi-value" id="kpiRelLicencas">--</div>
+                <div class="relatorios-kpi-sub" id="kpiRelLicencasSub">Prêmio, s/ remuneração e anulações</div>
+              </article>
+
+              <article class="relatorios-kpi-card">
+                <div class="relatorios-kpi-top">
+                  <span class="relatorios-kpi-label">Pendências (Rec. / Res.)</span>
+                  <span class="pill-badge pill-green">Atendimento</span>
+                </div>
+                <div class="relatorios-kpi-value" id="kpiRelPendencias">-- / --</div>
+                <div class="relatorios-kpi-sub" id="kpiRelPendenciasSub">Taxa de resolução no período</div>
+              </article>
+
+              <article class="relatorios-kpi-card">
+                <div class="relatorios-kpi-top">
+                  <span class="relatorios-kpi-label">SLA Médio Útil</span>
+                  <span class="pill-badge pill-amber">Expediente 08h–15h</span>
+                </div>
+                <div class="relatorios-kpi-value" id="kpiRelSlaMedio">--</div>
+                <div class="relatorios-kpi-sub" id="kpiRelSlaMedioSub">Tempo médio até finalização</div>
+              </article>
+
+              <article class="relatorios-kpi-card">
+                <div class="relatorios-kpi-top">
+                  <span class="relatorios-kpi-label">Publicações FEMURN</span>
+                  <span class="pill-badge pill-teal">Diário Oficial</span>
+                </div>
+                <div class="relatorios-kpi-value" id="kpiRelFemurn">--</div>
+                <div class="relatorios-kpi-sub" id="kpiRelFemurnSub">Atos capturados no mês</div>
+              </article>
+            </div>
+
+            <!-- GRÁFICOS SVG INLINE LEVES -->
+            <div class="relatorios-charts-grid">
+              <article class="relatorios-chart-card">
+                <div class="relatorios-chart-header">
+                  <h3 class="relatorios-chart-title">Portarias por Subcategoria</h3>
+                  <span class="pill-badge pill-gold" id="relatoriosChartPortariasTotal">0 atos</span>
+                </div>
+                <div id="relatoriosChartPortariasSvgWrap" class="relatorios-svg-chart-wrap">
+                  <div class="text-muted" style="font-size: 12.5px;">Gere o relatório para visualizar a distribuição vetorial.</div>
+                </div>
+              </article>
+
+              <article class="relatorios-chart-card">
+                <div class="relatorios-chart-header">
+                  <h3 class="relatorios-chart-title">Pendências por Setor</h3>
+                  <span class="pill-badge pill-blue" id="relatoriosChartPendenciasTotal">0 demandas</span>
+                </div>
+                <div id="relatoriosChartPendenciasSetorSvgWrap" class="relatorios-svg-chart-wrap">
+                  <div class="text-muted" style="font-size: 12.5px;">Gere o relatório para visualizar a distribuição por setor.</div>
+                </div>
+              </article>
+            </div>
+
+            <!-- TABELAS DETALHADAS PARA AUDITORIA & IMPRESSÃO -->
+            <div class="relatorios-breakdown-grid">
+              <article class="relatorios-chart-card">
+                <div class="relatorios-chart-header">
+                  <h3 class="relatorios-chart-title">Consolidado de Atos e Licenças</h3>
+                </div>
+                <div class="table-wrapper">
+                  <table class="clean-table table-responsive-cards" id="relatoriosTabelaDocumentos">
+                    <thead>
+                      <tr>
+                        <th>Categoria / Subcategoria</th>
+                        <th class="text-right">Quantidade</th>
+                      </tr>
+                    </thead>
+                    <tbody id="relatoriosTabelaDocumentosBody">
+                      <tr><td colspan="2" class="text-muted text-center" style="padding: 18px;">Aguardando geração do relatório.</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </article>
+
+              <article class="relatorios-chart-card">
+                <div class="relatorios-chart-header">
+                  <h3 class="relatorios-chart-title">Desempenho por Setor &amp; FEMURN</h3>
+                </div>
+                <div class="table-wrapper">
+                  <table class="clean-table table-responsive-cards" id="relatoriosTabelaSetores">
+                    <thead>
+                      <tr>
+                        <th>Setor / Origem</th>
+                        <th class="text-right">Recebidas</th>
+                        <th class="text-right">Resolvidas</th>
+                        <th class="text-right">SLA Médio</th>
+                      </tr>
+                    </thead>
+                    <tbody id="relatoriosTabelaSetoresBody">
+                      <tr><td colspan="4" class="text-muted text-center" style="padding: 18px;">Aguardando geração do relatório.</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </article>
+            </div>
+          </div>
+        </section>

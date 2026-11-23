@@ -82,8 +82,24 @@ export default defineConfig({
         chunkFileNames: 'assets/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash][extname]',
         manualChunks(id: string) {
-          if (id.includes('node_modules/@preact/signals-core')) {
+          const normalized = id.replace(/\\/g, '/');
+          if (normalized.includes('node_modules/@preact/signals-core')) {
             return 'vendor-signals';
+          }
+          if (normalized.includes('node_modules/@tiptap') || normalized.includes('node_modules/prosemirror')) {
+            return 'vendor-tiptap';
+          }
+          if (normalized.includes('node_modules/xlsx')) {
+            return 'vendor-xlsx';
+          }
+          if (normalized.includes('node_modules/pdf-lib') || normalized.includes('node_modules/@pdf-lib')) {
+            return 'vendor-pdf';
+          }
+          if (normalized.includes('node_modules/driver.js')) {
+            return 'vendor-driver';
+          }
+          if (normalized.includes('node_modules/fflate') || normalized.includes('node_modules/papaparse')) {
+            return 'vendor-batch';
           }
           return undefined;
         }

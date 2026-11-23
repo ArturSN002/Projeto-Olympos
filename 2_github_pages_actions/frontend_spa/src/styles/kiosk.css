@@ -1,0 +1,195 @@
+/* ==========================================================================
+   ONDA 1 (Sprint 1.3 — Item 1.2): Modo Painel de Gabinete (Kiosk / TV 16:9)
+   Carregado exclusivamente em chunk lazy da rota #kiosk.
+   ========================================================================== */
+
+body.kiosk-mode-active .top-masthead,
+body.kiosk-mode-active .editorial-hero,
+body.kiosk-mode-active .sidebar,
+body.kiosk-mode-active .sidebar-backdrop {
+  display: none !important;
+}
+
+body.kiosk-mode-active .editorial-shell,
+body.kiosk-mode-active .app-main {
+  max-width: 100% !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.kiosk-shell {
+  min-height: 100vh;
+  background: #060b16;
+  color: #f8fafc;
+  padding: 20px 26px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  font-size: 20px;
+}
+
+.kiosk-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 14px 20px;
+  background: #0f172a;
+  border: 2px solid #334155;
+  border-radius: 16px;
+}
+
+.kiosk-brand-group {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.kiosk-brand-title {
+  font-size: 1.55rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #fbbf24;
+  margin: 0;
+}
+
+.kiosk-clock-readout {
+  font-family: var(--font-mono);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.kiosk-controls-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.kiosk-status-pill {
+  font-size: 0.9rem;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #1e293b;
+  color: #e2e8f0;
+  border: 1px solid #475569;
+  font-family: var(--font-mono);
+}
+
+.kiosk-status-pill.is-warning {
+  background: #451a03;
+  color: #fde68a;
+  border-color: #f59e0b;
+}
+
+.kiosk-grid-4 {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: minmax(290px, 1fr);
+  gap: 18px;
+}
+
+.kiosk-quadrant {
+  background: #0f172a;
+  border: 2px solid #334155;
+  border-radius: 18px;
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.kiosk-quadrant-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid #1e293b;
+  padding-bottom: 10px;
+}
+
+.kiosk-quadrant-title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #fbbf24;
+}
+
+.kiosk-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+}
+
+.kiosk-card-row {
+  background: #1e293b;
+  border: 1px solid #475569;
+  border-left: 5px solid #38bdf8;
+  border-radius: 10px;
+  padding: 11px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.kiosk-card-row.is-urgent {
+  border-left-color: #ef4444;
+  background: #2a121b;
+}
+
+.kiosk-card-main {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #ffffff;
+  line-height: 1.35;
+}
+
+.kiosk-card-sub {
+  font-size: 0.95rem;
+  color: #cbd5e1;
+  margin-top: 3px;
+}
+
+.kiosk-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  flex: 1;
+}
+
+.kiosk-kpi-box {
+  background: #1e293b;
+  border: 1px solid #475569;
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.kiosk-kpi-label {
+  font-size: 0.95rem;
+  color: #cbd5e1;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.kiosk-kpi-value {
+  font-size: 2.35rem;
+  font-weight: 800;
+  color: #ffffff;
+  font-family: var(--font-mono);
+  margin-top: 4px;
+}
+
+@media (max-width: 1024px) {
+  .kiosk-grid-4 {
+    grid-template-columns: 1fr;
+  }
+}

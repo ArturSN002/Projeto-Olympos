@@ -1,12 +1,26 @@
         <section class="page-view hidden" id="page-portarias">
           <div class="surface-card">
+            <div id="portariasDispatchContextBanner" class="output-panel hidden" style="margin-bottom: 16px; border-left: 4px solid var(--accent-primary); display: none; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
+              <div>
+                <strong id="portariasDispatchBannerTitle">Despacho vinculado à Pendência</strong>
+                <div id="portariasDispatchBannerMeta" style="font-size: 12px; color: var(--text-secondary);"></div>
+              </div>
+              <button type="button" id="btnLimparPortariasDispatchCtx" class="btn btn-ghost btn-sm">Desvincular Pendência</button>
+            </div>
+
             <!-- SELETOR DE SUB-ABAS TIPO PÍLULA -->
             <div class="subnav-tabs-bar" role="tablist" aria-label="Navegação interna de Portarias">
-              <button type="button" class="subnav-tab active" id="subtabBtnPortariasLote" data-subtab="lote">
+              <button type="button" class="subnav-tab active" role="tab" aria-selected="true" aria-controls="subpanePortariasLote" id="subtabBtnPortariasLote" data-subtab="lote">
                 <span class="svg-icon-inline" data-icon="boltZeus"></span> <span>Portarias em Lote</span>
               </button>
-              <button type="button" class="subnav-tab" id="subtabBtnPortariasLicencas" data-subtab="licencas">
+              <button type="button" class="subnav-tab" role="tab" aria-selected="false" aria-controls="subpanePortariasLicencas" id="subtabBtnPortariasLicencas" data-subtab="licencas">
                 <span class="svg-icon-inline" data-icon="clipboard"></span> <span>Cadastro de Licenças</span>
+              </button>
+              <button type="button" class="subnav-tab" role="tab" aria-selected="false" aria-controls="subpanePortariasAcervo" id="subtabBtnPortariasAcervo" data-subtab="acervo">
+                <span class="svg-icon-inline" data-icon="folderDrive"></span> <span>Acervo Emitido (Pastas 2026)</span>
+              </button>
+              <button type="button" class="subnav-tab" role="tab" aria-selected="false" aria-controls="subpanePortariasLoteInteligente" id="subtabBtnPortariasLoteInteligente" data-subtab="lote-inteligente">
+                <span class="svg-icon-inline" data-icon="upload"></span> <span>Lote Inteligente (CSV/XLSX)</span>
               </button>
             </div>
 
@@ -72,6 +86,8 @@
                 <div id="jobResultSummary" style="font-size: 13.5px; color: var(--text-secondary);"></div>
                 <div class="job-links-list" id="jobLinksList"></div>
               </div>
+
+              <div id="portariasBundleExportRoot"></div>
 
               <div id="pincelOutput" class="output-panel">
                 Selecione a modalidade, a planilha oficial e a aba para executar a validação pré-voo ou iniciar a geração em lote.
@@ -185,6 +201,27 @@
               </form>
 
               <div id="licencaOutputFeedback" class="job-result-card hidden"></div>
+            </div>
+
+            <!-- SUB-ABA 3: ACERVO EMITIDO (PASTAS OFICIAIS 2026) -->
+            <div id="subpanePortariasAcervo" class="subtab-pane hidden" role="tabpanel" aria-labelledby="subtabBtnPortariasAcervo">
+              <div class="card-header-row">
+                <div>
+                  <span class="section-eyebrow">ÍNDICE DRIVE 2026 • TODAS AS PASTAS DE PORTARIAS</span>
+                  <h2 class="section-title">Acervo de Portarias Emitidas</h2>
+                  <p class="section-desc">Consulta direta e paginada dos atos gerados nas pastas oficiais (Gerais, Licenças, Licenças Publicadas, Readaptações e FEMURN).</p>
+                </div>
+                <a href="https://drive.google.com/drive/folders/1QEewN0R3bCksLxLhmOSFq20EQYI3g64Q" target="_blank" rel="noopener noreferrer" class="folder-chip">
+                  Abrir Pasta Portarias 2026 ↗
+                </a>
+              </div>
+              <div id="portariasAcervoRoot"></div>
+              <div id="portariasAcervoBundleExportRoot" style="margin-top: 14px;"></div>
+            </div>
+
+            <!-- SUB-ABA 4: LOTE INTELIGENTE (CSV/XLSX • HOMERO) -->
+            <div id="subpanePortariasLoteInteligente" class="subtab-pane hidden" role="tabpanel" aria-labelledby="subtabBtnPortariasLoteInteligente">
+              <div id="portariasBatchImporterRoot"></div>
             </div>
           </div>
         </section>

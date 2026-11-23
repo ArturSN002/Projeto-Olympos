@@ -81,11 +81,18 @@
                   <button type="button" class="filter-pill" data-status="TODOS">Todos</button>
                 </div>
 
-                <div class="filter-pills-group" id="filterUrgenciaGroup">
-                  <span style="font-size: 0.76rem; font-family: var(--font-mono); color: var(--text-muted); margin-right: 4px;">PRIORIDADE:</span>
-                  <button type="button" class="filter-pill active" data-urgencia="TODOS">Todos</button>
-                  <button type="button" class="filter-pill" data-urgencia="URGENTE"><span class="svg-icon-inline" data-icon="siren"></span> Urgentes</button>
-                  <button type="button" class="filter-pill" data-urgencia="PADRAO">Padrão</button>
+                <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                  <div class="filter-pills-group" id="filterUrgenciaGroup">
+                    <span style="font-size: 0.76rem; font-family: var(--font-mono); color: var(--text-muted); margin-right: 4px;">PRIORIDADE:</span>
+                    <button type="button" class="filter-pill active" data-urgencia="TODOS">Todos</button>
+                    <button type="button" class="filter-pill" data-urgencia="URGENTE"><span class="svg-icon-inline" data-icon="siren"></span> Urgentes</button>
+                    <button type="button" class="filter-pill" data-urgencia="PADRAO">Padrão</button>
+                  </div>
+
+                  <div class="chamados-view-toggle" role="group" aria-label="Alternar modo de visualização">
+                    <button type="button" id="btnChamadosViewTabela" class="chamados-view-btn is-active" aria-pressed="true">Tabela / Lista</button>
+                    <button type="button" id="btnChamadosViewKanban" class="chamados-view-btn" aria-pressed="false">Kanban</button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -101,5 +108,6 @@
               <span id="chamadosPaginacaoInfo" class="olympos-pagination-info"></span>
               <div id="chamadosPaginacaoControles" class="olympos-pagination-controls"></div>
             </div>
+            <div id="chamadosKanbanRoot" class="hidden" aria-label="Quadro Kanban de Pendências"></div>
           </div>
         </section>

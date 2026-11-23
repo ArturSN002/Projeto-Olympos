@@ -54,6 +54,7 @@ jobs:
           OLYMPOS_SECRET_TOKEN: ${{ secrets.OLYMPOS_SECRET_TOKEN }}
           GOOGLE_CHAT_WEBHOOK_URL: ${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}
           GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           DATA_INICIO_CUSTOM: ${{ github.event.inputs.data_inicio }}
           DATA_FIM_CUSTOM: ${{ github.event.inputs.data_fim }}
           SECAO_DIARIO_OFICIAL: ${{ github.event.inputs.secao_diario || '' }}

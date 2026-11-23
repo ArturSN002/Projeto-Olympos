@@ -1,0 +1,180 @@
+name: "Olympos — Alertas Preventivos de Prazo (Pendências 48h/24h)"
+
+on:
+  schedule:
+    # A cada 2h de segunda a sexta, 07h-17h BRT (10:00-20:00 UTC)
+    - cron: '0 10,12,14,16,18,20 * * 1-5'
+  workflow_dispatch:
+
+jobs:
+  alertar-prazos-pendencias:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - name: 1. Checkout do Monorepo Olympos
+        uses: actions/checkout@v6
+
+      - name: 2. Configurar Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: 3. Verificar Prazos de Pendências (48h / 24h) e Despachar Alertas Internos
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import sys
+          import urllib.error
+          import urllib.parse
+          import urllib.request
+          from datetime import datetime, timedelta, timezone
+
+          supabase_url = os.getenv("SUPABASE_URL", "").strip().rstrip("/")
+          service_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+          if not supabase_url or not service_key:
+              print("[PRAZOS] SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY ausentes. Encerrando sem alterações.")
+              sys.exit(0)
+
+          headers = {
+              "apikey": service_key,
+              "Authorization": f"Bearer {service_key}",
+              "Content-Type": "application/json",
+              "Accept": "application/json",
+          }
+
+          def http_json(method: str, url: str, body=None, extra_headers=None):
+              hdrs = dict(headers)
+              if extra_headers:
+                  hdrs.update(extra_headers)
+              data = json.dumps(body, ensure_ascii=False).encode("utf-8") if body is not None else None
+              req = urllib.request.Request(url, data=data, headers=hdrs, method=method)
+              try:
+                  with urllib.request.urlopen(req, timeout=25) as resp:
+                      raw = resp.read().decode("utf-8", errors="replace")
+                      return resp.status, (json.loads(raw) if raw.strip() else None)
+              except urllib.error.HTTPError as err:
+                  raw_err = err.read().decode("utf-8", errors="replace") if err.fp else str(err)
+                  return err.code, raw_err
+
+          # Consulta estritamente campos operacionais (NUNCA seleciona e-mail do solicitante; ZERO e-mail enviado)
+          query_params = urllib.parse.urlencode({
+              "select": "id,numero_protocolo,setor,assunto_tipo,status,urgencia,data_limite_entrega,alerta_48h_enviado_em,alerta_24h_enviado_em,responsavel_id",
+              "status": "not.in.(RESOLVIDO,CANCELADO)",
+              "data_limite_entrega": "not.is.null",
+              "order": "data_limite_entrega.asc",
+              "limit": "500",
+          })
+          status_code, rows = http_json("GET", f"{supabase_url}/rest/v1/pendencias_solicitacoes?{query_params}")
+          if status_code < 200 or status_code >= 300 or not isinstance(rows, list):
+              print(f"[PRAZOS ERRO] Falha ao consultar pendencias_solicitacoes: HTTP {status_code} {rows}")
+              sys.exit(1)
+
+          tz_brt = timezone(timedelta(hours=-3))
+          agora_utc = datetime.now(timezone.utc)
+          agora_brt = agora_utc.astimezone(tz_brt)
+          agora_iso = agora_utc.isoformat()
+
+          notificacoes = []
+          atualizacoes = []
+          dispatcher_eventos = []
+
+          for row in rows:
+              pend_id = row.get("id")
+              data_lim_raw = str(row.get("data_limite_entrega") or "").strip()[:10]
+              if not pend_id or not data_lim_raw:
+                  continue
+
+              try:
+                  dt_lim_date = datetime.strptime(data_lim_raw, "%Y-%m-%d")
+              except ValueError:
+                  continue
+
+              # Fim do expediente SMEB (15:00 BRT) na data limite de entrega
+              deadline_brt = dt_lim_date.replace(hour=15, minute=0, second=0, microsecond=0, tzinfo=tz_brt)
+              horas_restantes = (deadline_brt - agora_brt).total_seconds() / 3600.0
+
+              proto = str(row.get("numero_protocolo") or f"#{pend_id}").strip()
+              setor = str(row.get("setor") or "SMEB").strip()
+              assunto = str(row.get("assunto_tipo") or "Pendência Operacional").strip()
+              ja_24h = bool(row.get("alerta_24h_enviado_em"))
+              ja_48h = bool(row.get("alerta_48h_enviado_em"))
+
+              if horas_restantes <= 24.0 and not ja_24h:
+                  severidade = "CRITICO"
+                  janela = "24h"
+                  campo_patch = "alerta_24h_enviado_em"
+                  titulo = f"Prazo crítico (<= 24h): Pendência {proto}"
+                  dedup_key = f"pendencia_prazo_24h:{pend_id}:{data_lim_raw}"
+              elif horas_restantes <= 48.0 and not ja_48h:
+                  severidade = "AVISO"
+                  janela = "48h"
+                  campo_patch = "alerta_48h_enviado_em"
+                  titulo = f"Alerta preventivo (<= 48h): Pendência {proto}"
+                  dedup_key = f"pendencia_prazo_48h:{pend_id}:{data_lim_raw}"
+              else:
+                  continue
+
+              msg = f"Setor: {setor} • Assunto: {assunto} • Data limite: {data_lim_raw} ({janela})"
+              notificacoes.append({
+                  "destinatario_roles": ["MODERADOR", "ADMIN_GABINETE", "RH_COMISSAO", "JURIDICO", "PEDAGOGICO_EVENTOS"],
+                  "categoria": "PENDENCIA",
+                  "severidade": severidade,
+                  "titulo": titulo[:220],
+                  "mensagem": msg[:600],
+                  "link_rota": "#chamados",
+                  "dedup_key": dedup_key[:180],
+              })
+              atualizacoes.append((pend_id, campo_patch))
+              dispatcher_eventos.append({
+                  "event": "PRAZO_PREVENTIVO_24H_48H",
+                  "tipo_evento": "PRAZO_PREVENTIVO_24H_48H",
+                  "severidade": severidade,
+                  "janela": janela,
+                  "pendencia_id": pend_id,
+                  "numero_protocolo": proto,
+                  "setor": setor,
+                  "assunto_tipo": assunto,
+                  "data_limite_entrega": data_lim_raw,
+                  "responsavel_id": row.get("responsavel_id"),
+              })
+
+          if notificacoes:
+              n_code, n_resp = http_json(
+                  "POST",
+                  f"{supabase_url}/rest/v1/notificacoes?on_conflict=dedup_key",
+                  body=notificacoes,
+                  extra_headers={"Prefer": "resolution=ignore-duplicates,return=minimal"},
+              )
+              if n_code < 200 or n_code >= 300:
+                  print(f"[PRAZOS ERRO] Falha ao gravar notificações: HTTP {n_code} {n_resp}")
+                  sys.exit(1)
+
+              for evt in dispatcher_eventos:
+                  try:
+                      d_code, _ = http_json(
+                          "POST",
+                          f"{supabase_url}/functions/v1/notification-dispatcher",
+                          body=evt,
+                      )
+                      if d_code >= 400 and d_code != 404:
+                          print(f"[PRAZOS AVISO] notification-dispatcher HTTP {d_code} para {evt['numero_protocolo']}")
+                  except Exception as exc:
+                      print(f"[PRAZOS AVISO] Dispatcher opcional indisponível: {exc}")
+
+              for pend_id, campo_patch in atualizacoes:
+                  p_code, p_resp = http_json(
+                      "PATCH",
+                      f"{supabase_url}/rest/v1/pendencias_solicitacoes?id=eq.{pend_id}",
+                      body={campo_patch: agora_iso},
+                      extra_headers={"Prefer": "return=minimal"},
+                  )
+                  if p_code < 200 or p_code >= 300:
+                      print(f"[PRAZOS AVISO] Falha ao atualizar {campo_patch} na pendência {pend_id}: HTTP {p_code} {p_resp}")
+
+          print(f"[PRAZOS OK] Pendências analisadas: {len(rows)} | Alertas disparados: {len(notificacoes)}")
+          PY

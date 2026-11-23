@@ -7413,3 +7413,389 @@ button.btn-mini:disabled {
 #btnRevelarPiiDossie {
   margin-top: 6px;
 }
+
+/* ==========================================================================
+   ONDA 1 (V4.1): ACESSIBILIDADE WCAG 2.2 AA, EDITOR HÍBRIDO, ACERVO E NOTIFICAÇÕES
+   ========================================================================== */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-to-content {
+  position: fixed;
+  top: -140px;
+  left: 16px;
+  z-index: 99999;
+  padding: 10px 18px;
+  border-radius: 8px;
+  background: var(--accent-primary, #f59e0b);
+  color: #0b1120;
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-decoration: none;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  transition: top 0.15s ease;
+}
+
+.skip-to-content:focus {
+  top: 12px;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus-ring, #f59e0b);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Tema Alto Contraste WCAG 2.2 AA / AAA (>= 7:1) */
+[data-contrast="high"] {
+  --bg-app: #000000;
+  --bg-surface: #0a0a0a;
+  --bg-elevated: #111111;
+  --bg-tonal: #141414;
+  --text-main: #ffffff;
+  --text-primary: #ffffff;
+  --text-secondary: #f3f4f6;
+  --text-muted: #e5e7eb;
+  --border-hairline: #ffffff;
+  --accent-primary: #ffd400;
+  --accent-gold: #ffd400;
+  --focus-ring: #ffd400;
+}
+
+[data-contrast="high"] body,
+[data-contrast="high"] .surface-card,
+[data-contrast="high"] .modal-card,
+[data-contrast="high"] .output-panel,
+[data-contrast="high"] .stat-card {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border: 2px solid #ffffff !important;
+}
+
+[data-contrast="high"] .btn-primary {
+  background: #ffd400 !important;
+  color: #000000 !important;
+  border: 2px solid #ffffff !important;
+  font-weight: 800 !important;
+}
+
+[data-contrast="high"] .btn-secondary,
+[data-contrast="high"] .btn-ghost,
+[data-contrast="high"] .folder-chip,
+[data-contrast="high"] .input-clean,
+[data-contrast="high"] select.input-clean,
+[data-contrast="high"] textarea.input-clean {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border: 2px solid #ffffff !important;
+}
+
+[data-contrast="high"] .nav-link.active,
+[data-contrast="high"] .subnav-tab.active {
+  background: #ffd400 !important;
+  color: #000000 !important;
+}
+
+@media (prefers-contrast: more) {
+  :root:not([data-contrast="off"]) {
+    --focus-ring: #ffd400;
+  }
+  .surface-card,
+  .input-clean,
+  .btn {
+    border-width: 2px;
+  }
+}
+
+/* Central de Notificações (Sino + Drawer Lazy) */
+.notif-bell-btn {
+  position: relative;
+}
+
+.notif-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #ffffff;
+  font-size: 10.5px;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
+  border: 2px solid var(--bg-surface, #ffffff);
+}
+
+.notif-drawer-backdrop {
+  justify-content: flex-end !important;
+  align-items: stretch !important;
+  padding: 0 !important;
+}
+
+.notif-drawer-panel {
+  width: min(440px, 100vw);
+  max-width: 100% !important;
+  height: 100vh;
+  max-height: 100vh !important;
+  border-radius: 0 !important;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+.notif-drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.notif-drawer-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 18px;
+  background: var(--bg-tonal);
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.notif-filter-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.notif-filter-btn {
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border-hairline);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.notif-filter-btn.active {
+  background: var(--accent-primary, #f59e0b);
+  color: #0b1120;
+  border-color: transparent;
+}
+
+.notif-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.notif-item {
+  width: 100%;
+  text-align: left;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-hairline);
+  background: var(--bg-surface);
+  color: var(--text-main);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.notif-item.is-unread {
+  border-left: 4px solid var(--accent-primary, #f59e0b);
+  background: var(--bg-tonal);
+}
+
+.notif-item-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.notif-item-time {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.notif-item-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.notif-unread-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--accent-primary, #f59e0b);
+  flex-shrink: 0;
+}
+
+.notif-item-msg {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+/* Tabela de Acervo Documental (Sprint 1.1) */
+.acervo-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.acervo-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  flex: 1;
+  min-width: min(100%, 260px);
+}
+
+.acervo-search-input {
+  flex: 1 1 240px;
+}
+
+.acervo-select,
+.acervo-month-input {
+  flex: 0 1 210px;
+}
+
+.acervo-actions-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.acervo-status-line {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+/* Editor Rich Text TipTap PR/2018 (Sprint 1.2) */
+.oficio-editor-shell {
+  border: 1px solid var(--border-hairline);
+  border-radius: 14px;
+  background: var(--bg-surface);
+  overflow: hidden;
+}
+
+.oficio-editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  background: var(--bg-tonal);
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.oficio-toolbar-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding-right: 6px;
+  border-right: 1px solid var(--border-hairline);
+}
+
+.oficio-toolbar-group:last-child {
+  border-right: 0;
+  padding-right: 0;
+}
+
+.editor-tool-btn,
+.editor-tool-select {
+  min-height: 32px;
+  padding: 4px 9px;
+  border-radius: 8px;
+  border: 1px solid var(--border-hairline);
+  background: var(--bg-surface);
+  color: var(--text-main);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.editor-tool-btn.is-active {
+  background: var(--accent-primary, #f59e0b);
+  color: #0b1120;
+  border-color: transparent;
+}
+
+.editor-tool-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.oficio-editor-surface .ProseMirror {
+  min-height: 220px;
+  padding: 18px 22px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 12pt;
+  line-height: var(--oficio-line-spacing, 1.15);
+  color: var(--text-main);
+  outline: none;
+}
+
+.oficio-editor-surface .ProseMirror p {
+  margin: 0 0 10px 0;
+}
+
+.oficio-pr2018-indent .ProseMirror p {
+  text-indent: 2.5cm;
+}
+
+.oficio-editor-surface .ProseMirror table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 10px 0;
+}
+
+.oficio-editor-surface .ProseMirror th,
+.oficio-editor-surface .ProseMirror td {
+  border: 1px solid var(--border-hairline);
+  padding: 6px 8px;
+  min-width: 60px;
+  vertical-align: top;
+}
+
+.oficio-editor-surface .ProseMirror th {
+  background: var(--bg-tonal);
+  font-weight: 700;
+}

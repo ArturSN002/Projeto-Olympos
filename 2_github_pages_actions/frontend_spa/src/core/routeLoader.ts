@@ -15,6 +15,7 @@ const ROUTE_IMPORTERS: Record<string, () => Promise<RouteModule>> = {
   'oficios':        () => import('../modules/oficios'),
   'portarias':      () => import('../modules/portarias'),
   'certificados':   () => import('../modules/certificados'),
+  'relatorios':     () => import('../modules/relatorios'),
   'diario-oficial': () => import('../modules/diario-oficial'),
   'papiro-cadmo':   () => import('../modules/papiro-cadmo'),
   'servidores':     () => import('../modules/servidores'),
@@ -23,7 +24,8 @@ const ROUTE_IMPORTERS: Record<string, () => Promise<RouteModule>> = {
   'busca':          () => import('../modules/busca'),
   'configuracoes':  () => import('../modules/configuracoes'),
   'chamados':       () => import('../modules/chamados'),
-  'auditoria':      () => import('../modules/auditoria')
+  'auditoria':      () => import('../modules/auditoria'),
+  'kiosk':          () => import('../modules/kiosk')
 };
 
 const MODAL_IMPORTERS: Record<string, { id: string; loader: () => Promise<{ default: string }> }> = {

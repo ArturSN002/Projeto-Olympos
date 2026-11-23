@@ -1,21 +1,64 @@
     <div id="memoriaModal" class="modal-backdrop hidden">
-      <div class="modal-card">
+      <div class="modal-card" style="max-width: 820px;">
         <div class="modal-header" style="gap: 10px;">
           <div style="min-width: 0;">
             <h3 id="modalMemoriaTitle" style="font-size: 1.08rem; margin: 0;">Memória Operacional</h3>
             <div id="modalMemoriaSubtitle" class="modal-memoria-subtitle">Documento Google Docs canônico</div>
           </div>
+          <span id="memoriaHashStatusBadge" class="pill-badge pill-gray" style="font-size: 10px;">SHA-256 pronto</span>
           <a id="modalMemoriaOpenDocLink" href="#" target="_blank" rel="noopener noreferrer" class="folder-chip" style="margin-left: auto;">Abrir no Google Docs ↗</a>
           <button id="closeModalBtn" class="icon-capsule-btn" type="button" aria-label="Fechar"><span class="svg-icon-inline" data-icon="close"></span></button>
         </div>
         <div class="modal-body">
+          <div id="memoriaGovBar" class="memoria-gov-bar">
+            <div class="memoria-snapshot-bar">
+              <label for="snapshotDedaloSelect" style="font-size: 0.76rem; font-weight: 700; white-space: nowrap;">Snapshots Dédalo:</label>
+              <select id="snapshotDedaloSelect" class="input-clean" style="flex: 1; min-width: 210px; font-size: 12px;">
+                <option value="">Carregando snapshots...</option>
+              </select>
+              <button id="previewSnapshotDedaloBtn" type="button" class="btn btn-secondary btn-sm">Pré-visualizar Diff</button>
+              <button id="restoreSnapshotDedaloBtn" type="button" class="btn btn-ghost btn-sm" disabled>Restaurar Snapshot</button>
+            </div>
+          </div>
+
+          <div id="memoriaConflictPanel" class="memoria-conflict-banner hidden" role="alert">
+            <div style="font-weight: 700; font-size: 0.9rem; margin-bottom: 4px;">
+              Conflito de Edição Detectado (CONFLICT_DETECTED)
+            </div>
+            <p style="margin: 0 0 8px; font-size: 0.8rem;">
+              Este documento foi alterado no Google Docs após sua abertura. Compare a versão atual do servidor com a sua edição local antes de salvar:
+            </p>
+            <div class="memoria-conflict-grid">
+              <div>
+                <div style="font-size: 11px; font-weight: 700; margin-bottom: 4px;">Versão Atual no Google Docs</div>
+                <pre id="memoriaConflictRemotePre" class="memoria-conflict-pane"></pre>
+              </div>
+              <div>
+                <div style="font-size: 11px; font-weight: 700; margin-bottom: 4px;">Sua Edição Local</div>
+                <pre id="memoriaConflictLocalPre" class="memoria-conflict-pane"></pre>
+              </div>
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button id="btnConflictUseRemote" type="button" class="btn btn-secondary btn-sm">Usar versão do Google Docs</button>
+              <button id="btnConflictMergeManual" type="button" class="btn btn-ghost btn-sm">Mesclar manualmente</button>
+              <button id="btnConflictForceLocal" type="button" class="btn btn-primary btn-sm">Sobrescrever com minha versão</button>
+            </div>
+          </div>
+
           <textarea id="modalMemoriaTextarea" rows="16" class="input-clean" style="font-family: var(--font-mono); font-size: 12.5px; line-height: 1.55;"></textarea>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; gap: 8px; flex-wrap: wrap;">
+            <span style="font-size: 0.76rem; color: var(--text-muted);">Revisão de Alterações &amp; Limite Canônico (60 linhas)</span>
+            <button id="toggleMemoriaDiffBtn" type="button" class="btn btn-ghost btn-sm" aria-expanded="false">Mostrar Diff Visual</button>
+          </div>
+          <div id="memoriaDiffPreviewWrap" class="hidden"></div>
         </div>
         <div class="modal-footer" style="flex-wrap: wrap; gap: 8px;">
           <span class="pill-badge pill-gold" id="modalLineCounter">0 / 60 linhas</span>
           <div class="button-group" style="flex-wrap: wrap;">
             <button id="reloadMemoriaBtn" type="button" class="btn btn-ghost btn-sm">Recarregar do Docs</button>
             <button id="clearMemoriaBtn" type="button" class="btn btn-secondary btn-sm">Limpar Caixa/Pendências</button>
+            <button id="compactMemoriaBtn" type="button" class="btn btn-secondary btn-sm">Compactar Memória (&lt;= 60 linhas)</button>
             <button id="saveMemoriaBtn" type="button" class="btn btn-primary btn-sm">Salvar no Google Docs</button>
           </div>
         </div>

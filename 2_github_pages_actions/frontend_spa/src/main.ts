@@ -17,14 +17,34 @@ import '../js/signals.js';
 import '../js/pagination.js';
 import '../js/sla_engine.js';
 
-// 2. Módulos core TypeScript (LGPD, Zero-Trust Session Guard, Termo de Sigilo, Roteador Lazy)
+// 2. Módulos core TypeScript (LGPD, Zero-Trust Session Guard, Termo de Sigilo, Roteador Lazy, Acessibilidade & Notificações)
 import './core/piiMask';
 import './core/termoSigilo';
 import './core/sessionGuard';
+import { initModalManager } from './core/modalManager';
+import { initShortcuts } from './core/shortcuts';
+import { initNotifications } from './core/notifications';
 import { bindNavPrefetch } from './core/routeLoader';
 
 // 3. Controlador central e roteador (carregam módulos de página sob demanda)
 import '../js/router.js';
 import '../js/app.js';
 
+initModalManager();
+initShortcuts();
+initNotifications();
 bindNavPrefetch();
+
+// Ponte lazy para Tour Guiado de Onboarding (mantém driver.js fora do entry bundle)
+if (typeof window !== 'undefined' && !window.OlymposOnboarding) {
+  window.OlymposOnboarding = {
+    iniciarSeNecessario: async (roleId?: string | null) => {
+      const mod = await import('./core/onboardingTour');
+      return mod.iniciarOnboardingSeNecessario(roleId);
+    },
+    reverTourGuiado: async (roleId?: string | null) => {
+      const mod = await import('./core/onboardingTour');
+      return mod.reverTourGuiado(roleId);
+    }
+  };
+}

@@ -1,0 +1,260 @@
+name: "Olympos — Backup DR Criptografado Supabase (Semanal)"
+
+on:
+  schedule:
+    # Domingos 06:00 UTC = 03:00 BRT (Horário de Brasília)
+    - cron: '0 6 * * 0'
+  workflow_dispatch:
+
+jobs:
+  backup-dr-supabase:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+
+    steps:
+      - name: 1. Checkout do Monorepo Olympos
+        uses: actions/checkout@v6
+
+      - name: 2. Configurar Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: 3. Instalar pg_dump, zstd, age e SDK Google Drive
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y postgresql-client zstd age
+          pip install --upgrade pip
+          pip install google-api-python-client google-auth
+
+      - name: 4. Executar pg_dump Criptografado, Upload Drive DR_Supabase (GFS) e Auditoria
+        env:
+          SUPABASE_DB_BACKUP_URL: ${{ secrets.SUPABASE_DB_BACKUP_URL }}
+          DR_AGE_PUBLIC_KEY: ${{ secrets.DR_AGE_PUBLIC_KEY }}
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          python - <<'PY'
+          import base64
+          import hashlib
+          import json
+          import os
+          import subprocess
+          import sys
+          import tempfile
+          import urllib.error
+          import urllib.request
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          from google.oauth2 import service_account
+          from googleapiclient.discovery import build
+          from googleapiclient.http import MediaFileUpload
+
+          DEDALO_BACKUP_PARENT_ID = "1utZF8Najg1mdeGiHJuqxMmMlhvDrYr5j"
+          DR_SUBFOLDER_NAME = "DR_Supabase"
+          RETENCAO_SEMANAIS = 8
+          RETENCAO_MENSAIS = 6
+
+          db_url = os.getenv("SUPABASE_DB_BACKUP_URL", "").strip()
+          age_pub = os.getenv("DR_AGE_PUBLIC_KEY", "").strip()
+          gcp_sa_raw = os.getenv("GCP_SA_KEY", "").strip()
+          supabase_url = os.getenv("SUPABASE_URL", "").strip().rstrip("/")
+          service_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+
+          faltando = [
+              k for k, v in (
+                  ("SUPABASE_DB_BACKUP_URL", db_url),
+                  ("DR_AGE_PUBLIC_KEY", age_pub),
+                  ("GCP_SA_KEY", gcp_sa_raw),
+                  ("SUPABASE_URL", supabase_url),
+                  ("SUPABASE_SERVICE_ROLE_KEY", service_key),
+              ) if not v
+          ]
+          if faltando:
+              print(f"[DR BACKUP] Segredos ausentes ({', '.join(faltando)}). Abortando execução.")
+              sys.exit(1)
+
+          def supabase_post(path: str, payload: dict):
+              req = urllib.request.Request(
+                  f"{supabase_url}{path}",
+                  data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+                  headers={
+                      "apikey": service_key,
+                      "Authorization": f"Bearer {service_key}",
+                      "Content-Type": "application/json",
+                      "Prefer": "return=minimal",
+                  },
+                  method="POST",
+              )
+              try:
+                  with urllib.request.urlopen(req, timeout=30) as resp:
+                      return resp.status, resp.read().decode("utf-8", errors="replace")
+              except urllib.error.HTTPError as err:
+                  return err.code, (err.read().decode("utf-8", errors="replace") if err.fp else str(err))
+
+          now_utc = datetime.now(timezone.utc)
+          stamp = now_utc.strftime("%Y%m%d_%H%M%S")
+          age_filename = f"supabase_dr_public_{stamp}.dump.zst.age"
+
+          def aplicar_retencao_gfs(service, folder_id: str) -> dict:
+              resp = service.files().list(
+                  q=f"'{folder_id}' in parents and trashed = false",
+                  fields="files(id, name, createdTime)",
+                  orderBy="createdTime desc",
+                  pageSize=200,
+                  supportsAllDrives=True,
+                  includeItemsFromAllDrives=True,
+                  corpora="allDrives",
+              ).execute()
+              arquivos = [f for f in resp.get("files", []) if str(f.get("name", "")).endswith(".dump.zst.age")]
+
+              manter_ids: set[str] = set()
+              semanas_vistas: set[str] = set()
+              meses_vistos: set[str] = set()
+
+              for arq in arquivos:
+                  fid = arq["id"]
+                  ct_raw = str(arq.get("createdTime") or "").replace("Z", "+00:00")
+                  try:
+                      dt = datetime.fromisoformat(ct_raw)
+                  except ValueError:
+                      dt = now_utc
+                  iso_yr, iso_wk, _ = dt.isocalendar()
+                  chave_semana = f"{iso_yr}-W{iso_wk:02d}"
+                  chave_mes = dt.strftime("%Y-%m")
+
+                  if len(semanas_vistas) < RETENCAO_SEMANAIS and chave_semana not in semanas_vistas:
+                      semanas_vistas.add(chave_semana)
+                      manter_ids.add(fid)
+                  if len(meses_vistos) < RETENCAO_MENSAIS and chave_mes not in meses_vistos:
+                      meses_vistos.add(chave_mes)
+                      manter_ids.add(fid)
+
+              removidos = []
+              for arq in arquivos:
+                  if arq["id"] not in manter_ids:
+                      service.files().delete(fileId=arq["id"], supportsAllDrives=True).execute()
+                      removidos.append(arq["name"])
+
+              return {
+                  "total_encontrados": len(arquivos),
+                  "mantidos": len(manter_ids),
+                  "semanais": len(semanas_vistas),
+                  "mensais": len(meses_vistos),
+                  "removidos": removidos,
+              }
+
+          with tempfile.TemporaryDirectory() as tmp_dir:
+              tmp_path = Path(tmp_dir)
+              raw_dump = tmp_path / f"supabase_dr_public_{stamp}.dump"
+              zst_dump = tmp_path / f"supabase_dr_public_{stamp}.dump.zst"
+              age_dump = tmp_path / age_filename
+
+              try:
+                  # 1. pg_dump custom + compressão zstd + criptografia assimétrica age
+                  subprocess.run(
+                      ["pg_dump", db_url, "--format=custom", "--no-owner", "--schema=public", "-f", str(raw_dump)],
+                      check=True,
+                  )
+                  subprocess.run(["zstd", "-q", "-T0", str(raw_dump), "-o", str(zst_dump)], check=True)
+                  raw_dump.unlink(missing_ok=True)
+
+                  subprocess.run(["age", "-r", age_pub, "-o", str(age_dump), str(zst_dump)], check=True)
+                  zst_dump.unlink(missing_ok=True)
+
+                  tamanho_bytes = age_dump.stat().st_size
+                  sha256_hash = hashlib.sha256()
+                  with age_dump.open("rb") as f_age:
+                      for chunk in iter(lambda: f_age.read(1024 * 1024), b""):
+                          sha256_hash.update(chunk)
+                  checksum_sha256 = sha256_hash.hexdigest()
+
+                  # 2. Autenticação Google Drive e localização/criação da subpasta DR_Supabase
+                  try:
+                      sa_info = json.loads(gcp_sa_raw)
+                  except json.JSONDecodeError:
+                      sa_info = json.loads(base64.b64decode(gcp_sa_raw).decode("utf-8"))
+
+                  creds = service_account.Credentials.from_service_account_info(
+                      sa_info,
+                      scopes=["https://www.googleapis.com/auth/drive"],
+                  )
+                  drive_svc = build("drive", "v3", credentials=creds)
+
+                  q_sub = (
+                      f"'{DEDALO_BACKUP_PARENT_ID}' in parents and name = '{DR_SUBFOLDER_NAME}' "
+                      f"and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
+                  )
+                  res_sub = drive_svc.files().list(
+                      q=q_sub,
+                      fields="files(id, name)",
+                      supportsAllDrives=True,
+                      includeItemsFromAllDrives=True,
+                      corpora="allDrives",
+                  ).execute()
+                  pastas = res_sub.get("files", [])
+                  if pastas:
+                      dr_folder_id = pastas[0]["id"]
+                  else:
+                      created_folder = drive_svc.files().create(
+                          body={
+                              "name": DR_SUBFOLDER_NAME,
+                              "mimeType": "application/vnd.google-apps.folder",
+                              "parents": [DEDALO_BACKUP_PARENT_ID],
+                          },
+                          fields="id",
+                          supportsAllDrives=True,
+                      ).execute()
+                      dr_folder_id = created_folder["id"]
+
+                  media = MediaFileUpload(str(age_dump), mimetype="application/octet-stream", resumable=True)
+                  uploaded = drive_svc.files().create(
+                      body={"name": age_filename, "parents": [dr_folder_id]},
+                      media_body=media,
+                      fields="id, name, webViewLink",
+                      supportsAllDrives=True,
+                  ).execute()
+                  drive_file_id = uploaded["id"]
+
+                  # 3. Retenção GFS (8 semanais + 6 mensais)
+                  gfs_info = aplicar_retencao_gfs(drive_svc, dr_folder_id)
+
+                  # 4. Registro de telemetria em public.backup_runs
+                  run_code, run_resp = supabase_post("/rest/v1/backup_runs", {
+                      "tipo": "SUPABASE_DR",
+                      "status": "OK",
+                      "arquivo_nome": age_filename,
+                      "tamanho_bytes": tamanho_bytes,
+                      "checksum_sha256": checksum_sha256,
+                      "detalhes_json": {
+                          "pasta_pai_dedalo_id": DEDALO_BACKUP_PARENT_ID,
+                          "pasta_dr_supabase_id": dr_folder_id,
+                          "drive_file_id": drive_file_id,
+                          "retencao_gfs": gfs_info,
+                      },
+                  })
+                  if run_code < 200 or run_code >= 300:
+                      raise RuntimeError(f"Falha ao gravar backup_runs: HTTP {run_code} {run_resp}")
+
+                  # 5. Invocar auditoria automática de anomalias operacionais
+                  anom_code, anom_resp = supabase_post("/rest/v1/rpc/verificar_anomalias_operacionais", {})
+                  if anom_code < 200 or anom_code >= 300:
+                      print(f"[DR AVISO] RPC verificar_anomalias_operacionais retornou HTTP {anom_code}: {anom_resp}")
+
+                  print(
+                      f"[DR BACKUP OK] Arquivo: {age_filename} | Bytes: {tamanho_bytes} | "
+                      f"SHA256: {checksum_sha256} | Drive ID: {drive_file_id}"
+                  )
+              except Exception as err:
+                  supabase_post("/rest/v1/backup_runs", {
+                      "tipo": "SUPABASE_DR",
+                      "status": "ERRO",
+                      "arquivo_nome": age_filename,
+                      "tamanho_bytes": 0,
+                      "checksum_sha256": None,
+                      "detalhes_json": {"erro": str(err)[:500]},
+                  })
+                  raise
+          PY

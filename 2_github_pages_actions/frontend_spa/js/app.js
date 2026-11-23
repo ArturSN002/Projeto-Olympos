@@ -85,6 +85,13 @@ window.OlymposApp = (function() {
     definirTema(current === 'dark' ? 'light' : 'dark');
   }
 
+  function acionarOnboardingTour(roleId) {
+    const targetRole = roleId || obterRoleIdSessao(currentUserSession) || 'VISITANTE';
+    setTimeout(function() {
+      window.OlymposOnboarding?.iniciarSeNecessario?.(targetRole);
+    }, 600);
+  }
+
   // =========================================================================
   // AUTENTICAÇÃO E CONTROLE DE ACESSO RBAC
   // =========================================================================
@@ -105,6 +112,7 @@ window.OlymposApp = (function() {
           if (window.OlymposSessionGuard && typeof window.OlymposSessionGuard.startIdleMonitor === 'function') {
             window.OlymposSessionGuard.startIdleMonitor(obterRoleIdSessao(currentUserSession));
           }
+          acionarOnboardingTour(obterRoleIdSessao(currentUserSession));
           return;
         }
         sessionStorage.removeItem('olympos_session_rbac');
@@ -125,6 +133,8 @@ window.OlymposApp = (function() {
           if (!currentUserSession && initialHash && !PUBLIC_PAGES.includes(initialHash)) {
             window.location.hash = '#visao-geral';
             solicitarLogin();
+          } else if (!currentUserSession) {
+            acionarOnboardingTour('VISITANTE');
           }
           return;
         }
@@ -132,7 +142,7 @@ window.OlymposApp = (function() {
           const client = window.OlymposSupabase.getClient();
           const { data: profData } = await client
             .from('profiles')
-            .select('id, email, full_name, role, department, termo_sigilo_aceito_em, termo_sigilo_versao')
+            .select('id, email, full_name, role, department, termo_sigilo_aceito_em, termo_sigilo_versao, onboarding_version_seen')
             .eq('id', sbSession.user.id)
             .maybeSingle();
           const profile = profData || {
@@ -163,6 +173,7 @@ window.OlymposApp = (function() {
           if (window.OlymposRouter) {
             window.OlymposRouter.navegarPara(initialHash || window.OlymposRouter.getPaginaAtual(), true);
           }
+          acionarOnboardingTour(role);
         } catch (eHydrate) {
           console.warn('[OlymposApp] Falha silenciosa ao hidratar sessão Supabase:', eHydrate);
         }
@@ -173,6 +184,8 @@ window.OlymposApp = (function() {
     if (initialHash && !PUBLIC_PAGES.includes(initialHash)) {
       window.location.hash = '#visao-geral';
       solicitarLogin();
+    } else {
+      acionarOnboardingTour('VISITANTE');
     }
   }
 
@@ -218,23 +231,23 @@ window.OlymposApp = (function() {
 
   const RBAC_TAB_PERMISSIONS = {
     MODERADOR: [
-      'visao-geral', 'oficios', 'portarias', 'licencas', 'certificados',
-      'diario-oficial', 'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'auditoria', 'configuracoes'
+      'visao-geral', 'oficios', 'portarias', 'licencas', 'certificados', 'relatorios',
+      'diario-oficial', 'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'auditoria', 'kiosk', 'configuracoes'
     ],
     ADMIN_GABINETE: [
-      'visao-geral', 'oficios', 'portarias', 'licencas', 'certificados',
-      'diario-oficial', 'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'configuracoes'
+      'visao-geral', 'oficios', 'portarias', 'licencas', 'certificados', 'relatorios',
+      'diario-oficial', 'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'kiosk', 'configuracoes'
     ],
     RH_COMISSAO: [
-      'visao-geral', 'oficios', 'portarias', 'licencas',
-      'diario-oficial', 'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'configuracoes'
+      'visao-geral', 'oficios', 'portarias', 'licencas', 'relatorios',
+      'diario-oficial', 'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'kiosk', 'configuracoes'
     ],
     PEDAGOGICO_EVENTOS: [
-      'visao-geral', 'oficios', 'certificados', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'configuracoes'
+      'visao-geral', 'oficios', 'certificados', 'relatorios', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'kiosk', 'configuracoes'
     ],
     JURIDICO: [
-      'visao-geral', 'oficios', 'portarias', 'diario-oficial',
-      'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'configuracoes'
+      'visao-geral', 'oficios', 'portarias', 'relatorios', 'diario-oficial',
+      'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'kiosk', 'configuracoes'
     ]
   };
 
@@ -608,6 +621,7 @@ window.OlymposApp = (function() {
             window.OlymposViews.visaoGeral.recarregar();
           }
           window.OlymposRouter.navegarPara(window.OlymposRouter.getPaginaAtual(), true);
+          acionarOnboardingTour(role);
         }
 
         // 1.1 Verificação de MFA GoTrue (aal1 / aal2)
@@ -685,6 +699,7 @@ window.OlymposApp = (function() {
           window.OlymposViews.visaoGeral.recarregar();
         }
         window.OlymposRouter.navegarPara(window.OlymposRouter.getPaginaAtual(), true);
+        acionarOnboardingTour(obterRoleIdSessao(res));
       } else {
         showToast((res && res.mensagem) || 'Credenciais inválidas. Configure o Supabase no botão abaixo.', true);
       }
@@ -792,6 +807,9 @@ window.OlymposApp = (function() {
     if (window.OlymposIcons && typeof window.OlymposIcons.hydrateAll === 'function') {
       window.OlymposIcons.hydrateAll();
     }
+    try {
+      window.dispatchEvent(new CustomEvent('olympos:auth-changed', { detail: { sessao: null } }));
+    } catch (eEvt) {}
   }
 
   function normalizarTextoSemAcentos_(val) {
@@ -1048,6 +1066,9 @@ window.OlymposApp = (function() {
     if (window.OlymposIcons && typeof window.OlymposIcons.hydrateAll === 'function') {
       window.OlymposIcons.hydrateAll();
     }
+    try {
+      window.dispatchEvent(new CustomEvent('olympos:auth-changed', { detail: { sessao: sessao } }));
+    } catch (eEvt) {}
   }
 
   function getSession() {
@@ -1267,6 +1288,16 @@ window.OlymposApp = (function() {
     if (btnGemini) {
       btnGemini.addEventListener('click', function() {
         abrirJanelaGeminiCompanion();
+      });
+    }
+
+    const btnModoKiosk = document.getElementById('btnModoKiosk');
+    if (btnModoKiosk && !btnModoKiosk._boundKiosk) {
+      btnModoKiosk._boundKiosk = true;
+      btnModoKiosk.addEventListener('click', function() {
+        if (window.OlymposRouter && typeof window.OlymposRouter.navegarPara === 'function') {
+          window.OlymposRouter.navegarPara('kiosk');
+        }
       });
     }
 
@@ -1891,6 +1922,9 @@ window.OlymposApp = (function() {
 
   function showToast(msg, isError) {
     const t = document.getElementById('globalToast');
+    if (window.OlymposShortcuts && typeof window.OlymposShortcuts.anunciarLeitorTela === 'function') {
+      window.OlymposShortcuts.anunciarLeitorTela(msg, Boolean(isError));
+    }
     if (!t) return;
     t.textContent = msg;
     t.classList.toggle('error', Boolean(isError));

@@ -96,12 +96,29 @@
                     </select>
                   </div>
 
+                  <div class="field-group" style="margin-top: 12px;">
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                      <input type="checkbox" id="configAltoContrasteToggle" role="switch" aria-checked="false" />
+                      <span>Modo Alto Contraste (WCAG 2.2 AA / AAA — 7:1)</span>
+                    </label>
+                  </div>
+
                   <!-- Widget de Inspeção Cromática 60-30-10 -->
                   <div id="inspectorWidget" class="fixed bottom-4 right-4 inspector-settings-embedded" style="margin-top: 14px;">
                     <div class="inspect-60" title="60% Base Dominante (Obsidian Void / Scientific Daylight)">60% Base</div>
                     <div class="inspect-30" title="30% Superfícies &amp; Tipografia (Surface Hairline)">30% Surface</div>
                     <div class="inspect-10" title="10% Acento &amp; Foco (Azul Elétrico DeepMind)">10% Accent</div>
                     <button id="themeToggleBtnInspector" type="button" class="btn-theme-toggle" onclick="window.OlymposApp &amp;&amp; window.OlymposApp.alternarTema()" aria-label="Alternar Tema">Alternar Tema</button>
+                  </div>
+
+                  <div class="surface-card" style="margin-top: 16px; border: 1px solid var(--border-hairline); padding: 14px 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
+                      <div>
+                        <strong style="font-size: 0.92rem;">Onboarding &amp; Tour Guiado</strong>
+                        <p class="section-desc" style="margin: 2px 0 0; font-size: 12px;">Reveja a apresentação interativa dos módulos liberados para o seu perfil.</p>
+                      </div>
+                      <button type="button" id="btnReverTourGuiadoConfig" class="btn btn-secondary btn-sm">Rever Tour Guiado</button>
+                    </div>
                   </div>
                 </div>
 
@@ -270,6 +287,8 @@
                 </div>
                 <div id="configBoletimEmailFeedback" class="stat-label" style="margin-top: 8px; font-size: 12px;"></div>
               </div>
+
+              <div id="configTelegramRoot"></div>
             </div>
           </div>
         </section>

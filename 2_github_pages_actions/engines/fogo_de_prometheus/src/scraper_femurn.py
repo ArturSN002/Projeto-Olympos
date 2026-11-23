@@ -995,6 +995,48 @@ def sincronizar_supabase_publicacoes(publicacoes: list, dt_referencia: str) -> b
     return sucesso_total
 
 
+def registrar_notificacoes_femurn(
+    publicacoes: list,
+    dt_referencia: str,
+    supabase_url: str | None = None,
+    service_role_key: str | None = None,
+) -> bool:
+    """Envia alerta consolidado da edição FEMURN para public.notificacoes (não-bloqueante)."""
+    url_base = supabase_url or os.getenv("SUPABASE_URL")
+    srv_key = service_role_key or os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+    if not url_base or not srv_key or not publicacoes:
+        return False
+
+    try:
+        dt_clean = str(dt_referencia or "").strip() or "hoje"
+        total = len(publicacoes)
+        primeiro_titulo = str(publicacoes[0].get("titulo_ato") or publicacoes[0].get("categoria") or "Ato SMEB").strip()
+        notif = [{
+            "destinatario_roles": ["MODERADOR", "ADMIN_GABINETE", "RH_COMISSAO", "JURIDICO"],
+            "categoria": "FEMURN",
+            "severidade": "AVISO",
+            "titulo": f"FEMURN ({dt_clean}): {total} publicação(ões) relevante(s)",
+            "mensagem": f"Primeiro destaque: {primeiro_titulo[:180]}. Consulte o Diário Oficial no Hub.",
+            "link_rota": "#diario-oficial",
+            "dedup_key": f"femurn_lote:{dt_clean}:{total}",
+        }]
+        resp = requests.post(
+            f"{url_base.rstrip('/')}/rest/v1/notificacoes?on_conflict=dedup_key",
+            json=notif,
+            headers={
+                "apikey": srv_key,
+                "Authorization": f"Bearer {srv_key}",
+                "Content-Type": "application/json",
+                "Prefer": "resolution=ignore-duplicates,return=minimal",
+            },
+            timeout=20,
+        )
+        return 200 <= resp.status_code < 300
+    except Exception as err:
+        print(f"[FEMURN NOTIF AVISO] Falha não-bloqueante ao notificar: {err}")
+        return False
+
+
 def gerar_planilha_diaria_csv(publicacoes: list, dt_referencia: str, output_dir: str = ".") -> str:
     """
     Gera o arquivo de planilha diária com nome padronizado 'Publicações de dd-mm-yyyy.csv'.
@@ -1138,8 +1180,26 @@ def main():
     # Gera planilha diária padronizada "Publicações de dd-mm-yyyy.csv"
     gerar_planilha_diaria_csv(lista_final, dt_ini)
 
-    # Persistência Atômica no Supabase (se configurado)
-    sincronizar_supabase_publicacoes(lista_final, dt_ini)
+    # Persistência Atômica no Supabase (se configurado) + alerta persistente consolidado
+    if sincronizar_supabase_publicacoes(lista_final, dt_ini):
+        registrar_notificacoes_femurn(lista_final, dt_ini)
+
+    # Radar Preditivo FEMURN (Custo $0: Camada 1 Determinística + Camada 2 Embedding opcional)
+    try:
+        try:
+            import radar_preditivo
+        except ImportError:
+            from . import radar_preditivo  # type: ignore
+        if hasattr(radar_preditivo, "executar_radar_diario"):
+            resumo_radar = radar_preditivo.executar_radar_diario(lista_final, dt_ini)
+            print(
+                f"[RADAR PREDITIVO] Alertas: {len(resumo_radar.get('alertas', []))} | "
+                f"Servidores SMEB: {len(resumo_radar.get('pessoas_citadas', []))} | "
+                f"Prazos: {len(resumo_radar.get('prazos_detectados', []))} | "
+                f"IA Vetorial: {resumo_radar.get('vetorizado_com_ia', False)}"
+            )
+    except Exception as err_radar:
+        print(f"[RADAR PREDITIVO AVISO] Execução opcional falhou sem bloquear scraper: {err_radar}")
 
     webhook_url = os.getenv("GAS_WEBHOOK_URL")
     token = os.getenv("OLYMPOS_SECRET_TOKEN")

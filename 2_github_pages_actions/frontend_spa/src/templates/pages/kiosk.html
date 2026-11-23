@@ -1,0 +1,74 @@
+        <section class="page-view hidden" id="page-kiosk">
+          <div class="kiosk-shell" aria-label="Modo Painel de Gabinete TV">
+            <header class="kiosk-topbar">
+              <div class="kiosk-brand-group">
+                <h2 class="kiosk-brand-title">Hub Olympos • Painel de Gabinete SMEB</h2>
+                <span id="kioskWakeLockPill" class="kiosk-status-pill">Tela Ativa: Padrão</span>
+              </div>
+              <div class="kiosk-clock-readout" id="kioskClock" aria-live="off">--:--:--</div>
+              <div class="kiosk-controls-group">
+                <span id="kioskSyncStatus" class="kiosk-status-pill" aria-live="polite">Sincronizando painel...</span>
+                <button type="button" id="kioskRefreshNowBtn" class="btn btn-secondary btn-sm">Atualizar</button>
+                <button type="button" id="kioskFullscreenBtn" class="btn btn-secondary btn-sm">Tela Cheia</button>
+                <button type="button" id="kioskExitBtn" class="btn btn-primary btn-sm">Sair do Modo TV</button>
+              </div>
+            </header>
+
+            <div class="kiosk-grid-4">
+              <article class="kiosk-quadrant" id="kioskQuadrantePrazos">
+                <div class="kiosk-quadrant-header">
+                  <h3 class="kiosk-quadrant-title">1. Prazos &amp; SLA do Dia</h3>
+                  <span id="kioskPrazosBadge" class="kiosk-status-pill">Sem PII</span>
+                </div>
+                <div id="kioskPrazosList" class="kiosk-list">
+                  <div class="kiosk-card-sub">Carregando prazos e protocolos operacionais...</div>
+                </div>
+              </article>
+
+              <article class="kiosk-quadrant" id="kioskQuadranteFemurn">
+                <div class="kiosk-quadrant-header">
+                  <h3 class="kiosk-quadrant-title">2. Últimos Atos FEMURN</h3>
+                  <span id="kioskFemurnBadge" class="kiosk-status-pill">Diário Oficial</span>
+                </div>
+                <div id="kioskFemurnList" class="kiosk-list">
+                  <div class="kiosk-card-sub">Carregando publicações FEMURN...</div>
+                </div>
+              </article>
+
+              <article class="kiosk-quadrant" id="kioskQuadranteAgenda">
+                <div class="kiosk-quadrant-header">
+                  <h3 class="kiosk-quadrant-title">3. Agenda Intersetorial</h3>
+                  <span id="kioskAgendaBadge" class="kiosk-status-pill">SMEB 2026</span>
+                </div>
+                <div id="kioskAgendaList" class="kiosk-list">
+                  <div class="kiosk-card-sub">Carregando compromissos da semana...</div>
+                </div>
+              </article>
+
+              <article class="kiosk-quadrant" id="kioskQuadranteTelemetria">
+                <div class="kiosk-quadrant-header">
+                  <h3 class="kiosk-quadrant-title">4. Telemetria de Expediente</h3>
+                  <span class="kiosk-status-pill">Auto-refresh 120s</span>
+                </div>
+                <div class="kiosk-kpi-grid">
+                  <div class="kiosk-kpi-box">
+                    <span class="kiosk-kpi-label">Ofícios Indexados</span>
+                    <div id="kioskKpiOficios" class="kiosk-kpi-value">--</div>
+                  </div>
+                  <div class="kiosk-kpi-box">
+                    <span class="kiosk-kpi-label">Portarias Indexadas</span>
+                    <div id="kioskKpiPortarias" class="kiosk-kpi-value">--</div>
+                  </div>
+                  <div class="kiosk-kpi-box">
+                    <span class="kiosk-kpi-label">Pendências Abertas</span>
+                    <div id="kioskKpiPendencias" class="kiosk-kpi-value">--</div>
+                  </div>
+                  <div class="kiosk-kpi-box">
+                    <span class="kiosk-kpi-label">Taxa SLA / Resolvidas</span>
+                    <div id="kioskKpiSlaRate" class="kiosk-kpi-value">--%</div>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </div>
+        </section>

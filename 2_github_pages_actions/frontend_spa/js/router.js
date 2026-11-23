@@ -36,6 +36,12 @@ window.OlymposRouter = (function() {
       subtitle: 'Padronização de listas de participantes, QR Code de verificação de autenticidade, geração de PDFs e envio institucional.',
       category: 'atos'
     },
+    'relatorios': {
+      eyebrow: 'PRESTAÇÃO DE CONTAS • SMEB 2026',
+      title: 'Relatórios Executivos Mensais.',
+      subtitle: 'Consolidação mensal de ofícios, portarias, licenças, SLA de pendências e atos FEMURN com exportação em PDF e XLSX em 1 clique.',
+      category: 'atos'
+    },
     'diario-oficial': {
       eyebrow: 'PUBLICAÇÕES OFICIAIS • MONITORAMENTO DIÁRIO',
       title: 'Vigilância do Diário Oficial FEMURN.',
@@ -89,6 +95,12 @@ window.OlymposRouter = (function() {
       title: 'Trilha de Auditoria Imutável (audit_logs).',
       subtitle: 'Consulta auditada e imutável de acessos a dados pessoais, edições nas 22 memórias Google Docs, numeração Apolo e alterações de papéis RBAC.',
       category: 'sistema'
+    },
+    'kiosk': {
+      eyebrow: 'PAINEL DE GABINETE • MODO TV 16:9',
+      title: 'Monitoramento em Tempo Real SMEB.',
+      subtitle: 'Visão limpa em tela cheia com prazos SLA sem dados pessoais, atos da FEMURN e Agenda Intersetorial.',
+      category: 'gabinete'
     },
     'configuracoes': {
       eyebrow: 'INFRAESTRUTURA • CONECTIVIDADE & SEGURANÇA',
@@ -208,7 +220,7 @@ window.OlymposRouter = (function() {
     });
 
     // Destaque ativo para container e trigger do dropdown Documentos
-    const isDocPage = ['oficios', 'portarias', 'certificados'].includes(pageId);
+    const isDocPage = ['oficios', 'portarias', 'certificados', 'relatorios'].includes(pageId);
     document.querySelectorAll('.nav-dropdown').forEach(function(dd) {
       dd.classList.toggle('active', isDocPage);
     });
@@ -275,6 +287,7 @@ window.OlymposRouter = (function() {
       'portarias': 'portarias',
       'licencas': 'licencas',
       'certificados': 'certificados',
+      'relatorios': 'relatorios',
       'diario-oficial': 'diarioOficial',
       'papiro-cadmo': 'papiroCadmo',
       'servidores': 'servidores',

@@ -2,7 +2,7 @@
 <html lang="pt-BR" data-theme="light">
   <head>
     <meta charset="UTF-8" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com https://tiles.openfreemap.org https://*.basemaps.cartocdn.com https://basemaps.cartocdn.com data:; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://*.basemaps.cartocdn.com https://basemaps.cartocdn.com https://tiles.openfreemap.org https://*.openfreemap.org https://unpkg.com https://*.googleusercontent.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://script.google.com https://script.googleusercontent.com https://api.pwnedpasswords.com https://unpkg.com https://cdn.jsdelivr.net https://*.basemaps.cartocdn.com https://basemaps.cartocdn.com https://tiles.openfreemap.org https://*.openfreemap.org; worker-src 'self' blob:; manifest-src 'self'; base-uri 'self'; object-src 'none';" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com https://tiles.openfreemap.org https://*.basemaps.cartocdn.com https://basemaps.cartocdn.com data:; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://tile.openstreetmap.org https://*.basemaps.cartocdn.com https://basemaps.cartocdn.com https://tiles.openfreemap.org https://*.openfreemap.org https://unpkg.com https://*.googleusercontent.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://script.google.com https://script.googleusercontent.com https://api.pwnedpasswords.com https://unpkg.com https://cdn.jsdelivr.net https://*.basemaps.cartocdn.com https://basemaps.cartocdn.com https://tiles.openfreemap.org https://*.openfreemap.org; frame-src https://docs.google.com https://drive.google.com; worker-src 'self' blob:; manifest-src 'self'; base-uri 'self'; object-src 'none';" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Olympos — Inteligência Documental SMEB Ceará-Mirim</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230B1120'/%3E%3Cpath d='M8 22h16M10 22V12m4 10V12m4 10V12m4 10V12M7 12l9-6 9 6H7z' stroke='%23F59E0B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E" />
@@ -18,13 +18,13 @@
     <script>
       (function() {
         try {
-          var CANONICAL_GAS_URL = 'https://script.google.com/macros/s/AKfycbw-zKUdYJO6Zw1_XHo12a49p2wpgNtfii-2CJOq1838f6S1-L0SYM6iI9A2PS2ZPjYdmQ/exec';
+          var CANONICAL_GAS_URL = 'https://script.google.com/macros/s/AKfycby-59CN4EBKgQxjQgWHKtvorXsT1O5e0ZAt2DD42NRdf6cuXo-AnbvrVZdLBZqO538PCA/exec';
           var u1 = localStorage.getItem('olympos_api_url') || '';
           var u2 = localStorage.getItem('olympos_gas_api_url') || '';
-          if (u1.indexOf('AKfycbwM8M-L4QzDmsT3SGSUyuAAwwYri5McqL6HI2AGutVd7ZzXn5mQMfZj1O4eBs-ci2Ub7Q') !== -1) {
+          if (u1.indexOf('AKfycbwM8M-L4QzDmsT3SGSUyuAAwwYri5McqL6HI2AGutVd7ZzXn5mQMfZj1O4eBs-ci2Ub7Q') !== -1 || u1.indexOf('AKfycbw-zKUdYJO6Zw1_XHo12a49p2wpgNtfii-2CJOq1838f6S1-L0SYM6iI9A2PS2ZPjYdmQ') !== -1) {
             localStorage.setItem('olympos_api_url', CANONICAL_GAS_URL);
           }
-          if (u2.indexOf('AKfycbwM8M-L4QzDmsT3SGSUyuAAwwYri5McqL6HI2AGutVd7ZzXn5mQMfZj1O4eBs-ci2Ub7Q') !== -1) {
+          if (u2.indexOf('AKfycbwM8M-L4QzDmsT3SGSUyuAAwwYri5McqL6HI2AGutVd7ZzXn5mQMfZj1O4eBs-ci2Ub7Q') !== -1 || u2.indexOf('AKfycbw-zKUdYJO6Zw1_XHo12a49p2wpgNtfii-2CJOq1838f6S1-L0SYM6iI9A2PS2ZPjYdmQ') !== -1) {
             localStorage.setItem('olympos_gas_api_url', CANONICAL_GAS_URL);
           }
           if ('caches' in window) {
@@ -53,6 +53,9 @@
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   </head>
   <body>
+    <a href="#view-root" class="skip-to-content">Pular para o conteúdo principal</a>
+    <div id="srLivePolite" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+    <div id="srLiveAssertive" class="sr-only" role="alert" aria-live="assertive" aria-atomic="true"></div>
     <!-- TELA DE LOGIN EDITORIAL -->
     <div id="loginScreen" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
       <div class="modal-card" style="max-width: 450px; position: relative;">
@@ -115,6 +118,15 @@
 
           <button id="themeToggleBtn" class="icon-capsule-btn hidden" style="display: none !important;" title="Alternar Modo Claro / Modo Escuro" aria-label="Alternar Tema"></button>
 
+          <button type="button" id="btnAltoContrasteHeader" class="icon-capsule-btn" title="Alternar Modo Alto Contraste (WCAG 2.2)" aria-label="Alternar modo alto contraste" aria-pressed="false">◐</button>
+
+          <button type="button" id="btnModoKiosk" class="btn btn-ghost btn-sm hidden" data-requires-auth="true" title="Painel de Gabinete (Modo TV)" aria-label="Abrir Modo Painel de Gabinete TV">Modo TV</button>
+
+          <button type="button" id="btnNotificacoesSino" class="icon-capsule-btn notif-bell-btn hidden" data-requires-auth="true" title="Central de Notificações" aria-label="Central de notificações" aria-expanded="false" aria-controls="notificacoesDrawer">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span id="notificacoesBadge" class="notif-badge hidden">0</span>
+          </button>
+
           <button id="topGeminiBtn" class="btn btn-sm btn-gemini-companion" title="Abrir Assistente Gemini SMEB (Janela Lateral Desktop)" aria-label="Abrir Assistente Gemini">
             <span class="gemini-sparkle svg-icon-inline" data-icon="sparkles" aria-hidden="true"></span>
             <span class="sr-only">✨</span>
@@ -148,6 +160,7 @@
               <a href="#oficios" class="nav-link dropdown-item" role="menuitem" data-page="oficios">Ofícios</a>
               <a href="#portarias" class="nav-link dropdown-item" role="menuitem" data-page="portarias">Portarias</a>
               <a href="#certificados" class="nav-link dropdown-item" role="menuitem" data-page="certificados">Certificados</a>
+              <a href="#relatorios" class="nav-link dropdown-item" role="menuitem" data-page="relatorios">Relatórios</a>
             </div>
           </div>
           <span class="nav-divider-dot" aria-hidden="true"></span>
@@ -188,6 +201,7 @@
             <a href="#oficios" class="nav-link dropdown-item" role="menuitem" data-page="oficios">Ofícios</a>
             <a href="#portarias" class="nav-link dropdown-item" role="menuitem" data-page="portarias">Portarias</a>
             <a href="#certificados" class="nav-link dropdown-item" role="menuitem" data-page="certificados">Certificados</a>
+            <a href="#relatorios" class="nav-link dropdown-item" role="menuitem" data-page="relatorios">Relatórios</a>
           </div>
         </div>
         <a href="#chamados" class="nav-link" data-page="chamados">Pendências</a>

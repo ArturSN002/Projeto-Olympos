@@ -1,0 +1,664 @@
+/* ==========================================================================
+   ONDA 2 (V4.2): KANBAN DE PENDÊNCIAS, TIMELINE DRAWER, DIFF LCS, SNIPPETS & SAÚDE DR
+   Carregamento lazy por módulo (Vite cssCodeSplit: true).
+   ========================================================================== */
+
+/* Toggle Tabela / Kanban em #chamados */
+.chamados-view-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--radius-pill, 9999px);
+  background: var(--bg-base);
+  border: 1px solid var(--border-hairline);
+}
+
+.chamados-view-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 0;
+  border-radius: var(--radius-pill, 9999px);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.chamados-view-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-surface-hover, rgba(255, 255, 255, 0.05));
+}
+
+.chamados-view-btn.is-active,
+.chamados-view-btn[aria-pressed="true"] {
+  background: var(--accent-primary, #4E8DF5);
+  color: var(--accent-contrast, #06090F);
+}
+
+/* Board Kanban 4 Colunas */
+.kanban-board-wrap {
+  width: 100%;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+
+.kanban-board-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(250px, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+@media (max-width: 1120px) {
+  .kanban-board-grid {
+    grid-template-columns: repeat(2, minmax(240px, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .kanban-board-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.kanban-column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 360px;
+  padding: 12px;
+  border-radius: var(--radius-lg, 16px);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.kanban-column.is-drag-over {
+  border-color: var(--accent-primary, #4E8DF5);
+  background: var(--bg-tonal);
+  box-shadow: 0 0 0 2px rgba(78, 141, 245, 0.25);
+}
+
+.kanban-column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 4px 10px;
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.kanban-column-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+}
+
+.kanban-col-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.kanban-col-dot--RECEBIDO { background: #60A5FA; }
+.kanban-col-dot--EM_ANALISE { background: #FBBF24; }
+.kanban-col-dot--AGUARDANDO_ANEXO { background: #A78BFA; }
+.kanban-col-dot--RESOLVIDO { background: #34D399; }
+
+.kanban-column-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 240px;
+}
+
+.kanban-empty-col {
+  padding: 20px 12px;
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  border: 1px dashed var(--border-hairline);
+  border-radius: 12px;
+}
+
+.kanban-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 13px;
+  border-radius: 12px;
+  background: var(--bg-elevated, var(--bg-tonal));
+  border: 1px solid var(--border-hairline);
+  cursor: grab;
+  transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.kanban-card:hover {
+  border-color: var(--border-strong, var(--accent-primary));
+  box-shadow: var(--shadow-subtle);
+}
+
+.kanban-card:focus-visible,
+.kanban-card-open-btn:focus-visible,
+.kanban-move-btn:focus-visible {
+  outline: 3px solid var(--focus-ring, #F59E0B);
+  outline-offset: 2px;
+}
+
+.kanban-card.is-dragging {
+  opacity: 0.55;
+  transform: scale(0.98);
+  cursor: grabbing;
+}
+
+.kanban-card.is-urgent {
+  border-left: 4px solid var(--danger, #F87171);
+}
+
+.kanban-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.kanban-card-protocol {
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--accent-primary, #4E8DF5);
+}
+
+.kanban-card-open-btn {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kanban-card-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.kanban-card-subject {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.kanban-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.kanban-card-doc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-decoration: none;
+  background: var(--success-soft, rgba(52, 211, 153, 0.14));
+  color: var(--success, #34D399);
+  border: 1px solid rgba(52, 211, 153, 0.35);
+  width: fit-content;
+}
+
+.kanban-card-doc-badge:hover {
+  text-decoration: underline;
+}
+
+.kanban-card-move-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-hairline);
+}
+
+.kanban-move-btn {
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border-hairline);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.kanban-move-btn:hover:not(:disabled) {
+  color: var(--text-primary);
+  border-color: var(--accent-primary);
+}
+
+.kanban-move-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Drawers Laterais (Timeline de Chamado & Biblioteca de Snippets) */
+.onda2-drawer-backdrop {
+  justify-content: flex-end !important;
+  align-items: stretch !important;
+  padding: 0 !important;
+  z-index: 1130;
+}
+
+.onda2-drawer-panel {
+  width: min(560px, 100vw);
+  max-width: 100% !important;
+  height: 100vh;
+  max-height: 100vh !important;
+  border-radius: 0 !important;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  border-left: 1px solid var(--border-hairline);
+}
+
+.onda2-drawer-panel--wide {
+  width: min(640px, 100vw);
+}
+
+.onda2-drawer-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border-hairline);
+  background: var(--bg-surface);
+}
+
+.onda2-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.onda2-drawer-footer {
+  padding: 14px 22px;
+  border-top: 1px solid var(--border-hairline);
+  background: var(--bg-surface);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.timeline-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--bg-tonal);
+  border: 1px solid var(--border-hairline);
+  font-size: 0.8rem;
+}
+
+.timeline-meta-item strong {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.timeline-dispatch-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.timeline-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.timeline-item {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  border-left: 3px solid var(--accent-primary);
+  font-size: 0.82rem;
+}
+
+.timeline-item--MUDANCA_STATUS { border-left-color: #FBBF24; }
+.timeline-item--ATRIBUICAO { border-left-color: #A78BFA; }
+.timeline-item--DOCUMENTO_VINCULADO { border-left-color: #34D399; }
+.timeline-item--COMENTARIO { border-left-color: #4E8DF5; }
+
+.timeline-item-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.timeline-item-text {
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.45;
+}
+
+/* LCS Diff Viewer (Memórias Google Docs) */
+.diff-viewer-wrap {
+  border: 1px solid var(--border-hairline);
+  border-radius: 12px;
+  background: var(--bg-base);
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+.diff-viewer-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg-tonal);
+  border-bottom: 1px solid var(--border-hairline);
+  font-size: 0.76rem;
+}
+
+.diff-summary-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.diff-lines-scroll {
+  max-height: 240px;
+  overflow: auto;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.diff-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.diff-line-row td {
+  padding: 2px 8px;
+  vertical-align: top;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.diff-line-num {
+  width: 38px;
+  text-align: right;
+  color: var(--text-muted);
+  user-select: none;
+  border-right: 1px solid var(--border-hairline);
+}
+
+.diff-line-sign {
+  width: 20px;
+  text-align: center;
+  font-weight: 700;
+  user-select: none;
+}
+
+.diff-line--add {
+  background: rgba(22, 163, 74, 0.16);
+  color: #86EFAC;
+}
+
+[data-theme="light"] .diff-line--add {
+  background: rgba(22, 163, 74, 0.12);
+  color: #14532D;
+}
+
+.diff-line--remove {
+  background: rgba(220, 38, 38, 0.16);
+  color: #FCA5A5;
+}
+
+[data-theme="light"] .diff-line--remove {
+  background: rgba(220, 38, 38, 0.10);
+  color: #7F1D1D;
+}
+
+.diff-line--equal {
+  color: var(--text-secondary);
+}
+
+/* Governança no Modal de Memória */
+.memoria-gov-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  background: var(--bg-tonal);
+  border: 1px solid var(--border-hairline);
+}
+
+.memoria-snapshot-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.memoria-conflict-banner {
+  margin-bottom: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(220, 38, 38, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.55);
+  color: var(--text-primary);
+}
+
+.memoria-conflict-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.memoria-conflict-pane {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-hairline);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  max-height: 160px;
+  overflow: auto;
+  white-space: pre-wrap;
+}
+
+/* Biblioteca Lateral de Snippets */
+.snippets-tabs {
+  display: flex;
+  gap: 6px;
+  border-bottom: 1px solid var(--border-hairline);
+  padding-bottom: 10px;
+}
+
+.snippets-tab-btn {
+  padding: 6px 12px;
+  border-radius: 9999px;
+  border: 1px solid var(--border-hairline);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.snippets-tab-btn.is-active {
+  background: var(--accent-primary);
+  color: var(--accent-contrast, #06090F);
+  border-color: transparent;
+}
+
+.snippets-context-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--bg-tonal);
+  border: 1px solid var(--border-hairline);
+}
+
+.snippets-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.snippet-card {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-hairline);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.snippet-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.snippets-preview-box {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--bg-base);
+  border: 1px solid var(--border-hairline);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 160px;
+  overflow-y: auto;
+  color: var(--text-secondary);
+}
+
+/* Painel Saúde de Backups & DR em Auditoria */
+.dr-health-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dr-health-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+}
+
+.dr-kpi-card {
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--bg-tonal);
+  border: 1px solid var(--border-hairline);
+}
+
+.dr-anomaly-banner {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-hairline);
+  background: var(--bg-tonal);
+}
+
+.dr-anomaly-banner.has-anomalies {
+  border-color: rgba(248, 113, 113, 0.55);
+  background: rgba(220, 38, 38, 0.10);
+}
+
+.dr-anomaly-banner.is-healthy {
+  border-color: rgba(52, 211, 153, 0.45);
+  background: rgba(52, 211, 153, 0.09);
+}
+
+/* Alto Contraste WCAG 2.2 AA/AAA */
+[data-contrast="high"] .kanban-column,
+[data-contrast="high"] .kanban-card,
+[data-contrast="high"] .onda2-drawer-panel,
+[data-contrast="high"] .snippet-card,
+[data-contrast="high"] .diff-viewer-wrap {
+  background: #000000 !important;
+  color: #FFFFFF !important;
+  border: 2px solid #FFFFFF !important;
+}
+
+[data-contrast="high"] .diff-line--add {
+  background: #052E16 !important;
+  color: #86EFAC !important;
+}
+
+[data-contrast="high"] .diff-line--remove {
+  background: #450A0A !important;
+  color: #FCA5A5 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chamados-view-btn,
+  .kanban-column,
+  .kanban-card {
+    transition: none !important;
+  }
+}

@@ -1,6 +1,9 @@
 import configuracoesHtml from '../templates/pages/configuracoes.html?raw';
 import usuariosModalsHtml from '../templates/modals/usuariosModals.html?raw';
 import memoriaModalHtml from '../templates/modals/memoriaModal.html?raw';
+import { mountMemoriasGovernanca } from '../core/memoriasGovernanca';
+import { mountTelegramConfig } from './telegramConfig';
+import { reverTourGuiado } from '../core/onboardingTour';
 import '../../js/memorias_catalogo.js';
 import '../../js/views/personas.js';
 import '../../js/views/configuracoes.js';
@@ -80,9 +83,33 @@ function bindSecurityPanelEvents(): void {
       await window.OlymposSessionGuard.encerrarEmTodosDispositivos();
     }
   });
+
+  bindOnce('btnReverTourGuiadoConfig', () => {
+    void reverTourGuiado();
+  });
+
+  bindOnce('subtabBtnAjustesPersonas', () => {
+    mountMemoriasGovernanca();
+  });
+
+  bindOnce('subtabBtnAjustesAutomacoes', () => {
+    mountTelegramConfig('configTelegramRoot');
+  });
 }
+
+let authListenerBound = false;
 
 export async function mount(): Promise<void> {
   bindSecurityPanelEvents();
   atualizarPainelSegurancaMfaSessoes();
+  mountMemoriasGovernanca();
+  mountTelegramConfig('configTelegramRoot');
+
+  if (!authListenerBound && typeof window !== 'undefined') {
+    authListenerBound = true;
+    window.addEventListener('olympos:auth-changed', () => {
+      atualizarPainelSegurancaMfaSessoes();
+      mountTelegramConfig('configTelegramRoot');
+    });
+  }
 }

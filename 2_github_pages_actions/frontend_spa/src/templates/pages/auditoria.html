@@ -28,57 +28,122 @@
             </div>
 
             <div id="auditoriaPainelConteudo">
-              <div class="controls-grid" style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: 12px; margin-bottom: 16px;">
-                <div class="field-group">
-                  <label for="auditoriaFiltroAcao">Ação</label>
-                  <select id="auditoriaFiltroAcao" class="input-clean">
-                    <option value="">Todas as ações</option>
-                    <option value="DECRYPT_READ">DECRYPT_READ (Revelar PII)</option>
-                    <option value="TERMO_SIGILO_ACEITO">TERMO_SIGILO_ACEITO</option>
-                    <option value="USER_ROLE_PROMOTION">USER_ROLE_PROMOTION</option>
-                    <option value="GAS_memorias_salvar">GAS_memorias_salvar</option>
-                    <option value="GAS_atualizar_contador_md">GAS_atualizar_contador_md</option>
-                    <option value="GAS_oficio_emitir">GAS_oficio_emitir</option>
-                    <option value="GAS_portarias_gerar_lote">GAS_portarias_gerar_lote</option>
-                    <option value="INSERT">INSERT</option>
-                    <option value="UPDATE">UPDATE</option>
-                    <option value="DELETE">DELETE</option>
-                  </select>
+              <div class="subnav-tabs-bar" role="tablist" aria-label="Sub-abas de Auditoria e Saúde DR" style="margin-bottom: 16px;">
+                <button type="button" id="subtabBtnAuditoriaLogs" class="subnav-tab active" role="tab" aria-selected="true" data-audit-subtab="logs">
+                  <span class="svg-icon-inline" data-icon="shieldCheck"></span><span>Trilha de Auditoria (audit_logs)</span>
+                </button>
+                <button type="button" id="subtabBtnAuditoriaSaudeDr" class="subnav-tab" role="tab" aria-selected="false" data-audit-subtab="saude-dr">
+                  <span class="svg-icon-inline" data-icon="database"></span><span>Saúde de Backups &amp; DR</span>
+                </button>
+              </div>
+
+              <div id="auditoriaSubpaneLogs">
+                <div class="controls-grid" style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: 12px; margin-bottom: 16px;">
+                  <div class="field-group">
+                    <label for="auditoriaFiltroAcao">Ação</label>
+                    <select id="auditoriaFiltroAcao" class="input-clean">
+                      <option value="">Todas as ações</option>
+                      <option value="DECRYPT_READ">DECRYPT_READ (Revelar PII)</option>
+                      <option value="TERMO_SIGILO_ACEITO">TERMO_SIGILO_ACEITO</option>
+                      <option value="USER_ROLE_PROMOTION">USER_ROLE_PROMOTION</option>
+                      <option value="GAS_MEMORIAS_SALVAR">GAS_MEMORIAS_SALVAR</option>
+                      <option value="GAS_MEMORIAS_COMPACTAR">GAS_MEMORIAS_COMPACTAR</option>
+                      <option value="GAS_MEMORIAS_RESTAURAR_SNAPSHOT">GAS_MEMORIAS_RESTAURAR_SNAPSHOT</option>
+                      <option value="MEMORIA_RESTAURADA_SNAPSHOT">MEMORIA_RESTAURADA_SNAPSHOT</option>
+                      <option value="GAS_atualizar_contador_md">GAS_atualizar_contador_md</option>
+                      <option value="GAS_oficio_emitir">GAS_oficio_emitir</option>
+                      <option value="GAS_portarias_gerar_lote">GAS_portarias_gerar_lote</option>
+                      <option value="INSERT">INSERT</option>
+                      <option value="UPDATE">UPDATE</option>
+                      <option value="DELETE">DELETE</option>
+                    </select>
+                  </div>
+                  <div class="field-group">
+                    <label for="auditoriaFiltroTabela">Tabela / Recurso</label>
+                    <input type="text" id="auditoriaFiltroTabela" class="input-clean" placeholder="Ex: servidores, gas-gateway..." />
+                  </div>
+                  <div class="field-group">
+                    <label for="auditoriaFiltroDataInicio">Data Inicial</label>
+                    <input type="date" id="auditoriaFiltroDataInicio" class="input-clean" />
+                  </div>
+                  <div class="field-group">
+                    <label for="auditoriaFiltroDataFim">Data Final</label>
+                    <input type="date" id="auditoriaFiltroDataFim" class="input-clean" />
+                  </div>
                 </div>
-                <div class="field-group">
-                  <label for="auditoriaFiltroTabela">Tabela / Recurso</label>
-                  <input type="text" id="auditoriaFiltroTabela" class="input-clean" placeholder="Ex: servidores, gas-gateway..." />
+
+                <div class="table-wrapper">
+                  <table class="clean-table table-responsive-cards" id="tabelaAuditoriaLogs">
+                    <thead>
+                      <tr>
+                        <th>Data/Hora (UTC)</th>
+                        <th>Ação</th>
+                        <th>Tabela / Recurso</th>
+                        <th>Ator / Papel</th>
+                        <th>Detalhes (Diff JSON)</th>
+                      </tr>
+                    </thead>
+                    <tbody id="tabelaAuditoriaBody">
+                      <tr><td colspan="5" class="text-muted text-center" style="padding: 24px;">Carregando registros de auditoria...</td></tr>
+                    </tbody>
+                  </table>
                 </div>
-                <div class="field-group">
-                  <label for="auditoriaFiltroDataInicio">Data Inicial</label>
-                  <input type="date" id="auditoriaFiltroDataInicio" class="input-clean" />
-                </div>
-                <div class="field-group">
-                  <label for="auditoriaFiltroDataFim">Data Final</label>
-                  <input type="date" id="auditoriaFiltroDataFim" class="input-clean" />
+
+                <div id="auditoriaPaginacaoBar" class="olympos-pagination-bar hidden">
+                  <span id="auditoriaPaginacaoInfo" class="olympos-pagination-info"></span>
+                  <div id="auditoriaPaginacaoControles" class="olympos-pagination-controls"></div>
                 </div>
               </div>
 
-              <div class="table-wrapper">
-                <table class="clean-table table-responsive-cards" id="tabelaAuditoriaLogs">
-                  <thead>
-                    <tr>
-                      <th>Data/Hora (UTC)</th>
-                      <th>Ação</th>
-                      <th>Tabela / Recurso</th>
-                      <th>Ator / Papel</th>
-                      <th>Detalhes (Diff JSON)</th>
-                    </tr>
-                  </thead>
-                  <tbody id="tabelaAuditoriaBody">
-                    <tr><td colspan="5" class="text-muted text-center" style="padding: 24px;">Carregando registros de auditoria...</td></tr>
-                  </tbody>
-                </table>
-              </div>
+              <div id="auditoriaSubpaneSaudeDr" class="hidden">
+                <div class="dr-health-panel">
+                  <div class="card-header-row" style="margin-bottom: 4px;">
+                    <div>
+                      <span class="section-eyebrow" style="font-size: 10px;">DISASTER RECOVERY &amp; INTEGRIDADE SHA-256</span>
+                      <h3 style="margin: 2px 0 0; font-size: 1.08rem;">Saúde de Backups &amp; DR (public.backup_runs)</h3>
+                    </div>
+                    <div class="button-group">
+                      <button type="button" id="btnAtualizarBackupRuns" class="btn btn-secondary btn-sm">Atualizar Histórico DR</button>
+                      <button type="button" id="btnVerificarAnomaliasAgora" class="btn btn-primary btn-sm">Verificar Anomalias Agora</button>
+                    </div>
+                  </div>
 
-              <div id="auditoriaPaginacaoBar" class="olympos-pagination-bar hidden">
-                <span id="auditoriaPaginacaoInfo" class="olympos-pagination-info"></span>
-                <div id="auditoriaPaginacaoControles" class="olympos-pagination-controls"></div>
+                  <div class="dr-health-kpis">
+                    <div class="dr-kpi-card">
+                      <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">Último Backup SUPABASE_DR</div>
+                      <div id="drKpiUltimoSupabase" style="font-size: 0.96rem; font-weight: 700; margin-top: 4px;">--</div>
+                    </div>
+                    <div class="dr-kpi-card">
+                      <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">Último Snapshot MEMORIAS_22</div>
+                      <div id="drKpiUltimoMemorias" style="font-size: 0.96rem; font-weight: 700; margin-top: 4px;">--</div>
+                    </div>
+                    <div class="dr-kpi-card">
+                      <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase;">Anomalias Operacionais</div>
+                      <div id="drKpiAnomaliasStatus" style="font-size: 0.96rem; font-weight: 700; margin-top: 4px;">Não verificado nesta sessão</div>
+                    </div>
+                  </div>
+
+                  <div id="drAnomaliasResultadoBox" class="dr-anomaly-banner hidden" aria-live="polite"></div>
+
+                  <div class="table-wrapper">
+                    <table class="clean-table table-responsive-cards" id="tabelaBackupRuns">
+                      <thead>
+                        <tr>
+                          <th>Tipo</th>
+                          <th>Status</th>
+                          <th>Arquivo</th>
+                          <th>Tamanho</th>
+                          <th>Checksum SHA-256</th>
+                          <th>Executado em (UTC)</th>
+                          <th>Detalhes (JSON)</th>
+                        </tr>
+                      </thead>
+                      <tbody id="tabelaBackupRunsBody">
+                        <tr><td colspan="7" class="text-muted text-center" style="padding: 24px;">Abra esta aba para consultar o histórico de backups DR.</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

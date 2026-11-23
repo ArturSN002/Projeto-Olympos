@@ -4,11 +4,12 @@
  * Versão 2.0.3 — Projeto Olympos (Release V2.03)
  */
 window.OlymposApi = (function() {
-  const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycbw-zKUdYJO6Zw1_XHo12a49p2wpgNtfii-2CJOq1838f6S1-L0SYM6iI9A2PS2ZPjYdmQ/exec';
+  const DEFAULT_API_URL = 'https://script.google.com/macros/s/AKfycby-59CN4EBKgQxjQgWHKtvorXsT1O5e0ZAt2DD42NRdf6cuXo-AnbvrVZdLBZqO538PCA/exec';
 
   // IDs de implantações antigas/revogadas que retornam HTTP 404 HTML sem cabeçalho CORS
   const REVOKED_DEPLOYMENT_IDS = [
-    'AKfycbwM8M-L4QzDmsT3SGSUyuAAwwYri5McqL6HI2AGutVd7ZzXn5mQMfZj1O4eBs-ci2Ub7Q'
+    'AKfycbwM8M-L4QzDmsT3SGSUyuAAwwYri5McqL6HI2AGutVd7ZzXn5mQMfZj1O4eBs-ci2Ub7Q',
+    'AKfycbw-zKUdYJO6Zw1_XHo12a49p2wpgNtfii-2CJOq1838f6S1-L0SYM6iI9A2PS2ZPjYdmQ'
   ];
 
   function isRevokedOrInvalidUrl(url) {
