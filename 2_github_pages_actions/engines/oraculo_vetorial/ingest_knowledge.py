@@ -183,15 +183,24 @@ def collect_documents_from_supabase(
     docs: list[dict[str, Any]] = []
     hdrs = _supabase_headers(service_key)
 
-    # 1. Publicações FEMURN públicas -> VISITANTE
+    # 1. Publicações FEMURN públicas -> VISITANTE (com enriquecimento IA Onda 8 quando disponível)
     st_diario, diario_rows = http_fn(
         "GET",
         f"{supabase_url}/rest/v1/publicacoes_diario"
-        "?select=id,codigo_femurn,data_publicacao,titulo,ato_tipo,texto_completo,resumo"
+        "?select=id,codigo_femurn,data_publicacao,titulo,ato_tipo,orgao,secretaria_origem,resumo_ia,tags_ia,relevancia_smeb,texto_completo,resumo"
         "&order=data_publicacao.desc&limit=250",
         headers=hdrs,
         timeout=25,
     )
+    if st_diario != 200:
+        st_diario, diario_rows = http_fn(
+            "GET",
+            f"{supabase_url}/rest/v1/publicacoes_diario"
+            "?select=id,codigo_femurn,data_publicacao,titulo,ato_tipo,texto_completo,resumo"
+            "&order=data_publicacao.desc&limit=250",
+            headers=hdrs,
+            timeout=25,
+        )
     if st_diario == 200 and isinstance(diario_rows, list):
         for r in diario_rows:
             fid = str(r.get("codigo_femurn") or r.get("id") or "").strip()
@@ -199,6 +208,15 @@ def collect_documents_from_supabase(
             if not fid or not body:
                 continue
             titulo = str(r.get("titulo") or f"Ato FEMURN {fid}").strip()
+            sec_orig = str(r.get("secretaria_origem") or r.get("orgao") or "SMEB").strip()
+            resumo_ia = str(r.get("resumo_ia") or "").strip()
+            tags_ia = r.get("tags_ia") if isinstance(r.get("tags_ia"), list) else []
+            extra_ia = []
+            if resumo_ia:
+                extra_ia.append(f"Resumo IA: {resumo_ia}")
+            if tags_ia:
+                extra_ia.append(f"Tags IA: {', '.join(str(t) for t in tags_ia[:8])}")
+            bloco_extra = ("\n" + "\n".join(extra_ia)) if extra_ia else ""
             docs.append(
                 {
                     "fonte_tipo": "FEMURN",
@@ -207,7 +225,7 @@ def collect_documents_from_supabase(
                     "url_fonte": "#diario-oficial",
                     "persona_tag": "nike",
                     "rbac_min_role": "VISITANTE",
-                    "texto": f"{titulo}\nData: {r.get('data_publicacao') or ''}\nTipo: {r.get('ato_tipo') or ''}\n\n{body}",
+                    "texto": f"{titulo}\nData: {r.get('data_publicacao') or ''}\nTipo: {r.get('ato_tipo') or ''}\nSecretaria: {sec_orig}{bloco_extra}\n\n{body}",
                 }
             )
 

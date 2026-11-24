@@ -18,6 +18,14 @@ on:
         description: 'Nome da Seção do Diário Oficial (ex: Secretaria Municipal de Educação)'
         required: false
         default: ''
+      modo_coleta:
+        description: 'Modo de coleta (INTEGRAL = 100% Ceará-Mirim | SMEB_ONLY = apenas Educação)'
+        required: false
+        default: 'INTEGRAL'
+      recatalogar_ia:
+        description: 'Forçar recatalogação com Gemma 4 31B em atos já salvos (true/false)'
+        required: false
+        default: 'false'
 
 jobs:
   monitorar-femurn:
@@ -58,5 +66,7 @@ jobs:
           DATA_INICIO_CUSTOM: ${{ github.event.inputs.data_inicio }}
           DATA_FIM_CUSTOM: ${{ github.event.inputs.data_fim }}
           SECAO_DIARIO_OFICIAL: ${{ github.event.inputs.secao_diario || '' }}
+          PROMETHEUS_MODO_COLETA: ${{ github.event.inputs.modo_coleta || 'INTEGRAL' }}
+          RECATALOGAR_IA: ${{ github.event.inputs.recatalogar_ia || 'false' }}
         run: |
           python src/scraper_femurn.py

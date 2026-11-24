@@ -1,0 +1,125 @@
+/* Onda 8 — Fogo de Prometheus Integral, Síntese Executiva Oráculo & Painel IA */
+
+.oraculo-synthesis-card {
+  padding: 20px 22px;
+  border-left: 4px solid #6366f1;
+  background: var(--bg-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.oraculo-synthesis-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.oraculo-synthesis-body {
+  font-size: 0.94rem;
+  line-height: 1.62;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+}
+
+.oraculo-citations-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-hairline);
+}
+
+.diario-escopo-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.diario-tags-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.diario-tag-chip {
+  font-size: 0.7rem;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--bg-tonal);
+  border: 1px solid var(--border-hairline);
+  color: var(--text-secondary);
+}
+
+.diario-resumo-details {
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.diario-resumo-details summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--accent-primary, #6366f1);
+}
+
+.ia-gov-panel {
+  margin-top: 20px;
+  padding: 18px 20px;
+  border-radius: 12px;
+  border: 1px solid var(--border-hairline);
+  background: var(--bg-surface);
+}
+
+.ia-quota-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+  margin: 14px 0;
+}
+
+.ia-quota-card {
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border-hairline);
+  background: var(--bg-tonal);
+}
+
+.ia-quota-bar-track {
+  height: 8px;
+  width: 100%;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.22);
+  overflow: hidden;
+  margin: 8px 0 6px;
+}
+
+.ia-quota-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #6366f1, #10b981);
+  transition: width 0.25s ease;
+}
+
+.ia-flags-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+  margin: 12px 0 16px;
+}
+
+.ia-flag-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-hairline);
+  background: var(--bg-tonal);
+  font-size: 0.82rem;
+}

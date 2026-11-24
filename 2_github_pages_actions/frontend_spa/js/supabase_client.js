@@ -1550,6 +1550,40 @@ window.OlymposSupabase = (function() {
     return data;
   }
 
+  // =========================================================================
+  // ONDA 8: COTAS RPD DE IA HÍBRIDA & FEATURE FLAGS (MODERADOR)
+  // =========================================================================
+
+  async function obterStatusCotasIa() {
+    const client = getClient();
+    if (!client) return null;
+    try {
+      const { data, error } = await client.rpc('rpc_obter_status_cotas_ia');
+      if (error) return null;
+      return data || null;
+    } catch (_err) {
+      return null;
+    }
+  }
+
+  async function atualizarFeatureFlagsIa(flagsPatch) {
+    const client = getClient();
+    if (!client) throw new Error('Supabase não inicializado.');
+    const sess = await getSession();
+    const payload = Object.assign({}, flagsPatch || {}, {
+      updated_by: (sess && sess.user && sess.user.id) || null,
+      updated_at: new Date().toISOString()
+    });
+    const { data, error } = await client
+      .from('ai_feature_flags')
+      .update(payload)
+      .eq('id', 1)
+      .select('*')
+      .maybeSingle();
+    if (error) throw error;
+    return data;
+  }
+
   return {
     DEFAULT_PUBLIC_SUPABASE_URL: DEFAULT_PUBLIC_SUPABASE_URL,
     extrairUrlSupabaseDaChave: extrairUrlSupabaseDaChave,
@@ -1600,7 +1634,9 @@ window.OlymposSupabase = (function() {
     atualizarOperadorHierarquia: atualizarOperadorHierarquia,
     listarNumeracaoVisivel: listarNumeracaoVisivel,
     reservarNumeroDocumento: reservarNumeroDocumento,
-    ajustarContadorDocumento: ajustarContadorDocumento
+    ajustarContadorDocumento: ajustarContadorDocumento,
+    obterStatusCotasIa: obterStatusCotasIa,
+    atualizarFeatureFlagsIa: atualizarFeatureFlagsIa
   };
 })();
 

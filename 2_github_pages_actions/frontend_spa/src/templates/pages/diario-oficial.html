@@ -58,6 +58,15 @@
                 </div>
               </div>
               <div class="diario-controls-toolbar">
+                <select id="prometheusEscopoFilter" class="input-clean filter-select-modern" title="Escopo das publicações municipais">
+                  <option value="SMEB" selected>SMEB / Educação (Relevantes)</option>
+                  <option value="TODOS">Todo o Município de Ceará-Mirim</option>
+                  <option value="OUTRAS_SECRETARIAS">Outras Secretarias</option>
+                  <option value="CAMARA_MUNICIPAL">Câmara Municipal</option>
+                </select>
+                <select id="prometheusSecretariaFilter" class="input-clean filter-select-modern" title="Filtrar por secretaria ou órgão de origem">
+                  <option value="TODAS" selected>Todas as Secretarias</option>
+                </select>
                 <select id="prometheusPeriodFilter" class="input-clean filter-select-modern" title="Filtro de período de publicação">
                   <option value="SEMANA" selected>Esta Semana (Padrão)</option>
                   <option value="15DIAS">Últimos 15 Dias</option>

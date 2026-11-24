@@ -35,6 +35,8 @@ window.OlymposViews.diarioOficial = (function() {
     bind('prometheusTriggerActionBtn', 'click', dispararColetaGitHubActions);
     bind('prometheusPeriodFilter', 'change', filtrarERenderizar);
     bind('prometheusSectorFilter', 'change', filtrarERenderizar);
+    bind('prometheusEscopoFilter', 'change', filtrarERenderizar);
+    bind('prometheusSecretariaFilter', 'change', filtrarERenderizar);
     bind('prometheusSortFilter', 'change', filtrarERenderizar);
     bind('prometheusSearchInput', 'input', filtrarERenderizar);
 
@@ -71,6 +73,32 @@ window.OlymposViews.diarioOficial = (function() {
     });
   }
 
+  function atualizarOpcoesSecretaria() {
+    const sel = document.getElementById('prometheusSecretariaFilter');
+    if (!sel) return;
+    const prev = sel.value || 'TODAS';
+    const secs = new Set();
+    publicacoesUnificadas.forEach(function(p) {
+      const s = String(p.secretariaOrigem || '').trim();
+      if (s) secs.add(s);
+    });
+    const sorted = Array.from(secs).sort(function(a, b) {
+      return a.localeCompare(b, 'pt-BR');
+    });
+    const esc = (window.OlymposApp && typeof window.OlymposApp.escapeHtml === 'function')
+      ? window.OlymposApp.escapeHtml
+      : function(v) { return String(v == null ? '' : v); };
+    sel.innerHTML = '<option value="TODAS">Todas as Secretarias (' + sorted.length + ')</option>' +
+      sorted.map(function(s) {
+        return '<option value="' + esc(s) + '">' + esc(s) + '</option>';
+      }).join('');
+    if (prev !== 'TODAS' && secs.has(prev)) {
+      sel.value = prev;
+    } else {
+      sel.value = 'TODAS';
+    }
+  }
+
   function integrarPublicacoesSupabase(lista) {
     if (!Array.isArray(lista) || lista.length === 0) return;
     const urlsVistas = new Set(publicacoesUnificadas.map(function(x) { return x.url; }));
@@ -83,8 +111,29 @@ window.OlymposViews.diarioOficial = (function() {
       if (cat.includes('PORTARIA')) setor = 'Portarias 2026';
       else if (cat.includes('EDITAL') || cat.includes('PSS') || cat.includes('JURIDICO')) setor = 'Assessoria Jurídica 2026';
 
+      const secretariaOrigem = String(item.secretaria_origem || ner.secretaria_origem || item.orgao || 'SMEB').trim();
+      const entidadeStr = String(ner.entidade || '').toLowerCase();
+      let escopoOrgao = item.escopo_orgao || '';
+      if (!escopoOrgao) {
+        const secLow = secretariaOrigem.toLowerCase();
+        if (entidadeStr.indexOf('câmara') !== -1 || entidadeStr.indexOf('camara') !== -1 || secLow.indexOf('câmara') !== -1 || secLow.indexOf('camara') !== -1) {
+          escopoOrgao = 'CAMARA_MUNICIPAL';
+        } else if (secLow.indexOf('educa') !== -1 || secLow.indexOf('smeb') !== -1) {
+          escopoOrgao = 'SMEB';
+        } else if (secLow.indexOf('gabinete') !== -1) {
+          escopoOrgao = 'GABINETE_PREFEITO';
+        } else {
+          escopoOrgao = 'OUTRAS_SECRETARIAS';
+        }
+      }
+      const relevanciaSmeb = (typeof item.relevancia_smeb === 'boolean')
+        ? item.relevancia_smeb
+        : (escopoOrgao === 'SMEB' || escopoOrgao === 'GABINETE_PREFEITO' || /educa|smeb|escola|creche|cmei|fundeb|magist|professor/i.test(String(item.titulo || '') + ' ' + secretariaOrigem));
+
       const codigo = item.codigo_femurn || item.edicao || (item.numero_ato ? ('Ato ' + item.numero_ato) : (ner.numero_ato ? ('Ato ' + ner.numero_ato) : ''));
-      const url = item.url_drive || item.url_arquivo || item.urlDrive || (ner.url_materia || ner.link_pdf) || 'https://drive.google.com/drive/folders/1qGq5uqxOtN_V63itUheYatLIcj5R86O3';
+      const urlMateria = ner.url_materia || ner.link_pdf || '';
+      const urlDrive = item.url_drive || item.url_arquivo || item.urlDrive || '';
+      const url = urlDrive || urlMateria || 'https://drive.google.com/drive/folders/1qGq5uqxOtN_V63itUheYatLIcj5R86O3';
       if (codigo && codigosVistos.has(codigo)) return;
       if (url && urlsVistas.has(url) && !codigo) return;
       if (url) urlsVistas.add(url);
@@ -94,15 +143,24 @@ window.OlymposViews.diarioOficial = (function() {
         data: item.data_publicacao || item.data || '--',
         setor: setor,
         categoria: cat,
+        escopoOrgao: escopoOrgao,
+        secretariaOrigem: secretariaOrigem,
+        relevanciaSmeb: Boolean(relevanciaSmeb),
+        resumoIa: item.resumo_ia || ner.resumo_ia || '',
+        tagsIa: Array.isArray(item.tags_ia) ? item.tags_ia : [],
+        modeloIa: item.modelo_ia || '',
         titulo: item.titulo || 'Publicação FEMURN',
         codigo: codigo,
         servidores: (Array.isArray(item.servidores_envolvidos) && item.servidores_envolvidos.length > 0) ? item.servidores_envolvidos : (ner.servidores || []),
         matriculas: (Array.isArray(item.matriculas) && item.matriculas.length > 0) ? item.matriculas : (ner.matriculas || []),
-        url: url
+        url: url,
+        isDriveLink: Boolean(urlDrive),
+        urlMateria: urlMateria
       });
     });
 
     console.log('[Olympos Diário Oficial] Acervo oficial unificado (' + publicacoesUnificadas.length + ' atos):', publicacoesUnificadas);
+    atualizarOpcoesSecretaria();
     renderizarTabela();
   }
 
@@ -311,15 +369,34 @@ window.OlymposViews.diarioOficial = (function() {
 
     const periodSelect = document.getElementById('prometheusPeriodFilter');
     const periodFilter = periodSelect ? periodSelect.value : 'SEMANA';
-    const sectorFilter = document.getElementById('prometheusSectorFilter').value;
-    const termFilter = document.getElementById('prometheusSearchInput').value.toLowerCase().trim();
+    const sectorFilterEl = document.getElementById('prometheusSectorFilter');
+    const sectorFilter = sectorFilterEl ? sectorFilterEl.value : 'TODOS';
+    const escopoEl = document.getElementById('prometheusEscopoFilter');
+    const escopoFilter = escopoEl ? escopoEl.value : 'SMEB';
+    const secOrigEl = document.getElementById('prometheusSecretariaFilter');
+    const secOrigFilter = secOrigEl ? secOrigEl.value : 'TODAS';
+    const termFilter = (document.getElementById('prometheusSearchInput')?.value || '').toLowerCase().trim();
 
     const filtered = publicacoesUnificadas.filter(function(p) {
       const matchPeriod = verificarFiltroPeriodo(p.data, periodFilter);
       const matchSector = (sectorFilter === 'TODOS' || p.setor === sectorFilter);
-      const blob = [p.titulo, p.codigo, p.categoria, (p.servidores || []).join(' '), (p.matriculas || []).join(' '), p.origem || ''].join(' ').toLowerCase();
+
+      let matchEscopo = true;
+      if (escopoFilter === 'SMEB') {
+        matchEscopo = p.relevanciaSmeb !== false;
+      } else if (escopoFilter === 'OUTRAS_SECRETARIAS') {
+        matchEscopo = p.escopoOrgao === 'OUTRAS_SECRETARIAS' || p.escopoOrgao === 'PREFEITURA_GERAL' || (p.escopoOrgao === 'GABINETE_PREFEITO' && !p.relevanciaSmeb);
+      } else if (escopoFilter === 'CAMARA_MUNICIPAL') {
+        matchEscopo = p.escopoOrgao === 'CAMARA_MUNICIPAL';
+      }
+
+      const matchSecOrig = (secOrigFilter === 'TODAS' || (p.secretariaOrigem || p.setor) === secOrigFilter);
+      const blob = [
+        p.titulo, p.codigo, p.categoria, p.secretariaOrigem || '', p.resumoIa || '',
+        (p.tagsIa || []).join(' '), (p.servidores || []).join(' '), (p.matriculas || []).join(' '), p.origem || ''
+      ].join(' ').toLowerCase();
       const matchTerm = (!termFilter || blob.includes(termFilter));
-      return matchPeriod && matchSector && matchTerm;
+      return matchPeriod && matchSector && matchEscopo && matchSecOrig && matchTerm;
     });
 
     const sortSelect = document.getElementById('prometheusSortFilter');
@@ -401,8 +478,12 @@ window.OlymposViews.diarioOficial = (function() {
         btnClear.addEventListener('click', function() {
           if (periodSelect) periodSelect.value = 'SEMANA';
           const sec = document.getElementById('prometheusSectorFilter');
+          const escSel = document.getElementById('prometheusEscopoFilter');
+          const secOrig = document.getElementById('prometheusSecretariaFilter');
           const srch = document.getElementById('prometheusSearchInput');
           if (sec) sec.value = 'TODOS';
+          if (escSel) escSel.value = 'TODOS';
+          if (secOrig) secOrig.value = 'TODAS';
           if (srch) srch.value = '';
           paginaAtual = 1;
           renderizarTabela();
@@ -429,29 +510,50 @@ window.OlymposViews.diarioOficial = (function() {
 
     pag.items.forEach(function(item) {
       const tr = document.createElement('tr');
+      const escFn = window.OlymposApp.escapeHtml;
       const nerBadges = [];
-      if (item.codigo) nerBadges.push('Cód. ' + window.OlymposApp.escapeHtml(item.codigo));
-      if (item.servidores && item.servidores.length) nerBadges.push('Servidor(es): ' + window.OlymposApp.escapeHtml(item.servidores.join(', ')));
-      if (item.matriculas && item.matriculas.length) nerBadges.push('Mat.: ' + window.OlymposApp.escapeHtml(item.matriculas.join(', ')));
+      if (item.codigo) nerBadges.push('Cód. ' + escFn(item.codigo));
+      if (item.servidores && item.servidores.length) nerBadges.push('Servidor(es): ' + escFn(item.servidores.join(', ')));
+      if (item.matriculas && item.matriculas.length) nerBadges.push('Mat.: ' + escFn(item.matriculas.join(', ')));
       if (item.planilhaNome) {
         const iconHtml = window.OlymposIcons
           ? (typeof window.OlymposIcons.inline === 'function' ? window.OlymposIcons.inline('fileText', 12) : window.OlymposIcons.ui('fileText', 12))
           : '';
-        nerBadges.push(iconHtml + ' ' + window.OlymposApp.escapeHtml(item.planilhaNome));
+        nerBadges.push(iconHtml + ' ' + escFn(item.planilhaNome));
       }
 
+      const secBadge = escFn(item.secretariaOrigem || item.setor || 'SMEB');
+      const seloEscopo = item.relevanciaSmeb !== false
+        ? '<span class="pill-badge pill-gold" style="font-size:10px; margin-left:4px;">SMEB</span>'
+        : '<span class="pill-badge" style="font-size:10px; margin-left:4px;">Geral Municipal</span>';
+      const modeloBadge = item.modeloIa
+        ? '<span class="pill-badge pill-purple" style="font-size:10px; margin-left:4px;">' + escFn(String(item.modeloIa).includes('flash') ? 'Flash Lite' : 'Gemma 4') + '</span>'
+        : '';
+      const resumoHtml = item.resumoIa
+        ? '<details class="diario-resumo-details"><summary>Ver Resumo Executivo (IA)</summary><p style="margin:4px 0 0;">' + escFn(item.resumoIa) + '</p></details>'
+        : '';
+      const tagsHtml = (Array.isArray(item.tagsIa) && item.tagsIa.length > 0)
+        ? '<div class="diario-tags-row">' + item.tagsIa.slice(0, 5).map(function(t) { return '<span class="diario-tag-chip">#' + escFn(t) + '</span>'; }).join('') + '</div>'
+        : '';
+      const docBtnLabel = item.isDriveLink === false && item.urlMateria
+        ? 'Ver Matéria ↗'
+        : (String(item.url || '').includes('diariomunicipal.com.br') ? 'Ver Matéria ↗' : 'Abrir PDF ↗');
+
       tr.innerHTML =
-        '<td data-label="Data" style="font-family:var(--font-mono); font-size:12px;">' + window.OlymposApp.escapeHtml(item.data) + '</td>' +
+        '<td data-label="Data" style="font-family:var(--font-mono); font-size:12px;">' + escFn(item.data) + '</td>' +
         '<td data-label="Setor">' +
-          '<span class="pill-badge pill-blue">' + window.OlymposApp.escapeHtml(item.setor) + '</span>' +
+          '<span class="pill-badge pill-blue">' + secBadge + '</span>' +
+          '<div style="margin-top:4px;">' + seloEscopo + modeloBadge + '</div>' +
         '</td>' +
         '<td data-label="Ato Oficial">' +
-          '<div style="font-weight:600; color:var(--text-main);">' + window.OlymposApp.escapeHtml(item.titulo) + '</div>' +
+          '<div style="font-weight:600; color:var(--text-main);">' + escFn(item.titulo) + '</div>' +
           (nerBadges.length ? '<div style="font-size:11.5px; color:var(--text-muted); margin-top:3px;">' + nerBadges.join(' • ') + '</div>' : '') +
+          resumoHtml +
+          tagsHtml +
         '</td>' +
         '<td data-label="Documento" class="text-right">' +
           (item.url
-            ? '<a href="' + window.OlymposApp.escapeHtml(item.url) + '" target="_blank" rel="noopener" class="btn btn-primary btn-sm">Abrir PDF ↗</a>'
+            ? '<a href="' + escFn(item.url) + '" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">' + docBtnLabel + '</a>'
             : '<span class="text-muted">--</span>') +
         '</td>';
 

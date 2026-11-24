@@ -60,6 +60,22 @@ async function atualizarPainelSegurancaMfaSessoes(): Promise<void> {
 let oraculoLoadPromise: Promise<void> | null = null;
 let auditoriaLoadPromise: Promise<void> | null = null;
 let rbacLoadPromise: Promise<void> | null = null;
+let iaGovLoadPromise: Promise<void> | null = null;
+
+async function mountIaGovernancaEmAjustes(): Promise<void> {
+  const root = document.getElementById('iaGovernancaPanelRoot');
+  if (!root) return;
+  if (iaGovLoadPromise) return iaGovLoadPromise;
+  iaGovLoadPromise = (async () => {
+    const mod = await import('./iaGovernancaAdmin');
+    await mod.mountIaGovernancaAdmin('iaGovernancaPanelRoot');
+  })();
+  try {
+    await iaGovLoadPromise;
+  } finally {
+    iaGovLoadPromise = null;
+  }
+}
 
 async function mountRbacAdminEmAjustes(): Promise<void> {
   const root = document.getElementById('rbacAdminPanelRoot');
@@ -162,6 +178,9 @@ if (typeof window !== 'undefined') {
   (window as any).OlymposConfigRbacMount = () => {
     void mountRbacAdminEmAjustes();
   };
+  (window as any).OlymposConfigIaGovMount = () => {
+    void mountIaGovernancaEmAjustes();
+  };
 }
 
 function bindSecurityPanelEvents(): void {
@@ -210,6 +229,7 @@ function bindSecurityPanelEvents(): void {
 
   bindOnce('subtabBtnAjustesAutomacoes', () => {
     mountTelegramConfig('configTelegramRoot');
+    void mountIaGovernancaEmAjustes();
   });
 
   bindOnce('subtabBtnAjustesAuditoria', () => {
@@ -228,6 +248,7 @@ export async function mount(): Promise<void> {
   atualizarPainelSegurancaMfaSessoes();
   mountMemoriasGovernanca();
   mountTelegramConfig('configTelegramRoot');
+  void mountIaGovernancaEmAjustes();
   const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
   window.OlymposApp?.definirTema?.(currentTheme);
   setHighContrast(isHighContrastEnabled(), false);

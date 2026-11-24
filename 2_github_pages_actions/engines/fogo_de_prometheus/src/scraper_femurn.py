@@ -239,7 +239,16 @@ def classificar_tipo_ato(titulo_e_texto, orgao_origem: str = ""):
     if "PERMUTA" in t or "CESSAO" in t:
         return "PERMUTA_RH"
 
-    # 4. Editais, PSS e Convocatórias
+    # 4. Editais, PSS, Licitações e Pregões
+    if "TERMO DE JUSTIFICATIVA" in t or "ORDEM CRONOLOGICA" in t:
+        return "TERMO_JUSTIFICATIVA"
+
+    if "AVISO DE PREGAO" in t or "PREGAO ELETRONICO" in t:
+        return "AVISO_PREGAO"
+
+    if "EXTRATO DE CONTRATO" in t or "EXTRATO DO CONTRATO" in t or "EXTRATO DE ADITIVO" in t:
+        return "EXTRATO_CONTRATO"
+
     if "EDITAL" in t or "PROCESSO SELETIVO" in t or "CONVOCACAO" in t:
         return "EDITAL_PSS"
 
@@ -254,21 +263,66 @@ def classificar_tipo_ato(titulo_e_texto, orgao_origem: str = ""):
     return "ATO_GABINETE"
 
 
+def classificar_escopo_e_relevancia_smeb(entidade: str, orgao: str, titulo: str = "", texto: str = "") -> tuple[str, str, bool, str]:
+    """Determina o escopo institucional municipal e se o ato possui relevância para a SMEB."""
+    ent_norm = normalizar_texto_sem_acentos(entidade)
+    org_clean = str(orgao or "").strip() or ("Câmara Municipal" if "camara" in ent_norm else "Prefeitura Geral")
+    org_norm = normalizar_texto_sem_acentos(org_clean)
+    conteudo = f"{titulo}\n{texto[:3000]}"
+
+    if "camara" in ent_norm or "camara" in org_norm:
+        rel = contem_palavra_chave(conteudo, KEYWORDS_LEGISLATIVO)
+        motivo = "Menção legislativa à educação/SMEB" if rel else "Ato legislativo geral da Câmara Municipal"
+        return "CAMARA_MUNICIPAL", org_clean, rel, motivo
+
+    if "educacao" in org_norm or "smeb" in org_norm:
+        return "SMEB", org_clean, True, "Publicado diretamente pela Secretaria Municipal de Educação Básica"
+
+    if "gabinete" in org_norm:
+        rel = contem_palavra_chave(conteudo, KEYWORDS_EDUCACAO) and not bool(
+            re.search(PADRAO_SECRETARIAS_TERCEIROS, normalizar_texto_sem_acentos(conteudo).upper())
+            and not re.search(PADRAO_VINCULO_EDUCACAO, normalizar_texto_sem_acentos(conteudo).upper())
+        )
+        motivo = "Ato do Gabinete com vínculo à rede escolar" if rel else "Ato geral do Gabinete do Prefeito"
+        return "GABINETE_PREFEITO", org_clean, rel, motivo
+
+    if "prefeitura" in org_norm and "geral" in org_norm:
+        rel = contem_palavra_chave(conteudo, KEYWORDS_EDUCACAO)
+        motivo = "Vinculado à Educação Municipal" if rel else "Ato geral do Executivo Municipal"
+        return "PREFEITURA_GERAL", org_clean, rel, motivo
+
+    rel = contem_palavra_chave(conteudo, KEYWORDS_EDUCACAO)
+    motivo = f"Menção à rede escolar em ato de {org_clean}" if rel else f"Ato setorial de {org_clean}"
+    return "OUTRAS_SECRETARIAS", org_clean, rel, motivo
+
+
 def extrair_entidades_estruturadas(texto_integral, titulo_ato=""):
     """
     Sugestão 3.4.1 (NER Leve): Extrai automaticamente do texto das publicações da FEMURN
     o número do ato, matrículas e nomes de servidores citados.
+    Ignora números de Leis/Artigos citados no corpo (ex.: Lei nº 14.133/2021).
     """
     texto_combinado = f"{titulo_ato}\n{texto_integral or ''}"
+    cabecalho = f"{titulo_ato}\n{(texto_integral or '')[:700]}"
 
-    # 1. Número do Ato (ex: 045/2026)
+    # Sanitiza citações legislativas/normativas no corpo para não gerar falsos números de ato (ex.: Lei 14.133)
+    cabecalho_limpo = re.sub(
+        r"\b(?:lei(?:\s+(?:federal|municipal|estadual|complementar))?|art(?:igo)?\.?|inciso|par[aá]grafo|§)\s*(?:n[º°.]?\s*)?[\d.\-/]+",
+        " ",
+        cabecalho,
+        flags=re.IGNORECASE,
+    )
+
+    # 1. Número do Ato (ex: 045/2026) sem capturar leis referenciadas
     match_num = re.search(
         r"(?:(?:REPUBLICA[ÇC][ÃA]O(?:\s+POR\s+INCORRE[ÇC][ÃA]O)?|REPUBLICAD[OA](?:\s+POR\s+INCORRE[ÇC][ÃA]O)?)\s+(?:D[AEO]\s+)?(?:PORTARIA|EDITAL|DECRETO|LEI|EXTRATO|CONTRATO)|"
-        r"PORTARIA|EDITAL|DECRETO|LEI|REPUBLICA[ÇC][ÃA]O|REPUBLICAD[OA]|EXTRATO|CONTRATO)(?:[^\d\n]{1,40})?(?:N[º°.]?\s*)?(\d{1,4}(?:[.]\d{3})?(?:[./-]\d{2,4})?)",
-        texto_combinado,
+        r"PORTARIA|EDITAL|DECRETO|LEI|REPUBLICA[ÇC][ÃA]O|REPUBLICAD[OA]|EXTRATO|CONTRATO|RESOLU[ÇC][ÃA]O|AVISO|TERMO)(?:[^\d\n]{1,40})?(?:N[º°.]?\s*)?(\d{1,4}(?:[.]\d{3})?(?:[./-]\d{2,4})?)",
+        cabecalho_limpo,
         re.IGNORECASE
     )
     numero_ato = match_num.group(1).strip() if match_num else ""
+    if re.fullmatch(r"14\.?133(?:/\d{2,4})?", numero_ato):
+        numero_ato = ""
 
     # 2. Matrículas (ex: Matrícula nº 12345-6, mat. 9988)
     matriculas = []
@@ -337,28 +391,39 @@ def formatar_nome_arquivo_oficial(categoria, numero_ato, data_circulacao, orgao=
     tipo = "Portaria"
     if "REPUBLIC" in cat_upper:
         tipo = "Republicação"
+    elif "TERMO_JUSTIFICATIVA" in cat_upper or "JUSTIFICATIVA" in cat_upper:
+        tipo = "Termo de Justificativa"
+    elif "EXTRATO" in cat_upper:
+        tipo = "Extrato de Contrato"
     elif "EDITAL" in cat_upper:
         tipo = "Edital"
     elif "DECRETO" in cat_upper:
         tipo = "Decreto"
     elif "LEI" in cat_upper:
         tipo = "Lei"
-    elif "EXTRATO" in cat_upper:
-        tipo = "Extrato"
     elif "RESOLU" in cat_upper:
         tipo = "Resolução"
     elif "AVISO" in cat_upper:
         tipo = "Aviso"
+    elif "PARECER" in cat_upper:
+        tipo = "Parecer"
+    elif "OUTRO" in cat_upper:
+        tipo = "Ato Oficial"
     elif "PERMUTA" in cat_upper:
         tipo = "Portaria"
     elif "NOMEACAO" in cat_upper or "DIRETOR" in cat_upper:
         tipo = "Portaria"
 
-    orgao_tag = "SMEB"
-    if orgao and ("Gabinete" in str(orgao) or "Prefeitura" in str(orgao)):
+    orgao_str = str(orgao or "SMEB").strip()
+    orgao_norm = normalizar_texto_sem_acentos(orgao_str)
+    if not orgao_str or "educacao" in orgao_norm or "smeb" in orgao_norm:
+        orgao_tag = "SMEB"
+    elif "gabinete" in orgao_norm or "prefeitura" in orgao_norm:
         orgao_tag = "Gabinete"
-    elif orgao and "Câmara" in str(orgao):
+    elif "camara" in orgao_norm:
         orgao_tag = "Câmara"
+    else:
+        orgao_tag = re.sub(r"^Secretaria\s+Municipal\s+d[aeo]\s+", "", orgao_str, flags=re.IGNORECASE).strip()[:28] or "Município"
 
     data_extenso = formatar_data_por_extenso(data_circulacao)
 
@@ -426,16 +491,29 @@ def extrair_texto_com_fallback_ocr(texto_html, pdf_bytes=None, page_opt=None):
     return "\n".join(partes_recuperadas).strip(), metodo_usado
 
 
-def montar_resumo_espaco_google_chat(dt_ini, lista_final):
+try:
+    import gemma_cataloger
+except ImportError:
+    try:
+        from . import gemma_cataloger  # type: ignore
+    except ImportError:
+        gemma_cataloger = None
+
+
+def montar_resumo_espaco_google_chat(dt_ini, lista_final, total_outros_municipais=0):
     """
     Sugestão 3.4.3: Monta o payload de Resumo Executivo para o Espaço do Google Chat da SMEB,
     contendo tanto o texto estruturado quanto o Card interativo (cardsV2) com links clicáveis e entidades NER.
     """
     total = len(lista_final or [])
+    extra_mun = int(total_outros_municipais or 0)
+    nota_mun = f"\n🏛️ _+ {extra_mun} ato(s) geral(is) da Prefeitura/Câmara catalogado(s) no Hub Olympos._" if extra_mun > 0 else ""
+
     if total == 0:
         texto_simples = (
             f"🔥 *Fogo de Prometheus — Monitor FEMURN ({dt_ini})*\n"
             f"ℹ️ Nenhuma publicação referente à SMEB / Educação de Ceará-Mirim foi localizada na edição de hoje."
+            f"{nota_mun}"
         )
         return {"text": texto_simples}
 
@@ -480,6 +558,8 @@ def montar_resumo_espaco_google_chat(dt_ini, lista_final):
 
     resumo_categorias = " • ".join(f"{k}: {v}" for k, v in contagem_categorias.items())
     linhas_resumo.append(f"\n📊 *Distribuição por Tipo:* {resumo_categorias}")
+    if extra_mun > 0:
+        linhas_resumo.append(f"🏛️ _+ {extra_mun} ato(s) geral(is) da Prefeitura/Câmara catalogado(s) no Hub._")
 
     return {
         "text": "\n".join(linhas_resumo),
@@ -503,13 +583,13 @@ def montar_resumo_espaco_google_chat(dt_ini, lista_final):
     }
 
 
-def enviar_resumo_espaco_google_chat(chat_webhook_url, dt_ini, lista_final):
+def enviar_resumo_espaco_google_chat(chat_webhook_url, dt_ini, lista_final, total_outros_municipais=0):
     """
     Sugestão 3.4.3: Envia o resumo executivo diretamente para o Espaço do Google Chat via Webhook.
     """
     if not chat_webhook_url:
         return None
-    payload_chat = montar_resumo_espaco_google_chat(dt_ini, lista_final)
+    payload_chat = montar_resumo_espaco_google_chat(dt_ini, lista_final, total_outros_municipais=total_outros_municipais)
     for tentativa in range(1, 3):
         try:
             resp = requests.post(chat_webhook_url, json=payload_chat, timeout=30)
@@ -647,19 +727,85 @@ def preencher_datas_pesquisa(page, dt_ini_br, dt_fim_br):
         print(f"[AVISO] Campos de data não localizados pelo seletor ({len(inputs_data)} encontrados).")
 
 
+def listar_orgaos_entidade(page, entidade_alvo: str) -> list[str]:
+    """Lê dinamicamente todas as <option> de Órgãos da entidade no portal FEMURN."""
+    try:
+        page.goto(FEMURN_SEARCH_URL, wait_until="networkidle", timeout=60000)
+        seletor_entidade = "select[name*='entidade'], select[id*='entidade'], select[id*='municipio'], select[name*='municipio']"
+        ent_ok = selecionar_opcao_por_texto_parcial(page, seletor_entidade, entidade_alvo)
+        if not ent_ok:
+            return []
+        page.wait_for_timeout(2500)
+        try:
+            page.wait_for_load_state("networkidle", timeout=10000)
+        except Exception:
+            pass
+
+        seletor_orgao = "select[name*='busca_avancada[orgao]'], select[id*='busca_avancada_orgao'], select[name*='orgao'], select[id*='orgao'], select[id*='unidade'], select[name*='unidade']"
+        sel = page.locator(seletor_orgao).first
+        if not sel:
+            return []
+        opcoes = sel.evaluate(
+            """(el) => Array.from(el.options || []).map(o => ({
+                val: String(o.value || '').trim(),
+                txt: String(o.text || o.textContent || '').trim()
+            }))"""
+        )
+        vistos = set()
+        lista = []
+        for o in (opcoes or []):
+            val = str(o.get("val") or "").strip()
+            txt = str(o.get("txt") or "").strip()
+            norm = normalizar_texto_sem_acentos(txt)
+            if not txt or not val:
+                continue
+            if norm in ("selecione", "todos", "todas", "todos os orgaos", "-- selecione --"):
+                continue
+            if txt not in vistos:
+                vistos.add(txt)
+                lista.append(txt)
+        return lista
+    except Exception as err:
+        print(f"[AVISO] Não foi possível listar órgãos de '{entidade_alvo}': {err}")
+        return []
+
+
+def carregar_codigos_ja_catalogados_ia(supabase_url: str | None = None, service_key: str | None = None) -> set[str]:
+    """Consulta no Supabase quais codigo_femurn já possuem catalogado_por_ia=true para evitar reuso de cota."""
+    url_base = _normalizar_supabase_url(supabase_url or os.getenv("SUPABASE_URL"))
+    key = (service_key or os.getenv("SUPABASE_SERVICE_ROLE_KEY") or "").strip()
+    if not url_base or not key or not hasattr(requests, "get"):
+        return set()
+    try:
+        resp = requests.get(
+            f"{url_base}/rest/v1/publicacoes_diario?select=codigo_femurn&catalogado_por_ia=eq.true&order=data_publicacao.desc&limit=1000",
+            headers={"apikey": key, "Authorization": f"Bearer {key}", "Accept": "application/json"},
+            timeout=20,
+        )
+        if 200 <= resp.status_code < 300:
+            rows = resp.json() or []
+            return {str(r.get("codigo_femurn") or "").strip().upper() for r in rows if isinstance(r, dict) and r.get("codigo_femurn")}
+    except Exception:
+        pass
+    return set()
+
+
 def executar_ciclo_pesquisa(
     page,
     entidade_alvo,
     orgao_alvo,
     aplicar_filtro_keywords,
     lista_keywords=None,
-    urls_ja_processadas=None
+    urls_ja_processadas=None,
+    codigos_ja_catalogados=None
 ):
     publicacoes_coletadas = []
     dt_ini, dt_fim = obter_intervalo_datas()
     termos_filtro = lista_keywords if lista_keywords is not None else KEYWORDS_EDUCACAO
     if urls_ja_processadas is None:
         urls_ja_processadas = set()
+    if codigos_ja_catalogados is None:
+        codigos_ja_catalogados = set()
 
     page.goto(FEMURN_SEARCH_URL, wait_until="networkidle", timeout=60000)
 
@@ -843,31 +989,81 @@ def executar_ciclo_pesquisa(
             )
             data_circ_item = m_data_circ.group(1) if m_data_circ else dt_ini
 
-            # Padronização Oficial de Título e Nome de Arquivo (ex: 'Portaria - SMEB nº 163 de 29 de Outubro de 2026.pdf')
+            # Escopo municipal + relevância SMEB determinística
+            escopo_orgao, secretaria_origem, relevancia_smeb, motivo_rel = classificar_escopo_e_relevancia_smeb(
+                entidade_alvo, orgao_alvo or "", titulo_ato, texto_integral
+            )
+
+            # Enriquecimento Onda 8 via Gemma 4 31B (+ escalonamento Gemini 3.5 Flash Lite se confiança < 0.75)
+            ia_meta = None
+            recatalogar_ia = os.getenv("RECATALOGAR_IA", "false").strip().lower() == "true"
+            ia_ativa = os.getenv("PROMETHEUS_CATALOGACAO_IA_ATIVO", "true").strip().lower() != "false"
+            if (
+                ia_ativa
+                and gemma_cataloger is not None
+                and os.getenv("GEMINI_API_KEY", "").strip()
+                and (recatalogar_ia or cod_id.upper() not in codigos_ja_catalogados)
+            ):
+                ia_meta = gemma_cataloger.catalogar_publicacao_hibrida(
+                    entidade=entidade_alvo,
+                    orgao=secretaria_origem,
+                    data_circ=data_circ_item,
+                    codigo=cod_id,
+                    texto_integral=texto_integral,
+                )
+
+            if ia_meta:
+                categoria = ia_meta.get("tipo_ato_canonico") or categoria
+                if ia_meta.get("secretaria_origem"):
+                    secretaria_origem = ia_meta["secretaria_origem"]
+                if "relevancia_smeb" in ia_meta:
+                    relevancia_smeb = bool(ia_meta["relevancia_smeb"]) or (escopo_orgao == "SMEB")
+                if ia_meta.get("motivo_relevancia_smeb"):
+                    motivo_rel = ia_meta["motivo_relevancia_smeb"]
+                if ia_meta.get("numero_ato"):
+                    entidades_ner["numero_ato"] = ia_meta["numero_ato"]
+                if ia_meta.get("servidores"):
+                    for srv_ia in ia_meta["servidores"]:
+                        if srv_ia not in (entidades_ner.get("servidores") or []):
+                            entidades_ner.setdefault("servidores", []).append(srv_ia)
+                if ia_meta.get("matriculas"):
+                    for mat_ia in ia_meta["matriculas"]:
+                        if mat_ia not in (entidades_ner.get("matriculas") or []):
+                            entidades_ner.setdefault("matriculas", []).append(mat_ia)
+
+            # Padronização Oficial de Título e Nome de Arquivo
             nome_arq, tit_oficial = formatar_nome_arquivo_oficial(
                 categoria=categoria,
                 numero_ato=entidades_ner.get("numero_ato"),
                 data_circulacao=data_circ_item,
-                orgao=orgao_alvo or "SMEB",
+                orgao=secretaria_origem or orgao_alvo or "SMEB",
                 cod_id=cod_id
             )
+            if ia_meta and ia_meta.get("titulo_canonico"):
+                tit_oficial = ia_meta["titulo_canonico"]
 
-            # Upload direto no Drive se GCP_SA_KEY estiver ativa
+            # Opção A: Upload de PDF no Drive apenas para atos relevantes à SMEB (evita lotar Drive da Educação)
             url_drive_sa = ""
-            if pdf_bytes:
+            if pdf_bytes and relevancia_smeb:
                 pasta_id = obter_pasta_drive_destino(categoria, entidade_alvo)
                 sa_drive_res = upload_pdf_direto_drive(pdf_bytes, nome_arq, pasta_id)
                 if sa_drive_res:
                     url_drive_sa = sa_drive_res.get("url", "")
-                    pdf_b64 = ""  # Limpa pdf_base64 para reduzir tamanho do payload HTTP no webhook GAS
+                    pdf_b64 = ""
+            elif not relevancia_smeb:
+                pdf_b64 = ""
 
-            print(f"[MATERIA OK] Cód: {cod_id} | Cat: {categoria} | Método: {metodo_extracao} | Título: {tit_oficial or titulo_ato}")
+            print(f"[MATERIA OK] Cód: {cod_id} | Escopo: {escopo_orgao} | SMEB: {relevancia_smeb} | Cat: {categoria} | Título: {tit_oficial or titulo_ato}")
 
             publicacoes_coletadas.append({
                 "codigo_identificador": cod_id,
                 "data_circulacao": data_circ_item,
                 "entidade": entidade_alvo,
-                "orgao": orgao_alvo or "Câmara Municipal",
+                "orgao": secretaria_origem or orgao_alvo or "Câmara Municipal",
+                "escopo_orgao": escopo_orgao,
+                "secretaria_origem": secretaria_origem,
+                "relevancia_smeb": relevancia_smeb,
+                "motivo_relevancia_smeb": motivo_rel,
                 "titulo_ato": tit_oficial if tit_oficial else titulo_ato,
                 "titulo_original": titulo_ato,
                 "nome_arquivo": nome_arq,
@@ -875,8 +1071,17 @@ def executar_ciclo_pesquisa(
                 "metodo_extracao": metodo_extracao,
                 "entidades_ner": entidades_ner,
                 "url_origem": url_mat,
+                "url_materia": url_vis,
                 "url_drive": url_drive_sa,
-                "resumo_texto": texto_integral[:1200],
+                "resumo_texto": texto_integral[:1500],
+                "texto_completo": texto_integral[:12000],
+                "resumo_ia": (ia_meta or {}).get("resumo_executivo") or "",
+                "tags_ia": (ia_meta or {}).get("tags_tematicas") or [],
+                "prazos_ia": (ia_meta or {}).get("prazos_detectados") or [],
+                "catalogado_por_ia": bool(ia_meta),
+                "modelo_ia": (ia_meta or {}).get("modelo_ia") or None,
+                "confianca_ia": (ia_meta or {}).get("confianca_ia"),
+                "prompt_versao": (ia_meta or {}).get("prompt_versao") or None,
                 "pdf_base64": pdf_b64
             })
         except Exception as err:
@@ -983,14 +1188,29 @@ def sincronizar_supabase_publicacoes(publicacoes: list, dt_referencia: str) -> b
             "matriculas": matriculas,
             "url_drive": url_drive,
             "url_planilha_backup": url_backup_sheet,
+            "resumo": str(pub.get("resumo_ia") or pub.get("resumo_texto") or "")[:1000] if (pub.get("resumo_ia") or pub.get("resumo_texto")) else "",
+            "texto_completo": str(pub.get("texto_completo") or pub.get("resumo_texto") or "")[:12000] if (pub.get("texto_completo") or pub.get("resumo_texto")) else "",
+            "escopo_orgao": str(pub.get("escopo_orgao") or "SMEB"),
+            "secretaria_origem": str(pub.get("secretaria_origem") or pub.get("orgao") or "SMEB"),
+            "relevancia_smeb": bool(pub.get("relevancia_smeb", True)),
+            "motivo_relevancia_smeb": str(pub.get("motivo_relevancia_smeb") or ""),
+            "resumo_ia": str(pub.get("resumo_ia") or ""),
+            "tags_ia": pub.get("tags_ia") if isinstance(pub.get("tags_ia"), list) else [],
+            "prazos_ia": pub.get("prazos_ia") if isinstance(pub.get("prazos_ia"), list) else [],
+            "catalogado_por_ia": bool(pub.get("catalogado_por_ia", False)),
+            "modelo_ia": pub.get("modelo_ia"),
+            "confianca_ia": pub.get("confianca_ia"),
+            "prompt_versao": pub.get("prompt_versao"),
             "conteudo_ner": {
                 "codigo_identificador": cod_femurn,
                 "entidade": pub.get("entidade"),
                 "orgao": pub.get("orgao"),
-                "url_materia": pub.get("url_materia"),
+                "secretaria_origem": pub.get("secretaria_origem") or pub.get("orgao"),
+                "url_materia": pub.get("url_materia") or pub.get("url_origem"),
                 "link_pdf": pub.get("link_pdf"),
                 "numero_ato": entidades.get("numero_ato"),
-                "resumo_texto": pub.get("resumo_texto", "")[:1000] if pub.get("resumo_texto") else ""
+                "resumo_texto": pub.get("resumo_texto", "")[:1000] if pub.get("resumo_texto") else "",
+                "resumo_ia": pub.get("resumo_ia", "")
             }
         })
 
@@ -1018,6 +1238,15 @@ def sincronizar_supabase_publicacoes(publicacoes: list, dt_referencia: str) -> b
         lote_idx = i // chunk_size + 1
         try:
             resp = requests.post(endpoint, json=chunk, headers=headers, timeout=60)
+            if resp.status_code == 400 and ("42703" in (resp.text or "") or "PGRST204" in (resp.text or "")):
+                # Fallback caso Migration 042 (colunas Onda 8) ainda não tenha sido aplicada no remoto
+                onda8_cols = {
+                    "resumo", "texto_completo", "escopo_orgao", "secretaria_origem", "relevancia_smeb",
+                    "motivo_relevancia_smeb", "resumo_ia", "tags_ia", "prazos_ia",
+                    "catalogado_por_ia", "modelo_ia", "confianca_ia", "prompt_versao"
+                }
+                chunk = [{k: v for k, v in item.items() if k not in onda8_cols} for item in chunk]
+                resp = requests.post(endpoint, json=chunk, headers=headers, timeout=60)
             if 200 <= resp.status_code < 300:
                 print(f"[SUPABASE - Lote {lote_idx}] {len(chunk)} publicações gravadas com sucesso (HTTP {resp.status_code}).")
             elif resp.status_code == 400 and "42P10" in (resp.text or ""):
@@ -1163,7 +1392,9 @@ def gerar_planilha_diaria_csv(publicacoes: list, dt_referencia: str, output_dir:
         "Título do Ato",
         "Servidores Identificados (NER)",
         "Matrículas",
-        "URL do PDF no Drive"
+        "URL do PDF no Drive",
+        "Relevância SMEB",
+        "Resumo IA"
     ]
 
     try:
@@ -1181,11 +1412,13 @@ def gerar_planilha_diaria_csv(publicacoes: list, dt_referencia: str, output_dir:
 
                 data_pub = pub.get("data_publicacao") or pub.get("data_circulacao") or f"{dia}/{mes}/{ano}"
                 cod = pub.get("codigo_identificador") or pub.get("codigo") or ""
-                orgao = pub.get("orgao") or "SMEB"
+                orgao = pub.get("secretaria_origem") or pub.get("orgao") or "SMEB"
                 cat = pub.get("categoria") or "ATO_OFICIAL"
                 num_ato = entidades.get("numero_ato") or ""
                 titulo = pub.get("titulo_ato") or pub.get("resumo") or "Ato Oficial"
-                url_pdf = pub.get("url_drive") or pub.get("urlDrive") or pub.get("link_pdf") or ""
+                url_pdf = pub.get("url_drive") or pub.get("urlDrive") or pub.get("link_pdf") or pub.get("url_materia") or ""
+                rel_smeb = "Sim" if pub.get("relevancia_smeb", True) else "Geral Municipal"
+                resumo_ia = str(pub.get("resumo_ia") or "").replace("\n", " ").strip()[:350]
 
                 writer.writerow([
                     data_pub,
@@ -1196,7 +1429,9 @@ def gerar_planilha_diaria_csv(publicacoes: list, dt_referencia: str, output_dir:
                     titulo,
                     servidores_str,
                     matriculas_str,
-                    url_pdf
+                    url_pdf,
+                    rel_smeb,
+                    resumo_ia
                 ])
         print(f"[PROMETHEUS] Planilha diária gerada: {nome_arquivo} ({len(publicacoes)} matérias)")
     except Exception as errCsv:
@@ -1208,68 +1443,102 @@ def gerar_planilha_diaria_csv(publicacoes: list, dt_referencia: str, output_dir:
 def main():
     todas_publicacoes = []
     urls_ja_processadas = set()
+    modo_coleta = os.getenv("PROMETHEUS_MODO_COLETA", "INTEGRAL").strip().upper()
+    secao_custom = os.getenv("SECAO_DIARIO_OFICIAL", "").strip()
+    codigos_catalogados = carregar_codigos_ja_catalogados_ia()
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         context = browser.new_context(locale="pt-BR")
         page = context.new_page()
 
-        # Ciclo 1: Prefeitura -> Secretaria Municipal de Educação Básica (100% dos atos)
-        todas_publicacoes.extend(executar_ciclo_pesquisa(
-            page,
-            entidade_alvo="Prefeitura Municipal de Ceará-Mirim",
-            orgao_alvo="Secretaria Municipal de Educação Básica",
-            aplicar_filtro_keywords=False,
-            urls_ja_processadas=urls_ja_processadas
-        ))
+        if modo_coleta == "INTEGRAL" and not secao_custom:
+            # Coleta Integral 100% Município de Ceará-Mirim (todas as secretarias/órgãos + Câmara)
+            orgaos_prefeitura = listar_orgaos_entidade(page, "Prefeitura Municipal de Ceará-Mirim")
+            if orgaos_prefeitura:
+                print(f"[PROMETHEUS INTEGRAL] {len(orgaos_prefeitura)} órgão(s) detectado(s) na Prefeitura Municipal de Ceará-Mirim.")
+                for org_nome in orgaos_prefeitura:
+                    todas_publicacoes.extend(executar_ciclo_pesquisa(
+                        page,
+                        entidade_alvo="Prefeitura Municipal de Ceará-Mirim",
+                        orgao_alvo=org_nome,
+                        aplicar_filtro_keywords=False,
+                        urls_ja_processadas=urls_ja_processadas,
+                        codigos_ja_catalogados=codigos_catalogados
+                    ))
+            else:
+                # Fallback caso AJAX de órgãos falhe: busca SMEB + Gabinete + Prefeitura Geral
+                todas_publicacoes.extend(executar_ciclo_pesquisa(
+                    page,
+                    entidade_alvo="Prefeitura Municipal de Ceará-Mirim",
+                    orgao_alvo=None,
+                    aplicar_filtro_keywords=False,
+                    urls_ja_processadas=urls_ja_processadas,
+                    codigos_ja_catalogados=codigos_catalogados
+                ))
 
-        # Ciclo 2: Prefeitura -> Gabinete do Prefeito (Filtrado para Educação/SMEB)
-        todas_publicacoes.extend(executar_ciclo_pesquisa(
-            page,
-            entidade_alvo="Prefeitura Municipal de Ceará-Mirim",
-            orgao_alvo="Gabinete do Prefeito",
-            aplicar_filtro_keywords=True,
-            lista_keywords=KEYWORDS_EDUCACAO,
-            urls_ja_processadas=urls_ja_processadas
-        ))
-
-        # Ciclo 3: Câmara Municipal de Ceará-Mirim (Filtrado Legislativo Educacional)
-        todas_publicacoes.extend(executar_ciclo_pesquisa(
-            page,
-            entidade_alvo="Câmara Municipal de Ceará-Mirim",
-            orgao_alvo=None,
-            aplicar_filtro_keywords=True,
-            lista_keywords=KEYWORDS_LEGISLATIVO,
-            urls_ja_processadas=urls_ja_processadas
-        ))
-
-        # Ciclo Customizado Opcional: Seção/Órgão Específico do Diário Oficial
-        secao_custom = os.getenv("SECAO_DIARIO_OFICIAL", "").strip()
-        if secao_custom:
-            print(f"[PROMETHEUS] Executando ciclo para seção solicitada via SECAO_DIARIO_OFICIAL: {secao_custom}")
+            todas_publicacoes.extend(executar_ciclo_pesquisa(
+                page,
+                entidade_alvo="Câmara Municipal de Ceará-Mirim",
+                orgao_alvo=None,
+                aplicar_filtro_keywords=False,
+                urls_ja_processadas=urls_ja_processadas,
+                codigos_ja_catalogados=codigos_catalogados
+            ))
+        else:
+            # Modo SMEB_ONLY / Seção customizada
             todas_publicacoes.extend(executar_ciclo_pesquisa(
                 page,
                 entidade_alvo="Prefeitura Municipal de Ceará-Mirim",
-                orgao_alvo=secao_custom,
+                orgao_alvo="Secretaria Municipal de Educação Básica",
+                aplicar_filtro_keywords=False,
+                urls_ja_processadas=urls_ja_processadas,
+                codigos_ja_catalogados=codigos_catalogados
+            ))
+            todas_publicacoes.extend(executar_ciclo_pesquisa(
+                page,
+                entidade_alvo="Prefeitura Municipal de Ceará-Mirim",
+                orgao_alvo="Gabinete do Prefeito",
                 aplicar_filtro_keywords=True,
                 lista_keywords=KEYWORDS_EDUCACAO,
-                urls_ja_processadas=urls_ja_processadas
+                urls_ja_processadas=urls_ja_processadas,
+                codigos_ja_catalogados=codigos_catalogados
             ))
+            todas_publicacoes.extend(executar_ciclo_pesquisa(
+                page,
+                entidade_alvo="Câmara Municipal de Ceará-Mirim",
+                orgao_alvo=None,
+                aplicar_filtro_keywords=True,
+                lista_keywords=KEYWORDS_LEGISLATIVO,
+                urls_ja_processadas=urls_ja_processadas,
+                codigos_ja_catalogados=codigos_catalogados
+            ))
+            if secao_custom:
+                print(f"[PROMETHEUS] Executando ciclo para seção solicitada via SECAO_DIARIO_OFICIAL: {secao_custom}")
+                todas_publicacoes.extend(executar_ciclo_pesquisa(
+                    page,
+                    entidade_alvo="Prefeitura Municipal de Ceará-Mirim",
+                    orgao_alvo=secao_custom,
+                    aplicar_filtro_keywords=False,
+                    urls_ja_processadas=urls_ja_processadas,
+                    codigos_ja_catalogados=codigos_catalogados
+                ))
 
         browser.close()
 
     # Deduplicar por código identificador
     unicos = {pub["codigo_identificador"]: pub for pub in todas_publicacoes}
     lista_final = list(unicos.values())
+    lista_smeb = [pub for pub in lista_final if pub.get("relevancia_smeb", True)]
+    total_outros_municipais = max(0, len(lista_final) - len(lista_smeb))
 
     dt_ini, _ = obter_intervalo_datas()
 
-    # Gera planilha diária padronizada "Publicações de dd-mm-yyyy.csv"
-    gerar_planilha_diaria_csv(lista_final, dt_ini)
+    # Opção A: Planilha e webhook GAS focam nos atos relevantes à SMEB; Supabase guarda 100% do município
+    gerar_planilha_diaria_csv(lista_smeb, dt_ini)
 
-    # Persistência Atômica no Supabase (se configurado) + alerta persistente consolidado
     if sincronizar_supabase_publicacoes(lista_final, dt_ini):
-        registrar_notificacoes_femurn(lista_final, dt_ini)
+        registrar_notificacoes_femurn(lista_smeb or lista_final[:5], dt_ini)
 
     # Radar Preditivo FEMURN (Custo $0: Camada 1 Determinística + Camada 2 Embedding opcional)
     try:
@@ -1278,7 +1547,7 @@ def main():
         except ImportError:
             from . import radar_preditivo  # type: ignore
         if hasattr(radar_preditivo, "executar_radar_diario"):
-            resumo_radar = radar_preditivo.executar_radar_diario(lista_final, dt_ini)
+            resumo_radar = radar_preditivo.executar_radar_diario(lista_smeb or lista_final, dt_ini)
             print(
                 f"[RADAR PREDITIVO] Alertas: {len(resumo_radar.get('alertas', []))} | "
                 f"Servidores SMEB: {len(resumo_radar.get('pessoas_citadas', []))} | "
@@ -1293,20 +1562,24 @@ def main():
     chat_webhook_url = os.getenv("GOOGLE_CHAT_WEBHOOK_URL", "").strip()
 
     if webhook_url:
-        enviar_lotes_webhook(webhook_url, token, dt_ini, lista_final)
+        enviar_lotes_webhook(webhook_url, token, dt_ini, lista_smeb)
     else:
         payload = {
             "token": token,
             "modulo": "fogo_prometheus",
             "data_referencia": dt_ini,
             "total_publicacoes": len(lista_final),
+            "total_smeb": len(lista_smeb),
+            "total_outros_municipais": total_outros_municipais,
             "publicacoes": lista_final
         }
         print(json.dumps(payload, indent=2, ensure_ascii=False))
 
-    # Sugestão 3.4.3: Enviar resumo executivo para o Espaço do Google Chat (se configurado via Secret)
+    # Sugestão 3.4.3: Enviar resumo executivo SMEB + nota de atos municipais gerais para o Google Chat
     if chat_webhook_url:
-        enviar_resumo_espaco_google_chat(chat_webhook_url, dt_ini, lista_final)
+        enviar_resumo_espaco_google_chat(
+            chat_webhook_url, dt_ini, lista_smeb, total_outros_municipais=total_outros_municipais
+        )
 
 
 if __name__ == "__main__":

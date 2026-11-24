@@ -5,6 +5,7 @@
  */
 
 import '../styles/onda4.css';
+import '../styles/onda8.css';
 import oraculoHtml from '../templates/pages/oraculo.html?raw';
 
 export const routeId = 'oraculo';
@@ -232,6 +233,80 @@ function renderEvidencesList(evidences: OraculoEvidenceItem[], query: string): v
     .join('');
 }
 
+export function renderSynthesisCard(genMode: any): void {
+  const box = document.getElementById('oraculoSynthesisContainer');
+  if (!box) return;
+
+  if (!genMode) {
+    box.classList.add('hidden');
+    box.innerHTML = '';
+    return;
+  }
+
+  if (genMode.enabled && genMode.answerText) {
+    const modelStr = String(genMode.model || '');
+    const modelLabel = modelStr.includes('gemma') ? 'Gemma 4 31B' : 'Gemini 3.5 Flash Lite';
+    const quotaHtml = typeof genMode.quotaRemaining === 'number'
+      ? `<span class="pill-badge pill-gold" style="font-size:0.7rem;">Cota restante hoje: ${genMode.quotaRemaining}</span>`
+      : '';
+    const citations: any[] = Array.isArray(genMode.citations) ? genMode.citations : [];
+    const citHtml = citations
+      .map((c) => {
+        const safeUrl = sanitizarUrlOraculo(c.url_fonte);
+        const tag = `[${Number(c.indice || 0)}] ${escHtml(c.titulo || c.fonte_id || '')}`;
+        return safeUrl
+          ? `<a href="${escHtml(safeUrl)}" ${/^https?:\/\//i.test(safeUrl) ? 'target="_blank" rel="noopener noreferrer"' : ''} class="folder-chip" style="font-size:0.74rem;">${tag} ↗</a>`
+          : `<span class="folder-chip" style="font-size:0.74rem;">${tag}</span>`;
+      })
+      .join('');
+
+    box.innerHTML =
+      '<div class="surface-card oraculo-synthesis-card">' +
+        '<div class="oraculo-synthesis-head">' +
+          '<div>' +
+            '<span class="section-eyebrow">SÍNTESE EXECUTIVA OLYMPOS • ALUCINAÇÃO ZERO</span>' +
+            '<h3 style="margin:2px 0 0; font-size:1.05rem;">Resposta Fundamentada nas Fontes Oficiais</h3>' +
+          '</div>' +
+          '<div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">' +
+            `<span class="pill-badge pill-purple" style="font-size:0.72rem;">${escHtml(modelLabel)}</span>` +
+            quotaHtml +
+            '<button type="button" id="btnCopiarSinteseOraculo" class="btn btn-secondary btn-sm">Copiar Síntese</button>' +
+          '</div>' +
+        '</div>' +
+        `<div class="oraculo-synthesis-body">${escHtml(genMode.answerText)}</div>` +
+        (citHtml ? `<div class="oraculo-citations-row">${citHtml}</div>` : '') +
+      '</div>';
+    box.classList.remove('hidden');
+
+    const btnCopy = document.getElementById('btnCopiarSinteseOraculo');
+    if (btnCopy) {
+      btnCopy.addEventListener('click', () => {
+        const citText = citations
+          .map((c) => `[${c.indice}] ${c.titulo} (${c.fonte_id})`)
+          .join('\n');
+        const full = `${genMode.answerText}\n\nFontes:\n${citText}`.trim();
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(full).catch(() => {});
+        }
+        (window as any).OlymposApp?.showToast?.('Síntese copiada com citações!');
+      });
+    }
+    return;
+  }
+
+  const st = String(genMode.status || 'INCUBATED').toUpperCase();
+  if (st === 'QUOTA_FALLBACK' || st === 'PII_BLOCKED' || st === 'DISABLED') {
+    box.innerHTML =
+      '<div class="output-panel output-warning" style="font-size:0.84rem;">' +
+        `<strong>Modo Literal Ativo (${escHtml(st)}):</strong> ${escHtml(genMode.motivo || 'Exibindo evidências literais oficiais.')}` +
+      '</div>';
+    box.classList.remove('hidden');
+  } else {
+    box.classList.add('hidden');
+    box.innerHTML = '';
+  }
+}
+
 async function executarBuscaOraculo(query: string): Promise<void> {
   if (isSearching) return;
   const clean = String(query || '').trim();
@@ -241,12 +316,17 @@ async function executarBuscaOraculo(query: string): Promise<void> {
   const modeBadge = document.getElementById('oraculoModeBadge');
   const piiAlert = document.getElementById('oraculoPiiAlert');
   const personaBox = document.getElementById('oraculoPersonaContainer');
+  const synthBox = document.getElementById('oraculoSynthesisContainer');
   const resultsEl = document.getElementById('oraculoResultsContainer');
 
   isSearching = true;
   if (btn) {
     btn.disabled = true;
     btn.textContent = 'Buscando...';
+  }
+  if (synthBox) {
+    synthBox.classList.add('hidden');
+    synthBox.innerHTML = '';
   }
   if (resultsEl) {
     resultsEl.innerHTML = '<div class="surface-card" style="padding: 24px; text-align: center;">Consultando base institucional ($0)...</div>';
@@ -307,12 +387,14 @@ async function executarBuscaOraculo(query: string): Promise<void> {
       }
     }
 
+    renderSynthesisCard(data.generativeMode);
     renderEvidencesList(data.evidencias || [], data.query || clean);
   } catch (err) {
     console.warn('[Oraculo] Edge Function indisponível, executando fallback local:', err);
     const fb = await executarFallbackLocalSupabase(clean);
     if (modeBadge) modeBadge.textContent = 'Fallback FTS Local ($0)';
     if (personaBox) personaBox.classList.add('hidden');
+    renderSynthesisCard(null);
     renderEvidencesList(fb.evidencias, clean);
   } finally {
     isSearching = false;
