@@ -7900,29 +7900,6 @@ button.btn-mini:disabled {
   background: linear-gradient(90deg, #4285F4 0%, #EA4335 33%, #FBBC05 66%, #34A853 100%);
 }
 
-.ws-app-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.ws-dot-gemini {
-  background: linear-gradient(135deg, #4285F4 0%, #9B72CB 55%, #D96570 100%);
-}
-
-.ws-dot-docs {
-  background: #4285F4;
-}
-
-.ws-dot-sheets {
-  background: #34A853;
-}
-
-.ws-dot-forms {
-  background: #7248B9;
-}
-
 .ws-gemini-mobile-link {
   display: none;
 }
