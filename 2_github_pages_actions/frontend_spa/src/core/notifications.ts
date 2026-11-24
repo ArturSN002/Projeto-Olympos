@@ -9,7 +9,7 @@ export interface NotificacaoItem {
   id: number;
   destinatario_user_id: string | null;
   destinatario_roles: string[];
-  categoria: 'PENDENCIA' | 'FEMURN' | 'HOMERO' | 'CORREIO_OLIMPO' | 'SEGURANCA' | 'PSS';
+  categoria: 'PENDENCIA' | 'FEMURN' | 'HOMERO' | 'CORREIO_OLIMPO' | 'SEGURANCA' | 'PSS' | 'MURAL' | 'CHAT';
   severidade: 'INFO' | 'AVISO' | 'CRITICO';
   titulo: string;
   mensagem: string;
@@ -35,7 +35,9 @@ const CATEGORIA_LABELS: Record<string, string> = {
   HOMERO: 'Homero',
   CORREIO_OLIMPO: 'Correio do Olimpo',
   SEGURANCA: 'Segurança',
-  PSS: 'PSS / Niké'
+  PSS: 'PSS / Niké',
+  MURAL: 'Mural SMEB',
+  CHAT: 'Chat Interno'
 };
 
 function isLida(n: NotificacaoItem, uid: string): boolean {

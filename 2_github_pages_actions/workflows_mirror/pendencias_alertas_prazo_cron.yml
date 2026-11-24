@@ -28,13 +28,21 @@ jobs:
           python - <<'PY'
           import json
           import os
+          import re
           import sys
           import urllib.error
           import urllib.parse
           import urllib.request
           from datetime import datetime, timedelta, timezone
 
-          supabase_url = os.getenv("SUPABASE_URL", "").strip().rstrip("/")
+          def normalize_supabase_url(raw: str) -> str:
+              clean = str(raw or "").strip().rstrip("/")
+              if not clean:
+                  return ""
+              clean = re.sub(r"/(?:rest|auth|functions|storage)/v1(?:/.*)?$", "", clean, flags=re.IGNORECASE)
+              return clean.rstrip("/")
+
+          supabase_url = normalize_supabase_url(os.getenv("SUPABASE_URL", ""))
           service_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
           if not supabase_url or not service_key:
               print("[PRAZOS] SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY ausentes. Encerrando sem alterações.")

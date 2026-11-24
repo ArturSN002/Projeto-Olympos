@@ -24,6 +24,7 @@ import './core/sessionGuard';
 import { initModalManager } from './core/modalManager';
 import { initShortcuts } from './core/shortcuts';
 import { initNotifications } from './core/notifications';
+import { initChatBadge } from './core/chatBadge';
 import { bindNavPrefetch } from './core/routeLoader';
 
 // 3. Controlador central e roteador (carregam módulos de página sob demanda)
@@ -33,6 +34,7 @@ import '../js/app.js';
 initModalManager();
 initShortcuts();
 initNotifications();
+initChatBadge();
 bindNavPrefetch();
 
 // Ponte lazy para Tour Guiado de Onboarding (mantém driver.js fora do entry bundle)

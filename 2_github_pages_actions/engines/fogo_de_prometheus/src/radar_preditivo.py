@@ -593,16 +593,25 @@ def _salvar_guard_despacho(chaves: set[str], guard_path: Path | None) -> None:
         pass
 
 
+def _normalize_supabase_url(raw_url: str | None) -> str:
+    clean = str(raw_url or "").strip().rstrip("/")
+    if not clean:
+        return ""
+    clean = re.sub(r"/(?:rest|auth|functions|storage)/v1(?:/.*)?$", "", clean, flags=re.IGNORECASE)
+    return clean.rstrip("/")
+
+
 def _despachar_notificacoes_supabase(
     notificacoes: list[dict[str, Any]],
     supabase_url: str,
     service_role_key: str,
 ) -> int:
     """Grava alertas em public.notificacoes com idempotência via dedup_key."""
-    if not notificacoes or not supabase_url or not service_role_key:
+    base_url = _normalize_supabase_url(supabase_url)
+    if not notificacoes or not base_url or not service_role_key:
         return 0
 
-    endpoint = f"{supabase_url.rstrip('/')}/rest/v1/notificacoes?on_conflict=dedup_key"
+    endpoint = f"{base_url}/rest/v1/notificacoes?on_conflict=dedup_key"
     headers = {
         "apikey": service_role_key,
         "Authorization": f"Bearer {service_role_key}",
@@ -626,11 +635,12 @@ def _atualizar_publicacao_diario_supabase(
     service_role_key: str,
 ) -> bool:
     """Atualiza conteudo_ner e embedding (quando disponível) em public.publicacoes_diario."""
-    if not codigo_femurn or not supabase_url or not service_role_key:
+    base_url = _normalize_supabase_url(supabase_url)
+    if not codigo_femurn or not base_url or not service_role_key:
         return False
 
     cod_enc = urllib.parse.quote(codigo_femurn, safe="")
-    endpoint = f"{supabase_url.rstrip('/')}/rest/v1/publicacoes_diario?codigo_femurn=eq.{cod_enc}"
+    endpoint = f"{base_url}/rest/v1/publicacoes_diario?codigo_femurn=eq.{cod_enc}"
     headers = {
         "apikey": service_role_key,
         "Authorization": f"Bearer {service_role_key}",
@@ -665,7 +675,7 @@ def conciliar_publicacao_pss_femurn(
         return []
 
     req_fn = http_fn or _http_request
-    base_url = supabase_url.rstrip("/")
+    base_url = _normalize_supabase_url(supabase_url)
     headers = {
         "apikey": service_role_key,
         "Authorization": f"Bearer {service_role_key}",
@@ -830,7 +840,7 @@ def executar_radar_diario(
             prototype_embeddings=prototype_embeddings,
         )
 
-    supabase_url = os.getenv("SUPABASE_URL", "").strip()
+    supabase_url = _normalize_supabase_url(os.getenv("SUPABASE_URL", ""))
     service_role_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
     gateway_url = (
         os.getenv("GAS_GATEWAY_URL", "").strip() or os.getenv("GAS_WEBHOOK_URL", "").strip()

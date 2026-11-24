@@ -149,6 +149,9 @@ window.OlymposApp = (function() {
     mfaPendingCallbacks = [];
     initialPreloadDoneForAuth = false;
     aplicarModoVisitanteNaInterface();
+    if (window.OlymposChatBadge && typeof window.OlymposChatBadge.clearOnLogout === 'function') {
+      window.OlymposChatBadge.clearOnLogout();
+    }
 
     const initialHash = window.location.hash.replace('#', '').trim();
     if (window.OlymposSupabase && typeof window.OlymposSupabase.isConfigured === 'function' && window.OlymposSupabase.isConfigured()) {
@@ -272,6 +275,9 @@ window.OlymposApp = (function() {
         localStorage.removeItem('olympos_session');
       } catch (e) {}
       aplicarModoVisitanteNaInterface();
+    if (window.OlymposChatBadge && typeof window.OlymposChatBadge.clearOnLogout === 'function') {
+      window.OlymposChatBadge.clearOnLogout();
+    }
     } else {
       aplicarControleAcessoModularEDrive(currentUserSession);
     }
@@ -289,22 +295,22 @@ window.OlymposApp = (function() {
   const RBAC_TAB_PERMISSIONS = {
     MODERADOR: [
       'visao-geral', 'oficios', 'portarias', 'licencas', 'certificados', 'relatorios',
-      'diario-oficial', 'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'oraculo', 'processos-seletivos', 'pss', 'auditoria', 'kiosk', 'configuracoes'
+      'diario-oficial', 'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'oraculo', 'processos-seletivos', 'pss', 'mural', 'chat', 'auditoria', 'kiosk', 'configuracoes'
     ],
     ADMIN_GABINETE: [
       'visao-geral', 'oficios', 'portarias', 'licencas', 'certificados', 'relatorios',
-      'diario-oficial', 'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'oraculo', 'processos-seletivos', 'pss', 'kiosk', 'configuracoes'
+      'diario-oficial', 'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'oraculo', 'processos-seletivos', 'pss', 'mural', 'chat', 'kiosk', 'configuracoes'
     ],
     RH_COMISSAO: [
       'visao-geral', 'oficios', 'portarias', 'licencas', 'relatorios',
-      'diario-oficial', 'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'oraculo', 'processos-seletivos', 'pss', 'kiosk', 'configuracoes'
+      'diario-oficial', 'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'oraculo', 'processos-seletivos', 'pss', 'mural', 'chat', 'kiosk', 'configuracoes'
     ],
     PEDAGOGICO_EVENTOS: [
-      'visao-geral', 'oficios', 'certificados', 'relatorios', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'oraculo', 'kiosk', 'configuracoes'
+      'visao-geral', 'oficios', 'certificados', 'relatorios', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'oraculo', 'mural', 'chat', 'kiosk', 'configuracoes'
     ],
     JURIDICO: [
       'visao-geral', 'oficios', 'portarias', 'relatorios', 'diario-oficial',
-      'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'oraculo', 'processos-seletivos', 'pss', 'kiosk', 'configuracoes'
+      'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'oraculo', 'processos-seletivos', 'pss', 'mural', 'chat', 'kiosk', 'configuracoes'
     ]
   };
 
@@ -884,6 +890,9 @@ window.OlymposApp = (function() {
     mfaPendingCallbacks = [];
     initialPreloadDoneForAuth = false;
     aplicarModoVisitanteNaInterface();
+    if (window.OlymposChatBadge && typeof window.OlymposChatBadge.clearOnLogout === 'function') {
+      window.OlymposChatBadge.clearOnLogout();
+    }
     if (window.OlymposViews && window.OlymposViews.visaoGeral && typeof window.OlymposViews.visaoGeral.resetarEstadoLogout === 'function') {
       window.OlymposViews.visaoGeral.resetarEstadoLogout();
     }
@@ -1218,6 +1227,9 @@ window.OlymposApp = (function() {
     if (avisoRestrito) avisoRestrito.classList.toggle('hidden', isMod);
 
     aplicarControleAcessoModularEDrive(sessao, permitidas);
+    if (window.OlymposChatBadge && typeof window.OlymposChatBadge.refresh === 'function') {
+      window.OlymposChatBadge.refresh();
+    }
 
     if (window.OlymposViews) {
       if (window.OlymposViews.escolas && typeof window.OlymposViews.escolas.atualizarPermissoesMapa === 'function') {

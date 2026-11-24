@@ -910,9 +910,17 @@ def enviar_lotes_webhook(webhook_url, token, dt_ini, lista_final):
                     time.sleep(3 * tentativa)
 
 
+def _normalize_supabase_url(raw_url: str | None) -> str:
+    clean = str(raw_url or "").strip().rstrip("/")
+    if not clean:
+        return ""
+    clean = re.sub(r"/(?:rest|auth|functions|storage)/v1(?:/.*)?$", "", clean, flags=re.IGNORECASE)
+    return clean.rstrip("/")
+
+
 def sincronizar_supabase_publicacoes(publicacoes: list, dt_referencia: str) -> bool:
     """Realiza batch upsert atômico e idempotente das matérias mineradas na tabela publicacoes_diario do Supabase."""
-    supabase_url = os.getenv("SUPABASE_URL")
+    supabase_url = _normalize_supabase_url(os.getenv("SUPABASE_URL"))
     service_role_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
     if not supabase_url or not service_role_key:
@@ -923,7 +931,7 @@ def sincronizar_supabase_publicacoes(publicacoes: list, dt_referencia: str) -> b
         print("[SUPABASE] Nenhuma publicação para sincronizar nesta execução.")
         return True
 
-    endpoint = f"{supabase_url.rstrip('/')}/rest/v1/publicacoes_diario?on_conflict=codigo_femurn"
+    endpoint = f"{supabase_url}/rest/v1/publicacoes_diario?on_conflict=codigo_femurn"
     headers = {
         "apikey": service_role_key,
         "Authorization": f"Bearer {service_role_key}",
@@ -1002,7 +1010,7 @@ def registrar_notificacoes_femurn(
     service_role_key: str | None = None,
 ) -> bool:
     """Envia alerta consolidado da edição FEMURN para public.notificacoes (não-bloqueante)."""
-    url_base = supabase_url or os.getenv("SUPABASE_URL")
+    url_base = _normalize_supabase_url(supabase_url or os.getenv("SUPABASE_URL"))
     srv_key = service_role_key or os.getenv("SUPABASE_SERVICE_ROLE_KEY")
     if not url_base or not srv_key or not publicacoes:
         return False

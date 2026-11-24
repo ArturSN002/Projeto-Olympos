@@ -13,6 +13,30 @@ from __future__ import annotations
 import re
 from typing import Any
 
+# Fontes estruturalmente proibidas no pipeline vetorial (privacidade & LGPD)
+FORBIDDEN_VECTOR_SOURCES = frozenset({
+    "chat_mensagens",
+    "chat_salas",
+    "chat_participantes",
+    "mural_publicacoes",
+    "mural_confirmacoes_leitura",
+    "pss_candidatos",
+    "pss_inscricoes",
+})
+
+
+def assert_source_allowed_for_embedding(source_name: str | None) -> None:
+    """Bloqueia explicitamente envio de tabelas restritas (ex.: chat interno e PII PSS) ao embedding."""
+    clean = str(source_name or "").strip().lower()
+    if not clean:
+        return
+    normalized = clean.split(".")[-1]
+    if normalized in FORBIDDEN_VECTOR_SOURCES:
+        raise ValueError(
+            f"Fonte '{normalized}' bloqueada pelo Gate Zero-PII/LGPD para ingestão vetorial."
+        )
+
+
 # Regex sem falsos positivos por CPFs de exemplo no arquivo-fonte:
 _RE_CPF_FORMATTED = re.compile(r"\b\d{3}\.\d{3}\.\d{3}-\d{2}\b")
 _RE_CPF_LABELED_DIGITS = re.compile(r"\b(?:cpf|c\.p\.f\.?)\s*[:=\-#º°]?\s*(\d{11})\b", re.IGNORECASE)

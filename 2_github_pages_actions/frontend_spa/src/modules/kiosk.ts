@@ -5,6 +5,7 @@
 
 import '../styles/kiosk.css';
 import kioskHtml from '../templates/pages/kiosk.html?raw';
+import { sanitizarTextoSeguroParaTv } from './comunicacao/kioskSanitizer';
 
 export const routeId = 'kiosk';
 export const htmlTemplate = kioskHtml;
@@ -34,6 +35,13 @@ interface KioskCachedState {
     titulo: string;
     setor: string;
     local: string | null;
+  }>;
+  mural: Array<{
+    id: number;
+    titulo: string;
+    resumo: string | null;
+    tipo: string;
+    publicado_em: string;
   }>;
   telemetria: {
     oficios: number;
@@ -166,20 +174,37 @@ function renderizarQuadrantes(st: KioskCachedState): void {
   }
 
   if (agendaEl) {
-    if (st.agenda.length === 0) {
-      agendaEl.innerHTML = '<div class="kiosk-card-sub">Nenhum compromisso próximo na Agenda Intersetorial.</div>';
-    } else {
-      agendaEl.innerHTML = st.agenda
-        .map((a) => (
+    const agendaRows = st.agenda
+      .map((a) => (
+        '<div class="kiosk-card-row">' +
+          '<div>' +
+            `<div class="kiosk-card-main">${esc(a.titulo)}</div>` +
+            `<div class="kiosk-card-sub">${esc(a.setor)}${a.local ? ` • ${esc(a.local)}` : ''}</div>` +
+          '</div>' +
+          `<span class="kiosk-status-pill">${esc(formatarDataCurta(a.data_inicio))}${a.horario ? ` ${esc(a.horario)}` : ''}</span>` +
+        '</div>'
+      ));
+
+    const muralRows = (st.mural || [])
+      .map((m) => {
+        const tituloSeguro = sanitizarTextoSeguroParaTv(m.titulo, 90);
+        const resumoSeguro = sanitizarTextoSeguroParaTv(m.resumo, 110);
+        return (
           '<div class="kiosk-card-row">' +
             '<div>' +
-              `<div class="kiosk-card-main">${esc(a.titulo)}</div>` +
-              `<div class="kiosk-card-sub">${esc(a.setor)}${a.local ? ` • ${esc(a.local)}` : ''}</div>` +
+              `<div class="kiosk-card-main">${esc(tituloSeguro)}</div>` +
+              `<div class="kiosk-card-sub">Mural SMEB${resumoSeguro ? ` • ${esc(resumoSeguro)}` : ''}</div>` +
             '</div>' +
-            `<span class="kiosk-status-pill">${esc(formatarDataCurta(a.data_inicio))}${a.horario ? ` ${esc(a.horario)}` : ''}</span>` +
+            `<span class="kiosk-status-pill">${esc(m.tipo || 'COMUNICADO')}</span>` +
           '</div>'
-        ))
-        .join('');
+        );
+      });
+
+    const combined = [...agendaRows, ...muralRows];
+    if (combined.length === 0) {
+      agendaEl.innerHTML = '<div class="kiosk-card-sub">Nenhum compromisso próximo na Agenda Intersetorial ou Mural.</div>';
+    } else {
+      agendaEl.innerHTML = combined.join('');
     }
   }
 
@@ -210,7 +235,7 @@ async function atualizarPainelKiosk(): Promise<void> {
   try {
     const hojeIso = new Date().toISOString().slice(0, 10);
 
-    const [resPend, resFemurn, resAgenda, resOficiosCount, resPortariasCount, resAllPendCount, resResolvedCount] = await Promise.all([
+    const [resPend, resFemurn, resAgenda, resMural, resOficiosCount, resPortariasCount, resAllPendCount, resResolvedCount] = await Promise.all([
       // Consulta estritamente não-pessoal: apenas protocolo, setor, assunto, status e prazo
       client
         .from('pendencias_solicitacoes')
@@ -229,7 +254,16 @@ async function atualizarPainelKiosk(): Promise<void> {
         .select('data_inicio,horario,titulo,setor,local')
         .gte('data_inicio', hojeIso)
         .order('data_inicio', { ascending: true })
-        .limit(5),
+        .limit(4),
+      client
+        .from('mural_publicacoes')
+        .select('id,titulo,resumo,tipo,publicado_em')
+        .eq('escopo', 'GERAL_SMEB')
+        .eq('exibir_no_kiosk', true)
+        .is('arquivado_em', null)
+        .order('fixado', { ascending: false })
+        .order('publicado_em', { ascending: false })
+        .limit(3),
       client
         .from('documentos_emitidos')
         .select('id', { count: 'exact', head: true })
@@ -260,6 +294,7 @@ async function atualizarPainelKiosk(): Promise<void> {
       prazos: prazosList,
       femurn: Array.isArray(resFemurn.data) ? resFemurn.data : (lastGoodData?.femurn || []),
       agenda: Array.isArray(resAgenda.data) ? resAgenda.data : (lastGoodData?.agenda || []),
+      mural: Array.isArray(resMural.data) ? resMural.data : (lastGoodData?.mural || []),
       telemetria: {
         oficios: typeof resOficiosCount.count === 'number' ? resOficiosCount.count : (lastGoodData?.telemetria.oficios || 0),
         portarias: typeof resPortariasCount.count === 'number' ? resPortariasCount.count : (lastGoodData?.telemetria.portarias || 0),

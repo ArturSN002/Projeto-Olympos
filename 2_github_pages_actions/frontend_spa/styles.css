@@ -8112,3 +8112,289 @@ button.btn-mini:disabled {
 .acervo-sort-th-btn:hover {
   color: var(--accent-gold);
 }
+
+/* ==========================================================================
+   CLASSES DE SHELL EXTRAIDAS (BUDGET index.html <= 25 KB) & FORMULARIOS
+   ========================================================================== */
+
+.login-modal-card {
+  max-width: 450px;
+  position: relative;
+}
+
+.login-modal-body {
+  padding: 34px 32px 28px;
+}
+
+.login-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.login-header-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.login-header-meta .eyebrow-pill {
+  margin-bottom: 2px;
+}
+
+.login-modal-title {
+  font-size: 1.65rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin: 0;
+}
+
+.login-field {
+  margin-bottom: 14px;
+}
+
+.login-field-last {
+  margin-bottom: 20px;
+}
+
+.login-submit-btn {
+  width: 100%;
+  padding: 12px 20px;
+}
+
+.login-guest-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 11px 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.login-footer-row {
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-hairline);
+  text-align: center;
+}
+
+.login-setup-btn {
+  font-size: 0.78rem;
+  padding: 6px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.masthead-brand-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+#themeToggleBtn.hidden {
+  display: none !important;
+}
+
+.hero-section-editorial {
+  position: relative;
+  overflow: hidden;
+  padding-top: 32px;
+  padding-bottom: 24px;
+}
+
+.hero-eyebrow-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hero-ping-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: var(--accent-primary);
+}
+
+.hero-dual-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin: 18px 0 20px;
+  flex-wrap: wrap;
+}
+
+.hero-pill-btn {
+  border-radius: 9999px;
+  padding: 10px 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hero-telemetry-grid {
+  margin-top: 20px;
+}
+
+.setup-modal-dialog {
+  display: none;
+}
+
+.setup-modal-card {
+  max-width: 540px;
+  width: 92%;
+}
+
+.setup-modal-badge {
+  font-size: 0.72rem;
+  margin-bottom: 4px;
+}
+
+.setup-modal-title {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.setup-modal-body {
+  padding: 20px;
+}
+
+.setup-modal-desc {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-top: 0;
+}
+
+.setup-key-group {
+  margin-bottom: 12px;
+}
+
+.setup-key-hint {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.setup-detected-info {
+  padding: 9px 12px;
+  border-radius: 8px;
+  margin-bottom: 14px;
+  font-size: 0.79rem;
+  background: var(--bg-tonal);
+  border: 1px solid var(--border-hairline);
+  color: var(--text-secondary);
+}
+
+.setup-feedback-box {
+  display: none;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 14px;
+  font-size: 0.85rem;
+}
+
+.setup-actions-row {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+/* Primitivas compartilhadas por módulos Onda 6 e modais */
+.section-shell {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.page-title {
+  font-size: clamp(1.35rem, 2.2vw, 1.85rem);
+  margin: 4px 0 6px;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+}
+
+.page-subtitle {
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.modal-card-lg {
+  max-width: 720px;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.form-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.form-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 13px;
+  border-radius: 12px;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.9rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px var(--accent-gold-soft);
+}
+
+[data-contrast="high"] .form-input {
+  border-width: 2px;
+}
+
+/* Ajustes de responsividade extrema (320px mobile e >= 1920px ultra-wide) */
+.surface-card > .controls-grid {
+  width: 100%;
+}
+
+@media (max-width: 480px) {
+  .masthead-controls {
+    gap: 5px;
+    flex-shrink: 0;
+  }
+  .masthead-controls .icon-capsule-btn {
+    width: 34px;
+    height: 34px;
+  }
+  .btn-workspace-companion {
+    padding: 6px 9px !important;
+  }
+  .btn-workspace-companion > span:nth-child(2) {
+    display: none;
+  }
+  .hero-pill-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (min-width: 1920px) {
+  .bento-grid,
+  .chamados-grid {
+    gap: 22px;
+  }
+}

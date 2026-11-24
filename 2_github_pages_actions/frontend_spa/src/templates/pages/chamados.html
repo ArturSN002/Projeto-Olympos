@@ -67,6 +67,9 @@
                   </select>
                 </div>
 
+                <button type="button" id="btnNovaPendenciaInterna" class="btn btn-primary btn-sm" style="border-radius: 9999px; height: 42px; padding: 0 16px;" data-requires-auth="true">
+                  + Nova Pendência
+                </button>
                 <button type="button" id="chamadosAtualizarBtn" class="btn btn-secondary btn-sm" style="border-radius: 9999px; height: 42px; padding: 0 16px;">
                   <span class="svg-icon-inline" data-icon="refresh"></span> Atualizar Fila
                 </button>
@@ -111,3 +114,69 @@
             <div id="chamadosKanbanRoot" class="hidden" aria-label="Quadro Kanban de Pendências"></div>
           </div>
         </section>
+
+        <div
+          id="modalNovaPendenciaInterna"
+          class="modal-backdrop hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="novaPendenciaModalTitle"
+        >
+          <div class="modal-card modal-card-lg">
+            <div class="modal-header">
+              <h3 id="novaPendenciaModalTitle" class="modal-title">Registrar Nova Pendência Interna</h3>
+              <button type="button" id="btnFecharNovaPendenciaModal" class="modal-close-btn" aria-label="Fechar modal">&times;</button>
+            </div>
+            <form id="formNovaPendenciaInterna" class="modal-body" style="display: grid; gap: 14px;">
+              <div id="novaPendenciaChatRefBanner" class="mural-card-event-link hidden"></div>
+              <div>
+                <label for="novaPendenciaAssunto" class="form-label">Assunto / Título da Demanda *</label>
+                <input
+                  type="text"
+                  id="novaPendenciaAssunto"
+                  class="form-input"
+                  required
+                  maxlength="160"
+                  placeholder="Ex.: Solicitação de revisão contratual ou material"
+                />
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+                <div>
+                  <label for="novaPendenciaSetor" class="form-label">Setor Solicitante *</label>
+                  <select id="novaPendenciaSetor" class="form-input" required>
+                    <option value="Gabinete SMEB">Gabinete SMEB</option>
+                    <option value="RH / Gestão de Pessoal">RH / Gestão de Pessoal</option>
+                    <option value="Coordenação Pedagógica">Coordenação Pedagógica</option>
+                    <option value="Transporte">Transporte</option>
+                    <option value="Alimentação Escolar">Alimentação Escolar</option>
+                    <option value="Jurídico">Jurídico</option>
+                    <option value="Financeiro">Financeiro / Contabilidade</option>
+                    <option value="Outro">Outro Setor</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="novaPendenciaDataLimite" class="form-label">Prazo Desejado (opcional)</label>
+                  <input type="date" id="novaPendenciaDataLimite" class="form-input" />
+                </div>
+              </div>
+              <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="checkbox" id="novaPendenciaUrgencia" />
+                <span>Prioridade Urgente (destaque no Painel SLA)</span>
+              </label>
+              <div>
+                <label for="novaPendenciaJustificativa" class="form-label">Descrição / Encaminhamento *</label>
+                <textarea
+                  id="novaPendenciaJustificativa"
+                  class="form-input"
+                  rows="4"
+                  required
+                  placeholder="Detalhe a demanda operacional para a fila de Pendências (registro interno, sem envio de e-mail)."
+                ></textarea>
+              </div>
+              <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" id="btnCancelarNovaPendencia" class="btn btn-secondary">Cancelar</button>
+                <button type="submit" id="btnSalvarNovaPendencia" class="btn btn-primary">Registrar Pendência</button>
+              </div>
+            </form>
+          </div>
+        </div>

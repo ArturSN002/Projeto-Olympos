@@ -40,6 +40,7 @@ jobs:
           import hashlib
           import json
           import os
+          import re
           import subprocess
           import sys
           import tempfile
@@ -57,10 +58,17 @@ jobs:
           RETENCAO_SEMANAIS = 8
           RETENCAO_MENSAIS = 6
 
+          def normalize_supabase_url(raw: str) -> str:
+              clean = str(raw or "").strip().rstrip("/")
+              if not clean:
+                  return ""
+              clean = re.sub(r"/(?:rest|auth|functions|storage)/v1(?:/.*)?$", "", clean, flags=re.IGNORECASE)
+              return clean.rstrip("/")
+
           db_url = os.getenv("SUPABASE_DB_BACKUP_URL", "").strip()
           age_pub = os.getenv("DR_AGE_PUBLIC_KEY", "").strip()
           gcp_sa_raw = os.getenv("GCP_SA_KEY", "").strip()
-          supabase_url = os.getenv("SUPABASE_URL", "").strip().rstrip("/")
+          supabase_url = normalize_supabase_url(os.getenv("SUPABASE_URL", ""))
           service_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
 
           faltando = [

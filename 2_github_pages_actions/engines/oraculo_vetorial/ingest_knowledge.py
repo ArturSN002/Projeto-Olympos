@@ -24,6 +24,7 @@ import hashlib
 import hmac
 import json
 import os
+import re
 import sys
 import time
 import urllib.error
@@ -38,7 +39,7 @@ if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
 from chunker import chunk_text, compute_content_hash  # noqa: E402
-from zero_pii_gate import zero_pii_sanitize  # noqa: E402
+from zero_pii_gate import assert_source_allowed_for_embedding, zero_pii_sanitize  # noqa: E402
 
 DEFAULT_EMBEDDING_MODEL = "gemini-embedding-2-preview"
 FALLBACK_EMBEDDING_MODEL = "gemini-embedding-001"
@@ -136,6 +137,14 @@ def _supabase_headers(service_key: str, extra: dict[str, str] | None = None) -> 
     return h
 
 
+def _normalize_supabase_url(raw_url: str | None) -> str:
+    clean = str(raw_url or "").strip().rstrip("/")
+    if not clean:
+        return ""
+    clean = re.sub(r"/(?:rest|auth|functions|storage)/v1(?:/.*)?$", "", clean, flags=re.IGNORECASE)
+    return clean.rstrip("/")
+
+
 def fetch_existing_chunk_hashes(
     supabase_url: str,
     service_key: str,
@@ -143,6 +152,7 @@ def fetch_existing_chunk_hashes(
     http_fn: Callable[..., tuple[int, Any]] = default_http_json,
 ) -> dict[tuple[str, str, int], str]:
     """Busca o mapa (fonte_tipo, fonte_id, chunk_index) -> conteudo_hash já persistido."""
+    supabase_url = _normalize_supabase_url(supabase_url)
     existing: dict[tuple[str, str, int], str] = {}
     url = (
         f"{supabase_url}/rest/v1/olympos_knowledge_chunks"
@@ -169,6 +179,7 @@ def collect_documents_from_supabase(
     http_fn: Callable[..., tuple[int, Any]] = default_http_json,
 ) -> list[dict[str, Any]]:
     """Coleta atos FEMURN, documentos emitidos e modelos/snippets do Supabase."""
+    supabase_url = _normalize_supabase_url(supabase_url)
     docs: list[dict[str, Any]] = []
     hdrs = _supabase_headers(service_key)
 
@@ -390,6 +401,7 @@ def run_incremental_ingestion(
     Retorna estatísticas exatas de chunks processados, ignorados por hash,
     bloqueados por PII e chamadas realizadas à API Gemini.
     """
+    supabase_url = _normalize_supabase_url(supabase_url)
     existing_hashes = fetch_existing_chunk_hashes(supabase_url, service_key, http_fn=http_fn)
 
     all_docs = list(documents) if documents is not None else []
@@ -403,6 +415,7 @@ def run_incremental_ingestion(
         "chunks_totais": 0,
         "chunks_ignorados_hash": 0,
         "chunks_bloqueados_pii": 0,
+        "fontes_bloqueadas_lgpd": 0,
         "chunks_upserted": 0,
         "chamadas_gemini_embedding": 0,
         "erros_upsert": 0,
@@ -412,6 +425,13 @@ def run_incremental_ingestion(
     min_interval = 60.0 / float(MAX_RPM_FREE_TIER)
 
     for doc in all_docs:
+        fonte_origem = str(doc.get("tabela_origem") or doc.get("source_table") or doc.get("fonte_tipo") or "")
+        try:
+            assert_source_allowed_for_embedding(fonte_origem)
+        except ValueError:
+            stats["fontes_bloqueadas_lgpd"] += 1
+            continue
+
         fonte_tipo = str(doc.get("fonte_tipo") or "NORMA_MUNICIPAL")
         fonte_id = str(doc.get("fonte_id") or "").strip()
         titulo = str(doc.get("titulo") or fonte_id).strip()
@@ -514,6 +534,7 @@ def sync_persona_prototypes(
     stats: dict[str, Any] | None = None,
 ) -> None:
     """Atualiza embeddings dos protótipos de personas apenas quando o hash muda."""
+    supabase_url = _normalize_supabase_url(supabase_url)
     if not PROTOTYPES_JSON_PATH.is_file():
         return
     try:
@@ -577,7 +598,7 @@ def sync_persona_prototypes(
 
 
 def main() -> int:
-    supabase_url = os.getenv("SUPABASE_URL", "").strip().rstrip("/")
+    supabase_url = _normalize_supabase_url(os.getenv("SUPABASE_URL", ""))
     service_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
     gemini_key = os.getenv("GEMINI_API_KEY", "").strip()
     gas_url = os.getenv("GAS_WEBAPP_URL", "").strip()

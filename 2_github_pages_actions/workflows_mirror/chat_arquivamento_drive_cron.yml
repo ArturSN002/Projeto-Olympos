@@ -1,0 +1,33 @@
+name: "Olympos — Arquivamento Incremental Chat Grupos Drive"
+
+on:
+  schedule:
+    # Aos domingos as 05:00 UTC (02:00 BRT)
+    - cron: '0 5 * * 0'
+  workflow_dispatch:
+
+jobs:
+  arquivar-grupos-chat-drive:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: "2_github_pages_actions/engines/comunicacao_interna"
+
+    steps:
+      - name: 1. Checkout do Monorepo Olympos
+        uses: actions/checkout@v6
+
+      - name: 2. Configurar Python 3.11
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: 3. Arquivar Mensagens Ineditas de Grupos Setoriais no Google Drive
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GAS_WEBHOOK_URL: ${{ secrets.GAS_WEBHOOK_URL }}
+          OLYMPOS_SECRET_TOKEN: ${{ secrets.OLYMPOS_SECRET_TOKEN }}
+        run: |
+          python arquivar_chats_drive.py

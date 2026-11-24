@@ -1,0 +1,185 @@
+<section id="page-mural" class="page-view hidden" aria-labelledby="muralPageTitle">
+  <div class="section-shell">
+    <div class="onda6-page-head">
+      <div>
+        <span class="eyebrow">Comunicação Interna • SMEB</span>
+        <h2 id="muralPageTitle" class="page-title">Mural Compartilhado</h2>
+        <p class="page-subtitle">
+          Avisos setoriais, fluxos intersetoriais, comunicados do Gabinete e leitura obrigatória de confirmações.
+        </p>
+      </div>
+      <div class="onda6-page-head-actions">
+        <button type="button" id="btnMuralIrChat" class="btn btn-secondary btn-sm">Ir para o Chat</button>
+        <button type="button" id="btnMuralAtualizar" class="btn btn-secondary btn-sm">Atualizar</button>
+        <button type="button" id="btnNovaPublicacaoMural" class="btn btn-primary btn-sm" data-requires-auth="true">
+          + Nova Publicação
+        </button>
+      </div>
+    </div>
+
+    <div class="mural-calendar-strip" aria-label="Próximos Eventos da Agenda Intersetorial">
+      <div class="mural-calendar-strip-head">
+        <h3 class="mural-calendar-strip-title">
+          <span aria-hidden="true">📅</span>
+          <span>Próximos Eventos da Agenda Intersetorial (15 dias)</span>
+        </h3>
+        <button type="button" id="btnMuralAbrirCalendario" class="btn btn-ghost btn-sm">
+          Ver Calendário Completo
+        </button>
+      </div>
+      <div id="muralCalendarStripTrack" class="mural-calendar-track" aria-live="polite">
+        <div class="mural-event-pill-meta">Carregando agenda intersetorial...</div>
+      </div>
+    </div>
+
+    <div class="mural-toolbar">
+      <div class="filter-pills-inline" role="tablist" aria-label="Filtro de escopo do Mural">
+        <button type="button" class="filter-pill-btn is-active" data-mural-filter="TODOS" role="tab" aria-selected="true">
+          Todos
+        </button>
+        <button type="button" class="filter-pill-btn" data-mural-filter="MEU_SETOR" role="tab" aria-selected="false">
+          Meu Setor
+        </button>
+        <button type="button" class="filter-pill-btn" data-mural-filter="INTERSETORIAL" role="tab" aria-selected="false">
+          Intersetorial
+        </button>
+        <button type="button" class="filter-pill-btn" data-mural-filter="GERAL_SMEB" role="tab" aria-selected="false">
+          Geral SMEB
+        </button>
+        <button type="button" class="filter-pill-btn" data-mural-filter="FIXADOS" role="tab" aria-selected="false">
+          Fixados
+        </button>
+      </div>
+
+      <div class="mural-search-box">
+        <label for="muralSearchInput" class="sr-only">Buscar publicações do Mural</label>
+        <input
+          type="search"
+          id="muralSearchInput"
+          class="form-input"
+          placeholder="Buscar comunicado, setor ou título..."
+        />
+      </div>
+    </div>
+
+    <div id="muralStatusInfo" class="page-subtitle" style="margin-bottom: 12px;" aria-live="polite"></div>
+    <div id="muralFeedGrid" class="mural-feed-grid" aria-live="polite"></div>
+  </div>
+</section>
+
+<div
+  id="modalNovaPublicacaoMural"
+  class="modal-backdrop hidden"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="modalNovaPubMuralTitle"
+>
+  <div class="modal-card modal-card-lg">
+    <div class="modal-header">
+      <h3 id="modalNovaPubMuralTitle" class="modal-title">Nova Publicação no Mural</h3>
+      <button type="button" id="btnFecharNovaPubMural" class="modal-close-btn" aria-label="Fechar modal">&times;</button>
+    </div>
+    <form id="formNovaPublicacaoMural" class="modal-body" style="display: grid; gap: 14px;">
+      <div>
+        <label for="muralInputTitulo" class="form-label">Título da Publicação *</label>
+        <input
+          type="text"
+          id="muralInputTitulo"
+          class="form-input"
+          required
+          minlength="2"
+          maxlength="220"
+          placeholder="Ex.: Alinhamento Intersetorial de Matrículas 2026"
+        />
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+        <div>
+          <label for="muralSelectTipo" class="form-label">Tipo *</label>
+          <select id="muralSelectTipo" class="form-input">
+            <option value="AVISO_OPERACIONAL">Aviso Operacional</option>
+            <option value="NOTICIA">Notícia Interna</option>
+            <option value="EVENTO_DESTAQUE">Evento em Destaque</option>
+            <option value="COMUNICADO_GABINETE">Comunicado de Gabinete (Sino)</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="muralSelectEscopo" class="form-label">Escopo de Visibilidade *</label>
+          <select id="muralSelectEscopo" class="form-input">
+            <option value="GERAL_SMEB">Geral SMEB (Todos os Setores)</option>
+            <option value="INTERSETORIAL">Intersetorial (Setores Selecionados)</option>
+            <option value="MEU_SETOR">Meu Setor / Departamento</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="muralSetoresGroup">
+        <label for="muralInputSetores" class="form-label">Setores / Perfis de Destino (separados por vírgula)</label>
+        <input
+          type="text"
+          id="muralInputSetores"
+          class="form-input"
+          placeholder="Ex.: RH, PEDAGOGICO, JURIDICO, GABINETE"
+        />
+        <small class="form-hint">Para escopo Meu Setor ou Intersetorial, informe os setores destinatários.</small>
+      </div>
+
+      <div>
+        <label for="muralSelectEvento" class="form-label">Vincular Evento da Agenda (opcional)</label>
+        <select id="muralSelectEvento" class="form-input">
+          <option value="">Sem vínculo direto de agenda</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="muralInputResumo" class="form-label">Resumo Executivo *</label>
+        <textarea
+          id="muralInputResumo"
+          class="form-input"
+          rows="3"
+          required
+          minlength="2"
+          maxlength="1000"
+          placeholder="Resumo objetivo exibido no card do Mural e, se autorizado pelo Gabinete, na TV."
+        ></textarea>
+      </div>
+
+      <div>
+        <label for="muralInputConteudoMd" class="form-label">Detalhamento Adicional (opcional)</label>
+        <textarea
+          id="muralInputConteudoMd"
+          class="form-input"
+          rows="4"
+          placeholder="Instruções operacionais, checklists ou encaminhamentos para a equipe."
+        ></textarea>
+      </div>
+
+      <div>
+        <label for="muralInputLinkAcao" class="form-label">Link de Referência HTTPS (opcional)</label>
+        <input
+          type="url"
+          id="muralInputLinkAcao"
+          class="form-input"
+          placeholder="https://docs.google.com/..."
+        />
+      </div>
+
+      <div id="muralGabineteFlagsWrap" class="hidden" style="display: flex; flex-wrap: wrap; gap: 16px;">
+        <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
+          <input type="checkbox" id="muralCheckFixado" />
+          <span>Fixar publicação no topo do Mural</span>
+        </label>
+        <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
+          <input type="checkbox" id="muralCheckKiosk" />
+          <span>Refletir no Painel TV / Kiosk (somente Geral SMEB, Zero-PII)</span>
+        </label>
+      </div>
+
+      <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px;">
+        <button type="button" id="btnCancelarNovaPubMural" class="btn btn-secondary">Cancelar</button>
+        <button type="submit" id="btnSalvarNovaPubMural" class="btn btn-primary">Publicar no Mural</button>
+      </div>
+    </form>
+  </div>
+</div>

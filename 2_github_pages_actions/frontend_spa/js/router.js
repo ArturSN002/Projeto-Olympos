@@ -114,6 +114,18 @@ window.OlymposRouter = (function() {
       subtitle: 'Visão limpa em tela cheia com prazos SLA sem dados pessoais, atos da FEMURN e Agenda Intersetorial.',
       category: 'gabinete'
     },
+    'mural': {
+      eyebrow: 'COMUNICAÇÃO INTERNA • MURAL COMPARTILHADO',
+      title: 'Mural Institucional & Agenda SMEB.',
+      subtitle: 'Comunicados setoriais, alinhamentos intersetoriais, confirmações de leitura e agenda integrada.',
+      category: 'comunicacao'
+    },
+    'chat': {
+      eyebrow: 'COMUNICAÇÃO INTERNA • TEMPO REAL',
+      title: 'Chat Interno Olympos.',
+      subtitle: 'Mensagens diretas (1-a-1) e grupos setoriais com sincronização instantânea e arquivamento auditável.',
+      category: 'comunicacao'
+    },
     'configuracoes': {
       eyebrow: 'INFRAESTRUTURA • CONECTIVIDADE & SEGURANÇA',
       title: 'Conexão, Sessão e Preferências.',
@@ -318,6 +330,8 @@ window.OlymposRouter = (function() {
       'busca': 'busca',
       'oraculo': 'oraculo',
       'chamados': 'chamados',
+      'mural': 'mural',
+      'chat': 'chat',
       'auditoria': 'auditoria',
       'configuracoes': 'configuracoes'
     };

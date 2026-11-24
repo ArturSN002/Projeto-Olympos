@@ -41,6 +41,9 @@ interface Window {
   OlymposChamadosTimeline?: any;
   OlymposOraculo?: any;
   OlymposPss?: any;
+  OlymposChatBadge?: any;
+  OlymposMural?: any;
+  OlymposChat?: any;
   OLYMPOS_MEMORIAS_CATALOGO?: any;
   BANCO_SEMENTE_ESCOLAS?: any[];
   DADOS_PERMUTAS_VIGENTES?: any;

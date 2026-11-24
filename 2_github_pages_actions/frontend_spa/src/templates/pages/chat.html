@@ -1,0 +1,196 @@
+<section id="page-chat" class="page-view hidden" aria-labelledby="chatPageTitle">
+  <div class="section-shell">
+    <div class="onda6-page-head">
+      <div>
+        <span class="eyebrow">Comunicação Interna • Tempo Real</span>
+        <h2 id="chatPageTitle" class="page-title">Chat Interno Olympos</h2>
+        <p class="page-subtitle">
+          Conversas diretas (1-a-1) e grupos setoriais com sincronização instantânea e arquivamento auditável.
+        </p>
+      </div>
+      <div class="onda6-page-head-actions">
+        <button type="button" id="btnChatIrMural" class="btn btn-secondary btn-sm">Ir para o Mural</button>
+        <button type="button" id="btnChatAtualizarSalas" class="btn btn-secondary btn-sm">Atualizar Salas</button>
+      </div>
+    </div>
+
+    <div id="chatLayoutShell" class="chat-layout-shell">
+      <aside class="chat-sidebar" aria-label="Conversas e Grupos">
+        <div class="chat-sidebar-head">
+          <div class="chat-sidebar-actions">
+            <button type="button" id="btnNovoChatDireto" class="btn btn-primary btn-sm">+ Direta</button>
+            <button type="button" id="btnNovoChatGrupo" class="btn btn-secondary btn-sm">+ Grupo</button>
+          </div>
+          <div>
+            <label for="chatSidebarSearch" class="sr-only">Filtrar conversas</label>
+            <input
+              type="search"
+              id="chatSidebarSearch"
+              class="form-input"
+              placeholder="Filtrar conversas e grupos..."
+            />
+          </div>
+        </div>
+        <div id="chatRoomList" class="chat-room-list" role="list">
+          <div class="chat-empty-state">Carregando conversas...</div>
+        </div>
+      </aside>
+
+      <div class="chat-main" aria-label="Mensagens da sala selecionada">
+        <div class="chat-thread-header">
+          <div class="chat-thread-title-wrap">
+            <button type="button" id="btnChatVoltarLista" class="btn btn-secondary btn-sm chat-back-btn">
+              &larr; Conversas
+            </button>
+            <div>
+              <h3 id="chatThreadTitle" class="chat-thread-title">Selecione uma conversa</h3>
+              <div id="chatThreadSub" class="chat-thread-sub">Escolha uma conversa direta ou grupo na lista ao lado.</div>
+            </div>
+          </div>
+
+          <div class="chat-thread-tools">
+            <label for="chatMsgSearchInput" class="sr-only">Buscar na conversa</label>
+            <input
+              type="search"
+              id="chatMsgSearchInput"
+              class="form-input"
+              style="max-width: 190px; height: 34px;"
+              placeholder="Buscar mensagens..."
+            />
+            <button type="button" id="btnChatToggleDriveArchive" class="btn btn-ghost btn-sm hidden">
+              Arquivo Drive: OFF
+            </button>
+            <button type="button" id="btnChatExportarDrive" class="btn btn-secondary btn-sm hidden">
+              Arquivar Drive
+            </button>
+            <button type="button" id="btnChatExportarXlsx" class="btn btn-secondary btn-sm hidden">
+              Exportar .xlsx
+            </button>
+          </div>
+        </div>
+
+        <div
+          id="chatMessagesPane"
+          class="chat-messages-pane"
+          role="log"
+          aria-live="polite"
+          aria-relevant="additions"
+        >
+          <div class="chat-empty-state">
+            Selecione uma conversa ou inicie um novo contato interno em <strong>+ Direta</strong>.
+          </div>
+        </div>
+
+        <form id="chatComposerForm" class="chat-composer-bar">
+          <label for="chatComposerInput" class="sr-only">Mensagem do chat</label>
+          <textarea
+            id="chatComposerInput"
+            class="chat-composer-input"
+            rows="1"
+            maxlength="4000"
+            placeholder="Digite sua mensagem institucional... (Enter envia, Shift+Enter quebra linha)"
+            disabled
+          ></textarea>
+          <button type="submit" id="btnChatEnviar" class="btn btn-primary" disabled>Enviar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Modal: Nova Conversa Direta (1-a-1) -->
+<div
+  id="modalNovoChatDireto"
+  class="modal-backdrop hidden"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="modalNovoChatDiretoTitle"
+>
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 id="modalNovoChatDiretoTitle" class="modal-title">Iniciar Conversa Direta (1-a-1)</h3>
+      <button type="button" id="btnFecharChatDireto" class="modal-close-btn" aria-label="Fechar modal">&times;</button>
+    </div>
+    <div class="modal-body" style="display: grid; gap: 12px;">
+      <div>
+        <label for="chatDirSearch" class="form-label">Buscar Servidor / Setor</label>
+        <input
+          type="search"
+          id="chatDirSearch"
+          class="form-input"
+          placeholder="Digite nome ou departamento..."
+        />
+      </div>
+      <div id="chatDirResults" class="chat-members-picker">
+        <div class="chat-member-dept">Carregando diretório interno...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Novo Grupo Setorial / Temático -->
+<div
+  id="modalNovoChatGrupo"
+  class="modal-backdrop hidden"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="modalNovoChatGrupoTitle"
+>
+  <div class="modal-card modal-card-lg">
+    <div class="modal-header">
+      <h3 id="modalNovoChatGrupoTitle" class="modal-title">Criar Grupo Setorial / Temático</h3>
+      <button type="button" id="btnFecharChatGrupo" class="modal-close-btn" aria-label="Fechar modal">&times;</button>
+    </div>
+    <form id="formNovoChatGrupo" class="modal-body" style="display: grid; gap: 14px;">
+      <div>
+        <label for="chatGrupoNome" class="form-label">Nome do Grupo *</label>
+        <input
+          type="text"
+          id="chatGrupoNome"
+          class="form-input"
+          required
+          minlength="2"
+          maxlength="120"
+          placeholder="Ex.: Coordenação PSS &amp; RH"
+        />
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+        <div>
+          <label for="chatGrupoTipo" class="form-label">Tipo de Sala</label>
+          <select id="chatGrupoTipo" class="form-input">
+            <option value="GRUPO_SETORIAL">Grupo Setorial (Auditável no Drive)</option>
+            <option value="GRUPO_TEMATICO">Grupo Temático / Força-Tarefa</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="chatGrupoSetor" class="form-label">Setor Vinculado (opcional)</label>
+          <input
+            type="text"
+            id="chatGrupoSetor"
+            class="form-input"
+            placeholder="Ex.: RH, JURIDICO, GABINETE"
+          />
+        </div>
+      </div>
+
+      <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer;">
+        <input type="checkbox" id="chatGrupoDriveArchive" checked />
+        <span>Habilitar espelhamento incremental em Google Sheets (apenas Grupo Setorial)</span>
+      </label>
+
+      <div>
+        <span class="form-label" style="display: block; margin-bottom: 6px;">Participantes</span>
+        <div id="chatGrupoMembrosList" class="chat-members-picker">
+          <div class="chat-member-dept">Carregando participantes...</div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
+        <button type="button" id="btnCancelarChatGrupo" class="btn btn-secondary">Cancelar</button>
+        <button type="submit" id="btnCriarChatGrupoSubmit" class="btn btn-primary">Criar Grupo</button>
+      </div>
+    </form>
+  </div>
+</div>

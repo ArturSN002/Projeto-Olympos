@@ -27,7 +27,9 @@ const ROUTE_IMPORTERS: Record<string, () => Promise<RouteModule>> = {
   'auditoria':           () => import('../modules/auditoria'),
   'kiosk':               () => import('../modules/kiosk'),
   'oraculo':             () => import('../modules/oraculo'),
-  'processos-seletivos': () => import('../modules/processos-seletivos')
+  'processos-seletivos': () => import('../modules/processos-seletivos'),
+  'mural':               () => import('../modules/mural'),
+  'chat':                () => import('../modules/chat')
 };
 
 const MODAL_IMPORTERS: Record<string, { id: string; loader: () => Promise<{ default: string }> }> = {
@@ -124,7 +126,9 @@ const PRELOAD_VIEW_KEYS: Record<string, string> = {
   'chamados': 'chamados',
   'auditoria': 'auditoria',
   'configuracoes': 'configuracoes',
-  'oraculo': 'oraculo'
+  'oraculo': 'oraculo',
+  'mural': 'mural',
+  'chat': 'chat'
 };
 
 const preloadedInFlight = new Map<string, Promise<void>>();

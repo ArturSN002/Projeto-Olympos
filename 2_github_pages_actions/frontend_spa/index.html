@@ -23,12 +23,12 @@
     <div id="srLivePolite" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
     <div id="srLiveAssertive" class="sr-only" role="alert" aria-live="assertive" aria-atomic="true"></div>
     <div id="loginScreen" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
-      <div class="modal-card" style="max-width: 450px; position: relative;">
-        <div class="modal-body" style="padding: 34px 32px 28px;">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 22px;">
-            <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 10px;">
-              <span class="eyebrow-pill" style="margin-bottom: 2px;">ACESSO INSTITUCIONAL • SMEB</span>
-              <h2 id="loginModalTitle" style="font-size: 1.65rem; font-weight: 700; letter-spacing: -0.03em; margin: 0;">Entrar no Hub Olympos</h2>
+      <div class="modal-card login-modal-card">
+        <div class="modal-body login-modal-body">
+          <div class="login-header-row">
+            <div class="login-header-meta">
+              <span class="eyebrow-pill">ACESSO INSTITUCIONAL • SMEB</span>
+              <h2 id="loginModalTitle" class="login-modal-title">Entrar no Hub Olympos</h2>
             </div>
             <button type="button" id="closeLoginScreenXBtn" class="icon-capsule-btn" aria-label="Fechar janela de login e continuar como visitante" title="Fechar e continuar como visitante">
               <span class="svg-icon-inline" data-icon="close"></span>
@@ -36,25 +36,25 @@
           </div>
 
           <form id="loginForm">
-            <div class="field-group" style="margin-bottom: 14px;">
+            <div class="field-group login-field">
               <label for="loginUserInput">Identificador ou E-mail Institucional</label>
               <input type="text" id="loginUserInput" name="loginEmail" class="input-clean" placeholder="Ex: admin, rh, pedagogico, juridico" required autocomplete="username" />
             </div>
-            <div class="field-group" style="margin-bottom: 20px;">
+            <div class="field-group login-field-last">
               <label for="loginPasswordInput">Senha de Acesso</label>
               <input type="password" id="loginPasswordInput" name="loginSenha" class="input-clean" placeholder="••••••••" required autocomplete="current-password" />
             </div>
 
-            <button type="submit" id="loginSubmitBtn" class="btn btn-primary" style="width: 100%; padding: 12px 20px;">
+            <button type="submit" id="loginSubmitBtn" class="btn btn-primary login-submit-btn">
               Acessar Ambiente Olympos
             </button>
-            <button type="button" id="closeLoginModalBtn" class="btn btn-secondary" style="width: 100%; margin-top: 10px; padding: 11px 18px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+            <button type="button" id="closeLoginModalBtn" class="btn btn-secondary login-guest-btn">
               Continuar como Visitante
             </button>
           </form>
 
-          <div style="margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--border-hairline); text-align: center;">
-            <button type="button" id="openSetupModalFromLoginBtn" class="btn btn-secondary btn-sm" style="font-size: 0.78rem; padding: 6px 14px; display: inline-flex; align-items: center; gap: 6px;">
+          <div class="login-footer-row">
+            <button type="button" id="openSetupModalFromLoginBtn" class="btn btn-secondary btn-sm login-setup-btn">
               <span class="svg-icon-inline" data-icon="settingsGear"></span> Configurar Instância Supabase
             </button>
           </div>
@@ -65,7 +65,7 @@
     <!-- MASTHEAD EDITORIAL TRANSLÚCIDA -->
     <header class="top-masthead topbar">
       <div class="masthead-upper">
-        <div style="display: flex; align-items: center; gap: 10px;">
+        <div class="masthead-brand-group">
           <button id="mobileMenuToggleBtn" class="icon-capsule-btn mobile-menu-btn" aria-label="Alternar navegação"></button>
           <div class="brand-lockup" id="brandHomeLink">
             <span class="brand-mark" id="brandMarkSvg" aria-hidden="true"></span>
@@ -75,13 +75,18 @@
         </div>
 
         <div class="masthead-controls">
-          <button id="themeToggleBtn" class="icon-capsule-btn hidden" style="display: none !important;" title="Alternar Modo Claro / Modo Escuro" aria-label="Alternar Tema"></button>
+          <button id="themeToggleBtn" class="icon-capsule-btn hidden" title="Alternar Modo Claro / Modo Escuro" aria-label="Alternar Tema"></button>
 
           <button type="button" id="btnAltoContrasteHeader" class="icon-capsule-btn" title="Alternar Modo Alto Contraste (WCAG 2.2)" aria-label="Alternar modo alto contraste" aria-pressed="false">◐</button>
 
           <button type="button" id="btnNotificacoesSino" class="icon-capsule-btn notif-bell-btn hidden" data-requires-auth="true" title="Central de Notificações" aria-label="Central de notificações" aria-expanded="false" aria-controls="notificacoesDrawer">
             <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
             <span id="notificacoesBadge" class="notif-badge hidden">0</span>
+          </button>
+
+          <button type="button" id="btnChatHeaderBadge" class="icon-capsule-btn btn-chat-header hidden" data-requires-auth="true" title="Chat Interno Olympos" aria-label="Abrir Chat Interno">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span id="chatHeaderBadge" class="notif-badge hidden">0</span>
           </button>
 
           <div class="nav-dropdown header-workspace-dropdown" id="navDropdownWorkspace">
@@ -138,6 +143,13 @@
               <a href="#processos-seletivos" class="nav-link dropdown-item hidden" role="menuitem" data-page="processos-seletivos" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE,RH_COMISSAO,JURIDICO">PSS</a>
             </div>
           </div>
+          <div class="nav-dropdown hidden" id="navDropdownComunicacao" data-requires-auth="true">
+            <button type="button" class="nav-link nav-dropdown-trigger" id="dropdownComBtn" aria-haspopup="true" aria-expanded="false" aria-controls="dropdownComMenu"><span>Comunicação</span><span class="dropdown-caret svg-icon-inline" data-icon="chevronDown" aria-hidden="true"></span></button>
+            <div class="dropdown-menu" id="dropdownComMenu" role="menu" aria-labelledby="dropdownComBtn">
+              <a href="#mural" class="nav-link dropdown-item" role="menuitem" data-page="mural" data-requires-auth="true">Mural</a>
+              <a href="#chat" class="nav-link dropdown-item" role="menuitem" data-page="chat" data-requires-auth="true">Chat</a>
+            </div>
+          </div>
           <a href="#diario-oficial" class="nav-link" data-page="diario-oficial">Diário Oficial</a>
           <a href="#escolas" class="nav-link" data-page="escolas">Escolas</a>
           <a href="#busca" class="nav-link hidden" data-page="busca" style="display: none !important;">Busca no Acervo</a>
@@ -181,6 +193,13 @@
             <a href="#papiro-cadmo" class="nav-link dropdown-item" role="menuitem" data-page="papiro-cadmo">Permutas</a>
             <a href="#servidores" class="nav-link dropdown-item" role="menuitem" data-page="servidores">Servidores</a>
             <a href="#processos-seletivos" class="nav-link dropdown-item hidden" role="menuitem" data-page="processos-seletivos" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE,RH_COMISSAO,JURIDICO">PSS</a>
+          </div>
+        </div>
+        <div class="nav-dropdown mobile-nav-dropdown hidden" id="mobileNavDropdownComunicacao" data-requires-auth="true">
+          <button type="button" class="nav-link nav-dropdown-trigger" id="mobileDropdownComBtn" aria-haspopup="true" aria-expanded="false" aria-controls="mobileDropdownComMenu"><span>Comunicação</span><span class="dropdown-caret svg-icon-inline" data-icon="chevronDown" aria-hidden="true"></span></button>
+          <div class="dropdown-menu mobile-dropdown-menu" id="mobileDropdownComMenu" role="menu" aria-labelledby="mobileDropdownComBtn">
+            <a href="#mural" class="nav-link dropdown-item" role="menuitem" data-page="mural" data-requires-auth="true">Mural</a>
+            <a href="#chat" class="nav-link dropdown-item" role="menuitem" data-page="chat" data-requires-auth="true">Chat</a>
           </div>
         </div>
         <a href="#diario-oficial" class="nav-link" data-page="diario-oficial">Diário Oficial</a>
@@ -233,9 +252,9 @@
     <!-- HERO EDITORIAL CONTEXTUAL + CONTAINER DE ROTAS MODULARES -->
     <div class="editorial-shell">
       <div class="ambient-glow" aria-hidden="true"></div>
-      <section class="editorial-hero subtle-grid" style="position: relative; overflow: hidden; padding-top: 32px; padding-bottom: 24px;">
-        <div class="eyebrow eyebrow-pill" style="display: inline-flex; align-items: center; gap: 8px;">
-          <span class="animate-ping dot" style="display: inline-block; width: 8px; height: 8px; border-radius: 9999px; background: var(--accent-primary);" aria-hidden="true"></span>
+      <section class="editorial-hero subtle-grid hero-section-editorial">
+        <div class="eyebrow eyebrow-pill hero-eyebrow-pill">
+          <span class="animate-ping dot hero-ping-dot" aria-hidden="true"></span>
           <span id="pageHeaderEyebrow">SMEB Hub Olympos • GOVERNANÇA EXECUTIVA 2026 • V4.0</span>
         </div>
         <h1 id="pageHeaderTitle" class="hero-display-title">
@@ -245,22 +264,22 @@
           Painel central da Secretaria Municipal de Educação Básica de Ceará-Mirim: numeração sequencial oficial, atalhos operacionais e calendário escolar.
         </p>
 
-        <div id="heroDualActions" class="hero-dual-actions" style="display: flex; gap: 12px; align-items: center; margin: 18px 0 20px; flex-wrap: wrap;">
-          <a href="#chamados" id="heroBtnCentralChamados" class="btn btn-primary" data-requires-auth="true" style="border-radius: 9999px; padding: 10px 22px; display: inline-flex; align-items: center; gap: 8px;">
+        <div id="heroDualActions" class="hero-dual-actions">
+          <a href="#chamados" id="heroBtnCentralChamados" class="btn btn-primary hero-pill-btn" data-requires-auth="true">
             <span>Abrir Central de Chamados</span>
             <span class="arrow-shift">↗</span>
           </a>
-          <a href="#escolas" id="heroBtnMapaEscolas" class="btn btn-primary" data-visitante-only="true" style="border-radius: 9999px; padding: 10px 22px; display: inline-flex; align-items: center; gap: 8px;">
+          <a href="#escolas" id="heroBtnMapaEscolas" class="btn btn-primary hero-pill-btn" data-visitante-only="true">
             <span>Consultar Mapa de Escolas</span>
             <span class="arrow-shift">↗</span>
           </a>
-          <a href="#diario-oficial" class="btn btn-ghost" style="border-radius: 9999px; padding: 10px 22px; display: inline-flex; align-items: center; gap: 8px;">
+          <a href="#diario-oficial" class="btn btn-ghost hero-pill-btn">
             <span>Consultar Diário Oficial</span>
             <span class="arrow-shift">↗</span>
           </a>
         </div>
 
-        <div id="heroTelemetryStrip" class="telemetry-strip grid grid-cols-2" style="margin-top: 20px;">
+        <div id="heroTelemetryStrip" class="telemetry-strip grid grid-cols-2 hero-telemetry-grid">
           <div class="telemetry-card spotlight-card col-1" id="heroTelemetryChamadosCard" data-requires-auth="true">
             <span class="telemetry-label">Chamados SMEB • Fila Ativa</span>
             <div class="telemetry-metric" id="heroTelemetryChamados">--</div>
@@ -284,17 +303,17 @@
     <div id="modal-root"></div>
 
     <!-- MODAL DE CONFIGURAÇÃO SUPABASE (CHAVE ÚNICA) -->
-    <div id="supabaseSetupModal" class="modal-backdrop" style="display: none;" role="dialog" aria-labelledby="setupModalTitle" aria-modal="true">
-      <div class="modal-card" style="max-width: 540px; width: 92%;">
+    <div id="supabaseSetupModal" class="modal-backdrop setup-modal-dialog" role="dialog" aria-labelledby="setupModalTitle" aria-modal="true">
+      <div class="modal-card setup-modal-card">
         <div class="modal-header">
           <div class="modal-title-wrap">
-            <span class="badge badge-purple" style="font-size: 0.72rem; margin-bottom: 4px;">Ambiente Seguro Olympos</span>
-            <h3 id="setupModalTitle" style="margin: 0; font-size: 1.25rem;">Configuração da Instância Supabase</h3>
+            <span class="badge badge-purple setup-modal-badge">Ambiente Seguro Olympos</span>
+            <h3 id="setupModalTitle" class="setup-modal-title">Configuração da Instância Supabase</h3>
           </div>
           <button id="closeSetupModalBtn" class="icon-capsule-btn" type="button" aria-label="Fechar modal"><span class="svg-icon-inline" data-icon="close"></span></button>
         </div>
-        <div class="modal-body" style="padding: 20px;">
-          <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5; margin-top: 0;">
+        <div class="modal-body setup-modal-body">
+          <p class="setup-modal-desc">
             Informe apenas a <strong>Chave Pública (Anon Key)</strong> do projeto Supabase.
             A URL da instância e o Gateway Google Apps Script são resolvidos e vinculados automaticamente.
           </p>
@@ -302,16 +321,16 @@
             <input type="text" name="username" autocomplete="username" class="sr-only" tabindex="-1" aria-hidden="true" value="admin-smeb" />
             <label for="setupSupabaseUrl" class="sr-only">URL do Projeto Supabase (Derivada Automaticamente)</label>
             <input type="url" id="setupSupabaseUrl" class="sr-only" tabindex="-1" aria-hidden="true" value="https://rbwizevjvbvjwtbwwyif.supabase.co" autocomplete="url" />
-            <div class="field-group" style="margin-bottom: 12px;">
+            <div class="field-group setup-key-group">
               <label for="setupSupabaseAnonKey">Chave Pública do Supabase (Anon / Public Key)</label>
               <input type="password" id="setupSupabaseAnonKey" class="input-clean" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." required autocomplete="new-password" />
-              <small style="color: var(--text-muted); font-size: 0.75rem;">Disponível em Project Settings &gt; API &gt; Project API keys (anon public)</small>
+              <small class="setup-key-hint">Disponível em Project Settings &gt; API &gt; Project API keys (anon public)</small>
             </div>
-            <div id="setupModalDetectedInfo" style="padding: 9px 12px; border-radius: 8px; margin-bottom: 14px; font-size: 0.79rem; background: var(--bg-tonal); border: 1px solid var(--border-hairline); color: var(--text-secondary);">
+            <div id="setupModalDetectedInfo" class="setup-detected-info">
               <span class="svg-icon-inline" data-icon="lock"></span> Endpoint Supabase e Gateway GAS serão detectados automaticamente a partir da chave pública.
             </div>
-            <div id="setupModalFeedback" style="display: none; padding: 10px; border-radius: 8px; margin-bottom: 14px; font-size: 0.85rem;"></div>
-            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+            <div id="setupModalFeedback" class="setup-feedback-box"></div>
+            <div class="setup-actions-row">
               <button type="button" id="testSupabaseConnectionBtn" class="btn btn-secondary">Testar Conexão</button>
               <button type="submit" id="saveSupabaseConfigBtn" class="btn btn-primary">Salvar Configuração</button>
             </div>
