@@ -90,16 +90,17 @@
           </button>
 
           <div class="nav-dropdown header-workspace-dropdown" id="navDropdownWorkspace">
-            <button type="button" id="topWorkspaceBtn" class="btn btn-sm btn-workspace-companion nav-dropdown-trigger" aria-haspopup="true" aria-expanded="false" aria-controls="dropdownWorkspaceMenu" title="Atalhos Google Workspace e Gemini">
-              <span class="svg-icon-inline" data-icon="sparkles" aria-hidden="true"></span>
+            <button type="button" id="topWorkspaceBtn" class="btn btn-sm btn-workspace-companion nav-dropdown-trigger" aria-haspopup="true" aria-expanded="false" aria-controls="dropdownWorkspaceMenu" title="Atalhos Google Workspace e Google Gemini">
+              <span class="ws-google-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
               <span>Workspace</span>
               <span class="dropdown-caret svg-icon-inline" data-icon="chevronDown" aria-hidden="true"></span>
             </button>
             <div class="dropdown-menu dropdown-menu-right" id="dropdownWorkspaceMenu" role="menu" aria-labelledby="topWorkspaceBtn">
-              <button type="button" id="topGeminiBtn" class="dropdown-item btn-gemini-companion" role="menuitem" title="Abrir Assistente Gemini SMEB (Janela Lateral Desktop)" aria-label="Abrir Assistente Gemini"><span class="gemini-sparkle svg-icon-inline" data-icon="sparkles" aria-hidden="true"></span><span class="sr-only">✨</span><span>Gemini</span></button>
-              <a href="https://docs.google.com/document/" target="_blank" rel="noopener noreferrer" class="dropdown-item" role="menuitem"><span>Docs</span><span class="external-arrow">↗</span></a>
-              <a href="https://docs.google.com/spreadsheets/" target="_blank" rel="noopener noreferrer" class="dropdown-item" role="menuitem"><span>Sheets</span><span class="external-arrow">↗</span></a>
-              <a href="https://docs.google.com/forms/" target="_blank" rel="noopener noreferrer" class="dropdown-item" role="menuitem"><span>Forms</span><span class="external-arrow">↗</span></a>
+              <button type="button" id="topGeminiBtn" class="dropdown-item btn-gemini-companion ws-item-gemini" role="menuitem" title="Abrir Assistente Google Gemini SMEB (Janela Lateral Desktop)" aria-label="Abrir Assistente Google Gemini"><span class="ws-app-dot ws-dot-gemini" aria-hidden="true"></span><span class="sr-only">✨</span><span>Google Gemini</span><span class="external-arrow">↗</span></button>
+              <a href="https://gemini.google.com/" target="_blank" rel="noopener noreferrer" class="dropdown-item ws-item-gemini ws-gemini-mobile-link" role="menuitem"><span class="ws-app-dot ws-dot-gemini" aria-hidden="true"></span><span>Google Gemini</span><span class="external-arrow">↗</span></a>
+              <a href="https://docs.google.com/document/" target="_blank" rel="noopener noreferrer" class="dropdown-item ws-item-docs" role="menuitem"><span class="ws-app-dot ws-dot-docs" aria-hidden="true"></span><span>Google Docs</span><span class="external-arrow">↗</span></a>
+              <a href="https://docs.google.com/spreadsheets/" target="_blank" rel="noopener noreferrer" class="dropdown-item ws-item-sheets" role="menuitem"><span class="ws-app-dot ws-dot-sheets" aria-hidden="true"></span><span>Google Sheets</span><span class="external-arrow">↗</span></a>
+              <a href="https://docs.google.com/forms/" target="_blank" rel="noopener noreferrer" class="dropdown-item ws-item-forms" role="menuitem"><span class="ws-app-dot ws-dot-forms" aria-hidden="true"></span><span>Google Forms</span><span class="external-arrow">↗</span></a>
             </div>
           </div>
 
@@ -303,7 +304,7 @@
     <div id="modal-root"></div>
 
     <!-- MODAL DE CONFIGURAÇÃO SUPABASE (CHAVE ÚNICA) -->
-    <div id="supabaseSetupModal" class="modal-backdrop setup-modal-dialog" role="dialog" aria-labelledby="setupModalTitle" aria-modal="true">
+    <div id="supabaseSetupModal" class="modal-backdrop setup-modal-dialog hidden" role="dialog" aria-labelledby="setupModalTitle" aria-modal="true">
       <div class="modal-card setup-modal-card">
         <div class="modal-header">
           <div class="modal-title-wrap">

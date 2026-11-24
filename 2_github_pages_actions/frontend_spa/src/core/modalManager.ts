@@ -29,6 +29,10 @@ function isElementVisible(el: HTMLElement): boolean {
   if (el.hasAttribute('hidden')) return false;
   if (el.getAttribute('aria-hidden') === 'true') return false;
   if (el.style && el.style.display === 'none') return false;
+  if (typeof window !== 'undefined' && typeof window.getComputedStyle === 'function') {
+    const cs = window.getComputedStyle(el);
+    if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+  }
   return true;
 }
 
@@ -105,7 +109,10 @@ export function closeModal(el?: HTMLElement | null): void {
 export function openModal(el: HTMLElement): void {
   if (!el) return;
   el.classList.remove('hidden');
-  if (el.style.display === 'none') {
+  const computedDisplay = typeof window !== 'undefined' && typeof window.getComputedStyle === 'function'
+    ? window.getComputedStyle(el).display
+    : '';
+  if (el.style.display === 'none' || computedDisplay === 'none') {
     el.style.display = 'flex';
   }
   syncVisibleModals();

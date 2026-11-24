@@ -104,12 +104,14 @@ window.OlymposSetupModal = (function() {
       el.feedback.textContent = '';
     }
 
+    el.modal.classList.remove('hidden');
     el.modal.style.display = 'flex';
   }
 
   function fecharModal() {
     const el = getElements();
     if (el.modal) {
+      el.modal.classList.add('hidden');
       el.modal.style.display = 'none';
     }
   }

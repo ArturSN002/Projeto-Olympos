@@ -7816,29 +7816,121 @@ button.btn-mini:disabled {
 }
 
 .btn-workspace-companion {
-  background: linear-gradient(135deg, rgba(26, 115, 232, 0.10), rgba(245, 158, 11, 0.14));
-  border: 1px solid var(--accent-gold-border);
+  border: 1.5px solid transparent;
+  background: linear-gradient(var(--bg-surface), var(--bg-surface)) padding-box,
+              linear-gradient(90deg, #4285F4 0%, #EA4335 33%, #FBBC05 66%, #34A853 100%) border-box;
   color: var(--text-main);
   padding: 5px 12px;
   font-size: 0.78rem;
   font-weight: 600;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
 }
 
 .btn-workspace-companion:hover {
-  background: linear-gradient(135deg, rgba(26, 115, 232, 0.18), rgba(245, 158, 11, 0.22));
-  border-color: var(--accent-gold);
+  background: linear-gradient(var(--bg-surface-hover), var(--bg-surface-hover)) padding-box,
+              linear-gradient(90deg, #4285F4 0%, #EA4335 33%, #FBBC05 66%, #34A853 100%) border-box;
+  box-shadow: 0 4px 14px rgba(66, 133, 244, 0.24);
+  transform: translateY(-1px);
+}
+
+[data-theme="light"] .btn-workspace-companion {
+  background: linear-gradient(#FFFFFF, #FFFFFF) padding-box,
+              linear-gradient(90deg, #4285F4 0%, #EA4335 33%, #FBBC05 66%, #34A853 100%) border-box;
+  color: #202124;
+  box-shadow: 0 2px 8px rgba(66, 133, 244, 0.14);
+}
+
+[data-theme="light"] .btn-workspace-companion:hover {
+  background: linear-gradient(#F8FAFF, #F8FAFF) padding-box,
+              linear-gradient(90deg, #4285F4 0%, #EA4335 33%, #FBBC05 66%, #34A853 100%) border-box;
 }
 
 [data-theme="dark"] .btn-workspace-companion {
-  background: linear-gradient(135deg, rgba(96, 165, 250, 0.16), rgba(245, 158, 11, 0.18));
-  border-color: rgba(245, 158, 11, 0.35);
-  color: var(--text-main);
+  background: linear-gradient(#181D29, #181D29) padding-box,
+              linear-gradient(90deg, #4285F4 0%, #EA4335 33%, #FBBC05 66%, #34A853 100%) border-box;
+  color: #F1F3F5;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
 }
+
+[data-theme="dark"] .btn-workspace-companion:hover {
+  background: linear-gradient(#1F2636, #1F2636) padding-box,
+              linear-gradient(90deg, #4285F4 0%, #EA4335 33%, #FBBC05 66%, #34A853 100%) border-box;
+}
+
+[data-contrast="high"] .btn-workspace-companion {
+  border: 2px solid var(--border-strong);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+.ws-google-mark {
+  display: inline-grid;
+  grid-template-columns: repeat(2, 5px);
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.ws-google-mark i {
+  display: block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+.ws-google-mark i:nth-child(1) { background: #4285F4; }
+.ws-google-mark i:nth-child(2) { background: #EA4335; }
+.ws-google-mark i:nth-child(3) { background: #FBBC05; }
+.ws-google-mark i:nth-child(4) { background: #34A853; }
 
 .header-workspace-dropdown .dropdown-menu-right {
   left: auto;
   right: 0;
-  min-width: 190px;
+  min-width: 205px;
+  overflow: hidden;
+  padding-top: 9px;
+}
+
+#dropdownWorkspaceMenu::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #4285F4 0%, #EA4335 33%, #FBBC05 66%, #34A853 100%);
+}
+
+.ws-app-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ws-dot-gemini {
+  background: linear-gradient(135deg, #4285F4 0%, #9B72CB 55%, #D96570 100%);
+}
+
+.ws-dot-docs {
+  background: #4285F4;
+}
+
+.ws-dot-sheets {
+  background: #34A853;
+}
+
+.ws-dot-forms {
+  background: #7248B9;
+}
+
+.ws-gemini-mobile-link {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .ws-gemini-mobile-link {
+    display: flex;
+  }
 }
 
 .dropdown-menu .btn-gemini-companion {
@@ -7857,14 +7949,29 @@ button.btn-mini:disabled {
 .dropdown-menu .btn-gemini-companion:hover {
   transform: none;
   box-shadow: none;
-  color: var(--text-main);
-  background: var(--bg-tonal);
+  color: #4285F4;
+  background: rgba(66, 133, 244, 0.10);
   padding-left: 17px;
 }
 
 [data-theme="dark"] .dropdown-menu .btn-gemini-companion:hover {
-  color: #D4AF37;
-  background: #1E293B;
+  color: #8AB4F8;
+  background: rgba(66, 133, 244, 0.16);
+}
+
+.ws-item-docs:hover {
+  color: #4285F4 !important;
+  background: rgba(66, 133, 244, 0.10) !important;
+}
+
+.ws-item-sheets:hover {
+  color: #34A853 !important;
+  background: rgba(52, 168, 83, 0.12) !important;
+}
+
+.ws-item-forms:hover {
+  color: #A78BFA !important;
+  background: rgba(114, 72, 185, 0.14) !important;
 }
 
 .dropdown-item .external-arrow {
@@ -8383,7 +8490,7 @@ button.btn-mini:disabled {
   .btn-workspace-companion {
     padding: 6px 9px !important;
   }
-  .btn-workspace-companion > span:nth-child(2) {
+  .btn-workspace-companion > span:not(.ws-google-mark):not(.dropdown-caret) {
     display: none;
   }
   .hero-pill-btn {
