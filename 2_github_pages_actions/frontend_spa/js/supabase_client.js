@@ -1194,11 +1194,22 @@ window.OlymposSupabase = (function() {
   }
 
   /**
-   * Retorna true se o perfil requer obrigatoriamente aal2 (TOTP MFA).
+   * Retorna true se o perfil / setor / cargo requer obrigatoriamente aal2 (TOTP MFA).
    */
-  function isRoleMfaMandatory(role) {
+  function isRoleMfaMandatory(role, setorCodigo, cargoSetor) {
+    if (window.OlymposRbac && typeof window.OlymposRbac.computarRequerMfa === 'function') {
+      return window.OlymposRbac.computarRequerMfa(setorCodigo || null, cargoSetor || null, role);
+    }
     const r = String(role || '').toUpperCase();
-    return r === 'MODERADOR' || r === 'ADMIN_GABINETE' || r === 'JURIDICO';
+    const s = String(setorCodigo || '').toUpperCase();
+    const c = String(cargoSetor || '').toUpperCase();
+    if (r === 'MODERADOR' || r === 'ADMIN_GABINETE' || s === 'MODERADOR' || c === 'MODERADOR' || s === 'GABINETE') {
+      return true;
+    }
+    if (c === 'ENCARREGADO' && (s === 'RECURSOS_HUMANOS' || s === 'JURIDICO' || s === 'FINANCEIRO_TESOURARIA')) {
+      return true;
+    }
+    return !s && r === 'JURIDICO';
   }
 
   // =========================================================================
@@ -1244,8 +1255,21 @@ window.OlymposSupabase = (function() {
           department: dados.department || dados.departamento,
           updated_at: new Date().toISOString()
         };
+        if (dados.setor_codigo !== undefined) payload.setor_codigo = dados.setor_codigo;
+        if (dados.cargo_setor !== undefined) payload.cargo_setor = dados.cargo_setor;
+        if (dados.ativo !== undefined) payload.ativo = Boolean(dados.ativo);
+
         const { error } = await client.from('profiles').update(payload).eq('id', id);
         if (error) {
+          if (error.code === '42703') {
+            const { error: legacyErr } = await client.from('profiles').update({
+              full_name: payload.full_name,
+              role: payload.role,
+              department: payload.department,
+              updated_at: payload.updated_at
+            }).eq('id', id);
+            if (!legacyErr) return true;
+          }
           console.warn('[OlymposSupabase] Erro ao atualizar perfil:', error);
           return false;
         }
@@ -1354,6 +1378,178 @@ window.OlymposSupabase = (function() {
     return false;
   }
 
+  // =========================================================================
+  // ONDA 7: SETORES ORGANIZACIONAIS, MATRIZ RBAC DINÂMICA & NUMERAÇÃO SETORIAL
+  // =========================================================================
+
+  async function obterContextoAcessoAtual() {
+    const client = getClient();
+    if (!client) return null;
+    try {
+      const { data, error } = await client.rpc('rpc_obter_contexto_acesso_atual');
+      if (error) return null;
+      return data || null;
+    } catch (_err) {
+      return null;
+    }
+  }
+
+  async function listarSetoresOrganizacionais() {
+    const client = getClient();
+    if (!client) return null;
+    const { data, error } = await client
+      .from('setores_organizacionais')
+      .select('*')
+      .order('ordem', { ascending: true });
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function listarPermissoesCatalogo() {
+    const client = getClient();
+    if (!client) return null;
+    const { data, error } = await client
+      .from('rbac_permissoes_catalogo')
+      .select('*')
+      .order('ordem', { ascending: true });
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function listarMatrizSetorCargo() {
+    const client = getClient();
+    if (!client) return null;
+    const { data, error } = await client
+      .from('rbac_matriz_setor_cargo')
+      .select('*');
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function salvarPermissoesSetorCargo(setorCodigo, cargoSetor, permissoesObj) {
+    const client = getClient();
+    if (!client) throw new Error('Supabase não inicializado.');
+    const { data, error } = await client.rpc('rpc_salvar_permissoes_setor_cargo', {
+      p_setor_codigo: setorCodigo,
+      p_cargo_setor: cargoSetor,
+      p_alteracoes: permissoesObj || {}
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  async function restaurarPadraoSetor(setorCodigo) {
+    const client = getClient();
+    if (!client) throw new Error('Supabase não inicializado.');
+    const { data, error } = await client.rpc('rpc_restaurar_padrao_setor', {
+      p_setor_codigo: setorCodigo
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  async function listarOverridesUsuario(userIdOpt) {
+    const client = getClient();
+    if (!client) return [];
+    let q = client.from('rbac_usuario_overrides').select('*').order('criado_em', { ascending: false });
+    if (userIdOpt) q = q.eq('user_id', userIdOpt);
+    const { data, error } = await q;
+    if (error) throw error;
+    return data || [];
+  }
+
+  async function salvarOverrideUsuario(userId, permissaoCodigo, permitido, motivo, expiraEm) {
+    const client = getClient();
+    if (!client) throw new Error('Supabase não inicializado.');
+    const { data, error } = await client.rpc('rpc_salvar_override_usuario', {
+      p_user_id: userId,
+      p_permissao_codigo: permissaoCodigo,
+      p_permitido: Boolean(permitido),
+      p_motivo: motivo,
+      p_expira_em: expiraEm || null
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  async function removerOverrideUsuario(userId, permissaoCodigo) {
+    const client = getClient();
+    if (!client) throw new Error('Supabase não inicializado.');
+    const { data, error } = await client.rpc('rpc_remover_override_usuario', {
+      p_user_id: userId,
+      p_permissao_codigo: permissaoCodigo
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  async function definirEncarregadoSetor(setorCodigo, novoEncarregadoId) {
+    const client = getClient();
+    if (!client) throw new Error('Supabase não inicializado.');
+    const { data, error } = await client.rpc('rpc_definir_encarregado_setor', {
+      p_setor_codigo: setorCodigo,
+      p_novo_encarregado_id: novoEncarregadoId
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  async function atualizarOperadorHierarquia(userId, dados) {
+    const client = getClient();
+    if (!client) throw new Error('Supabase não inicializado.');
+    const opts = dados || {};
+    const { data, error } = await client.rpc('rpc_atualizar_operador_hierarquia', {
+      p_user_id: userId,
+      p_full_name: opts.full_name || opts.nome || '',
+      p_setor_codigo: opts.setor_codigo || 'PEDAGOGICO',
+      p_cargo_setor: opts.cargo_setor || 'MEMBRO',
+      p_ativo: opts.ativo !== false
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  async function listarNumeracaoVisivel(ano) {
+    const client = getClient();
+    if (!client) return null;
+    try {
+      const { data, error } = await client.rpc('rpc_listar_numeracao_visivel', {
+        p_ano: ano || 2026
+      });
+      if (error) return null;
+      return data || null;
+    } catch (_err) {
+      return null;
+    }
+  }
+
+  async function reservarNumeroDocumento(tipo, setorCodigo, ano, motivo) {
+    const client = getClient();
+    if (!client) throw new Error('Supabase não inicializado.');
+    const { data, error } = await client.rpc('rpc_reservar_numero_documento', {
+      p_tipo: String(tipo || 'OFICIO').toUpperCase(),
+      p_setor_codigo: setorCodigo || null,
+      p_ano: ano || 2026,
+      p_motivo: motivo || null
+    });
+    if (error) throw error;
+    return data;
+  }
+
+  async function ajustarContadorDocumento(tipo, setorCodigo, proximoNumero, ano, motivo) {
+    const client = getClient();
+    if (!client) throw new Error('Supabase não inicializado.');
+    const { data, error } = await client.rpc('rpc_ajustar_contador_documento', {
+      p_tipo: String(tipo || 'OFICIO').toUpperCase(),
+      p_setor_codigo: setorCodigo,
+      p_ano: ano || 2026,
+      p_proximo_numero: Number(proximoNumero),
+      p_motivo: motivo || null
+    });
+    if (error) throw error;
+    return data;
+  }
+
   return {
     DEFAULT_PUBLIC_SUPABASE_URL: DEFAULT_PUBLIC_SUPABASE_URL,
     extrairUrlSupabaseDaChave: extrairUrlSupabaseDaChave,
@@ -1390,7 +1586,21 @@ window.OlymposSupabase = (function() {
     listarPerfisUsuarios: listarPerfisUsuarios,
     atualizarPerfilUsuario: atualizarPerfilUsuario,
     atualizarPerfilProprio: atualizarPerfilProprio,
-    excluirPerfilUsuario: excluirPerfilUsuario
+    excluirPerfilUsuario: excluirPerfilUsuario,
+    obterContextoAcessoAtual: obterContextoAcessoAtual,
+    listarSetoresOrganizacionais: listarSetoresOrganizacionais,
+    listarPermissoesCatalogo: listarPermissoesCatalogo,
+    listarMatrizSetorCargo: listarMatrizSetorCargo,
+    salvarPermissoesSetorCargo: salvarPermissoesSetorCargo,
+    restaurarPadraoSetor: restaurarPadraoSetor,
+    listarOverridesUsuario: listarOverridesUsuario,
+    salvarOverrideUsuario: salvarOverrideUsuario,
+    removerOverrideUsuario: removerOverrideUsuario,
+    definirEncarregadoSetor: definirEncarregadoSetor,
+    atualizarOperadorHierarquia: atualizarOperadorHierarquia,
+    listarNumeracaoVisivel: listarNumeracaoVisivel,
+    reservarNumeroDocumento: reservarNumeroDocumento,
+    ajustarContadorDocumento: ajustarContadorDocumento
   };
 })();
 

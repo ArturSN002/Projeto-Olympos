@@ -249,9 +249,38 @@ window.OlymposViews.chamados = (function() {
     }
   }
 
+  function filtrarPorIsolamentoSetorial(lista) {
+    if (!Array.isArray(lista)) return [];
+    const rbac = window.OlymposRbac;
+    if (!rbac || typeof rbac.isModerador !== 'function') return lista;
+    if (rbac.isModerador() || rbac.isGabinete()) return lista;
+
+    const meuSetor = String(rbac.getSetorAtual() || '').toUpperCase();
+    const minhaSigla = String(rbac.getSiglaOficioAtual() || '').toUpperCase();
+    const infoSetor = rbac.SETORES_MAP && rbac.SETORES_MAP[meuSetor];
+    const nomeSetorNorm = String(infoSetor ? infoSetor.nome : '').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+    const sess = window.OlymposApp && typeof window.OlymposApp.getSession === 'function' ? window.OlymposApp.getSession() : null;
+    const meuUid = sess && (sess.user?.id || sess.profile?.id || '');
+    const meuEmail = String(sess && (sess.user?.email || sess.usuario || '')).trim().toLowerCase();
+
+    return lista.filter(function(t) {
+      if (meuUid && t.responsavel_id && String(t.responsavel_id) === String(meuUid)) return true;
+      if (meuEmail && t.email && String(t.email).trim().toLowerCase() === meuEmail) return true;
+      const tSetorCod = String(t.setor_codigo || '').toUpperCase();
+      if (tSetorCod && meuSetor && tSetorCod === meuSetor) return true;
+      const tSetorRaw = String(t.setor || '').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+      if (!tSetorRaw) return false;
+      if (tSetorRaw === meuSetor || tSetorRaw === minhaSigla) return true;
+      if (nomeSetorNorm && (nomeSetorNorm.indexOf(tSetorRaw) !== -1 || tSetorRaw.indexOf(meuSetor.replace(/_/g, ' ')) !== -1)) return true;
+      return false;
+    });
+  }
+
   function armazenarNaFila(lista) {
+    const listaIsolada = filtrarPorIsolamentoSetorial(lista);
     if (window.OlymposSignals) {
-      window.OlymposSignals.loadTickets(lista);
+      window.OlymposSignals.loadTickets(listaIsolada);
     }
     renderFila();
     atualizarTelemetriaHero();

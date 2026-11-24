@@ -4,9 +4,85 @@
 window.OlymposViews = window.OlymposViews || {};
 
 window.OlymposViews.oficios = (function() {
+  let numeracaoSetoresCache = [];
+  let setorSelecionado = '';
+
+  function getSetorAlvoOficio() {
+    const rbac = window.OlymposRbac;
+    const podeEscolher = rbac && typeof rbac.temPermissao === 'function'
+      && (rbac.isModerador() || rbac.temPermissao('oficios.ver_todos_setores'));
+    const sel = document.getElementById('oficioSetorSelect');
+    if (podeEscolher && sel && sel.value) {
+      return String(sel.value).toUpperCase();
+    }
+    const meuSetor = (rbac && typeof rbac.getSetorAtual === 'function' && rbac.getSetorAtual()) || 'GABINETE';
+    return meuSetor === 'MODERADOR' ? ((sel && sel.value) || 'GABINETE') : meuSetor;
+  }
+
+  function atualizarBannerSerieSetorial() {
+    const rbac = window.OlymposRbac;
+    const setorCod = getSetorAlvoOficio();
+    setorSelecionado = setorCod;
+    const info = (rbac && rbac.SETORES_MAP && rbac.SETORES_MAP[setorCod]) || {
+      codigo: 'GABINETE',
+      nome: 'Gabinete da Secretaria',
+      siglaOficio: 'GS',
+      pisoOficio2026: 155
+    };
+    const itemNum = numeracaoSetoresCache.find(function(n) { return n.setor_codigo === setorCod; });
+    const badgeEl = document.getElementById('oficioSerieBadge');
+    const proxEl = document.getElementById('oficioSerieProxNumero');
+    const pastaEl = document.getElementById('oficioSeriePastaNome');
+    const inputNum = document.getElementById('oficioNumeroInput');
+
+    if (badgeEl) {
+      badgeEl.textContent = 'Série: ' + info.siglaOficio + ' — ' + info.nome;
+    }
+    if (pastaEl) {
+      pastaEl.textContent = setorCod === 'GABINETE' ? 'Ofícios 2026 (Raiz GS)' : ('Ofícios 2026 - ' + info.siglaOficio);
+    }
+
+    let proxLiveVal = itemNum && itemNum.proximo_numero ? Number(itemNum.proximo_numero) : null;
+    if (!proxLiveVal && setorCod === 'GABINETE') {
+      const kpiElem = document.getElementById('kpiProximoOficio');
+      const txtKpi = kpiElem && kpiElem.textContent ? String(kpiElem.textContent) : '';
+      const m = txtKpi && txtKpi.indexOf('--') === -1 ? txtKpi.match(/\d+/) : null;
+      if (m) proxLiveVal = Number(m[0]);
+    }
+
+    if (proxEl) {
+      proxEl.textContent = proxLiveVal
+        ? (String(proxLiveVal).padStart(3, '0') + '/2026')
+        : ('-- (Piso ' + String(info.pisoOficio2026 || 1).padStart(3, '0') + '/2026)');
+    }
+    const userEdited = Boolean(inputNum && inputNum.dataset && inputNum.dataset.userEdited);
+    if (inputNum && !userEdited && proxLiveVal) {
+      inputNum.value = String(proxLiveVal);
+    }
+  }
+
+  async function carregarNumeracaoSetorialOficios() {
+    if (window.OlymposSupabase && typeof window.OlymposSupabase.listarNumeracaoVisivel === 'function') {
+      try {
+        const res = await window.OlymposSupabase.listarNumeracaoVisivel(2026);
+        if (res && res.ok && Array.isArray(res.oficios)) {
+          numeracaoSetoresCache = res.oficios;
+        }
+      } catch (_eNum) {}
+    }
+    atualizarBannerSerieSetorial();
+  }
+
   function init() {
     bindEvents();
+    const sel = document.getElementById('oficioSetorSelect');
+    const rbac = window.OlymposRbac;
+    if (sel && rbac && typeof rbac.getSetorAtual === 'function') {
+      const s = rbac.getSetorAtual();
+      if (s && s !== 'MODERADOR') sel.value = s;
+    }
     sugerirProximoNumero();
+    void carregarNumeracaoSetorialOficios();
     if (window.OlymposOficiosBridge && typeof window.OlymposOficiosBridge.aplicarPendingDispatchContext === 'function') {
       window.OlymposOficiosBridge.aplicarPendingDispatchContext();
     }
@@ -17,6 +93,24 @@ window.OlymposViews.oficios = (function() {
     if (btnGerar && !btnGerar._bound) {
       btnGerar._bound = true;
       btnGerar.addEventListener('click', handleGerarOficio);
+    }
+
+    const selSetor = document.getElementById('oficioSetorSelect');
+    if (selSetor && !selSetor._bound && typeof selSetor.addEventListener === 'function') {
+      selSetor._bound = true;
+      selSetor.addEventListener('change', function() {
+        const inputNum = document.getElementById('oficioNumeroInput');
+        if (inputNum && inputNum.dataset) delete inputNum.dataset.userEdited;
+        atualizarBannerSerieSetorial();
+      });
+    }
+
+    const inputNum = document.getElementById('oficioNumeroInput');
+    if (inputNum && !inputNum._boundUserEdit && typeof inputNum.addEventListener === 'function') {
+      inputNum._boundUserEdit = true;
+      inputNum.addEventListener('input', function() {
+        if (inputNum.dataset) inputNum.dataset.userEdited = inputNum.value ? '1' : '';
+      });
     }
 
     const btnCloseEmbed = document.getElementById('oficioFecharEmbedBtn');
@@ -76,6 +170,13 @@ window.OlymposViews.oficios = (function() {
     btn.textContent = 'Gerando Ofício no Google Docs...';
     outBox.classList.add('hidden');
 
+    const setorCod = getSetorAlvoOficio();
+    const rbac = window.OlymposRbac;
+    const setorMeta = (rbac && rbac.SETORES_MAP && rbac.SETORES_MAP[setorCod]) || {
+      nome: 'Gabinete da Secretaria',
+      siglaOficio: 'GS'
+    };
+
     window.OlymposApi.chamar('oficio_emitir', {
       numero: numero,
       destinatario: destinatario,
@@ -83,7 +184,10 @@ window.OlymposViews.oficios = (function() {
       corpo: corpo,
       corpoJson: corpoJson,
       presetPr2018: presetPr2018,
-      fecho: fecho
+      fecho: fecho,
+      setorCodigo: setorCod,
+      siglaSetor: setorMeta.siglaOficio,
+      setorNome: setorMeta.nome
     }, function(res) {
       btn.disabled = false;
       btn.textContent = 'Emitir Ofício no Google Docs';
@@ -94,19 +198,22 @@ window.OlymposViews.oficios = (function() {
         const editNovaAbaUrl = fileId ? ('https://docs.google.com/document/d/' + encodeURIComponent(fileId) + '/edit') : urlFinal;
         const embedUrl = fileId ? ('https://docs.google.com/document/d/' + encodeURIComponent(fileId) + '/edit?embedded=true') : '';
         const pdfUrl = (res.pdfExportUrl) || (fileId ? ('https://docs.google.com/document/d/' + encodeURIComponent(fileId) + '/export?format=pdf') : '');
+        const siglaOut = res.siglaSetor || setorMeta.siglaOficio || 'GS';
 
-        window.OlymposApp.showToast('Ofício Nº ' + res.numero + '/2026 emitido com sucesso!');
+        window.OlymposApp.showToast('Ofício Nº ' + res.numero + '/2026 (' + siglaOut + ') emitido com sucesso!');
 
         const checkSvg = window.OlymposIcons ? window.OlymposIcons.ui('check') : '✓';
         outBox.innerHTML =
           '<div class="job-result-header">' +
             '<div class="job-result-title">' +
               '<span class="job-done-badge">' + checkSvg + '</span>' +
-              '<span>Finalização Confirmada — Ofício Nº ' + window.OlymposApp.escapeHtml(res.numero) + '/2026 - GS/SMEB</span>' +
+              '<span>Finalização Confirmada — Ofício Nº ' + window.OlymposApp.escapeHtml(res.numero) + '/2026 - ' + window.OlymposApp.escapeHtml(siglaOut) + '/SMEB</span>' +
             '</div>' +
           '</div>' +
           '<div style="font-size: 13.5px; color: var(--text-secondary); margin-bottom: 12px;">' +
-            'Expediente gravado na pasta <strong>Ofícios 2026</strong> com formatação PR/2018 e numeração atualizada em <code>_memoria_apolo.md</code>.' +
+            (setorCod === 'GABINETE'
+              ? 'Expediente gravado na pasta <strong>Ofícios 2026</strong> com formatação PR/2018 e numeração atualizada em <code>_memoria_apolo.md</code>.'
+              : 'Expediente gravado na subpasta setorial <strong>Ofícios 2026 - ' + window.OlymposApp.escapeHtml(siglaOut) + '</strong> com formatação PR/2018 (numeração setorial independente).') +
           '</div>' +
           '<div class="button-group" style="margin-bottom: 12px; flex-wrap: wrap;">' +
             '<a href="' + window.OlymposApp.escapeHtml(editNovaAbaUrl) + '" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">Editar no Google Docs (Nova Aba) ↗</a>' +
@@ -157,8 +264,13 @@ window.OlymposViews.oficios = (function() {
         }
         if (res.numero) {
           const prox = parseInt(String(res.numero), 10) + 1;
-          if (!isNaN(prox)) document.getElementById('oficioNumeroInput').value = String(prox);
+          const inpNum = document.getElementById('oficioNumeroInput');
+          if (inpNum && !isNaN(prox)) {
+            delete inpNum.dataset.userEdited;
+            inpNum.value = String(prox);
+          }
         }
+        void carregarNumeracaoSetorialOficios();
         if (window.OlymposOficiosBridge && typeof window.OlymposOficiosBridge.vincularOficioEmitidoAPendencia === 'function') {
           window.OlymposOficiosBridge.vincularOficioEmitidoAPendencia({
             fileId: fileId,

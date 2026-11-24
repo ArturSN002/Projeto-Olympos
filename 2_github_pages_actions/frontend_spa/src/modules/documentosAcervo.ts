@@ -9,6 +9,8 @@ export interface DocumentoEmitidoRow {
   tipo: 'OFICIO' | 'PORTARIA';
   subcategoria: string;
   pasta_drive_id: string;
+  setor_codigo?: string | null;
+  sigla_setor?: string | null;
   numero: number | null;
   ano: number | null;
   nome_arquivo: string;
@@ -43,6 +45,8 @@ interface AcervoInstanceState {
   total: number;
   searchTerm: string;
   subcategoria: string;
+  setorFiltro: string;
+  supportsSetorCols: boolean;
   mesFiltro: string;
   sortBy: AcervoSortKey;
   loading: boolean;
@@ -92,11 +96,33 @@ function montarShellAcervo(root: HTMLElement, st: AcervoInstanceState): void {
   const tipo = st.config.tipo;
   const prefix = `acervo-${tipo.toLowerCase()}`;
   const isPortaria = tipo === 'PORTARIA';
+  const rbac = (window as any).OlymposRbac;
+  const canViewAllSectors = Boolean(
+    rbac && (rbac.isModerador?.() || rbac.temPermissao?.('oficios.ver_todos_setores'))
+  );
+  const meuSetor = (rbac && rbac.getSetorAtual?.()) || 'GABINETE';
+  if (!isPortaria && !canViewAllSectors) {
+    st.setorFiltro = meuSetor === 'MODERADOR' ? 'TODOS' : meuSetor;
+  }
 
   root.innerHTML =
     '<div class="acervo-toolbar">' +
       '<div class="acervo-filters">' +
         `<input type="search" id="${prefix}-search" class="input-clean acervo-search-input" placeholder="Buscar por nº, arquivo, servidor ou assunto..." autocomplete="off" aria-label="Buscar documentos emitidos" />` +
+        (!isPortaria && canViewAllSectors
+          ? `<select id="${prefix}-setor" class="input-clean acervo-select" aria-label="Filtrar ofícios por setor">` +
+              '<option value="TODOS">Todos os Setores (9)</option>' +
+              '<option value="GABINETE">Gabinete (GS)</option>' +
+              '<option value="PEDAGOGICO">Pedagógico (PED)</option>' +
+              '<option value="ADMINISTRATIVO">Administrativo (ADM)</option>' +
+              '<option value="JURIDICO">Assessoria Jurídica (JUR)</option>' +
+              '<option value="NUTRICAO">Nutrição (NUT)</option>' +
+              '<option value="RECURSOS_HUMANOS">Recursos Humanos (RH)</option>' +
+              '<option value="TRANSPORTE_ESCOLAR">Transporte Escolar (TRANS)</option>' +
+              '<option value="FINANCEIRO_TESOURARIA">Financeiro e Tesouraria (FIN)</option>' +
+              '<option value="ENGENHARIA">Engenharia (ENG)</option>' +
+            '</select>'
+          : '') +
         (st.config.showSubcategoriaFilter
           ? `<select id="${prefix}-subcat" class="input-clean acervo-select" aria-label="Filtrar subcategoria">` +
               '<option value="TODAS">Todas as Pastas 2026</option>' +
@@ -132,12 +158,22 @@ function montarShellAcervo(root: HTMLElement, st: AcervoInstanceState): void {
     '</div>';
 
   const searchEl = document.getElementById(`${prefix}-search`) as HTMLInputElement | null;
+  const setorEl = document.getElementById(`${prefix}-setor`) as HTMLSelectElement | null;
   const subcatEl = document.getElementById(`${prefix}-subcat`) as HTMLSelectElement | null;
   const monthEl = document.getElementById(`${prefix}-month`) as HTMLInputElement | null;
   const sortEl = document.getElementById(`${prefix}-sort`) as HTMLSelectElement | null;
   const refreshBtn = document.getElementById(`${prefix}-refresh-btn`);
   const syncBtn = document.getElementById(`${prefix}-sync-btn`);
   const tableWrap = document.getElementById(`${prefix}-table-wrap`);
+
+  if (setorEl) {
+    setorEl.value = st.setorFiltro || 'TODOS';
+    setorEl.addEventListener('change', () => {
+      st.setorFiltro = setorEl.value || 'TODOS';
+      st.page = 1;
+      void consultarDocumentos(st);
+    });
+  }
 
   if (searchEl) {
     searchEl.value = st.searchTerm;
@@ -265,6 +301,7 @@ function renderizarTabela(st: AcervoInstanceState): void {
   }
 
   const showSubcat = st.config.tipo === 'PORTARIA';
+  const showSetorCol = st.config.tipo === 'OFICIO' && st.supportsSetorCols;
   const sortArrow = (col: 'numero' | 'nome' | 'data'): string => {
     if (st.sortBy === `${col}_asc`) return ' ↑';
     if (st.sortBy === `${col}_desc`) return ' ↓';
@@ -275,6 +312,7 @@ function renderizarTabela(st: AcervoInstanceState): void {
   html += '<thead><tr>' +
     `<th style="width: 104px;"><button type="button" class="acervo-sort-th-btn" data-acervo-sort-col="numero" title="Ordenar por número">Nº / Ano${sortArrow('numero')}</button></th>` +
     (showSubcat ? '<th style="width: 150px;">Pasta</th>' : '') +
+    (showSetorCol ? '<th style="width: 110px;">Setor</th>' : '') +
     `<th><button type="button" class="acervo-sort-th-btn" data-acervo-sort-col="nome" title="Ordenar por nome">Documento &amp; Destinatário / Assunto${sortArrow('nome')}</button></th>` +
     `<th style="width: 118px;"><button type="button" class="acervo-sort-th-btn" data-acervo-sort-col="data" title="Ordenar por data">Data${sortArrow('data')}</button></th>` +
     '<th class="text-right" style="width: 245px;">Ações</th>' +
@@ -285,6 +323,7 @@ function renderizarTabela(st: AcervoInstanceState): void {
       ? `${String(row.numero).padStart(3, '0')}/${row.ano || 2026}`
       : `--/${row.ano || 2026}`;
     const subcatLbl = SUBCATEGORIA_LABELS[row.subcategoria] || row.subcategoria;
+    const siglaSetorLbl = row.sigla_setor || row.setor_codigo || 'GS';
     const docsUrl = sanitizarUrlSegura(row.drive_url);
     const fallbackPdf = row.drive_file_id
       ? `https://docs.google.com/document/d/${encodeURIComponent(row.drive_file_id)}/export?format=pdf`
@@ -298,6 +337,7 @@ function renderizarTabela(st: AcervoInstanceState): void {
     html += '<tr>' +
       `<td data-label="Nº / Ano"><code>${esc(numFmt)}</code></td>` +
       (showSubcat ? `<td data-label="Pasta"><span class="pill-badge pill-blue" style="font-size:11px;">${esc(subcatLbl)}</span></td>` : '') +
+      (showSetorCol ? `<td data-label="Setor"><span class="setor-pill" style="font-size:11px;">${esc(siglaSetorLbl)}</span></td>` : '') +
       '<td data-label="Documento">' +
         `<div style="font-weight: 600; color: var(--text-main); word-break: break-word;">${esc(row.nome_arquivo)}</div>` +
         (detalheSec ? `<div style="font-size: 12px; color: var(--text-secondary); margin-top: 2px;">${esc(detalheSec)}</div>` : '') +
@@ -389,12 +429,13 @@ async function consultarDocumentos(st: AcervoInstanceState): Promise<void> {
     const from = (st.page - 1) * st.pageSize;
     const to = from + st.pageSize - 1;
 
+    const selectCols = st.supportsSetorCols
+      ? 'id,drive_file_id,tipo,subcategoria,pasta_drive_id,setor_codigo,sigla_setor,numero,ano,nome_arquivo,assunto_ou_titulo,destinatario_ou_servidor,mime_type,drive_url,pdf_export_url,criado_em,modificado_em,sincronizado_em'
+      : 'id,drive_file_id,tipo,subcategoria,pasta_drive_id,numero,ano,nome_arquivo,assunto_ou_titulo,destinatario_ou_servidor,mime_type,drive_url,pdf_export_url,criado_em,modificado_em,sincronizado_em';
+
     let query = client
       .from('documentos_emitidos')
-      .select(
-        'id,drive_file_id,tipo,subcategoria,pasta_drive_id,numero,ano,nome_arquivo,assunto_ou_titulo,destinatario_ou_servidor,mime_type,drive_url,pdf_export_url,criado_em,modificado_em,sincronizado_em',
-        { count: 'exact' }
-      )
+      .select(selectCols, { count: 'exact' })
       .eq('tipo', st.config.tipo);
 
     switch (st.sortBy) {
@@ -435,6 +476,10 @@ async function consultarDocumentos(st: AcervoInstanceState): Promise<void> {
       query = query.eq('subcategoria', st.subcategoria);
     }
 
+    if (st.supportsSetorCols && st.config.tipo === 'OFICIO' && st.setorFiltro && st.setorFiltro !== 'TODOS') {
+      query = query.eq('setor_codigo', st.setorFiltro);
+    }
+
     if (st.mesFiltro && /^\d{4}-\d{2}$/.test(st.mesFiltro)) {
       const [yStr, mStr] = st.mesFiltro.split('-');
       const y = parseInt(yStr, 10);
@@ -456,6 +501,11 @@ async function consultarDocumentos(st: AcervoInstanceState): Promise<void> {
     }
 
     const { data, error, count } = await query.range(from, to);
+    if (error && st.supportsSetorCols && (error.code === '42703' || String(error.message || '').includes('setor_codigo'))) {
+      st.supportsSetorCols = false;
+      await consultarDocumentos(st);
+      return;
+    }
     st.loading = false;
 
     if (error) {
@@ -533,6 +583,8 @@ export function mountDocumentosAcervo(config: AcervoMountConfig): void {
       total: 0,
       searchTerm: '',
       subcategoria: 'TODAS',
+      setorFiltro: 'TODOS',
+      supportsSetorCols: true,
       mesFiltro: '',
       sortBy: 'data_desc',
       loading: false,

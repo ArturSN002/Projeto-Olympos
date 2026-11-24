@@ -7,7 +7,7 @@
                 <p class="section-desc">Padronização automática de participantes, gravação de código verificável na aba <code>Registro_Autenticidade</code> e links visíveis de todos os PDFs emitidos.</p>
               </div>
               <div class="button-group" style="display: flex; gap: 8px; align-items: center;">
-                <button type="button" id="liraNovaAbaBtn" class="btn btn-secondary btn-sm">+ Nova Aba de Evento</button>
+                <button type="button" id="liraNovaAbaBtn" class="btn btn-secondary btn-sm" data-perm="certificados.operar">+ Nova Aba de Evento</button>
                 <a href="https://drive.google.com/drive/folders/1XriqpPQsWjQxJROsE_FyaQQpCwybJSUJ" target="_blank" rel="noopener" class="folder-chip">
                   Abrir Pasta A Lira de Orfeu ↗
                 </a>
@@ -34,10 +34,10 @@
 
             <!-- OS 3 GATILHOS INDEPENDENTES + ATALHO COMPOSTO -->
             <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 14px; margin-bottom: 20px; padding: 14px; background: var(--bg-surface-hover); border-radius: 10px; border: 1px solid var(--border-hairline);">
-              <button id="liraHigienizarBtn" class="btn btn-secondary" title="Limpa espaços, corrige domínios @gmail e padroniza em Title Case">1. Higienizar Lista</button>
-              <button id="liraGerarPdfsBtn" class="btn btn-secondary" title="Gera PDFs e QR Codes sem envio de e-mails">2. Somente Gerar Certificados (PDF)</button>
-              <button id="liraEnviarEmailsBtn" class="btn btn-secondary" title="Envia e-mails exclusivamente para participantes com PDF gerado">3. Somente Enviar E-mails</button>
-              <button id="liraExecutarBtn" class="btn btn-primary" title="Atalho opcional: Executa geração de PDFs seguida de envio de e-mails">Executar Ambos (Gerar + Enviar)</button>
+              <button id="liraHigienizarBtn" class="btn btn-secondary" title="Limpa espaços, corrige domínios @gmail e padroniza em Title Case" data-perm="certificados.operar">1. Higienizar Lista</button>
+              <button id="liraGerarPdfsBtn" class="btn btn-secondary" title="Gera PDFs e QR Codes sem envio de e-mails" data-perm="certificados.operar">2. Somente Gerar Certificados (PDF)</button>
+              <button id="liraEnviarEmailsBtn" class="btn btn-secondary" title="Envia e-mails exclusivamente para participantes com PDF gerado" data-perm="certificados.operar">3. Somente Enviar E-mails</button>
+              <button id="liraExecutarBtn" class="btn btn-primary" title="Atalho opcional: Executa geração de PDFs seguida de envio de e-mails" data-perm="certificados.operar">Executar Ambos (Gerar + Enviar)</button>
               <span id="liraCotaBadge" class="pill-badge pill-blue" style="margin-left: auto;">Envios Disponíveis: --</span>
             </div>
 
@@ -78,7 +78,7 @@
                   <label for="liraQuickCarga" style="font-size: 11.5px; font-weight: 600;">Carga Horária</label>
                   <input type="text" id="liraQuickCarga" class="input-clean" placeholder="Ex: 40h" />
                 </div>
-                <button type="submit" id="liraQuickAddBtn" class="btn btn-primary btn-sm" style="height: 38px; white-space: nowrap;">+ Adicionar</button>
+                <button type="submit" id="liraQuickAddBtn" class="btn btn-primary btn-sm" style="height: 38px; white-space: nowrap;" data-perm="certificados.operar">+ Adicionar</button>
               </form>
 
               <!-- Grade de Participantes -->

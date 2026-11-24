@@ -2,11 +2,11 @@
           <div class="stats-grid">
             <div class="stat-card" id="statCardProximoOficio" data-requires-auth="true">
               <div class="stat-top">
-                <span class="stat-label">Olho de Apolo • Próximo Ofício</span>
+                <span class="stat-label" id="statLabelProximoOficio">Olho de Apolo • Próximo Ofício</span>
                 <div class="stat-actions">
                   <button id="copyOficioBtn" class="btn-mini" title="Copiar número">Copiar</button>
-                  <button id="reserveOficioBtn" class="btn-mini btn-mini-accent" title="Reservar número atual e avançar +1" data-requires-auth="true" data-access-page="oficios">+1 Reservar</button>
-                  <button id="editOficioBtn" class="btn-mini" title="Ajustar contador oficial" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE">Ajustar</button>
+                  <button id="reserveOficioBtn" class="btn-mini btn-mini-accent" title="Reservar número atual e avançar +1" data-requires-auth="true" data-access-page="oficios" data-perm="oficios.reservar_ajustar">+1 Reservar</button>
+                  <button id="editOficioBtn" class="btn-mini" title="Ajustar contador oficial" data-requires-auth="true" data-perm="oficios.reservar_ajustar">Ajustar</button>
                 </div>
               </div>
               <div class="stat-value" id="kpiProximoOficio">--</div>
@@ -16,13 +16,13 @@
               </div>
             </div>
 
-            <div class="stat-card" id="statCardProximaPortaria" data-requires-auth="true">
+            <div class="stat-card" id="statCardProximaPortaria" data-requires-auth="true" data-perm="portarias.ver">
               <div class="stat-top">
                 <span class="stat-label">Olho de Apolo • Próxima Portaria</span>
                 <div class="stat-actions">
                   <button id="copyPortariaBtn" class="btn-mini" title="Copiar número">Copiar</button>
-                  <button id="reservePortariaBtn" class="btn-mini btn-mini-accent" title="Reservar número atual e avançar +1" data-requires-auth="true" data-access-page="portarias">+1 Reservar</button>
-                  <button id="editPortariaBtn" class="btn-mini" title="Ajustar contador oficial" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE">Ajustar</button>
+                  <button id="reservePortariaBtn" class="btn-mini btn-mini-accent" title="Reservar número atual e avançar +1" data-requires-auth="true" data-access-page="portarias" data-perm="portarias.numerar_reservar">+1 Reservar</button>
+                  <button id="editPortariaBtn" class="btn-mini" title="Ajustar contador oficial" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE" data-perm="portarias.numerar_reservar">Ajustar</button>
                 </div>
               </div>
               <div class="stat-value" id="kpiProximaPortaria">--</div>
@@ -78,7 +78,7 @@
                   <button type="button" class="filter-pill" data-news-source="prefeitura">Prefeitura</button>
                   <button type="button" class="filter-pill" data-news-source="camara">Câmara Municipal</button>
                 </div>
-                <button type="button" id="btnRefreshMunicipalNews" class="btn btn-secondary btn-sm">
+                <button type="button" id="btnRefreshMunicipalNews" class="btn btn-secondary btn-sm" data-perm="noticias.atualizar">
                   <span class="svg-icon-inline" data-icon="refreshSync"></span><span>Atualizar</span>
                 </button>
               </div>
@@ -126,7 +126,7 @@
                 <span class="qm-action">Abrir página dedicada →</span>
               </div>
 
-              <div class="quick-module-card" data-nav-target="portarias">
+              <div class="quick-module-card" data-nav-target="portarias" data-perm="portarias.ver">
                 <div class="qm-icon-badge" data-persona-icon="apolo"></div>
                 <div>
                   <div class="qm-category">O Pincel de Homero</div>
@@ -136,7 +136,7 @@
                 <span class="qm-action">Abrir página dedicada →</span>
               </div>
 
-              <div class="quick-module-card" data-nav-target="licencas">
+              <div class="quick-module-card" data-nav-target="licencas" data-perm="portarias.licencas_cadastrar">
                 <div class="qm-icon-badge" data-persona-icon="hera"></div>
                 <div>
                   <div class="qm-category">Gestão Funcional</div>
@@ -198,7 +198,7 @@
             </div>
           </div>
 
-          <div id="homeMemoriasPanel" class="surface-card" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE,RH_COMISSAO,PEDAGOGICO_EVENTOS,JURIDICO" style="margin-top: 20px;">
+          <div id="homeMemoriasPanel" class="surface-card" data-requires-auth="true" data-perm="memorias.ler" data-access-roles="MODERADOR,ADMIN_GABINETE,RH_COMISSAO,PEDAGOGICO_EVENTOS,JURIDICO" style="margin-top: 20px;">
             <div class="card-header-row" style="margin-bottom: 14px;">
               <div>
                 <span class="section-eyebrow">MEMÓRIAS OPERACIONAIS • GOOGLE DOCS (22 DOCUMENTOS)</span>

@@ -94,7 +94,7 @@
               </div>
 
               <div class="cal-export-group" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                <button type="button" class="btn btn-secondary btn-sm" id="btnNovoEventoAgenda" title="Agendar nova reunião ou evento intersetorial">
+                <button type="button" class="btn btn-secondary btn-sm" id="btnNovoEventoAgenda" title="Agendar nova reunião ou evento intersetorial" data-perm="calendario.criar_editar">
                   <span>+ Novo Evento da Agenda</span>
                 </button>
                 <button type="button" class="btn btn-secondary btn-sm" id="btnExportarIcal">
@@ -315,12 +315,12 @@
                   </div>
 
                   <div class="modal-footer" style="padding: 14px 24px; display: flex; justify-content: space-between; align-items: center;">
-                    <button type="button" id="btnExcluirEventoAgenda" class="btn btn-ghost btn-sm hidden" style="color: var(--danger); border-color: var(--danger-soft);">
+                    <button type="button" id="btnExcluirEventoAgenda" class="btn btn-ghost btn-sm hidden" data-perm="calendario.excluir" style="color: var(--danger); border-color: var(--danger-soft);">
                       <span class="svg-icon-inline" data-icon="trash"></span> Excluir Evento
                     </button>
                     <div style="display: flex; gap: 10px; margin-left: auto;">
                       <button type="button" id="btnCancelarFormAgenda" class="btn btn-secondary btn-sm">Cancelar</button>
-                      <button type="submit" id="btnSalvarEventoAgenda" class="btn btn-primary btn-sm">Salvar Evento</button>
+                      <button type="submit" id="btnSalvarEventoAgenda" class="btn btn-primary btn-sm" data-perm="calendario.criar_editar">Salvar Evento</button>
                     </div>
                   </div>
                 </form>

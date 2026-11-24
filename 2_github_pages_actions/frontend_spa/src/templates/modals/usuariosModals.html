@@ -26,15 +26,39 @@
               <input type="email" id="novoUsuarioEmail" class="input-clean" placeholder="servidor@smeb.cearamirim.rn.gov.br" required autocomplete="email username" />
             </div>
 
-            <!-- Campo: Papel (select) -->
+            <!-- Campos Onda 7: Setor Organizacional & Cargo Setorial -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
+              <div class="field-group" style="margin-bottom: 0;">
+                <label for="novoUsuarioSetor">Setor Organizacional *</label>
+                <select id="novoUsuarioSetor" class="input-clean">
+                  <option value="GABINETE">Gabinete da Secretaria (GS)</option>
+                  <option value="PEDAGOGICO">Setor Pedagógico (PED)</option>
+                  <option value="ADMINISTRATIVO">Setor Administrativo (ADM)</option>
+                  <option value="JURIDICO">Assessoria Jurídica (JUR)</option>
+                  <option value="NUTRICAO">Setor de Nutrição (NUT)</option>
+                  <option value="RECURSOS_HUMANOS" selected>Setor de Recursos Humanos (RH)</option>
+                  <option value="TRANSPORTE_ESCOLAR">Setor de Transporte Escolar (TRANS)</option>
+                  <option value="FINANCEIRO_TESOURARIA">Setor Financeiro e Tesouraria (FIN)</option>
+                  <option value="ENGENHARIA">Setor de Engenharia (ENG)</option>
+                </select>
+              </div>
+              <div class="field-group" style="margin-bottom: 0;">
+                <label for="novoUsuarioCargoSetor">Função no Setor *</label>
+                <select id="novoUsuarioCargoSetor" class="input-clean">
+                  <option value="MEMBRO">Membro do Setor</option>
+                  <option value="ENCARREGADO">Encarregado do Setor (Líder)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Campo: Papel (compatibilidade legada sincronizada) -->
             <div class="field-group" style="margin-bottom: 14px;">
-              <label for="novoUsuarioRole">Perfil de Acesso *</label>
+              <label for="novoUsuarioRole">Perfil Base (Compatibilidade RBAC) *</label>
               <select id="novoUsuarioRole" class="input-clean" required>
-                <option value="RH_COMISSAO">Recursos Humanos e Portarias</option>
-                <option value="PEDAGOGICO_EVENTOS">Pedagógico e Eventos</option>
+                <option value="RH_COMISSAO">Recursos Humanos</option>
+                <option value="PEDAGOGICO_EVENTOS">Setores Especializados / Pedagógico</option>
                 <option value="JURIDICO">Assessoria Jurídica</option>
                 <option value="ADMIN_GABINETE">Gabinete Executivo</option>
-                <option value="MODERADOR">Moderador (Acesso Máximo)</option>
               </select>
             </div>
 
@@ -101,12 +125,39 @@
               <input type="email" id="editarUsuarioEmail" class="input-clean" readonly disabled style="opacity: 0.7; cursor: not-allowed;" autocomplete="username" />
             </div>
 
-            <!-- Campo: Papel (select) -->
+            <!-- Campos Onda 7: Setor Organizacional & Cargo Setorial -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px;">
+              <div class="field-group" style="margin-bottom: 0;">
+                <label for="editarUsuarioSetor">Setor Organizacional *</label>
+                <select id="editarUsuarioSetor" class="input-clean">
+                  <option value="GABINETE">Gabinete da Secretaria (GS)</option>
+                  <option value="PEDAGOGICO">Setor Pedagógico (PED)</option>
+                  <option value="ADMINISTRATIVO">Setor Administrativo (ADM)</option>
+                  <option value="JURIDICO">Assessoria Jurídica (JUR)</option>
+                  <option value="NUTRICAO">Setor de Nutrição (NUT)</option>
+                  <option value="RECURSOS_HUMANOS">Setor de Recursos Humanos (RH)</option>
+                  <option value="TRANSPORTE_ESCOLAR">Setor de Transporte Escolar (TRANS)</option>
+                  <option value="FINANCEIRO_TESOURARIA">Setor Financeiro e Tesouraria (FIN)</option>
+                  <option value="ENGENHARIA">Setor de Engenharia (ENG)</option>
+                  <option value="MODERADOR">Moderador do Sistema (Único)</option>
+                </select>
+              </div>
+              <div class="field-group" style="margin-bottom: 0;">
+                <label for="editarUsuarioCargoSetor">Função no Setor *</label>
+                <select id="editarUsuarioCargoSetor" class="input-clean">
+                  <option value="MEMBRO">Membro do Setor</option>
+                  <option value="ENCARREGADO">Encarregado do Setor (Líder)</option>
+                  <option value="MODERADOR">Moderador (Único)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Campo: Papel (compatibilidade legada) -->
             <div class="field-group" style="margin-bottom: 14px;">
-              <label for="editarUsuarioRole">Perfil de Acesso *</label>
+              <label for="editarUsuarioRole">Perfil Base (Compatibilidade RBAC) *</label>
               <select id="editarUsuarioRole" class="input-clean" required>
-                <option value="RH_COMISSAO">Recursos Humanos e Portarias</option>
-                <option value="PEDAGOGICO_EVENTOS">Pedagógico e Eventos</option>
+                <option value="RH_COMISSAO">Recursos Humanos</option>
+                <option value="PEDAGOGICO_EVENTOS">Setores Especializados / Pedagógico</option>
                 <option value="JURIDICO">Assessoria Jurídica</option>
                 <option value="ADMIN_GABINETE">Gabinete Executivo</option>
                 <option value="MODERADOR">Moderador (Acesso Máximo)</option>

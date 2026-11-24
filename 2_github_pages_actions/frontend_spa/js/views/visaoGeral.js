@@ -437,6 +437,8 @@ window.OlymposViews.visaoGeral = (function() {
       definirEstadoInicialNumeracao();
     }
 
+    carregarNumeracaoSetorVisaoGeral();
+
     // 1. Consulta prioritária à fonte oficial (_memoria_apolo.md no Drive via Gateway GAS).
     // Enquanto a resposta não chega, os contadores permanecem com "--" (zero números estáticos).
     window.OlymposApi.chamar('overview_get', {}, function(res) {
@@ -460,8 +462,45 @@ window.OlymposViews.visaoGeral = (function() {
     });
   }
 
+  async function carregarNumeracaoSetorVisaoGeral() {
+    const rbac = window.OlymposRbac;
+    const setorAtual = (rbac && typeof rbac.getSetorAtual === 'function' && rbac.getSetorAtual()) || 'GABINETE';
+    const isModOuGab = setorAtual === 'MODERADOR' || setorAtual === 'GABINETE';
+
+    const labelOf = document.getElementById('statLabelProximoOficio');
+    if (labelOf) {
+      const info = rbac && rbac.SETORES_MAP ? rbac.SETORES_MAP[setorAtual] : null;
+      labelOf.textContent = isModOuGab
+        ? 'Olho de Apolo • Próximo Ofício (GS)'
+        : ('Série Setorial • Próximo Ofício (' + (info ? info.siglaOficio : setorAtual) + ')');
+    }
+
+    if (window.OlymposSupabase && typeof window.OlymposSupabase.listarNumeracaoVisivel === 'function') {
+      try {
+        const resNum = await window.OlymposSupabase.listarNumeracaoVisivel(2026);
+        if (resNum && resNum.ok && Array.isArray(resNum.oficios)) {
+          const alvo = setorAtual === 'MODERADOR' ? 'GABINETE' : setorAtual;
+          const item = resNum.oficios.find(function(n) { return n.setor_codigo === alvo; }) || resNum.oficios[0];
+          if (item) {
+            const elOf = document.getElementById('kpiProximoOficio');
+            const elUltOf = document.getElementById('kpiUltimoOficio');
+            const sigla = item.sigla_documento || 'GS';
+            if (elOf) elOf.textContent = 'Nº ' + item.proximo_numero + ' (' + sigla + ')';
+            if (elUltOf) {
+              elUltOf.innerHTML = '<span>Último emitido: Nº ' + (item.ultimo_numero || 0) + ' • Série ' + sigla + '</span>';
+            }
+          }
+        }
+      } catch (_eNum) {}
+    }
+  }
+
   function atualizarKpis(data) {
     if (!data) return;
+
+    const rbac = window.OlymposRbac;
+    const setorAtual = (rbac && typeof rbac.getSetorAtual === 'function' && rbac.getSetorAtual()) || 'GABINETE';
+    const isModOuGab = setorAtual === 'MODERADOR' || setorAtual === 'GABINETE';
 
     if (data.numeracao) {
       const n = data.numeracao;
@@ -487,16 +526,18 @@ window.OlymposViews.visaoGeral = (function() {
       const elPt = document.getElementById('kpiProximaPortaria');
       const elUltPt = document.getElementById('kpiUltimaPortaria');
 
-      if (elOf) elOf.textContent = ofVal !== null ? ('Nº ' + ofVal) : '--';
-      if (elUltOf) {
-        elUltOf.innerHTML = '<span>Último emitido: ' + (ultOf !== null ? ('Nº ' + ultOf) : '--') + '</span>' +
-          '<a href="' + window.OlymposApp.escapeHtml(memUrl) + '" target="_blank" rel="noopener" class="folder-chip" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE,RH_COMISSAO,PEDAGOGICO_EVENTOS,JURIDICO">Memória de Apolo ↗</a>';
+      if (isModOuGab) {
+        if (elOf) elOf.textContent = ofVal !== null ? ('Nº ' + ofVal) : '--';
+        if (elUltOf) {
+          elUltOf.innerHTML = '<span>Último emitido: ' + (ultOf !== null ? ('Nº ' + ultOf) : '--') + '</span>' +
+            '<a href="' + window.OlymposApp.escapeHtml(memUrl) + '" target="_blank" rel="noopener" class="folder-chip" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE,RH_COMISSAO,PEDAGOGICO_EVENTOS,JURIDICO">Memória de Apolo ↗</a>';
+        }
       }
 
-      if (elPt) elPt.textContent = ptVal !== null ? ('Nº ' + ptVal) : '--';
+      if (elPt) elPt.textContent = isModOuGab && ptVal !== null ? ('Nº ' + ptVal) : '--';
       if (elUltPt) {
-        elUltPt.innerHTML = '<span>Última emitida: ' + (ultPt !== null ? ('Nº ' + ultPt) : '--') + '</span>' +
-          '<a href="' + window.OlymposApp.escapeHtml(memUrl) + '" target="_blank" rel="noopener" class="folder-chip" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE,RH_COMISSAO,PEDAGOGICO_EVENTOS,JURIDICO">Memória de Apolo ↗</a>';
+        elUltPt.innerHTML = '<span>Última emitida: ' + (isModOuGab && ultPt !== null ? ('Nº ' + ultPt) : '--') + '</span>' +
+          '<a href="' + window.OlymposApp.escapeHtml(memUrl) + '" target="_blank" rel="noopener" class="folder-chip" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE">Memória de Apolo ↗</a>';
       }
 
       if (window.OlymposApp && typeof window.OlymposApp.aplicarControleAcessoModularEDrive === 'function') {
@@ -506,14 +547,14 @@ window.OlymposViews.visaoGeral = (function() {
       const inOf = document.getElementById('inputProximoOficioMd');
       const inPt = document.getElementById('inputProximaPortariaMd');
       const inSig = document.getElementById('inputSignatarioMd');
-      if (inOf && ofVal !== null) inOf.value = ofVal;
-      if (inPt && ptVal !== null) inPt.value = ptVal;
+      if (inOf && ofVal !== null && isModOuGab) inOf.value = ofVal;
+      if (inPt && ptVal !== null && isModOuGab) inPt.value = ptVal;
       if (inSig && (n.signatarioTitular || n.signatario)) {
         inSig.value = n.signatarioTitular || n.signatario;
       }
 
       const inputOficioForm = document.getElementById('oficioNumeroInput');
-      if (inputOficioForm && !inputOficioForm.value && ofVal !== null) {
+      if (inputOficioForm && !inputOficioForm.value && ofVal !== null && isModOuGab) {
         inputOficioForm.value = String(ofVal);
       }
     }
@@ -593,9 +634,28 @@ window.OlymposViews.visaoGeral = (function() {
     });
   }
 
-  function reservarNumero(tipo) {
-    const desc = prompt('Informe a finalidade/destinatário para reservar o próximo ' + tipo + ' em _memoria_apolo.md:', 'Emissão pelo Gabinete SMEB');
+  async function reservarNumero(tipo) {
+    const desc = prompt('Informe a finalidade/destinatário para reservar o próximo ' + tipo + ':', 'Emissão pelo Setor SMEB');
     if (!desc) return;
+
+    const rbac = window.OlymposRbac;
+    const setorAtual = (rbac && typeof rbac.getSetorAtual === 'function' && rbac.getSetorAtual()) || 'GABINETE';
+    const alvoSetor = setorAtual === 'MODERADOR' ? 'GABINETE' : setorAtual;
+
+    if (window.OlymposSupabase && typeof window.OlymposSupabase.reservarNumeroDocumento === 'function') {
+      try {
+        const resRpc = await window.OlymposSupabase.reservarNumeroDocumento(tipo, alvoSetor, 2026, desc);
+        if (resRpc && resRpc.ok) {
+          window.OlymposApp.showToast(
+            tipo + ' reservado (' + (resRpc.sigla_documento || alvoSetor) + '): Nº ' + resRpc.numero_formatado + ' (Próximo: ' + resRpc.proximo_numero + ')'
+          );
+          void carregarNumeracaoSetorVisaoGeral();
+          if (alvoSetor !== 'GABINETE') return;
+        }
+      } catch (_eRpc) {
+        // Fallback legado para Gabinete se RPC Onda 7 ainda não aplicada
+      }
+    }
 
     window.OlymposApi.chamar('reservar_numero_md', { tipo: tipo, detalhe: desc }, function(res) {
       if (res && res.ok) {

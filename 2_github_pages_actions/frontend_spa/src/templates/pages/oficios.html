@@ -24,6 +24,27 @@
               <button type="button" id="btnLimparOficioDispatchCtx" class="btn btn-ghost btn-sm">Desvincular Pendência</button>
             </div>
 
+            <div id="oficioSerieBanner" class="oficio-serie-banner" data-requires-auth="true">
+              <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <span id="oficioSerieBadge" class="setor-pill is-encarregado">Série Setorial: --</span>
+                <span id="oficioSerieMeta" style="font-size: 0.82rem; color: var(--text-secondary);">Próximo Nº 2026: <strong id="oficioSerieProxNumero">--</strong> • Pasta: <code id="oficioSeriePastaNome">Ofícios 2026</code></span>
+              </div>
+              <div data-perm="oficios.ver_todos_setores" style="display: flex; align-items: center; gap: 8px;">
+                <label for="oficioSetorSelect" style="font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); margin: 0;">Emitir pelo setor:</label>
+                <select id="oficioSetorSelect" class="input-clean" style="min-width: 210px; padding: 5px 10px; font-size: 0.82rem;">
+                  <option value="GABINETE">Gabinete da Secretaria (GS)</option>
+                  <option value="PEDAGOGICO">Setor Pedagógico (PED)</option>
+                  <option value="ADMINISTRATIVO">Setor Administrativo (ADM)</option>
+                  <option value="JURIDICO">Assessoria Jurídica (JUR)</option>
+                  <option value="NUTRICAO">Setor de Nutrição (NUT)</option>
+                  <option value="RECURSOS_HUMANOS">Setor de Recursos Humanos (RH)</option>
+                  <option value="TRANSPORTE_ESCOLAR">Setor de Transporte Escolar (TRANS)</option>
+                  <option value="FINANCEIRO_TESOURARIA">Setor Financeiro e Tesouraria (FIN)</option>
+                  <option value="ENGENHARIA">Setor de Engenharia (ENG)</option>
+                </select>
+              </div>
+            </div>
+
             <div class="controls-grid oficio-meta-grid">
               <div class="field-group">
                 <label for="oficioNumeroInput">Nº do Ofício (Sugerido por Apolo)</label>
@@ -58,7 +79,7 @@
             </div>
 
             <div class="button-group" style="margin-top: 20px;">
-              <button id="gerarOficioRapidoBtn" class="btn btn-primary">Emitir Ofício no Google Docs</button>
+              <button id="gerarOficioRapidoBtn" class="btn btn-primary" data-perm="oficios.emitir">Emitir Ofício no Google Docs</button>
             </div>
 
             <div id="oficioRapidoOutput" class="job-result-card hidden"></div>

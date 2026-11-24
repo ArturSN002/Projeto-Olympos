@@ -19,7 +19,7 @@
         <div class="chat-sidebar-head">
           <div class="chat-sidebar-actions">
             <button type="button" id="btnNovoChatDireto" class="btn btn-primary btn-sm">+ Direta</button>
-            <button type="button" id="btnNovoChatGrupo" class="btn btn-secondary btn-sm">+ Grupo</button>
+            <button type="button" id="btnNovoChatGrupo" class="btn btn-secondary btn-sm" data-perm="chat.criar_grupo">+ Grupo</button>
           </div>
           <div>
             <label for="chatSidebarSearch" class="sr-only">Filtrar conversas</label>
@@ -189,7 +189,7 @@
 
       <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
         <button type="button" id="btnCancelarChatGrupo" class="btn btn-secondary">Cancelar</button>
-        <button type="submit" id="btnCriarChatGrupoSubmit" class="btn btn-primary">Criar Grupo</button>
+        <button type="submit" id="btnCriarChatGrupoSubmit" class="btn btn-primary" data-perm="chat.criar_grupo">Criar Grupo</button>
       </div>
     </form>
   </div>

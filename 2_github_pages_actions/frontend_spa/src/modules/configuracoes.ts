@@ -59,6 +59,22 @@ async function atualizarPainelSegurancaMfaSessoes(): Promise<void> {
 
 let oraculoLoadPromise: Promise<void> | null = null;
 let auditoriaLoadPromise: Promise<void> | null = null;
+let rbacLoadPromise: Promise<void> | null = null;
+
+async function mountRbacAdminEmAjustes(): Promise<void> {
+  const root = document.getElementById('rbacAdminPanelRoot');
+  if (!root) return;
+  if (rbacLoadPromise) return rbacLoadPromise;
+  rbacLoadPromise = (async () => {
+    const mod = await import('./rbacAdmin');
+    await mod.mountRbacAdmin('rbacAdminPanelRoot');
+  })();
+  try {
+    await rbacLoadPromise;
+  } finally {
+    rbacLoadPromise = null;
+  }
+}
 
 async function mountOraculoEmAjustes(): Promise<void> {
   const host = document.getElementById('configOraculoHost');
@@ -143,6 +159,9 @@ if (typeof window !== 'undefined') {
   (window as any).OlymposConfigAuditoriaMount = () => {
     void mountAuditoriaEmAjustes();
   };
+  (window as any).OlymposConfigRbacMount = () => {
+    void mountRbacAdminEmAjustes();
+  };
 }
 
 function bindSecurityPanelEvents(): void {
@@ -195,6 +214,10 @@ function bindSecurityPanelEvents(): void {
 
   bindOnce('subtabBtnAjustesAuditoria', () => {
     void mountAuditoriaEmAjustes();
+  });
+
+  bindOnce('subtabBtnAjustesUsuarios', () => {
+    void mountRbacAdminEmAjustes();
   });
 }
 

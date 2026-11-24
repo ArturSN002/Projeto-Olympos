@@ -110,6 +110,28 @@ window.OlymposViews.configuracoes = (function() {
       formEditarUser._bound = true;
       formEditarUser.addEventListener('submit', salvarEdicaoUsuario);
     }
+
+    // Sincroniza selects Setor <-> Role legada nos modais Novo e Editar Usuário
+    const mapSetorToRole = function(setorCod) {
+      const rbac = window.OlymposRbac;
+      if (rbac && rbac.SETORES_MAP && rbac.SETORES_MAP[setorCod]) {
+        return rbac.SETORES_MAP[setorCod].legacyRole;
+      }
+      if (setorCod === 'MODERADOR') return 'MODERADOR';
+      if (setorCod === 'GABINETE') return 'ADMIN_GABINETE';
+      if (setorCod === 'RECURSOS_HUMANOS') return 'RH_COMISSAO';
+      if (setorCod === 'JURIDICO') return 'JURIDICO';
+      return 'PEDAGOGICO_EVENTOS';
+    };
+
+    bind('novoUsuarioSetor', 'change', function(e) {
+      const rSel = document.getElementById('novoUsuarioRole');
+      if (rSel) rSel.value = mapSetorToRole(e.target.value);
+    });
+    bind('editarUsuarioSetor', 'change', function(e) {
+      const rSel = document.getElementById('editarUsuarioRole');
+      if (rSel) rSel.value = mapSetorToRole(e.target.value);
+    });
   }
 
   function alternarSubtab(subtabId) {
@@ -149,6 +171,9 @@ window.OlymposViews.configuracoes = (function() {
       }
     } else if (subtabId === 'usuarios') {
       carregarUsuarios();
+      if (typeof window.OlymposConfigRbacMount === 'function') {
+        window.OlymposConfigRbacMount();
+      }
     } else if (subtabId === 'personas') {
       if (window.OlymposViews && window.OlymposViews.personas && typeof window.OlymposViews.personas.init === 'function') {
         window.OlymposViews.personas.init();
@@ -224,24 +249,28 @@ window.OlymposViews.configuracoes = (function() {
       : { items: usuariosLista, paginaAtual: 1, totalPaginas: 1, totalItens: usuariosLista.length, inicio: 1, fim: usuariosLista.length };
     paginaUsuarios = pag.paginaAtual;
 
-    const getRoleBadge = function(role) {
-      const r = String(role || '').toUpperCase();
-      const labelOrganico = (window.OlymposApp && typeof window.OlymposApp.obterLabelPerfilOrganico === 'function')
-        ? window.OlymposApp.obterLabelPerfilOrganico(r)
-        : r;
+    const getRoleBadge = function(userObj) {
+      const r = String((userObj && userObj.role) || '').toUpperCase();
+      const setorCod = (userObj && userObj.setor_codigo) || '';
+      const cargoSet = (userObj && userObj.cargo_setor) || '';
+      const labelOrganico = (window.OlymposRbac && typeof window.OlymposRbac.formatarCargoSetorBadge === 'function')
+        ? window.OlymposRbac.formatarCargoSetorBadge(setorCod, cargoSet, r)
+        : ((window.OlymposApp && typeof window.OlymposApp.obterLabelPerfilOrganico === 'function')
+          ? window.OlymposApp.obterLabelPerfilOrganico(r)
+          : r);
       const labelSafe = (window.OlymposApp && typeof window.OlymposApp.escapeHtml === 'function')
         ? window.OlymposApp.escapeHtml(labelOrganico)
         : labelOrganico;
-      if (r === 'MODERADOR') {
+      if (r === 'MODERADOR' || setorCod === 'MODERADOR') {
         return '<span class="pill-badge pill-gold" style="font-size: 0.72rem;">' + labelSafe + '</span>';
       }
-      if (r === 'ADMIN_GABINETE') {
+      if (r === 'ADMIN_GABINETE' || setorCod === 'GABINETE') {
         return '<span class="pill-badge pill-purple" style="font-size: 0.72rem;">' + labelSafe + '</span>';
       }
-      if (r === 'JURIDICO') {
+      if (r === 'JURIDICO' || setorCod === 'JURIDICO') {
         return '<span class="pill-badge pill-blue" style="font-size: 0.72rem;">' + labelSafe + '</span>';
       }
-      if (r === 'RH_COMISSAO') {
+      if (r === 'RH_COMISSAO' || setorCod === 'RECURSOS_HUMANOS') {
         return '<span class="pill-badge pill-amber" style="font-size: 0.72rem;">' + labelSafe + '</span>';
       }
       return '<span class="pill-badge pill-green" style="font-size: 0.72rem;">' + labelSafe + '</span>';
@@ -263,7 +292,7 @@ window.OlymposViews.configuracoes = (function() {
             <div style="font-weight: 600; color: var(--text-primary);">${nomeSafe}</div>
             <div style="font-size: 0.76rem; color: var(--text-muted); font-family: var(--font-mono);">${emailSafe}</div>
           </td>
-          <td style="padding: 12px 14px;">${getRoleBadge(u.role)}</td>
+          <td style="padding: 12px 14px;">${getRoleBadge(u)}</td>
           <td style="padding: 12px 14px; font-size: 0.85rem; color: var(--text-secondary);">${deptSafe}</td>
           <td style="padding: 12px 14px;">
             <span class="pill-badge ${isAtivo ? 'pill-green' : 'pill-red'}" style="font-size: 0.7rem;">
@@ -340,16 +369,40 @@ window.OlymposViews.configuracoes = (function() {
     const inNome = document.getElementById('editarUsuarioNome');
     const inEmail = document.getElementById('editarUsuarioEmail');
     const inRole = document.getElementById('editarUsuarioRole');
+    const inSetor = document.getElementById('editarUsuarioSetor');
+    const inCargo = document.getElementById('editarUsuarioCargoSetor');
     const inDept = document.getElementById('editarUsuarioDepartamento');
     const inAtivo = document.getElementById('editarUsuarioAtivo');
     const feedback = document.getElementById('editarUsuarioFeedback');
 
+    const inferredSetor = (window.OlymposRbac && typeof window.OlymposRbac.inferirSetorPorRoleLegado === 'function')
+      ? window.OlymposRbac.inferirSetorPorRoleLegado(user.role, user.setor_codigo)
+      : (user.setor_codigo || 'RECURSOS_HUMANOS');
+    const inferredCargo = (window.OlymposRbac && typeof window.OlymposRbac.inferirCargoPorRoleLegado === 'function')
+      ? window.OlymposRbac.inferirCargoPorRoleLegado(user.role, user.cargo_setor)
+      : (user.cargo_setor || 'MEMBRO');
+    const isTargetMod = inferredSetor === 'MODERADOR' || inferredCargo === 'MODERADOR' || String(user.role || '').toUpperCase() === 'MODERADOR';
+
     if (inId) inId.value = user.id;
     if (inNome) inNome.value = user.full_name || user.nome || '';
     if (inEmail) inEmail.value = user.email || '';
-    if (inRole) inRole.value = user.role || 'RH_COMISSAO';
+    if (inRole) {
+      inRole.value = user.role || 'RH_COMISSAO';
+      inRole.disabled = isTargetMod;
+    }
+    if (inSetor) {
+      inSetor.value = inferredSetor;
+      inSetor.disabled = isTargetMod;
+    }
+    if (inCargo) {
+      inCargo.value = inferredCargo;
+      inCargo.disabled = isTargetMod;
+    }
     if (inDept) inDept.value = user.department || user.departamento || 'Secretaria Municipal de Educacao';
-    if (inAtivo) inAtivo.value = user.ativo !== false ? 'true' : 'false';
+    if (inAtivo) {
+      inAtivo.value = user.ativo !== false ? 'true' : 'false';
+      inAtivo.disabled = isTargetMod;
+    }
     if (feedback) {
       feedback.classList.add('hidden');
       feedback.textContent = '';
@@ -377,6 +430,8 @@ window.OlymposViews.configuracoes = (function() {
     const inId = document.getElementById('editarUsuarioId');
     const inNome = document.getElementById('editarUsuarioNome');
     const inRole = document.getElementById('editarUsuarioRole');
+    const inSetor = document.getElementById('editarUsuarioSetor');
+    const inCargo = document.getElementById('editarUsuarioCargoSetor');
     const inDept = document.getElementById('editarUsuarioDepartamento');
     const inAtivo = document.getElementById('editarUsuarioAtivo');
     const feedback = document.getElementById('editarUsuarioFeedback');
@@ -386,9 +441,25 @@ window.OlymposViews.configuracoes = (function() {
 
     const userId = inId.value;
     const nome = inNome.value.trim();
-    const role = inRole.value;
+    const existing = usuariosLista.find(function(u) { return u.id === userId; });
+    const wasMod = existing && String(existing.role || '').toUpperCase() === 'MODERADOR';
+    const setorCodigo = inSetor ? inSetor.value : (existing && existing.setor_codigo) || 'PEDAGOGICO';
+    const cargoSetor = inCargo ? inCargo.value : (existing && existing.cargo_setor) || 'MEMBRO';
+    let role = inRole.value;
+    if (window.OlymposRbac && window.OlymposRbac.SETORES_MAP && window.OlymposRbac.SETORES_MAP[setorCodigo]) {
+      role = window.OlymposRbac.SETORES_MAP[setorCodigo].legacyRole;
+    }
     const department = inDept ? inDept.value.trim() : 'Secretaria Municipal de Educacao';
     const ativo = inAtivo ? (inAtivo.value === 'true') : true;
+
+    if (!wasMod && (role === 'MODERADOR' || setorCodigo === 'MODERADOR' || cargoSetor === 'MODERADOR')) {
+      if (feedback) {
+        feedback.textContent = 'Governança: não é permitido promover um segundo Moderador.';
+        feedback.className = 'output-panel output-error';
+        feedback.classList.remove('hidden');
+      }
+      return;
+    }
 
     if (!nome) {
       if (feedback) {
@@ -407,14 +478,31 @@ window.OlymposViews.configuracoes = (function() {
     const payload = {
       full_name: nome,
       role: role,
+      setor_codigo: setorCodigo,
+      cargo_setor: cargoSetor,
+      ativo: ativo,
       department: department
     };
 
     const hasClient = Boolean(window.OlymposSupabase && typeof window.OlymposSupabase.getClient === 'function' && window.OlymposSupabase.getClient());
     let sucesso = false;
-    if (window.OlymposSupabase && typeof window.OlymposSupabase.atualizarPerfilUsuario === 'function') {
+    if (window.OlymposSupabase) {
       try {
-        sucesso = await window.OlymposSupabase.atualizarPerfilUsuario(userId, payload);
+        if (typeof window.OlymposSupabase.atualizarOperadorHierarquia === 'function') {
+          try {
+            const rpcRes = await window.OlymposSupabase.atualizarOperadorHierarquia(userId, payload);
+            if (rpcRes && rpcRes.ok) {
+              sucesso = true;
+            }
+          } catch (_eRpc) {
+            sucesso = false;
+          }
+        }
+        if (!sucesso && typeof window.OlymposSupabase.atualizarPerfilUsuario === 'function') {
+          sucesso = await window.OlymposSupabase.atualizarPerfilUsuario(userId, payload);
+        } else if (sucesso && department && typeof window.OlymposSupabase.atualizarPerfilUsuario === 'function') {
+          await window.OlymposSupabase.atualizarPerfilUsuario(userId, payload);
+        }
       } catch (err) {
         console.warn('[Configuracoes] Falha na atualização do perfil:', err);
       }

@@ -17,10 +17,11 @@ import '../js/signals.js';
 import '../js/pagination.js';
 import '../js/sla_engine.js';
 
-// 2. Módulos core TypeScript (LGPD, Zero-Trust Session Guard, Termo de Sigilo, Roteador Lazy, Acessibilidade & Notificações)
+// 2. Módulos core TypeScript (LGPD, Zero-Trust Session Guard, Termo de Sigilo, RBAC Onda 7, Roteador Lazy, Acessibilidade & Notificações)
 import './core/piiMask';
 import './core/termoSigilo';
 import './core/sessionGuard';
+import './core/rbacEngine';
 import { initModalManager } from './core/modalManager';
 import { initShortcuts } from './core/shortcuts';
 import { initNotifications } from './core/notifications';

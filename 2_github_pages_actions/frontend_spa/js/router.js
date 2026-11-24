@@ -309,6 +309,9 @@ window.OlymposRouter = (function() {
         }
       }
 
+      if (window.OlymposRbac && typeof window.OlymposRbac.aplicarAtributosPermissaoDom === 'function') {
+        window.OlymposRbac.aplicarAtributosPermissaoDom();
+      }
       dispararCarregamentoPagina(pageId);
     }
 

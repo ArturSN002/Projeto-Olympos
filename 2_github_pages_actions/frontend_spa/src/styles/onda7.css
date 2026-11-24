@@ -1,0 +1,252 @@
+/* ==========================================================================
+   Onda 7 — Hierarquia de Acesso, 10 Setores, Matriz Dinâmica & Numeração
+   Carregado sob demanda pelo módulo rbacAdmin / views setoriais.
+   ========================================================================== */
+
+.rbac-admin-panel {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-hairline);
+}
+
+.rbac-status-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--bg-tonal);
+  border: 1px solid var(--border-hairline);
+  margin-bottom: 16px;
+  font-size: 0.85rem;
+}
+
+.rbac-status-banner.is-warning {
+  border-color: rgba(217, 119, 6, 0.35);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.rbac-subtabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--border-hairline);
+  padding-bottom: 10px;
+}
+
+.rbac-subtab-btn {
+  appearance: none;
+  background: var(--bg-tonal);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-hairline);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+}
+
+.rbac-subtab-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--border-strong, rgba(128, 128, 128, 0.35));
+}
+
+.rbac-subtab-btn.active {
+  background: var(--text-primary);
+  color: var(--bg-surface);
+  border-color: var(--text-primary);
+}
+
+.rbac-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.rbac-toolbar-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.rbac-matrix-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border-hairline);
+  border-radius: 12px;
+  background: var(--bg-surface);
+}
+
+.rbac-matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+
+.rbac-matrix-table th,
+.rbac-matrix-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-hairline);
+  vertical-align: middle;
+}
+
+.rbac-matrix-table thead th {
+  background: var(--bg-tonal);
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-align: left;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.rbac-group-row td {
+  background: var(--bg-tonal);
+  font-weight: 700;
+  font-size: 0.78rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  padding: 8px 12px;
+}
+
+.rbac-perm-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.rbac-perm-code {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.rbac-perm-desc {
+  font-size: 0.77rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.rbac-lock-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  background: rgba(180, 83, 9, 0.12);
+  color: #b45309;
+  border: 1px solid rgba(180, 83, 9, 0.25);
+}
+
+[data-theme="dark"] .rbac-lock-badge {
+  color: #fbbf24;
+  background: rgba(245, 158, 11, 0.14);
+}
+
+.rbac-toggle-check {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent-gold, #c99738);
+  cursor: pointer;
+}
+
+.rbac-toggle-check:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.rbac-num-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 12px;
+}
+
+.rbac-num-card {
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border-hairline);
+  background: var(--bg-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.rbac-num-card.is-portaria {
+  border-color: rgba(139, 92, 246, 0.35);
+}
+
+.rbac-num-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.rbac-num-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.oficio-serie-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--bg-tonal);
+  border: 1px solid var(--border-hairline);
+  margin-bottom: 16px;
+}
+
+.setor-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border: 1px solid var(--border-hairline);
+  background: var(--bg-tonal);
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.setor-pill.is-encarregado {
+  border-color: rgba(201, 151, 56, 0.45);
+  background: rgba(201, 151, 56, 0.12);
+}
+
+.setor-pill.is-moderador {
+  border-color: rgba(139, 92, 246, 0.45);
+  background: rgba(139, 92, 246, 0.12);
+}
+
+@media (max-width: 720px) {
+  .rbac-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

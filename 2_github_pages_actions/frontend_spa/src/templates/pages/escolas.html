@@ -7,7 +7,7 @@
                 <p class="section-desc">Mapeamento cartográfico interativo (Leaflet.js), catálogo georreferenciado com latitude e longitude, cadastro, edição e exclusão de unidades diretamente no mapa com persistência local e backup JSON.</p>
               </div>
               <div class="button-group">
-                <button type="button" id="btnNovaEscola" class="btn btn-primary btn-sm" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE">
+                <button type="button" id="btnNovaEscola" class="btn btn-primary btn-sm" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE" data-perm="escolas.editar">
                   <span>+ Nova Unidade Escolar</span>
                 </button>
                 <button type="button" id="btnRecentralizarMapaEscolas" class="btn btn-secondary btn-sm" title="Centralizar mapa em Ceará-Mirim">
@@ -16,11 +16,11 @@
                 <button type="button" id="btnExportarEscolasJson" class="btn btn-secondary btn-sm" title="Exportar catálogo em arquivo JSON">
                   <span class="svg-icon-inline" data-icon="download"></span> <span>Exportar JSON</span>
                 </button>
-                <button type="button" id="btnImportarEscolasJson" class="btn btn-secondary btn-sm" title="Importar catálogo a partir de arquivo JSON" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE">
+                <button type="button" id="btnImportarEscolasJson" class="btn btn-secondary btn-sm" title="Importar catálogo a partir de arquivo JSON" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE" data-perm="escolas.editar">
                   <span class="svg-icon-inline" data-icon="upload"></span> <span>Importar JSON</span>
                 </button>
                 <input type="file" id="escolasImportFileInput" accept=".json" style="display: none;" />
-                <button type="button" id="btnRestaurarEscolasPadrao" class="btn btn-ghost btn-sm" title="Restaurar catálogo inicial oficial com 20 escolas" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE">
+                <button type="button" id="btnRestaurarEscolasPadrao" class="btn btn-ghost btn-sm" title="Restaurar catálogo inicial oficial com 20 escolas" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE" data-perm="escolas.editar">
                   <span class="svg-icon-inline" data-icon="refresh"></span> <span>Restaurar Padrão</span>
                 </button>
               </div>

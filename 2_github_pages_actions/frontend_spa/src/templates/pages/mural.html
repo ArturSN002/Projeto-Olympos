@@ -11,7 +11,7 @@
       <div class="onda6-page-head-actions">
         <button type="button" id="btnMuralIrChat" class="btn btn-secondary btn-sm">Ir para o Chat</button>
         <button type="button" id="btnMuralAtualizar" class="btn btn-secondary btn-sm">Atualizar</button>
-        <button type="button" id="btnNovaPublicacaoMural" class="btn btn-primary btn-sm" data-requires-auth="true">
+        <button type="button" id="btnNovaPublicacaoMural" class="btn btn-primary btn-sm" data-requires-auth="true" data-perm="mural.publicar">
           + Nova Publicação
         </button>
       </div>
@@ -178,7 +178,7 @@
 
       <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px;">
         <button type="button" id="btnCancelarNovaPubMural" class="btn btn-secondary">Cancelar</button>
-        <button type="submit" id="btnSalvarNovaPubMural" class="btn btn-primary">Publicar no Mural</button>
+        <button type="submit" id="btnSalvarNovaPubMural" class="btn btn-primary" data-perm="mural.publicar">Publicar no Mural</button>
       </div>
     </form>
   </div>

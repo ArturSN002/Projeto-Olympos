@@ -151,6 +151,9 @@ window.OlymposApp = (function() {
     mfaFlowActive = false;
     mfaPendingCallbacks = [];
     initialPreloadDoneForAuth = false;
+    if (window.OlymposRbac && typeof window.OlymposRbac.limparContextoAcesso === 'function') {
+      window.OlymposRbac.limparContextoAcesso();
+    }
     aplicarModoVisitanteNaInterface();
     if (window.OlymposChatBadge && typeof window.OlymposChatBadge.clearOnLogout === 'function') {
       window.OlymposChatBadge.clearOnLogout();
@@ -170,19 +173,40 @@ window.OlymposApp = (function() {
         }
         try {
           const client = window.OlymposSupabase.getClient();
-          const { data: profData } = await client
+          let profData = null;
+          const resProf = await client
             .from('profiles')
-            .select('id, email, full_name, role, department, termo_sigilo_aceito_em, termo_sigilo_versao, onboarding_version_seen')
+            .select('id, email, full_name, role, department, setor_codigo, cargo_setor, ativo, termo_sigilo_aceito_em, termo_sigilo_versao, onboarding_version_seen')
             .eq('id', sbSession.user.id)
             .maybeSingle();
+          if (resProf && !resProf.error && resProf.data) {
+            profData = resProf.data;
+          } else {
+            const resLegacy = await client
+              .from('profiles')
+              .select('id, email, full_name, role, department, termo_sigilo_aceito_em, termo_sigilo_versao, onboarding_version_seen')
+              .eq('id', sbSession.user.id)
+              .maybeSingle();
+            profData = resLegacy ? resLegacy.data : null;
+          }
           const profile = profData || {
             id: sbSession.user.id,
             email: sbSession.user.email,
             full_name: sbSession.user.email,
             role: (sbSession.user.app_metadata && sbSession.user.app_metadata.role) || 'PEDAGOGICO_EVENTOS'
           };
+          if (profile.ativo === false) {
+            showToast('Conta de operador suspensa pelo Moderador.', true);
+            await fazerLogout();
+            return;
+          }
           const role = profile.role || 'PEDAGOGICO_EVENTOS';
-          const abas = RBAC_TAB_PERMISSIONS[role] || RBAC_TAB_PERMISSIONS.PEDAGOGICO_EVENTOS;
+          const ctxRbacInit = window.OlymposRbac && typeof window.OlymposRbac.hidratarContextoLocal === 'function'
+            ? window.OlymposRbac.hidratarContextoLocal(profile)
+            : null;
+          const abas = (ctxRbacInit && ctxRbacInit.paginasPermitidas)
+            ? ctxRbacInit.paginasPermitidas
+            : (RBAC_TAB_PERMISSIONS[role] || RBAC_TAB_PERMISSIONS.PEDAGOGICO_EVENTOS);
 
           const finishHydration = function(finalAccessToken) {
             const tok = finalAccessToken || sbSession.access_token;
@@ -197,9 +221,25 @@ window.OlymposApp = (function() {
               profile: profile,
               perfil: { id: role, nome: obterLabelPerfilOrganico(role), abasPermitidas: abas }
             };
+            if (window.OlymposRbac && typeof window.OlymposRbac.hidratarContextoLocal === 'function') {
+              window.OlymposRbac.hidratarContextoLocal(profile);
+            }
             sessionStorage.setItem('olympos_session_rbac', JSON.stringify(currentUserSession));
             sessionStorage.setItem('olympos_rbac_profile_cache', JSON.stringify(profile));
             aplicarSessaoNaInterface(currentUserSession);
+            if (window.OlymposRbac && typeof window.OlymposRbac.carregarContextoAcesso === 'function') {
+              window.OlymposRbac.carregarContextoAcesso(true).then(function(ctxAtualizado) {
+                if (currentUserSession && ctxAtualizado && ctxAtualizado.autenticado) {
+                  currentUserSession.perfil.abasPermitidas = ctxAtualizado.paginasPermitidas;
+                  currentUserSession.profile = Object.assign({}, currentUserSession.profile || {}, {
+                    setor_codigo: ctxAtualizado.setorCodigo,
+                    cargo_setor: ctxAtualizado.cargoSetor,
+                    ativo: ctxAtualizado.ativo
+                  });
+                  aplicarSessaoNaInterface(currentUserSession);
+                }
+              }).catch(function() {});
+            }
             if (window.OlymposSessionGuard && typeof window.OlymposSessionGuard.startIdleMonitor === 'function') {
               window.OlymposSessionGuard.startIdleMonitor(role);
             }
@@ -216,7 +256,7 @@ window.OlymposApp = (function() {
           };
 
           const isMfaMandatory = (typeof window.OlymposSupabase.isRoleMfaMandatory === 'function')
-            ? window.OlymposSupabase.isRoleMfaMandatory(role)
+            ? window.OlymposSupabase.isRoleMfaMandatory(role, profile.setor_codigo, profile.cargo_setor)
             : (role === 'MODERADOR' || role === 'ADMIN_GABINETE' || role === 'JURIDICO');
 
           if (isMfaMandatory && decodificarAalJwt_(sbSession.access_token) !== 'aal2' && typeof window.OlymposSupabase.checkMfaStatus === 'function') {
@@ -305,14 +345,14 @@ window.OlymposApp = (function() {
       'diario-oficial', 'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'oraculo', 'processos-seletivos', 'pss', 'mural', 'chat', 'kiosk', 'configuracoes'
     ],
     RH_COMISSAO: [
-      'visao-geral', 'oficios', 'portarias', 'licencas', 'relatorios',
+      'visao-geral', 'oficios', 'relatorios',
       'diario-oficial', 'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'oraculo', 'processos-seletivos', 'pss', 'mural', 'chat', 'kiosk', 'configuracoes'
     ],
     PEDAGOGICO_EVENTOS: [
       'visao-geral', 'oficios', 'certificados', 'relatorios', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'oraculo', 'mural', 'chat', 'kiosk', 'configuracoes'
     ],
     JURIDICO: [
-      'visao-geral', 'oficios', 'portarias', 'relatorios', 'diario-oficial',
+      'visao-geral', 'oficios', 'relatorios', 'diario-oficial',
       'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'oraculo', 'processos-seletivos', 'pss', 'mural', 'chat', 'kiosk', 'configuracoes'
     ]
   };
@@ -712,8 +752,20 @@ window.OlymposApp = (function() {
         }
 
         const profile = authResult.profile || {};
+        if (profile.ativo === false) {
+          showToast('Conta de operador suspensa pelo Moderador.', true);
+          if (window.OlymposSupabase && typeof window.OlymposSupabase.logout === 'function') {
+            try { await window.OlymposSupabase.logout(); } catch (_eL) {}
+          }
+          return;
+        }
         const role = profile.role || 'RH_COMISSAO';
-        const abas = RBAC_TAB_PERMISSIONS[role] || RBAC_TAB_PERMISSIONS.RH_COMISSAO;
+        const ctxLogin = window.OlymposRbac && typeof window.OlymposRbac.hidratarContextoLocal === 'function'
+          ? window.OlymposRbac.hidratarContextoLocal(profile)
+          : null;
+        const abas = (ctxLogin && ctxLogin.paginasPermitidas)
+          ? ctxLogin.paginasPermitidas
+          : (RBAC_TAB_PERMISSIONS[role] || RBAC_TAB_PERMISSIONS.RH_COMISSAO);
 
         async function concluirSessaoLogin(tokenAal, aalLevel) {
           let finalToken = tokenAal;
@@ -744,6 +796,10 @@ window.OlymposApp = (function() {
             }
           };
 
+          if (window.OlymposRbac && typeof window.OlymposRbac.hidratarContextoLocal === 'function') {
+            window.OlymposRbac.hidratarContextoLocal(profile);
+          }
+
           try {
             localStorage.removeItem('olympos_session');
             sessionStorage.setItem('olympos_session_rbac', JSON.stringify(currentUserSession));
@@ -751,6 +807,20 @@ window.OlymposApp = (function() {
           } catch (eStore) {}
           document.getElementById('loginScreen').classList.add('hidden');
           aplicarSessaoNaInterface(currentUserSession);
+
+          if (window.OlymposRbac && typeof window.OlymposRbac.carregarContextoAcesso === 'function') {
+            window.OlymposRbac.carregarContextoAcesso(true).then(function(ctxAtualizado) {
+              if (currentUserSession && ctxAtualizado && ctxAtualizado.autenticado) {
+                currentUserSession.perfil.abasPermitidas = ctxAtualizado.paginasPermitidas;
+                currentUserSession.profile = Object.assign({}, currentUserSession.profile || {}, {
+                  setor_codigo: ctxAtualizado.setorCodigo,
+                  cargo_setor: ctxAtualizado.cargoSetor,
+                  ativo: ctxAtualizado.ativo
+                });
+                aplicarSessaoNaInterface(currentUserSession);
+              }
+            }).catch(function() {});
+          }
 
           if (window.OlymposTermoSigilo && typeof window.OlymposTermoSigilo.verificarEAplicarTermoSigilo === 'function') {
             const aceito = await window.OlymposTermoSigilo.verificarEAplicarTermoSigilo(currentUserSession);
@@ -784,7 +854,7 @@ window.OlymposApp = (function() {
 
         // 1.1 Verificação de MFA GoTrue (aal1 / aal2)
         const isMfaMandatory = (typeof window.OlymposSupabase.isRoleMfaMandatory === 'function')
-          ? window.OlymposSupabase.isRoleMfaMandatory(role)
+          ? window.OlymposSupabase.isRoleMfaMandatory(role, profile.setor_codigo, profile.cargo_setor)
           : (role === 'MODERADOR' || role === 'ADMIN_GABINETE' || role === 'JURIDICO');
 
         let mfaStatus = { supported: false, currentLevel: 'aal1', nextLevel: 'aal1', hasEnrolled: false, factors: [], verifiedFactors: [] };
@@ -892,6 +962,9 @@ window.OlymposApp = (function() {
     mfaFlowActive = false;
     mfaPendingCallbacks = [];
     initialPreloadDoneForAuth = false;
+    if (window.OlymposRbac && typeof window.OlymposRbac.limparContextoAcesso === 'function') {
+      window.OlymposRbac.limparContextoAcesso();
+    }
     aplicarModoVisitanteNaInterface();
     if (window.OlymposChatBadge && typeof window.OlymposChatBadge.clearOnLogout === 'function') {
       window.OlymposChatBadge.clearOnLogout();
@@ -1057,6 +1130,12 @@ window.OlymposApp = (function() {
       return PUBLIC_PAGES.slice();
     }
     const roleId = obterRoleIdSessao(s);
+    if (window.OlymposRbac && typeof window.OlymposRbac.getContextoAtual === 'function') {
+      const ctx = window.OlymposRbac.getContextoAtual();
+      if (ctx && ctx.autenticado && Array.isArray(ctx.paginasPermitidas) && ctx.paginasPermitidas.length > 0) {
+        return normalizarPermissoesRbac(ctx.paginasPermitidas, roleId);
+      }
+    }
     const abasBrutas = Array.isArray(s.perfil.abasPermitidas) && s.perfil.abasPermitidas.length > 0
       ? s.perfil.abasPermitidas
       : (RBAC_TAB_PERMISSIONS[roleId] || []);
@@ -1069,6 +1148,12 @@ window.OlymposApp = (function() {
     if (!s || !s.perfil) {
       return PUBLIC_PAGES.includes(target);
     }
+    if (window.OlymposRbac && typeof window.OlymposRbac.podeAcessarPagina === 'function') {
+      const ctx = window.OlymposRbac.getContextoAtual();
+      if (ctx && ctx.autenticado) {
+        return window.OlymposRbac.podeAcessarPagina(target, ctx);
+      }
+    }
     const permitidas = getPermitidasSessao(s);
     return permitidas.includes('TODOS') || permitidas.includes(target);
   }
@@ -1080,7 +1165,7 @@ window.OlymposApp = (function() {
     const permitidas = Array.isArray(permitidasArg)
       ? permitidasArg
       : getPermitidasSessao(sessao);
-    const temTodos = isAuth && (permitidas.includes('TODOS') || roleId === 'MODERADOR' || roleId === 'ADMIN_GABINETE');
+    const temTodos = isAuth && (permitidas.includes('TODOS') || roleId === 'MODERADOR');
 
     // 1. Filtrar cards da seção OPERAÇÕES MODULARES (.quick-module-card[data-nav-target])
     let cardsVisiveis = 0;
@@ -1171,10 +1256,18 @@ window.OlymposApp = (function() {
       headerDriveActions.classList.toggle('hidden', !hasVisibleChip);
       headerDriveActions.style.display = hasVisibleChip ? 'flex' : 'none';
     }
+
+    if (window.OlymposRbac && typeof window.OlymposRbac.aplicarAtributosPermissaoDom === 'function') {
+      window.OlymposRbac.aplicarAtributosPermissaoDom();
+    }
   }
 
   function aplicarSessaoNaInterface(sessao) {
     if (!sessao || !sessao.perfil) return;
+
+    if (window.OlymposRbac && typeof window.OlymposRbac.getContextoAtual === 'function' && !window.OlymposRbac.getContextoAtual().autenticado) {
+      window.OlymposRbac.hidratarContextoLocal(sessao.profile || sessao);
+    }
 
     if (document.body) {
       document.body.classList.remove('is-visitante');
@@ -1192,7 +1285,13 @@ window.OlymposApp = (function() {
       userSessionBtn.classList.add('is-authenticated');
     }
     if (userBadgeName) userBadgeName.textContent = nomeExibicao;
-    if (userBadgeRole) userBadgeRole.textContent = obterLabelPerfilOrganico(roleId);
+    if (userBadgeRole) {
+      const setorCod = sessao.profile && sessao.profile.setor_codigo;
+      const cargoSet = sessao.profile && sessao.profile.cargo_setor;
+      userBadgeRole.textContent = (window.OlymposRbac && typeof window.OlymposRbac.formatarCargoSetorBadge === 'function')
+        ? window.OlymposRbac.formatarCargoSetorBadge(setorCod, cargoSet, roleId)
+        : obterLabelPerfilOrganico(roleId);
+    }
     if (avatarInitials) {
       const partes = nomeExibicao.split(/\s+/).filter(Boolean);
       const iniciais = partes.length >= 2
@@ -2551,14 +2650,31 @@ window.OlymposApp = (function() {
     const inNome = document.getElementById('novoUsuarioNome');
     const inEmail = document.getElementById('novoUsuarioEmail');
     const inRole = document.getElementById('novoUsuarioRole');
+    const inSetor = document.getElementById('novoUsuarioSetor');
+    const inCargoSetor = document.getElementById('novoUsuarioCargoSetor');
     const inDepto = document.getElementById('novoUsuarioDepartamento');
     const inSenha = document.getElementById('novoUsuarioSenha');
     const btnSubmit = document.getElementById('btnSalvarNovoUsuario');
 
     const nome = inNome ? inNome.value.trim() : '';
     const email = inEmail ? inEmail.value.trim() : '';
-    const papel = inRole ? inRole.value.trim() : '';
-    const departamento = inDepto ? inDepto.value.trim() : 'Secretaria Municipal de Educacao';
+    let setorCodigo = inSetor ? inSetor.value.trim().toUpperCase() : '';
+    let cargoSetor = inCargoSetor ? inCargoSetor.value.trim().toUpperCase() : '';
+    let papel = inRole ? inRole.value.trim().toUpperCase() : '';
+
+    if (setorCodigo && window.OlymposRbac && window.OlymposRbac.SETORES_MAP && window.OlymposRbac.SETORES_MAP[setorCodigo]) {
+      papel = window.OlymposRbac.SETORES_MAP[setorCodigo].legacyRole || papel;
+    } else if (!setorCodigo && papel && window.OlymposRbac) {
+      setorCodigo = window.OlymposRbac.inferirSetorPorRoleLegado(papel);
+      cargoSetor = cargoSetor || window.OlymposRbac.inferirCargoPorRoleLegado(papel);
+    }
+    cargoSetor = cargoSetor || 'MEMBRO';
+    if (papel === 'MODERADOR' || setorCodigo === 'MODERADOR' || cargoSetor === 'MODERADOR') {
+      exibirFeedbackNovoUsuario('Governança: existe apenas um usuário Moderador único no sistema.', 'erro');
+      return;
+    }
+    const setorInfo = window.OlymposRbac && window.OlymposRbac.SETORES_MAP ? window.OlymposRbac.SETORES_MAP[setorCodigo] : null;
+    const departamento = (inDepto ? inDepto.value.trim() : '') || (setorInfo ? setorInfo.nome : 'Secretaria Municipal de Educacao');
     const senha = inSenha ? inSenha.value.trim() : '';
 
     if (!nome || !email || !papel || !senha) {
@@ -2596,6 +2712,8 @@ window.OlymposApp = (function() {
       nome: nome,
       email: email,
       role: papel,
+      setorCodigo: setorCodigo,
+      cargoSetor: cargoSetor,
       departamento: departamento,
       senhaTemporaria: senha
     };

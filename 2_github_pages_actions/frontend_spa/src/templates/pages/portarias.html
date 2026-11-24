@@ -57,7 +57,7 @@
 
               <div class="button-group" style="margin-top: 20px; margin-bottom: 18px;">
                 <button id="pincelDryRunBtn" class="btn btn-secondary">Simular Emissão (Verificar Dados)</button>
-                <button id="pincelGenerateBtn" class="btn btn-primary">Gerar Portarias Pendentes</button>
+                <button id="pincelGenerateBtn" class="btn btn-primary" data-perm="portarias.emitir_lote">Gerar Portarias Pendentes</button>
                 <button id="pincelStopBtn" class="btn btn-danger hidden">Interromper Lote</button>
               </div>
 
@@ -195,7 +195,7 @@
                 </div>
 
                 <div class="button-group" style="margin-top: 20px;">
-                  <button type="submit" id="btnSalvarLicenca" class="btn btn-primary">Registrar Licença e Gerar Ato</button>
+                  <button type="submit" id="btnSalvarLicenca" class="btn btn-primary" data-perm="portarias.licencas_cadastrar">Registrar Licença e Gerar Ato</button>
                   <button type="reset" class="btn btn-secondary">Limpar Campos</button>
                 </div>
               </form>
