@@ -34,6 +34,9 @@ window.OlymposApp = (function() {
     bindGlobalElements();
     if (window.OlymposRouter && typeof window.OlymposRouter.init === 'function') {
       window.OlymposRouter.init();
+      if (document.body && typeof window.OlymposRouter.getPaginaAtual === 'function') {
+        document.body.setAttribute('data-active-page', window.OlymposRouter.getPaginaAtual());
+      }
     }
     verificarStatusConexaoInicial();
     agendarPreloadInicial_(Boolean(currentUserSession && !mfaFlowActive));
@@ -1592,7 +1595,14 @@ window.OlymposApp = (function() {
       });
     });
 
-    // Gatilho de abertura/fechamento do dropdown Documentos
+    // Gatilho de abertura/fechamento do dropdown Documentos e navegação completa por teclado
+    const getVisibleDropdownItems = function(menu) {
+      if (!menu) return [];
+      return Array.from(menu.querySelectorAll('.dropdown-item')).filter(function(item) {
+        return !item.classList.contains('hidden') && item.offsetParent !== null;
+      });
+    };
+
     document.querySelectorAll('.nav-dropdown-trigger').forEach(function(trigger) {
       trigger.addEventListener('click', function(e) {
         e.preventDefault();
@@ -1606,7 +1616,89 @@ window.OlymposApp = (function() {
           trigger.setAttribute('aria-expanded', 'true');
         }
       });
+
+      trigger.addEventListener('keydown', function(e) {
+        if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+        const parent = trigger.closest('.nav-dropdown');
+        const menu = parent ? parent.querySelector('.dropdown-menu') : null;
+        const items = getVisibleDropdownItems(menu);
+        if (!parent || items.length === 0) return;
+        e.preventDefault();
+        e.stopPropagation();
+        fecharDropdowns();
+        parent.classList.add('open');
+        trigger.setAttribute('aria-expanded', 'true');
+        const targetItem = e.key === 'ArrowUp' ? items[items.length - 1] : items[0];
+        if (targetItem && typeof targetItem.focus === 'function') {
+          targetItem.focus();
+        }
+      });
     });
+
+    document.querySelectorAll('.dropdown-menu').forEach(function(menu) {
+      menu.addEventListener('keydown', function(e) {
+        const items = getVisibleDropdownItems(menu);
+        if (items.length === 0) return;
+        const currentIdx = items.indexOf(document.activeElement);
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          const next = items[(currentIdx + 1) % items.length];
+          if (next) next.focus();
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          const prev = items[(currentIdx - 1 + items.length) % items.length];
+          if (prev) prev.focus();
+        } else if (e.key === 'Home') {
+          e.preventDefault();
+          items[0].focus();
+        } else if (e.key === 'End') {
+          e.preventDefault();
+          items[items.length - 1].focus();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          const parent = menu.closest('.nav-dropdown');
+          const trigger = parent ? parent.querySelector('.nav-dropdown-trigger') : null;
+          fecharDropdowns();
+          if (trigger && typeof trigger.focus === 'function') trigger.focus();
+        }
+      });
+    });
+
+    // Toast clicável para fechamento imediato
+    const globalToastEl = document.getElementById('globalToast');
+    if (globalToastEl && !globalToastEl._boundClose) {
+      globalToastEl._boundClose = true;
+      globalToastEl.setAttribute('title', 'Clique para fechar');
+      globalToastEl.addEventListener('click', function() {
+        globalToastEl.classList.add('hidden');
+        if (document.body) document.body.classList.remove('has-active-toast');
+        clearTimeout(globalToastEl._timer);
+      });
+    }
+
+    // Botão flutuante Voltar ao Topo (criado dinamicamente para preservar budget do index.html)
+    if (typeof document !== 'undefined' && document.body && !document.getElementById('btnBackToTop')) {
+      const btnTop = document.createElement('button');
+      btnTop.type = 'button';
+      btnTop.id = 'btnBackToTop';
+      btnTop.className = 'back-to-top-fab hidden';
+      btnTop.setAttribute('aria-label', 'Voltar ao topo da página');
+      btnTop.setAttribute('title', 'Voltar ao topo');
+      btnTop.innerHTML = (window.OlymposIcons && typeof window.OlymposIcons.ui === 'function')
+        ? (window.OlymposIcons.ui('arrowUp') || '↑')
+        : '↑';
+      btnTop.addEventListener('click', function() {
+        const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
+      });
+      document.body.appendChild(btnTop);
+
+      const syncBackToTop = function() {
+        btnTop.classList.toggle('hidden', window.scrollY <= 460);
+      };
+      window.addEventListener('scroll', syncBackToTop, { passive: true });
+      syncBackToTop();
+    }
 
     // Fechamento defensivo de dropdowns ao clicar fora ou pressionar Escape
     document.addEventListener('click', function(e) {
@@ -1675,11 +1767,25 @@ window.OlymposApp = (function() {
     };
 
     document.querySelectorAll('[data-nav-target]').forEach(function(el) {
+      if (el.tagName !== 'A' && el.tagName !== 'BUTTON') {
+        if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '0');
+        if (!el.hasAttribute('role')) el.setAttribute('role', 'link');
+      }
       bindOnce(el, 'click', function() {
         const target = el.getAttribute('data-nav-target');
         document.body.classList.remove('nav-drawer-open');
         if (target) window.OlymposRouter.navegarPara(target);
       });
+      if (el.tagName !== 'A' && el.tagName !== 'BUTTON') {
+        bindOnce(el, 'keydown', function(e) {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            const target = el.getAttribute('data-nav-target');
+            document.body.classList.remove('nav-drawer-open');
+            if (target) window.OlymposRouter.navegarPara(target);
+          }
+        });
+      }
     });
 
     const btnModoKioskDyn = document.getElementById('btnModoKiosk');
@@ -1752,6 +1858,12 @@ window.OlymposApp = (function() {
     if (document.getElementById('configBoletimEmailInput') || document.getElementById('diarioBoletimEmailInput')) {
       carregarConfiguracaoBoletimEmails();
     }
+
+    bindOnce(document.getElementById('btnAbrirMapaAtalhosConfig'), 'click', function() {
+      if (window.OlymposShortcuts && typeof window.OlymposShortcuts.openHelpModal === 'function') {
+        window.OlymposShortcuts.openHelpModal();
+      }
+    });
   }
 
   function verificarStatusConexaoInicial() {
@@ -2136,9 +2248,11 @@ window.OlymposApp = (function() {
     t.textContent = msg;
     t.classList.toggle('error', Boolean(isError));
     t.classList.remove('hidden');
+    if (document.body) document.body.classList.add('has-active-toast');
     clearTimeout(t._timer);
     t._timer = setTimeout(function() {
       t.classList.add('hidden');
+      if (document.body) document.body.classList.remove('has-active-toast');
     }, 4200);
   }
 

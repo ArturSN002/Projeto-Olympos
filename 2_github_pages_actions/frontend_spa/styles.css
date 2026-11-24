@@ -1770,7 +1770,7 @@ html.light-theme .folder-chip-indigo:hover {
 .btn-gemini-companion:active,
 .icon-capsule-btn:active,
 .nav-link:active,
-.stat-card:active,
+.quick-module-card:active,
 .folder-chip:active,
 .user-capsule-btn:active {
   transform: scale(0.97) !important;
@@ -7761,8 +7761,8 @@ button.btn-mini:disabled {
 }
 
 .editor-tool-btn.is-active {
-  background: var(--accent-primary, #f59e0b);
-  color: #0b1120;
+  background: var(--accent-primary, #4E8DF5);
+  color: var(--accent-contrast, #ffffff);
   border-color: transparent;
 }
 
@@ -8503,5 +8503,277 @@ button.btn-mini:disabled {
   .bento-grid,
   .chamados-grid {
     gap: 22px;
+  }
+}
+
+/* ==========================================================================
+   V4.7 — REFINAMENTO INTEGRAL DE UI, UX, SUAVIDADE E ACESSIBILIDADE
+   ========================================================================== */
+
+/* 1. Ponte anti-fechamento em dropdowns da navbar e Workspace */
+@media (min-width: 861px) {
+  .nav-dropdown::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: 10px;
+    background: transparent;
+  }
+}
+
+/* 2. Harmonização cromática DeepMind nos dropdowns de navegação */
+[data-theme="dark"] .masthead-nav-rail .dropdown-menu {
+  background: rgba(19, 23, 32, 0.96);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-color: var(--border-strong);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.58);
+}
+
+[data-theme="dark"] .masthead-nav-rail .dropdown-item:hover {
+  color: var(--text-primary);
+  background: var(--bg-tonal);
+}
+
+[data-theme="dark"] .masthead-nav-rail .dropdown-item.active {
+  background: var(--accent-primary);
+  color: var(--accent-contrast);
+}
+
+[data-theme="dark"] .nav-dropdown.active .nav-dropdown-trigger,
+[data-theme="dark"] .nav-dropdown-trigger.active {
+  background: var(--bg-tonal);
+  color: var(--aurora-start);
+  border-color: var(--accent-gold-border);
+}
+
+/* 3. Fluidez da barra de navegação em notebooks (861px–1180px) */
+@media (min-width: 861px) and (max-width: 1180px) {
+  .masthead-nav-rail .nav-rail-inner {
+    gap: 3px;
+    flex-wrap: wrap;
+    padding: 7px clamp(14px, 2.5vw, 28px);
+  }
+  .masthead-nav-rail > .nav-rail-inner > .nav-link,
+  .masthead-nav-rail .nav-dropdown-trigger {
+    padding: 6px 11px;
+    font-size: 12.2px;
+  }
+}
+
+@media (min-width: 861px) and (max-width: 1080px) {
+  .masthead-nav-rail .nav-divider-dot {
+    display: none;
+  }
+}
+
+/* 4. Hero editorial contextual compacto em páginas internas */
+body[data-active-page]:not([data-active-page="visao-geral"]) .editorial-hero {
+  padding: clamp(16px, 2.2vw, 24px) clamp(16px, 3.5vw, 40px) 16px;
+}
+
+body[data-active-page]:not([data-active-page="visao-geral"]) .eyebrow-pill {
+  margin-bottom: 8px;
+  padding: 3px 11px;
+  font-size: 10px;
+}
+
+body[data-active-page]:not([data-active-page="visao-geral"]) .hero-display-title {
+  font-size: clamp(1.35rem, 2.05vw, 1.78rem);
+  max-width: 44ch;
+  margin-bottom: 6px;
+}
+
+body[data-active-page]:not([data-active-page="visao-geral"]) .hero-lead-subtitle {
+  font-size: 0.92rem;
+  margin-bottom: 0;
+  max-width: 78ch;
+}
+
+/* 5. Sub-abas em pílula sem transbordo em desktops/tablets e paginação ativa */
+@media (min-width: 601px) {
+  .subnav-tabs-bar {
+    flex-wrap: wrap;
+    max-width: 100%;
+    border-radius: 20px;
+    gap: 6px;
+    padding: 6px;
+  }
+}
+
+.btn-mini.active,
+.olympos-pagination-controls .btn-mini[aria-current="page"] {
+  background: var(--accent-primary);
+  color: var(--accent-contrast, #ffffff);
+  border-color: var(--accent-primary);
+  font-weight: 700;
+  box-shadow: 0 2px 8px var(--accent-gold-soft);
+}
+
+/* 6. Scrollbars finas, tabelas fluidas e alinhamento numérico tabular */
+.table-wrapper,
+.modal-card,
+.onda2-drawer-body,
+.notif-drawer-body,
+.chat-room-list,
+.chat-messages-pane,
+.job-links-list {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+.clean-table tbody tr,
+.table-clean tbody tr {
+  transition: background-color 0.14s ease;
+}
+
+.stat-value,
+.cal-kpi-value,
+.relatorios-kpi-value,
+.code-badge,
+.olympos-pagination-info {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 7. Coreografia suave de modais, drawers e toasts clicáveis */
+@keyframes modalCardReveal {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes drawerSlideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(22px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes toastSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-backdrop:not(.hidden) .modal-card:not(.onda2-drawer-panel):not(.notif-drawer-panel) {
+  animation: modalCardReveal 0.22s var(--ease-deepmind);
+}
+
+.onda2-drawer-backdrop:not(.hidden) .onda2-drawer-panel,
+.notif-drawer-backdrop:not(.hidden) .notif-drawer-panel {
+  animation: drawerSlideInRight 0.24s var(--ease-deepmind);
+}
+
+.toast {
+  cursor: pointer;
+}
+
+.toast:not(.hidden) {
+  animation: toastSlideUp 0.22s var(--ease-deepmind);
+}
+
+@media (max-width: 600px) {
+  .toast {
+    left: 14px;
+    right: 14px;
+    bottom: 16px;
+    max-width: none;
+    text-align: center;
+  }
+}
+
+/* 8. Botão flutuante Voltar ao Topo */
+.back-to-top-fab {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 980;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s var(--ease-deepmind), border-color 0.2s ease, background-color 0.2s ease, bottom 0.22s var(--ease-deepmind);
+}
+
+.back-to-top-fab svg {
+  width: 18px;
+  height: 18px;
+}
+
+.back-to-top-fab:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  background: var(--bg-surface);
+}
+
+body.has-active-toast .back-to-top-fab {
+  bottom: 84px;
+}
+
+@media (max-width: 600px) {
+  .back-to-top-fab {
+    right: 14px;
+    bottom: 16px;
+    width: 44px;
+    height: 44px;
+  }
+  body.has-active-toast .back-to-top-fab {
+    bottom: 76px;
+  }
+}
+
+/* 9. Anéis de foco consistentes e acessibilidade reduced-motion */
+.btn:focus-visible,
+.btn-mini:focus-visible,
+.nav-link:focus-visible,
+.dropdown-item:focus-visible,
+.subnav-tab:focus-visible,
+.filter-pill:focus-visible,
+.filter-pill-btn:focus-visible,
+.quick-module-card:focus-visible,
+.home-persona-tile:focus-visible,
+.icon-capsule-btn:focus-visible,
+.user-capsule-btn:focus-visible,
+.back-to-top-fab:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

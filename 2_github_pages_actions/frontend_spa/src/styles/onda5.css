@@ -36,13 +36,23 @@
   font-size: 0.84rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+
+.pss-subtab-btn:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-surface-hover);
+}
+
+.pss-subtab-btn:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
 }
 
 .pss-subtab-btn.is-active {
-  background: var(--accent-primary, #f59e0b);
-  color: #0b1120;
-  border-color: var(--accent-primary, #f59e0b);
+  background: var(--accent-primary, #4E8DF5);
+  color: var(--accent-contrast, #ffffff);
+  border-color: var(--accent-primary, #4E8DF5);
 }
 
 .pss-panel {
@@ -76,6 +86,7 @@
   font-size: 1.55rem;
   font-weight: 700;
   margin-top: 4px;
+  font-variant-numeric: tabular-nums;
 }
 
 .pss-stat-label {
@@ -125,10 +136,34 @@
   padding: 5px 8px;
   border-radius: 6px;
   border: 1px solid var(--border-hairline);
-  background: var(--bg-canvas, #fff);
+  background: var(--bg-elevated, var(--bg-surface));
   color: var(--text-primary);
   font-size: 0.85rem;
   text-align: right;
+  font-variant-numeric: tabular-nums;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pss-grade-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px var(--accent-gold-soft);
+}
+
+[data-theme="dark"] .pss-badge-quarentena {
+  color: #fca5a5;
+}
+
+[data-theme="dark"] .pss-badge-ativa {
+  color: #6ee7b7;
+}
+
+[data-theme="dark"] .pss-badge-substituida {
+  color: #fcd34d;
+}
+
+[data-theme="dark"] .pss-badge-cert-ok {
+  color: #6ee7b7;
 }
 
 .pss-checklist-row {

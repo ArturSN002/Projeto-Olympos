@@ -212,6 +212,9 @@ window.OlymposRouter = (function() {
     }
 
     activePage = pageId;
+    if (document.body) {
+      document.body.setAttribute('data-active-page', pageId);
+    }
     if (window.location.hash !== '#' + pageId) {
       if (replaceState) {
         window.history.replaceState(null, '', '#' + pageId);
@@ -276,7 +279,8 @@ window.OlymposRouter = (function() {
     if (subtitleElem) subtitleElem.textContent = meta.subtitle;
 
     document.body.classList.remove('nav-drawer-open');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
 
     const currentSeq = ++navSequence;
 
