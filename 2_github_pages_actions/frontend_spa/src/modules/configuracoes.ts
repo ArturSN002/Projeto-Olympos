@@ -4,6 +4,7 @@ import memoriaModalHtml from '../templates/modals/memoriaModal.html?raw';
 import { mountMemoriasGovernanca } from '../core/memoriasGovernanca';
 import { mountTelegramConfig } from './telegramConfig';
 import { reverTourGuiado } from '../core/onboardingTour';
+import { isHighContrastEnabled, setHighContrast } from '../core/shortcuts';
 import '../../js/memorias_catalogo.js';
 import '../../js/views/personas.js';
 import '../../js/views/configuracoes.js';
@@ -57,6 +58,7 @@ async function atualizarPainelSegurancaMfaSessoes(): Promise<void> {
 }
 
 let oraculoLoadPromise: Promise<void> | null = null;
+let auditoriaLoadPromise: Promise<void> | null = null;
 
 async function mountOraculoEmAjustes(): Promise<void> {
   const host = document.getElementById('configOraculoHost');
@@ -96,9 +98,50 @@ async function mountOraculoEmAjustes(): Promise<void> {
   }
 }
 
+async function mountAuditoriaEmAjustes(): Promise<void> {
+  const host = document.getElementById('configAuditoriaHost');
+  if (!host) return;
+
+  if (host.dataset.auditoriaMounted === '1') {
+    await import('./auditoria').then((mod) => mod.mount());
+    return;
+  }
+
+  if (auditoriaLoadPromise) return auditoriaLoadPromise;
+
+  auditoriaLoadPromise = (async () => {
+    const mod = await import('./auditoria');
+    const standalone = document.getElementById('page-auditoria');
+    if (standalone && !host.contains(standalone)) {
+      standalone.remove();
+    }
+
+    const tpl = document.createElement('template');
+    tpl.innerHTML = String(mod.htmlTemplate || '').trim();
+    const section = tpl.content.querySelector('#page-auditoria');
+    host.innerHTML = section ? section.innerHTML : tpl.innerHTML;
+    host.dataset.auditoriaMounted = '1';
+
+    await mod.mount();
+    if (window.OlymposIcons && typeof window.OlymposIcons.hydrateAll === 'function') {
+      window.OlymposIcons.hydrateAll();
+    }
+    window.OlymposApp?.aplicarControleAcessoModularEDrive?.();
+  })();
+
+  try {
+    await auditoriaLoadPromise;
+  } finally {
+    auditoriaLoadPromise = null;
+  }
+}
+
 if (typeof window !== 'undefined') {
   (window as any).OlymposConfigOraculoMount = () => {
     void mountOraculoEmAjustes();
+  };
+  (window as any).OlymposConfigAuditoriaMount = () => {
+    void mountAuditoriaEmAjustes();
   };
 }
 
@@ -149,6 +192,10 @@ function bindSecurityPanelEvents(): void {
   bindOnce('subtabBtnAjustesAutomacoes', () => {
     mountTelegramConfig('configTelegramRoot');
   });
+
+  bindOnce('subtabBtnAjustesAuditoria', () => {
+    void mountAuditoriaEmAjustes();
+  });
 }
 
 let authListenerBound = false;
@@ -158,6 +205,10 @@ export async function mount(): Promise<void> {
   atualizarPainelSegurancaMfaSessoes();
   mountMemoriasGovernanca();
   mountTelegramConfig('configTelegramRoot');
+  const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+  window.OlymposApp?.definirTema?.(currentTheme);
+  setHighContrast(isHighContrastEnabled(), false);
+  window.OlymposApp?.bindDynamicControls?.();
   window.OlymposApp?.aplicarControleAcessoModularEDrive?.();
 
   if (!authListenerBound && typeof window !== 'undefined') {

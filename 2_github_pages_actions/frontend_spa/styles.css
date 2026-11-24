@@ -7923,17 +7923,19 @@ button.btn-mini:disabled {
   color: var(--text-secondary);
 }
 
-.dropdown-menu .btn-gemini-companion:hover {
+.dropdown-menu .btn-gemini-companion:hover,
+.ws-item-gemini:hover {
   transform: none;
   box-shadow: none;
-  color: #4285F4;
-  background: rgba(66, 133, 244, 0.10);
+  color: #D9468F !important;
+  background: rgba(217, 70, 143, 0.11) !important;
   padding-left: 17px;
 }
 
-[data-theme="dark"] .dropdown-menu .btn-gemini-companion:hover {
-  color: #8AB4F8;
-  background: rgba(66, 133, 244, 0.16);
+[data-theme="dark"] .dropdown-menu .btn-gemini-companion:hover,
+[data-theme="dark"] .ws-item-gemini:hover {
+  color: #F472B6 !important;
+  background: rgba(244, 114, 182, 0.16) !important;
 }
 
 .ws-item-docs:hover {
@@ -8455,20 +8457,63 @@ button.btn-mini:disabled {
   width: 100%;
 }
 
+@media (max-width: 768px) {
+  .masthead-controls #topWorkspaceBtn.btn-workspace-companion,
+  .masthead-controls #userSessionBtn.user-capsule-btn,
+  .masthead-controls .icon-capsule-btn {
+    height: 36px !important;
+    min-height: 36px !important;
+    max-height: 36px !important;
+    box-sizing: border-box !important;
+  }
+  .masthead-controls #topWorkspaceBtn.btn-workspace-companion {
+    padding: 0 11px !important;
+    border-radius: 999px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+  }
+  .masthead-controls #userSessionBtn.user-capsule-btn {
+    width: 36px !important;
+    min-width: 36px !important;
+    padding: 2px !important;
+    border-radius: 50% !important;
+    border: 1.5px solid var(--border-subtle) !important;
+    background: var(--bg-surface) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .masthead-controls .user-avatar-dot {
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 11px !important;
+  }
+}
+
 @media (max-width: 480px) {
   .masthead-controls {
-    gap: 5px;
+    gap: 6px;
     flex-shrink: 0;
   }
-  .masthead-controls .icon-capsule-btn {
-    width: 34px;
-    height: 34px;
+  .masthead-controls .icon-capsule-btn,
+  .masthead-controls #topWorkspaceBtn.btn-workspace-companion,
+  .masthead-controls #userSessionBtn.user-capsule-btn {
+    width: 36px !important;
+    min-width: 36px !important;
+    max-width: 36px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    max-height: 36px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
-  .btn-workspace-companion {
-    padding: 6px 9px !important;
-  }
-  .btn-workspace-companion > span:not(.ws-google-mark):not(.dropdown-caret) {
-    display: none;
+  .masthead-controls #topWorkspaceBtn.btn-workspace-companion > span:not(.ws-google-mark) {
+    display: none !important;
   }
   .hero-pill-btn {
     width: 100%;

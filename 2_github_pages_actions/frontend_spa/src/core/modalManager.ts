@@ -46,6 +46,23 @@ function getFocusableElements(container: HTMLElement): HTMLElement[] {
   });
 }
 
+function hoistModalOutOfInertTargets(el: HTMLElement): void {
+  if (typeof document === 'undefined' || !el) return;
+  const viewRoot = document.getElementById('view-root');
+  const masthead = document.querySelector<HTMLElement>('.top-masthead');
+  const hero = document.querySelector<HTMLElement>('.editorial-hero');
+  const insideInertContainer =
+    (viewRoot && viewRoot.contains(el)) ||
+    (masthead && masthead.contains(el)) ||
+    (hero && hero.contains(el));
+  if (!insideInertContainer) return;
+
+  const modalRoot = document.getElementById('modal-root') || document.body;
+  if (modalRoot && modalRoot !== el.parentElement) {
+    modalRoot.appendChild(el);
+  }
+}
+
 function setBackgroundInert(enabled: boolean): void {
   const targets = [
     document.getElementById('view-root'),
@@ -55,6 +72,9 @@ function setBackgroundInert(enabled: boolean): void {
   for (const target of targets) {
     if (!target) continue;
     if (enabled) {
+      if (activeStack.some((entry) => target.contains(entry.el))) {
+        continue;
+      }
       (target as any).inert = true;
       target.setAttribute('inert', '');
     } else {
@@ -108,6 +128,7 @@ export function closeModal(el?: HTMLElement | null): void {
 
 export function openModal(el: HTMLElement): void {
   if (!el) return;
+  hoistModalOutOfInertTargets(el);
   el.classList.remove('hidden');
   const computedDisplay = typeof window !== 'undefined' && typeof window.getComputedStyle === 'function'
     ? window.getComputedStyle(el).display
@@ -140,6 +161,7 @@ function syncVisibleModals(): void {
 
   // Empilhar modais recém-abertos
   for (const el of currentlyVisible) {
+    hoistModalOutOfInertTargets(el);
     const alreadyInStack = activeStack.some((entry) => entry.el === el);
     if (!alreadyInStack) {
       const trigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;

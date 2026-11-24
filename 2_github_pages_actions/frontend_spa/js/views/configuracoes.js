@@ -129,7 +129,8 @@ window.OlymposViews.configuracoes = (function() {
       'aparencia': 'subpaneAjustesAparencia',
       'usuarios': 'subpaneAjustesUsuarios',
       'personas': 'subpaneAjustesPersonas',
-      'automacoes': 'subpaneAjustesAutomacoes'
+      'automacoes': 'subpaneAjustesAutomacoes',
+      'auditoria': 'subpaneAjustesAuditoria'
     };
 
     Object.keys(mapSubpanes).forEach(function(key) {
@@ -155,6 +156,14 @@ window.OlymposViews.configuracoes = (function() {
     } else if (subtabId === 'oraculo') {
       if (typeof window.OlymposConfigOraculoMount === 'function') {
         window.OlymposConfigOraculoMount();
+      }
+    } else if (subtabId === 'auditoria') {
+      if (window.OlymposApp && typeof window.OlymposApp.isModerador === 'function' && !window.OlymposApp.isModerador()) {
+        alternarSubtab('conexao');
+        return;
+      }
+      if (typeof window.OlymposConfigAuditoriaMount === 'function') {
+        window.OlymposConfigAuditoriaMount();
       }
     }
 

@@ -1472,9 +1472,6 @@ window.OlymposApp = (function() {
       });
     }
 
-    const btnTheme = document.getElementById('themeToggleBtn');
-    if (btnTheme) btnTheme.addEventListener('click', alternarTema);
-
     const btnGemini = document.getElementById('topGeminiBtn');
     if (btnGemini) {
       btnGemini.addEventListener('click', function() {
@@ -1858,6 +1855,8 @@ window.OlymposApp = (function() {
     if (document.getElementById('configBoletimEmailInput') || document.getElementById('diarioBoletimEmailInput')) {
       carregarConfiguracaoBoletimEmails();
     }
+
+    bindOnce(document.getElementById('themeToggleBtn'), 'click', alternarTema);
 
     bindOnce(document.getElementById('btnAbrirMapaAtalhosConfig'), 'click', function() {
       if (window.OlymposShortcuts && typeof window.OlymposShortcuts.openHelpModal === 'function') {

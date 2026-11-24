@@ -80,6 +80,22 @@ function hideRouteSkeleton(): void {
   if (sk) sk.classList.add('hidden');
 }
 
+function hoistEmbeddedModals(root: ParentNode): void {
+  if (typeof document === 'undefined') return;
+  const modalRoot = document.getElementById('modal-root') || document.body;
+  if (!modalRoot) return;
+  root.querySelectorAll<HTMLElement>('.modal-backdrop').forEach((modalEl) => {
+    if (modalEl.id) {
+      const existing = document.getElementById(modalEl.id);
+      if (existing && existing !== modalEl) {
+        modalEl.remove();
+        return;
+      }
+    }
+    modalRoot.appendChild(modalEl);
+  });
+}
+
 function appendModalTemplate(domId: string, html: string): void {
   if (!html || mountedModalIds.has(domId) || document.getElementById(domId)) {
     mountedModalIds.add(domId);
@@ -168,6 +184,7 @@ export async function preloadRoute(pageId: string, options?: { initView?: boolea
           sec.classList.toggle('active', isCurrentlyActive);
           sec.classList.toggle('hidden', !isCurrentlyActive);
         });
+        hoistEmbeddedModals(tpl.content);
         viewRoot.appendChild(tpl.content);
       }
 
@@ -263,6 +280,7 @@ export async function loadRoute(pageId: string): Promise<void> {
     if (viewRoot && !document.getElementById(`page-${key}`)) {
       const tpl = document.createElement('template');
       tpl.innerHTML = mod.htmlTemplate.trim();
+      hoistEmbeddedModals(tpl.content);
       viewRoot.appendChild(tpl.content);
     }
 

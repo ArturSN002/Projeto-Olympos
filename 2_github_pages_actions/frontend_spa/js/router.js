@@ -190,6 +190,10 @@ window.OlymposRouter = (function() {
       pageId = 'configuracoes';
       targetSubtab = 'oraculo';
     }
+    if (pageId === 'auditoria' && sessaoAtiva) {
+      pageId = 'configuracoes';
+      targetSubtab = 'auditoria';
+    }
 
     if (!sessaoAtiva && !PUBLIC_PAGES.includes(pageId)) {
       if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
@@ -201,7 +205,7 @@ window.OlymposRouter = (function() {
       pageId = 'visao-geral';
       targetSubtab = null;
     } else if (sessaoAtiva && window.OlymposApp && typeof window.OlymposApp.podeAcessarPagina === 'function') {
-      const checkPage = targetSubtab === 'licencas' ? 'licencas' : pageId;
+      const checkPage = targetSubtab === 'licencas' ? 'licencas' : (targetSubtab === 'auditoria' ? 'auditoria' : pageId);
       if (!window.OlymposApp.podeAcessarPagina(checkPage)) {
         if (typeof window.OlymposApp.showToast === 'function') {
           window.OlymposApp.showToast('Seu nível de acesso atual não possui permissão para este módulo.', true);

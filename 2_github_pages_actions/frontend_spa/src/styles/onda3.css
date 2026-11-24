@@ -76,9 +76,21 @@
 
 .relatorios-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: 1fr;
   gap: 14px;
   margin-bottom: 22px;
+}
+
+@media (min-width: 600px) {
+  .relatorios-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .relatorios-kpi-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 .relatorios-kpi-card {
@@ -88,15 +100,18 @@
   padding: 16px 18px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
   box-shadow: var(--shadow-subtle);
 }
 
 .relatorios-kpi-top {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  gap: 8px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 6px 8px;
 }
 
 .relatorios-kpi-label {
@@ -105,6 +120,13 @@
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  line-height: 1.3;
+  min-width: 0;
+}
+
+.relatorios-kpi-top .pill-badge {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .relatorios-kpi-value {
@@ -117,7 +139,9 @@
 
 .relatorios-kpi-sub {
   font-size: 12px;
+  line-height: 1.4;
   color: var(--text-muted);
+  overflow-wrap: anywhere;
 }
 
 .relatorios-charts-grid {

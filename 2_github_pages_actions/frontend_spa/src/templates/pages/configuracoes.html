@@ -33,6 +33,9 @@
               <button type="button" class="subnav-tab" id="subtabBtnAjustesAutomacoes" data-subtab="automacoes">
                 <span class="svg-icon-inline" data-icon="mail"></span><span>Automações &amp; Notificações</span>
               </button>
+              <button type="button" class="subnav-tab hidden" id="subtabBtnAjustesAuditoria" data-subtab="auditoria" data-requires-auth="true" data-access-roles="MODERADOR">
+                <span class="svg-icon-inline" data-icon="shieldCheck"></span><span>Auditoria &amp; DR</span>
+              </button>
             </div>
 
             <!-- SUB-ABA 1: CONECTIVIDADE & GATEWAY -->
@@ -89,6 +92,17 @@
                     <div style="margin-bottom: 6px;">Perfil de Acesso: <strong id="configUserRole">Governança Total</strong></div>
                     <div style="margin-bottom: 12px; font-size: 12px; color: var(--text-muted);">Páginas Habilitadas: <span id="configUserTabs">Todas</span></div>
                     <button id="configLogoutBtn" class="btn btn-secondary btn-sm">Trocar Usuário / Encerrar Sessão</button>
+                  </div>
+
+                  <div class="surface-card" style="margin-bottom: 14px; padding: 12px 14px; border: 1px solid var(--border-hairline); display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
+                    <div>
+                      <strong style="font-size: 0.9rem; display: block;">Controles Rápidos de Tema e Contraste</strong>
+                      <span class="stat-label" style="font-size: 11.5px;">Alterne entre Modo Claro/Escuro e Alto Contraste WCAG 2.2 AA/AAA.</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                      <button id="themeToggleBtn" type="button" class="icon-capsule-btn" title="Alternar Modo Claro / Modo Escuro" aria-label="Alternar Tema"></button>
+                      <button type="button" id="btnAltoContrasteHeader" class="icon-capsule-btn" title="Alternar Modo Alto Contraste (WCAG 2.2)" aria-label="Alternar modo alto contraste" aria-pressed="false">◐</button>
+                    </div>
                   </div>
 
                   <div class="field-group">
@@ -301,6 +315,13 @@
             <div id="subpaneAjustesOraculo" class="subtab-pane">
               <div id="configOraculoHost">
                 <div class="output-panel">Carregando Oráculo Semântico...</div>
+              </div>
+            </div>
+
+            <!-- SUB-ABA 7: AUDITORIA & DR (EXCLUSIVA MODERADOR) -->
+            <div id="subpaneAjustesAuditoria" class="subtab-pane hidden" style="display: none;">
+              <div id="configAuditoriaHost">
+                <div class="output-panel">Carregando Trilha de Auditoria e Saúde DR...</div>
               </div>
             </div>
           </div>

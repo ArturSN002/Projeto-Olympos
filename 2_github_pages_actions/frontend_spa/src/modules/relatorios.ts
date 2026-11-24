@@ -61,6 +61,17 @@ const SUBCATEGORIA_LABELS: Record<string, string> = {
   FEMURN_PUBLICADA: 'Publicadas FEMURN'
 };
 
+const FEMURN_TIPO_LABELS: Record<string, string> = {
+  PORTARIA: 'Portarias',
+  ATO_GABINETE: 'Atos de Gabinete',
+  NOMEACAO_DIRETOR: 'Nomeações',
+  EDITAL_PSS: 'Editais/PSS',
+  PERMUTA_RH: 'Permutas/RH',
+  NORMATIVO_JURIDICO: 'Normativos',
+  REPUBLICACAO: 'Republicações',
+  ATO_OFICIAL: 'Atos Oficiais'
+};
+
 let ultimoRelatorio: RelatorioMensalNormalizado | null = null;
 let carregando = false;
 
@@ -343,7 +354,10 @@ function renderizarRelatorioNaTela(rel: RelatorioMensalNormalizado): void {
   setTxt(
     'kpiRelFemurnSub',
     rel.femurnPorTipo.length
-      ? rel.femurnPorTipo.map((f) => `${f.tipo}: ${f.total}`).slice(0, 3).join(' • ')
+      ? rel.femurnPorTipo
+          .map((f) => `${FEMURN_TIPO_LABELS[String(f.tipo || '').toUpperCase()] || f.tipo}: ${f.total}`)
+          .slice(0, 3)
+          .join(' • ')
       : `Atos FEMURN em ${rel.competencia}`
   );
 

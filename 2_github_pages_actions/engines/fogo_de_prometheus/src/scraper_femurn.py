@@ -14,6 +14,7 @@ except ImportError:
     TZ_FORTALEZA = timezone(timedelta(hours=-3))
 
 import urllib.request
+from urllib.parse import quote
 try:
     import requests
 except ImportError:
@@ -834,11 +835,19 @@ def executar_ciclo_pesquisa(
             # Sugestão 3.4.1: Extração estruturada NER (Servidores, Matrículas, Nº do Ato)
             entidades_ner = extrair_entidades_estruturadas(texto_integral, titulo_ato)
 
+            # Data real de circulação extraída do corpo da matéria (essencial em backfills multi-dia)
+            m_data_circ = re.search(
+                r"CIRCULA[ÇC][ÃA]O\s*[:\n\r\s]*(\d{2}/\d{2}/\d{4})",
+                texto_integral,
+                re.IGNORECASE
+            )
+            data_circ_item = m_data_circ.group(1) if m_data_circ else dt_ini
+
             # Padronização Oficial de Título e Nome de Arquivo (ex: 'Portaria - SMEB nº 163 de 29 de Outubro de 2026.pdf')
             nome_arq, tit_oficial = formatar_nome_arquivo_oficial(
                 categoria=categoria,
                 numero_ato=entidades_ner.get("numero_ato"),
-                data_circulacao=dt_ini,
+                data_circulacao=data_circ_item,
                 orgao=orgao_alvo or "SMEB",
                 cod_id=cod_id
             )
@@ -856,7 +865,7 @@ def executar_ciclo_pesquisa(
 
             publicacoes_coletadas.append({
                 "codigo_identificador": cod_id,
-                "data_circulacao": dt_ini,
+                "data_circulacao": data_circ_item,
                 "entidade": entidade_alvo,
                 "orgao": orgao_alvo or "Câmara Municipal",
                 "titulo_ato": tit_oficial if tit_oficial else titulo_ato,
@@ -944,7 +953,7 @@ def sincronizar_supabase_publicacoes(publicacoes: list, dt_referencia: str) -> b
     # Converter para o schema de publicacoes_diario SSOT V3
     lote = []
     for pub in publicacoes:
-        data_pub = pub.get("data_publicacao") or dt_referencia
+        data_pub = pub.get("data_publicacao") or pub.get("data_circulacao") or dt_referencia
         if "/" in str(data_pub):
             partes = str(data_pub).split("/")
             if len(partes) == 3:
@@ -987,14 +996,84 @@ def sincronizar_supabase_publicacoes(publicacoes: list, dt_referencia: str) -> b
 
     chunk_size = 50
     sucesso_total = True
+    read_headers = {
+        "apikey": service_role_key,
+        "Authorization": f"Bearer {service_role_key}",
+        "Accept": "application/json",
+    }
+    patch_headers = {
+        "apikey": service_role_key,
+        "Authorization": f"Bearer {service_role_key}",
+        "Content-Type": "application/json",
+        "Prefer": "return=minimal",
+    }
+    insert_headers = {
+        "apikey": service_role_key,
+        "Authorization": f"Bearer {service_role_key}",
+        "Content-Type": "application/json",
+        "Prefer": "return=representation",
+    }
     for i in range(0, len(lote), chunk_size):
         chunk = lote[i:i + chunk_size]
+        lote_idx = i // chunk_size + 1
         try:
             resp = requests.post(endpoint, json=chunk, headers=headers, timeout=60)
             if 200 <= resp.status_code < 300:
-                print(f"[SUPABASE - Lote {i // chunk_size + 1}] {len(chunk)} publicações gravadas com sucesso (HTTP {resp.status_code}).")
+                print(f"[SUPABASE - Lote {lote_idx}] {len(chunk)} publicações gravadas com sucesso (HTTP {resp.status_code}).")
+            elif resp.status_code == 400 and "42P10" in (resp.text or ""):
+                # Fallback idempotente para índice único parcial (WHERE codigo_femurn IS NOT NULL)
+                cods = [str(item.get("codigo_femurn") or "").strip() for item in chunk if str(item.get("codigo_femurn") or "").strip()]
+                existentes = set()
+                if cods and hasattr(requests, "get"):
+                    cods_csv = ",".join(f'"{c.replace(chr(34), "")}"' for c in cods)
+                    check_url = f"{supabase_url}/rest/v1/publicacoes_diario?select=codigo_femurn&codigo_femurn=in.({quote(cods_csv, safe=',')})"
+                    r_check = requests.get(check_url, headers=read_headers, timeout=30)
+                    if 200 <= r_check.status_code < 300:
+                        try:
+                            for row in (r_check.json() or []):
+                                if isinstance(row, dict) and row.get("codigo_femurn"):
+                                    existentes.add(str(row["codigo_femurn"]).strip())
+                        except Exception:
+                            pass
+
+                novos = [item for item in chunk if str(item.get("codigo_femurn") or "").strip() not in existentes]
+                atualizar = [item for item in chunk if str(item.get("codigo_femurn") or "").strip() in existentes]
+                lote_ok = True
+
+                if novos:
+                    r_ins = requests.post(
+                        f"{supabase_url}/rest/v1/publicacoes_diario",
+                        json=novos,
+                        headers=insert_headers,
+                        timeout=60,
+                    )
+                    if not (200 <= r_ins.status_code < 300):
+                        print(f"[SUPABASE FALLBACK ERRO POST - Lote {lote_idx}] HTTP {r_ins.status_code}: {r_ins.text}")
+                        lote_ok = False
+
+                for item in atualizar:
+                    cod = str(item.get("codigo_femurn") or "").strip()
+                    if not cod or not hasattr(requests, "patch"):
+                        continue
+                    r_upd = requests.patch(
+                        f"{supabase_url}/rest/v1/publicacoes_diario?codigo_femurn=eq.{quote(cod, safe='')}",
+                        json=item,
+                        headers=patch_headers,
+                        timeout=30,
+                    )
+                    if not (200 <= r_upd.status_code < 300):
+                        print(f"[SUPABASE FALLBACK ERRO PATCH - {cod}] HTTP {r_upd.status_code}: {r_upd.text}")
+                        lote_ok = False
+
+                if lote_ok:
+                    print(
+                        f"[SUPABASE FALLBACK 42P10 - Lote {lote_idx}] Inseridos {len(novos)} novo(s), "
+                        f"atualizados {len(atualizar)} existente(s) com sucesso."
+                    )
+                else:
+                    sucesso_total = False
             else:
-                print(f"[SUPABASE ERRO - Lote {i // chunk_size + 1}] HTTP {resp.status_code}: {resp.text}")
+                print(f"[SUPABASE ERRO - Lote {lote_idx}] HTTP {resp.status_code}: {resp.text}")
                 sucesso_total = False
         except Exception as err:
             print(f"[SUPABASE EXCEPTION] Erro de comunicação: {err}")

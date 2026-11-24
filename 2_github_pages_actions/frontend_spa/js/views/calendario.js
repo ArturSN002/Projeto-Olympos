@@ -1065,6 +1065,31 @@ window.OlymposViews.calendario = (function() {
   }
 
   /**
+   * Sincroniza Calendário, Modal de Detalhes (se aberto), Visão Geral e Telemetria após qualquer mudança na agenda
+   */
+  function sincronizarUiAgendaGlobal() {
+    try { renderizar(); } catch (e) {}
+    var modalDetalhes = document.getElementById('modalDetalhesDiaCalendario');
+    if (selectedDate && modalDetalhes && !modalDetalhes.classList.contains('hidden') && modalDetalhes.style.display !== 'none') {
+      abrirModalDetalhesDia(selectedDate);
+    }
+    if (window.OlymposViews && window.OlymposViews.visaoGeral) {
+      if (typeof window.OlymposViews.visaoGeral.renderizarWidgetEventosAgenda === 'function') {
+        window.OlymposViews.visaoGeral.renderizarWidgetEventosAgenda();
+      }
+      if (typeof window.OlymposViews.visaoGeral.atualizarTelemetriaCientifica === 'function') {
+        window.OlymposViews.visaoGeral.atualizarTelemetriaCientifica();
+      }
+    }
+    if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+      var pendentes = obterEventosAgendaCustom().filter(function(ev) {
+        return (ev.status || 'PENDENTE').toUpperCase() !== 'CONCLUIDO';
+      }).length;
+      window.dispatchEvent(new CustomEvent('olympos:agenda-updated', { detail: { totalPendentes: pendentes } }));
+    }
+  }
+
+  /**
    * Salva ou atualiza um evento da agenda
    */
   function salvarEventoAgenda(evento) {
@@ -1112,13 +1137,15 @@ window.OlymposViews.calendario = (function() {
 
     // Sincronização assíncrona com Supabase
     if (window.OlymposSupabase && typeof window.OlymposSupabase.salvarAgendaEvento === 'function') {
-      window.OlymposSupabase.salvarAgendaEvento(dadosNormalizados).catch(function(eSup) {
+      window.OlymposSupabase.salvarAgendaEvento(dadosNormalizados).then(function() {
+        sincronizarUiAgendaGlobal();
+      }).catch(function(eSup) {
         console.warn('[Calendario] Sincronização em segundo plano com Supabase falhou:', eSup);
       });
     }
 
     fecharModalFormAgenda();
-    renderizar();
+    sincronizarUiAgendaGlobal();
 
     if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
       window.OlymposApp.showToast('Evento "' + dadosNormalizados.titulo + '" registrado com sucesso na Agenda!');
@@ -1137,14 +1164,16 @@ window.OlymposViews.calendario = (function() {
 
     // Sincronização assíncrona com Supabase
     if (window.OlymposSupabase && typeof window.OlymposSupabase.excluirAgendaEvento === 'function') {
-      window.OlymposSupabase.excluirAgendaEvento(id).catch(function(eSup) {
+      window.OlymposSupabase.excluirAgendaEvento(id).then(function() {
+        sincronizarUiAgendaGlobal();
+      }).catch(function(eSup) {
         console.warn('[Calendario] Falha ao excluir do Supabase:', eSup);
       });
     }
 
     fecharModalFormAgenda();
     fecharModalDetalhesDia();
-    renderizar();
+    sincronizarUiAgendaGlobal();
 
     if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
       window.OlymposApp.showToast('Evento da agenda excluído com sucesso!');
@@ -1168,17 +1197,13 @@ window.OlymposViews.calendario = (function() {
     });
     if (alterado) {
       salvarListaAgendaCustom(lista);
+      sincronizarUiAgendaGlobal();
       if (window.OlymposSupabase && typeof window.OlymposSupabase.atualizarStatusEventoAgenda === 'function') {
-        window.OlymposSupabase.atualizarStatusEventoAgenda(id, 'CONCLUIDO').catch(function(eSup) {
+        window.OlymposSupabase.atualizarStatusEventoAgenda(id, 'CONCLUIDO').then(function() {
+          sincronizarUiAgendaGlobal();
+        }).catch(function(eSup) {
           console.warn('[Calendario] Falha ao atualizar status no Supabase:', eSup);
         });
-      }
-      renderizar();
-      if (selectedDate) {
-        abrirModalDetalhesDia(selectedDate);
-      }
-      if (window.OlymposViews && window.OlymposViews.visaoGeral && typeof window.OlymposViews.visaoGeral.renderizarWidgetEventosAgenda === 'function') {
-        window.OlymposViews.visaoGeral.renderizarWidgetEventosAgenda();
       }
       if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
         window.OlymposApp.showToast('Evento marcado como Concluído!');
@@ -1202,17 +1227,13 @@ window.OlymposViews.calendario = (function() {
     });
     if (alterado) {
       salvarListaAgendaCustom(lista);
+      sincronizarUiAgendaGlobal();
       if (window.OlymposSupabase && typeof window.OlymposSupabase.atualizarStatusEventoAgenda === 'function') {
-        window.OlymposSupabase.atualizarStatusEventoAgenda(id, 'PENDENTE').catch(function(eSup) {
+        window.OlymposSupabase.atualizarStatusEventoAgenda(id, 'PENDENTE').then(function() {
+          sincronizarUiAgendaGlobal();
+        }).catch(function(eSup) {
           console.warn('[Calendario] Falha ao reabrir status no Supabase:', eSup);
         });
-      }
-      renderizar();
-      if (selectedDate) {
-        abrirModalDetalhesDia(selectedDate);
-      }
-      if (window.OlymposViews && window.OlymposViews.visaoGeral && typeof window.OlymposViews.visaoGeral.renderizarWidgetEventosAgenda === 'function') {
-        window.OlymposViews.visaoGeral.renderizarWidgetEventosAgenda();
       }
       if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
         window.OlymposApp.showToast('Evento reaberto!');
@@ -1281,8 +1302,18 @@ window.OlymposViews.calendario = (function() {
       if (horarioIn) horarioIn.value = '09:00 - 11:30';
     }
 
-    modal.classList.remove('hidden');
-    modal.style.display = 'flex';
+    modal.style.zIndex = '10050';
+    if (window.OlymposModalManager && typeof window.OlymposModalManager.open === 'function') {
+      window.OlymposModalManager.open(modal);
+    } else {
+      modal.classList.remove('hidden');
+      modal.style.display = 'flex';
+    }
+    if (tituloIn && typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(function() {
+        try { tituloIn.focus(); } catch (eFocus) {}
+      });
+    }
   }
 
   /**
@@ -1326,16 +1357,8 @@ window.OlymposViews.calendario = (function() {
             mapLocais[s.id] = Object.assign({}, mapLocais[s.id] || {}, s);
           });
           salvarListaAgendaCustom(Object.keys(mapLocais).map(function(k) { return mapLocais[k]; }));
-          renderizar();
         }
-        if (window.OlymposViews && window.OlymposViews.visaoGeral) {
-          if (typeof window.OlymposViews.visaoGeral.renderizarWidgetEventosAgenda === 'function') {
-            window.OlymposViews.visaoGeral.renderizarWidgetEventosAgenda();
-          }
-          if (typeof window.OlymposViews.visaoGeral.atualizarTelemetriaCientifica === 'function') {
-            window.OlymposViews.visaoGeral.atualizarTelemetriaCientifica();
-          }
-        }
+        sincronizarUiAgendaGlobal();
       }).catch(function(err) {
         agendaCloudLoading = false;
         console.warn('[Calendario] Carregamento inicial do Supabase em background:', err);
@@ -2222,12 +2245,12 @@ window.OlymposViews.calendario = (function() {
         html += '      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">';
         html += '        <div><span class="cal-pill-badge ' + ev.categoria + '">' + formatarCategoriaLabel(ev.categoria) + '</span>' + statusBadge + '</div>';
         html += '        <div style="display:flex; gap:6px;">';
-        if (isConcluido) {
-          html += '          <button type="button" class="btn btn-secondary btn-sm" style="font-size:11px; padding:2px 8px;" onclick="window.OlymposViews.calendario.reabrirEventoAgenda(\'' + escapeAttr(ev.id) + '\')">' + (window.OlymposIcons ? window.OlymposIcons.ui('refresh') : '') + ' Reabrir</button>';
-        } else {
-          html += '          <button type="button" class="btn btn-primary btn-sm" style="font-size:11px; padding:2px 8px;" onclick="window.OlymposViews.calendario.concluirEventoAgenda(\'' + escapeAttr(ev.id) + '\')">' + (window.OlymposIcons ? window.OlymposIcons.ui('check') : '') + ' Concluir</button>';
-        }
         if (isCustom) {
+          if (isConcluido) {
+            html += '          <button type="button" class="btn btn-secondary btn-sm" style="font-size:11px; padding:2px 8px;" onclick="window.OlymposViews.calendario.reabrirEventoAgenda(\'' + escapeAttr(ev.id) + '\')">' + (window.OlymposIcons ? window.OlymposIcons.ui('refresh') : '') + ' Reabrir</button>';
+          } else {
+            html += '          <button type="button" class="btn btn-primary btn-sm" style="font-size:11px; padding:2px 8px;" onclick="window.OlymposViews.calendario.concluirEventoAgenda(\'' + escapeAttr(ev.id) + '\')">' + (window.OlymposIcons ? window.OlymposIcons.ui('check') : '') + ' Concluir</button>';
+          }
           html += '          <button type="button" class="btn btn-ghost btn-sm" style="font-size:11px; padding:2px 8px; color:var(--brand-gold); display:inline-flex; align-items:center; gap:4px;" onclick="window.OlymposViews.calendario.abrirModalFormAgenda(\'' + escapeAttr(ev.id) + '\')">' + editSvg + ' Editar</button>';
         }
         html += '        </div>';
@@ -2275,14 +2298,20 @@ window.OlymposViews.calendario = (function() {
     html += '</div>'; // fim cal-modal-content-wrap
 
     bodyEl.innerHTML = html;
-    modal.classList.remove('hidden');
-    modal.style.display = 'flex';
+    modal.style.zIndex = '10020';
+    if (window.OlymposModalManager && typeof window.OlymposModalManager.open === 'function') {
+      window.OlymposModalManager.open(modal);
+    } else {
+      modal.classList.remove('hidden');
+      modal.style.display = 'flex';
+    }
   }
 
   /**
    * Fecha o modal de detalhes do dia
    */
   function fecharModalDetalhesDia() {
+    selectedDate = null;
     var modal = document.getElementById('modalDetalhesDiaCalendario');
     if (modal) {
       modal.classList.add('hidden');
