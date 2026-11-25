@@ -160,10 +160,14 @@ window.OlymposApp = (function() {
     }
 
     const initialHash = window.location.hash.replace('#', '').trim();
+    const initialHashRoute = initialHash.split('?')[0].trim();
+    const isInitialPublicQr =
+      (initialHashRoute === 'inventario' && /[?&](?:item|codigo|lote)=/i.test(initialHash)) ||
+      (initialHashRoute === 'certificados' && initialHash.indexOf('?') !== -1);
     if (window.OlymposSupabase && typeof window.OlymposSupabase.isConfigured === 'function' && window.OlymposSupabase.isConfigured()) {
       window.OlymposSupabase.getSession().then(async function(sbSession) {
         if (!sbSession || !sbSession.user || currentUserSession) {
-          if (!currentUserSession && initialHash && !PUBLIC_PAGES.includes(initialHash)) {
+          if (!currentUserSession && initialHashRoute && !PUBLIC_PAGES.includes(initialHashRoute) && !isInitialPublicQr) {
             window.location.hash = '#visao-geral';
             solicitarLogin();
           } else if (!currentUserSession) {
@@ -284,7 +288,7 @@ window.OlymposApp = (function() {
       return;
     }
 
-    if (initialHash && !PUBLIC_PAGES.includes(initialHash)) {
+    if (initialHashRoute && !PUBLIC_PAGES.includes(initialHashRoute) && !isInitialPublicQr) {
       window.location.hash = '#visao-geral';
       solicitarLogin();
     } else {
@@ -338,11 +342,11 @@ window.OlymposApp = (function() {
   const RBAC_TAB_PERMISSIONS = {
     MODERADOR: [
       'visao-geral', 'oficios', 'portarias', 'licencas', 'certificados', 'relatorios',
-      'diario-oficial', 'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'oraculo', 'processos-seletivos', 'pss', 'mural', 'chat', 'auditoria', 'kiosk', 'configuracoes'
+      'diario-oficial', 'papiro-cadmo', 'servidores', 'escolas', 'inventario', 'chamados', 'pendencias', 'personas', 'busca', 'oraculo', 'processos-seletivos', 'pss', 'mural', 'chat', 'auditoria', 'kiosk', 'configuracoes'
     ],
     ADMIN_GABINETE: [
       'visao-geral', 'oficios', 'portarias', 'licencas', 'certificados', 'relatorios',
-      'diario-oficial', 'papiro-cadmo', 'servidores', 'chamados', 'pendencias', 'personas', 'busca', 'oraculo', 'processos-seletivos', 'pss', 'mural', 'chat', 'kiosk', 'configuracoes'
+      'diario-oficial', 'papiro-cadmo', 'servidores', 'escolas', 'inventario', 'chamados', 'pendencias', 'personas', 'busca', 'oraculo', 'processos-seletivos', 'pss', 'mural', 'chat', 'kiosk', 'configuracoes'
     ],
     RH_COMISSAO: [
       'visao-geral', 'oficios', 'relatorios',

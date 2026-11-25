@@ -1,0 +1,515 @@
+<!-- Modal 1: Registrar Entrada no Depósito -->
+<div
+  id="modalInventarioEntrada"
+  class="modal-backdrop hidden"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="modalInvEntradaTitle"
+>
+  <div class="modal-card modal-card-lg">
+    <div class="modal-header">
+      <h3 id="modalInvEntradaTitle" class="modal-title">Registrar Entrada no Depósito</h3>
+      <button type="button" class="modal-close-btn" data-inv-close-modal="modalInventarioEntrada" aria-label="Fechar modal">&times;</button>
+    </div>
+    <form id="formInvEntrada" class="modal-body" style="display: grid; gap: 14px;">
+      <div class="inv-field-grid-2">
+        <div>
+          <label for="invEntradaModo" class="form-label">Modo de Rastreio *</label>
+          <select id="invEntradaModo" class="form-input" required>
+            <option value="UNITARIO_CODIGO">Bem Unitário (1 código único + QR por unidade)</option>
+            <option value="CONSUMIVEL_QUANTITATIVO">Material Consumível (controle por saldo em estoque)</option>
+          </select>
+        </div>
+        <div>
+          <label for="invEntradaCategoria" class="form-label">Categoria *</label>
+          <select id="invEntradaCategoria" class="form-input" required>
+            <option value="MOBILIARIO">Mobiliário Escolar / Escritório</option>
+            <option value="INFORMATICA">Informática &amp; TI</option>
+            <option value="ELETRODOMESTICO">Eletrodomésticos / Climatização</option>
+            <option value="AUDIOVISUAL">Audiovisual &amp; Som</option>
+            <option value="EXPEDIENTE">Material de Expediente</option>
+            <option value="LIMPEZA">Higiene &amp; Limpeza</option>
+            <option value="PEDAGOGICO">Material Pedagógico</option>
+            <option value="ESPORTE">Esporte &amp; Lazer</option>
+            <option value="FERRAMENTA">Ferramentas &amp; Manutenção</option>
+            <option value="OUTRO">Outro</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="inv-field-grid-2">
+        <div>
+          <label for="invEntradaNome" class="form-label">Nome Detalhado do Item *</label>
+          <input
+            type="text"
+            id="invEntradaNome"
+            class="form-input"
+            required
+            minlength="2"
+            maxlength="200"
+            placeholder="Ex.: Mesa Escolar 1 Lugar Tampo MDF Azul"
+          />
+        </div>
+        <div>
+          <label for="invEntradaMarca" class="form-label">Marca / Modelo</label>
+          <input
+            type="text"
+            id="invEntradaMarca"
+            class="form-input"
+            maxlength="120"
+            placeholder="Ex.: Móveis Escolar BR-200"
+          />
+        </div>
+      </div>
+
+      <div class="inv-field-grid-3">
+        <div>
+          <label for="invEntradaQtd" class="form-label">Quantidade *</label>
+          <input type="number" id="invEntradaQtd" class="form-input" min="1" max="5000" value="1" required />
+          <small id="invEntradaQtdHint" class="form-hint">Para itens unitários: máx. 250 códigos por lote (consumíveis até 5000).</small>
+        </div>
+        <div>
+          <label for="invEntradaUnidade" class="form-label">Unidade de Medida</label>
+          <input type="text" id="invEntradaUnidade" class="form-input" maxlength="20" value="UN" placeholder="UN, CX, RESMA, PCT" />
+        </div>
+        <div>
+          <label for="invEntradaData" class="form-label">Data de Chegada no Depósito *</label>
+          <input type="date" id="invEntradaData" class="form-input" required />
+        </div>
+      </div>
+
+      <div id="invEntradaConsumivelRow" class="inv-field-grid-2 hidden">
+        <div>
+          <label for="invEntradaEstoqueMin" class="form-label">Estoque Mínimo para Alerta</label>
+          <input type="number" id="invEntradaEstoqueMin" class="form-input" min="0" step="1" value="5" />
+        </div>
+        <div>
+          <label for="invEntradaValorUnit" class="form-label">Valor Unitário Estimado (R$)</label>
+          <input type="number" id="invEntradaValorUnit" class="form-input" min="0" step="0.01" placeholder="Opcional" />
+        </div>
+      </div>
+
+      <div id="invEntradaUnitarioRow" class="inv-field-grid-2">
+        <div>
+          <label for="invEntradaEstado" class="form-label">Estado Inicial de Conservação</label>
+          <select id="invEntradaEstado" class="form-input">
+            <option value="NOVO">Novo</option>
+            <option value="BOM">Bom</option>
+            <option value="REGULAR">Regular</option>
+          </select>
+        </div>
+        <div>
+          <label for="invEntradaSeriais" class="form-label">Números de Série (1 por linha, opcional)</label>
+          <textarea
+            id="invEntradaSeriais"
+            class="form-input"
+            rows="2"
+            placeholder="Opcional: associe 1 nº de série por unidade gerada"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="inv-field-grid-2">
+        <div>
+          <label for="invEntradaFornecedor" class="form-label">Fornecedor / Origem</label>
+          <input type="text" id="invEntradaFornecedor" class="form-input" maxlength="160" placeholder="Ex.: Licitação Pregão 014/2026" />
+        </div>
+        <div>
+          <label for="invEntradaDoc" class="form-label">Nota Fiscal / Empenho / Documento</label>
+          <input type="text" id="invEntradaDoc" class="form-input" maxlength="120" placeholder="Ex.: NF 48291" />
+        </div>
+      </div>
+
+      <div>
+        <label for="invEntradaDescricao" class="form-label">Descrição Técnica / Observações</label>
+        <textarea
+          id="invEntradaDescricao"
+          class="form-input"
+          rows="2"
+          placeholder="Cor, dimensões, acessórios incluídos ou observações de recebimento..."
+        ></textarea>
+      </div>
+
+      <div class="inv-field-grid-2">
+        <div>
+          <label for="invEntradaFotoFile" class="form-label">Foto ou Comprovante no Google Drive (opcional)</label>
+          <input type="file" id="invEntradaFotoFile" class="form-input" accept="image/*,application/pdf" />
+        </div>
+        <div>
+          <label for="invEntradaFotoTipo" class="form-label">Tipo do Anexo</label>
+          <select id="invEntradaFotoTipo" class="form-input">
+            <option value="FOTO_ENTRADA">Foto de Chegada no Depósito</option>
+            <option value="NOTA_FISCAL">Nota Fiscal / Empenho (PDF/Img)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="padding: 0; margin-top: 4px;">
+        <button type="button" class="btn btn-ghost btn-sm" data-inv-close-modal="modalInventarioEntrada">Cancelar</button>
+        <button type="submit" id="btnInvEntradaSubmit" class="btn btn-primary btn-sm">Salvar Entrada &amp; Gerar Códigos</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal 2: Movimentar / Destinar Itens Unitários -->
+<div
+  id="modalInventarioMovimentar"
+  class="modal-backdrop hidden"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="modalInvMovTitle"
+>
+  <div class="modal-card modal-card-lg">
+    <div class="modal-header">
+      <h3 id="modalInvMovTitle" class="modal-title">Movimentar Itens Patrimoniais</h3>
+      <button type="button" class="modal-close-btn" data-inv-close-modal="modalInventarioMovimentar" aria-label="Fechar modal">&times;</button>
+    </div>
+    <form id="formInvMov" class="modal-body" style="display: grid; gap: 14px;">
+      <div id="invMovResumoBox" class="inv-meta-item">
+        <small>Itens incluídos na remessa</small>
+        <strong id="invMovResumoText">0 item(ns)</strong>
+      </div>
+
+      <div class="inv-field-grid-2">
+        <div>
+          <label for="invMovTipo" class="form-label">Tipo de Movimentação *</label>
+          <select id="invMovTipo" class="form-input" required>
+            <option value="SAIDA_ESCOLA">Saída / Destinação para Escola</option>
+            <option value="SAIDA_SETOR">Saída / Alocação em Setor da SMEB</option>
+            <option value="TRANSFERENCIA">Transferência entre Locais</option>
+            <option value="RETORNO_DEPOSITO">Devolução ao Depósito Central</option>
+            <option value="ENVIO_MANUTENCAO">Envio para Manutenção</option>
+            <option value="RETORNO_MANUTENCAO">Retorno de Manutenção</option>
+            <option value="BAIXA_PATRIMONIAL" data-perm="inventario.baixar_ajustar">Baixa Patrimonial</option>
+          </select>
+        </div>
+        <div>
+          <label for="invMovDestinoTipo" class="form-label">Tipo de Destino *</label>
+          <select id="invMovDestinoTipo" class="form-input" required>
+            <option value="ESCOLA">Escola Municipal</option>
+            <option value="SETOR_SEDE">Setor da Sede SMEB</option>
+            <option value="DEPOSITO">Depósito Central SMEB</option>
+            <option value="EXTERNO_MANUTENCAO">Oficina / Manutenção Externa</option>
+            <option value="BAIXADO" data-perm="inventario.baixar_ajustar">Baixa Definitiva</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="invMovEscolaGroup">
+        <label for="invMovEscolaSelect" class="form-label">Escola de Destino *</label>
+        <select id="invMovEscolaSelect" class="form-input">
+          <option value="">Selecione a escola...</option>
+        </select>
+      </div>
+
+      <div id="invMovSetorGroup" class="hidden">
+        <label for="invMovSetorSelect" class="form-label">Setor da SMEB de Destino *</label>
+        <select id="invMovSetorSelect" class="form-input">
+          <option value="">Selecione o setor...</option>
+        </select>
+      </div>
+
+      <div id="invMovDestinoTextoGroup" class="hidden">
+        <label for="invMovDestinoNome" class="form-label">Nome do Destino *</label>
+        <input type="text" id="invMovDestinoNome" class="form-input" maxlength="160" placeholder="Ex.: Depósito Central SMEB" />
+      </div>
+
+      <div class="inv-field-grid-2">
+        <div>
+          <label for="invMovAmbiente" class="form-label">Sala / Ambiente (opcional)</label>
+          <input type="text" id="invMovAmbiente" class="form-input" maxlength="100" placeholder="Ex.: Sala 03, Diretoria, Almoxarifado" />
+        </div>
+        <div>
+          <label for="invMovEstado" class="form-label">Estado de Conservação no Ato</label>
+          <select id="invMovEstado" class="form-input">
+            <option value="">Manter estado atual</option>
+            <option value="NOVO">Novo</option>
+            <option value="BOM">Bom</option>
+            <option value="REGULAR">Regular</option>
+            <option value="AVARIADO">Avariado</option>
+            <option value="INSERVIVEL">Inservível</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="inv-field-grid-2">
+        <div>
+          <label for="invMovRecebidoPor" class="form-label">Recebido por (Nome completo)</label>
+          <input type="text" id="invMovRecebidoPor" class="form-input" maxlength="120" placeholder="Gestor(a), servidor ou responsável" />
+        </div>
+        <div>
+          <label for="invMovRecebidoCargo" class="form-label">Cargo / Função</label>
+          <input type="text" id="invMovRecebidoCargo" class="form-input" maxlength="80" placeholder="Ex.: Diretor(a) Escolar" />
+        </div>
+      </div>
+
+      <div>
+        <label for="invMovMotivo" class="form-label">Observações da Movimentação</label>
+        <textarea id="invMovMotivo" class="form-input" rows="2" placeholder="Motivo, solicitação ou detalhes do transporte..."></textarea>
+      </div>
+
+      <div class="inv-field-grid-2">
+        <div>
+          <label for="invMovAnexoFile" class="form-label">Foto de Entrega / Comprovante no Drive (opcional)</label>
+          <input type="file" id="invMovAnexoFile" class="form-input" accept="image/*,application/pdf" />
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem; padding-top: 1.4rem;">
+          <input type="checkbox" id="invMovGerarTermo" checked />
+          <label for="invMovGerarTermo" class="form-label" style="margin: 0; cursor: pointer;">
+            Gerar Termo de Entrega automático no Google Docs
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="padding: 0; margin-top: 4px;">
+        <button type="button" class="btn btn-ghost btn-sm" data-inv-close-modal="modalInventarioMovimentar">Cancelar</button>
+        <button type="submit" id="btnInvMovSubmit" class="btn btn-primary btn-sm">Confirmar Movimentação</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal 3: Movimentar Estoque de Consumível -->
+<div
+  id="modalInventarioConsumivelMov"
+  class="modal-backdrop hidden"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="modalInvConsTitle"
+>
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 id="modalInvConsTitle" class="modal-title">Movimentar Estoque de Consumível</h3>
+      <button type="button" class="modal-close-btn" data-inv-close-modal="modalInventarioConsumivelMov" aria-label="Fechar modal">&times;</button>
+    </div>
+    <form id="formInvConsMov" class="modal-body" style="display: grid; gap: 12px;">
+      <input type="hidden" id="invConsLoteId" />
+      <div class="inv-meta-item">
+        <small>Lote Selecionado</small>
+        <strong id="invConsResumoText">—</strong>
+      </div>
+      <div class="inv-field-grid-2">
+        <div>
+          <label for="invConsTipo" class="form-label">Operação *</label>
+          <select id="invConsTipo" class="form-input" required>
+            <option value="SAIDA_ESCOLA">Saída / Distribuição para Escola</option>
+            <option value="SAIDA_SETOR">Saída / Distribuição para Setor SMEB</option>
+            <option value="REPOSICAO_CONSUMIVEL" data-perm="inventario.cadastrar">Reposição / Nova Entrada no Lote</option>
+            <option value="BAIXA_PATRIMONIAL" data-perm="inventario.baixar_ajustar">Baixa / Descarte de Estoque</option>
+          </select>
+        </div>
+        <div>
+          <label for="invConsQuantidade" class="form-label">Quantidade *</label>
+          <input type="number" id="invConsQuantidade" class="form-input" min="1" step="1" value="1" required />
+        </div>
+      </div>
+      <div class="inv-field-grid-2">
+        <div>
+          <label for="invConsDestinoTipo" class="form-label">Destino</label>
+          <select id="invConsDestinoTipo" class="form-input">
+            <option value="ESCOLA">Escola Municipal</option>
+            <option value="SETOR_SEDE">Setor da Sede SMEB</option>
+            <option value="DEPOSITO">Depósito Central</option>
+          </select>
+        </div>
+        <div>
+          <label for="invConsDestinoNome" class="form-label">Escola / Setor de Destino *</label>
+          <input type="text" id="invConsDestinoNome" class="form-input" list="invEscolasDatalist" required placeholder="Nome da escola ou setor" />
+          <datalist id="invEscolasDatalist"></datalist>
+        </div>
+      </div>
+      <div>
+        <label for="invConsRecebedor" class="form-label">Recebido por</label>
+        <input type="text" id="invConsRecebedor" class="form-input" placeholder="Nome de quem retirou/recebeu" />
+      </div>
+      <div>
+        <label for="invConsObs" class="form-label">Observações</label>
+        <textarea id="invConsObs" class="form-input" rows="2"></textarea>
+      </div>
+      <div class="modal-footer" style="padding: 0; margin-top: 4px;">
+        <button type="button" class="btn btn-ghost btn-sm" data-inv-close-modal="modalInventarioConsumivelMov">Cancelar</button>
+        <button type="submit" id="btnInvConsSubmit" class="btn btn-primary btn-sm">Registrar Operação</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal 4: Dossiê Completo do Bem + QR Code + Anexos Drive -->
+<div
+  id="modalInventarioDossie"
+  class="modal-backdrop hidden"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="modalInvDossieTitle"
+>
+  <div class="modal-card modal-card-lg">
+    <div class="modal-header">
+      <h3 id="modalInvDossieTitle" class="modal-title">Dossiê Patrimonial do Item</h3>
+      <button type="button" class="modal-close-btn" data-inv-close-modal="modalInventarioDossie" aria-label="Fechar modal">&times;</button>
+    </div>
+    <div class="modal-body" style="display: grid; gap: 16px;">
+      <div class="inv-dossie-grid">
+        <div class="inv-qr-box">
+          <div id="invDossieQrSvg"></div>
+          <div id="invDossieCodigoPill" class="inv-code-pill" style="margin-bottom: 0.45rem;">—</div>
+          <div style="display: grid; gap: 0.4rem;">
+            <button type="button" id="btnInvDossieImprimirQr" class="btn btn-secondary btn-sm">Imprimir Etiqueta</button>
+            <button
+              type="button"
+              id="btnInvDossieMovimentar"
+              class="btn btn-primary btn-sm"
+              data-requires-auth="true"
+              data-perm="inventario.movimentar"
+            >
+              Movimentar Bem
+            </button>
+            <button
+              type="button"
+              id="btnInvDossieEditar"
+              class="btn btn-ghost btn-sm"
+              data-requires-auth="true"
+              data-perm="inventario.baixar_ajustar"
+            >
+              Editar / Tombamento
+            </button>
+          </div>
+        </div>
+        <div id="invDossieMetaGrid" class="inv-meta-grid"></div>
+      </div>
+
+      <div>
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.5rem;">
+          <h4 style="margin: 0; font-size: 0.96rem;">Anexos Fotográficos &amp; Documentos (Google Drive)</h4>
+          <form id="formInvDossieAnexo" style="display: flex; flex-wrap: wrap; gap: 0.45rem; align-items: center;" data-requires-auth="true" data-perm="inventario.movimentar">
+            <select id="invDossieAnexoTipo" class="form-input" style="width: auto; min-width: 170px;">
+              <option value="FOTO_ENTREGA">Foto no Local / Entrega</option>
+              <option value="FOTO_ENTRADA">Foto no Depósito</option>
+              <option value="FOTO_AVARIA">Registro de Avaria</option>
+              <option value="TERMO_ASSINADO_SCAN">Termo Assinado (PDF/Img)</option>
+              <option value="LAUDO">Laudo Técnico</option>
+              <option value="OUTRO">Outro Anexo</option>
+            </select>
+            <input type="file" id="invDossieAnexoFile" class="form-input" style="width: auto;" accept="image/*,application/pdf" required />
+            <button type="submit" id="btnInvDossieEnviarAnexo" class="btn btn-secondary btn-sm">Enviar para Drive</button>
+          </form>
+        </div>
+        <div id="invDossieAnexosGrid" class="inv-anexos-grid"></div>
+      </div>
+
+      <div>
+        <h4 style="margin: 0 0 0.5rem 0; font-size: 0.96rem;">Histórico de Movimentações</h4>
+        <div class="table-wrapper table-responsive">
+          <table id="invDossieHistTable" class="clean-table table-responsive-cards">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Remessa</th>
+                <th>Tipo</th>
+                <th>Origem</th>
+                <th>Destino</th>
+                <th>Recebedor</th>
+                <th>Termo</th>
+              </tr>
+            </thead>
+            <tbody id="invDossieHistTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal 5: Editar Dados Patrimoniais / Ajuste Técnico -->
+<div
+  id="modalInventarioEditarItem"
+  class="modal-backdrop hidden"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="modalInvEditarTitle"
+>
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 id="modalInvEditarTitle" class="modal-title">Editar Cadastro / Ajuste Técnico</h3>
+      <button type="button" class="modal-close-btn" data-inv-close-modal="modalInventarioEditarItem" aria-label="Fechar modal">&times;</button>
+    </div>
+    <form id="formInvEditarItem" class="modal-body" style="display: grid; gap: 12px;">
+      <input type="hidden" id="invEditItemId" />
+      <div class="inv-field-grid-2">
+        <div>
+          <label for="invEditTombamento" class="form-label">Tombamento Prefeitura (opcional)</label>
+          <input type="text" id="invEditTombamento" class="form-input" maxlength="60" placeholder="Ex.: PMCM-004921" />
+        </div>
+        <div>
+          <label for="invEditSerie" class="form-label">Número de Série</label>
+          <input type="text" id="invEditSerie" class="form-input" maxlength="80" />
+        </div>
+      </div>
+      <div>
+        <label for="invEditNome" class="form-label">Nome Detalhado *</label>
+        <input type="text" id="invEditNome" class="form-input" required maxlength="200" />
+      </div>
+      <div class="inv-field-grid-2">
+        <div>
+          <label for="invEditMarca" class="form-label">Marca / Modelo</label>
+          <input type="text" id="invEditMarca" class="form-input" maxlength="120" />
+        </div>
+        <div>
+          <label for="invEditEstado" class="form-label">Estado de Conservação</label>
+          <select id="invEditEstado" class="form-input">
+            <option value="NOVO">Novo</option>
+            <option value="BOM">Bom</option>
+            <option value="REGULAR">Regular</option>
+            <option value="AVARIADO">Avariado</option>
+            <option value="INSERVIVEL">Inservível</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label for="invEditObs" class="form-label">Observações</label>
+        <textarea id="invEditObs" class="form-input" rows="2"></textarea>
+      </div>
+      <div class="modal-footer" style="padding: 0; margin-top: 4px;">
+        <button type="button" class="btn btn-ghost btn-sm" data-inv-close-modal="modalInventarioEditarItem">Cancelar</button>
+        <button type="submit" id="btnInvEditarSubmit" class="btn btn-primary btn-sm">Salvar Alterações</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal 6: Leitor QR Code (Câmera ou Leitor USB / Código Manual) -->
+<div
+  id="modalInventarioQrScanner"
+  class="modal-backdrop hidden"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="modalInvScannerTitle"
+>
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 id="modalInvScannerTitle" class="modal-title">Leitor de QR Code Patrimonial</h3>
+      <button type="button" class="modal-close-btn" data-inv-close-modal="modalInventarioQrScanner" aria-label="Fechar modal">&times;</button>
+    </div>
+    <div class="modal-body" style="display: grid; gap: 12px;">
+      <form id="formInvScannerManual" style="display: flex; gap: 0.5rem;">
+        <label for="invScannerInput" class="sr-only">Código ou URL do QR</label>
+        <input
+          type="text"
+          id="invScannerInput"
+          class="form-input"
+          placeholder="Bipe com leitor USB ou digite o código SMEB-PAT-..."
+          autocomplete="off"
+        />
+        <button type="submit" class="btn btn-primary btn-sm">Abrir</button>
+      </form>
+      <video id="invScannerVideo" class="inv-scanner-video hidden" playsinline muted></video>
+      <div id="invScannerStatus" class="inv-submeta">
+        Aponte a câmera para a etiqueta ou utilize um leitor óptico USB no campo acima.
+      </div>
+      <div class="modal-footer" style="padding: 0;">
+        <button type="button" id="btnInvScannerCameraToggle" class="btn btn-secondary btn-sm">Ativar Câmera</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-inv-close-modal="modalInventarioQrScanner">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>

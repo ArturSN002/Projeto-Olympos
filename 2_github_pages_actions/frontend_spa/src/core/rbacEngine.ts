@@ -230,7 +230,12 @@ export const CATALOGO_PERMISSOES: PermissaoCatalogoItem[] = [
   { codigo: 'memorias.editar', grupo: 'Governança & Sistema', rotulo: 'Editar Memórias & Snapshots', descricao: 'Edita memórias Google Docs, compacta e restaura Dédalo', rotaPagina: 'personas', exclusivoGabinete: false, somenteModerador: false, requerAal2: true, ordem: 42 },
   { codigo: 'automacoes.gerir', grupo: 'Governança & Sistema', rotulo: 'Gerir Automações & Telegram', descricao: 'Configura boletins e vínculos operacionais do Telegram', rotaPagina: 'configuracoes', exclusivoGabinete: false, somenteModerador: false, requerAal2: true, ordem: 43 },
   { codigo: 'auditoria.ver', grupo: 'Governança & Sistema', rotulo: 'Visualizar Auditoria & Saúde DR', descricao: 'Acessa audit_logs imutáveis e backups DR', rotaPagina: 'auditoria', exclusivoGabinete: false, somenteModerador: false, requerAal2: true, ordem: 44 },
-  { codigo: 'usuarios.gerir', grupo: 'Governança & Sistema', rotulo: 'Gerenciar Usuários & Matriz', descricao: 'Acesso exclusivo do Moderador para usuários e permissões', rotaPagina: 'configuracoes', exclusivoGabinete: false, somenteModerador: true, requerAal2: true, ordem: 45 }
+  { codigo: 'usuarios.gerir', grupo: 'Governança & Sistema', rotulo: 'Gerenciar Usuários & Matriz', descricao: 'Acesso exclusivo do Moderador para usuários e permissões', rotaPagina: 'configuracoes', exclusivoGabinete: false, somenteModerador: true, requerAal2: true, ordem: 45 },
+
+  { codigo: 'inventario.ver', grupo: 'Patrimônio & Almoxarifado', rotulo: 'Visualizar Inventário & Estoque', descricao: 'Consulta bens tombados, consumíveis, lotes, histórico e etiquetas QR', rotaPagina: 'inventario', exclusivoGabinete: false, somenteModerador: false, requerAal2: false, ordem: 46 },
+  { codigo: 'inventario.cadastrar', grupo: 'Patrimônio & Almoxarifado', rotulo: 'Cadastrar Entradas no Depósito', descricao: 'Registra chegada de lotes unitários (códigos únicos) e consumíveis no depósito', rotaPagina: 'inventario', exclusivoGabinete: false, somenteModerador: false, requerAal2: false, ordem: 47 },
+  { codigo: 'inventario.movimentar', grupo: 'Patrimônio & Almoxarifado', rotulo: 'Movimentar Itens, Drive & Termos', descricao: 'Registra saídas para escolas/setores, transferências, fotos Drive e Termo Docs', rotaPagina: 'inventario', exclusivoGabinete: false, somenteModerador: false, requerAal2: false, ordem: 48 },
+  { codigo: 'inventario.baixar_ajustar', grupo: 'Patrimônio & Almoxarifado', rotulo: 'Baixar Itens / Ajustar Cadastro', descricao: 'Realiza baixa patrimonial, edição estrutural e ajustes críticos de estoque', rotaPagina: 'inventario', exclusivoGabinete: false, somenteModerador: false, requerAal2: false, ordem: 49 }
 ];
 
 const MATRIZ_SEEDS: Array<[SetorCodigo, string, boolean, boolean]> = [
@@ -488,7 +493,17 @@ const MATRIZ_SEEDS: Array<[SetorCodigo, string, boolean, boolean]> = [
   ['FINANCEIRO_TESOURARIA', 'memorias.ler', true, false],
 
   ['GABINETE', 'memorias.editar', true, false],
-  ['GABINETE', 'automacoes.gerir', true, false]
+  ['GABINETE', 'automacoes.gerir', true, false],
+
+  ['GABINETE', 'inventario.ver', true, true],
+  ['GABINETE', 'inventario.cadastrar', true, false],
+  ['GABINETE', 'inventario.movimentar', true, false],
+  ['GABINETE', 'inventario.baixar_ajustar', true, false],
+
+  ['ADMINISTRATIVO', 'inventario.ver', true, true],
+  ['ADMINISTRATIVO', 'inventario.cadastrar', true, true],
+  ['ADMINISTRATIVO', 'inventario.movimentar', true, true],
+  ['ADMINISTRATIVO', 'inventario.baixar_ajustar', true, false]
 ];
 
 export const MATRIZ_PADRAO: Record<string, { ENCARREGADO: Set<string>; MEMBRO: Set<string> }> = (() => {

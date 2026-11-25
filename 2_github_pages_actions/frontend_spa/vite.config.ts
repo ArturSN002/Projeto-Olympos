@@ -92,6 +92,9 @@ export default defineConfig({
           if (normalized.includes('node_modules/xlsx')) {
             return 'vendor-xlsx';
           }
+          if (normalized.includes('node_modules/qrcode')) {
+            return 'vendor-qrcode';
+          }
           if (normalized.includes('node_modules/pdf-lib') || normalized.includes('node_modules/@pdf-lib')) {
             return 'vendor-pdf';
           }

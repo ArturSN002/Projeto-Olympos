@@ -1,0 +1,270 @@
+<section id="page-inventario" class="page-view hidden" aria-labelledby="invPageTitle">
+  <div class="section-shell">
+    <!-- ══ MODO PÚBLICO / LEITURA DE QR SEM AUTENTICAÇÃO PATRIMONIAL ══════════ -->
+    <div id="invPublicQrSection" class="hidden">
+      <div class="glass-card inv-public-card">
+        <div class="onda6-page-head onda6-compact-head" style="margin-bottom: 1rem;">
+          <div>
+            <span class="eyebrow">Conferência Patrimonial Pública • SMEB Ceará-Mirim/RN</span>
+            <h2 id="invPublicQrTitle" class="page-title">Consulta via QR Code</h2>
+            <p class="page-subtitle">
+              Verificação rápida de tombamento, situação de conservação e lotação institucional.
+            </p>
+          </div>
+          <div class="inv-header-actions">
+            <button type="button" id="btnInvPublicEntrar" class="btn btn-primary btn-sm">
+              Entrar para Movimentar
+            </button>
+          </div>
+        </div>
+
+        <form id="invPublicQrSearchForm" style="display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1rem;">
+          <label for="invPublicQrInput" class="sr-only">Código patrimonial ou QR Code</label>
+          <input
+            type="search"
+            id="invPublicQrInput"
+            class="form-input"
+            style="flex: 1 1 240px;"
+            placeholder="Digite ou leia o código (ex.: SMEB-PAT-2026-00001)"
+            autocomplete="off"
+          />
+          <button type="submit" class="btn btn-secondary btn-sm">Consultar Código</button>
+          <button type="button" id="btnInvPublicAbrirScanner" class="btn btn-ghost btn-sm">Ler com Câmera</button>
+        </form>
+
+        <div id="invPublicQrCardBody" aria-live="polite">
+          <div class="inv-meta-item">
+            <small>Orientação</small>
+            <strong>Escaneie uma etiqueta patrimonial ou informe o código único acima para consultar o bem.</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ MODO PAINEL SETORIAL (ADMINISTRATIVO / GABINETE / MODERADOR) ═════════ -->
+    <div id="invStaffSection" class="inv-shell hidden">
+      <div class="onda6-page-head onda6-compact-head">
+        <div>
+          <span class="eyebrow">A Forja de Hefesto • Setor Administrativo</span>
+          <h2 id="invPageTitle" class="page-title">Inventário Online &amp; Almoxarifado</h2>
+          <p class="page-subtitle">
+            Controle patrimonial por código único e QR Code, saldo de consumíveis, movimentações intersetoriais, fotos no Drive e Termos de Entrega no Docs.
+          </p>
+        </div>
+        <div class="inv-header-actions">
+          <button
+            type="button"
+            id="btnInvNovaEntrada"
+            class="btn btn-primary btn-sm"
+            data-requires-auth="true"
+            data-perm="inventario.cadastrar"
+          >
+            + Registrar Entrada
+          </button>
+          <button type="button" id="btnInvLerQr" class="btn btn-secondary btn-sm">
+            Ler / Buscar QR Code
+          </button>
+          <button type="button" id="btnInvImprimirQr" class="btn btn-secondary btn-sm">
+            Imprimir Etiquetas QR
+          </button>
+          <button type="button" id="btnInvExportarXlsx" class="btn btn-ghost btn-sm">
+            Exportar XLSX
+          </button>
+          <button type="button" id="btnInvAbrirPastaDrive" class="btn btn-ghost btn-sm">
+            Pasta Drive
+          </button>
+          <button type="button" id="btnInvRecarregar" class="btn btn-ghost btn-sm">
+            Atualizar
+          </button>
+        </div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="inv-kpi-grid" aria-label="Indicadores do Inventário">
+        <div class="glass-card inv-kpi-card">
+          <span class="inv-kpi-label">Itens Patrimoniados</span>
+          <strong id="invKpiTotalItens" class="inv-kpi-value">0</strong>
+          <span id="invKpiTotalItensSub" class="inv-kpi-sub">Unidades rastreadas por QR</span>
+        </div>
+        <div class="glass-card inv-kpi-card">
+          <span class="inv-kpi-label">Em Depósito (Sede)</span>
+          <strong id="invKpiEmDeposito" class="inv-kpi-value">0</strong>
+          <span class="inv-kpi-sub">Disponíveis para destinação</span>
+        </div>
+        <div class="glass-card inv-kpi-card">
+          <span class="inv-kpi-label">Alocados (Escolas / Setores)</span>
+          <strong id="invKpiAlocados" class="inv-kpi-value">0</strong>
+          <span class="inv-kpi-sub">Em uso ou transferência externa</span>
+        </div>
+        <div class="glass-card inv-kpi-card">
+          <span class="inv-kpi-label">Consumíveis / Alerta Mínimo</span>
+          <strong id="invKpiConsumiveisBaixos" class="inv-kpi-value">0</strong>
+          <span id="invKpiConsumiveisSub" class="inv-kpi-sub">Lotes quantitativos monitorados</span>
+        </div>
+      </div>
+
+      <!-- Abas + Status -->
+      <div class="glass-card" style="padding: 1.1rem 1.2rem; display: flex; flex-direction: column; gap: 1rem;">
+        <div class="inv-tabs-bar">
+          <div class="inv-tabs-group" role="tablist" aria-label="Visões do Inventário">
+            <button type="button" class="inv-tab-btn active" data-inv-tab="itens" role="tab" aria-selected="true">
+              Itens Tombados
+            </button>
+            <button type="button" class="inv-tab-btn" data-inv-tab="consumiveis" role="tab" aria-selected="false">
+              Estoque &amp; Consumíveis
+            </button>
+            <button type="button" class="inv-tab-btn" data-inv-tab="historico" role="tab" aria-selected="false">
+              Histórico &amp; Termos Drive
+            </button>
+          </div>
+          <span id="invViewModeBadge" class="page-subtitle" style="margin: 0;"></span>
+        </div>
+
+        <!-- Filtros da Aba Principal -->
+        <div id="invFiltersWrap" class="inv-filter-bar">
+          <div>
+            <label for="invSearchInput" class="sr-only">Buscar no inventário</label>
+            <input
+              type="search"
+              id="invSearchInput"
+              class="form-input"
+              placeholder="Buscar por código SMEB, tombamento, nome, marca, escola ou responsável..."
+            />
+          </div>
+          <div>
+            <label for="invFilterStatus" class="sr-only">Filtrar por status</label>
+            <select id="invFilterStatus" class="form-input">
+              <option value="">Status: Todos</option>
+              <option value="EM_ESTOQUE">Em Estoque</option>
+              <option value="ALOCADO">Alocado</option>
+              <option value="EM_MANUTENCAO">Em Manutenção</option>
+              <option value="BAIXADO">Baixado</option>
+            </select>
+          </div>
+          <div>
+            <label for="invFilterCategoria" class="sr-only">Filtrar por categoria</label>
+            <select id="invFilterCategoria" class="form-input">
+              <option value="">Categoria: Todas</option>
+            </select>
+          </div>
+          <div>
+            <label for="invFilterLotacao" class="sr-only">Filtrar por tipo de lotação</label>
+            <select id="invFilterLotacao" class="form-input">
+              <option value="">Lotação: Todas</option>
+              <option value="DEPOSITO">Depósito Central</option>
+              <option value="ESCOLA">Escolas</option>
+              <option value="SETOR_SEDE">Setores SMEB</option>
+              <option value="EXTERNO_MANUTENCAO">Manutenção Externa</option>
+              <option value="BAIXADO">Baixado</option>
+            </select>
+          </div>
+          <div>
+            <label for="invFilterEstado" class="sr-only">Filtrar por conservação</label>
+            <select id="invFilterEstado" class="form-input">
+              <option value="">Conservação: Todas</option>
+              <option value="NOVO">Novo</option>
+              <option value="BOM">Bom</option>
+              <option value="REGULAR">Regular</option>
+              <option value="AVARIADO">Avariado</option>
+              <option value="INSERVIVEL">Inservível</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Barra de Seleção em Lote -->
+        <div id="invBatchBar" class="inv-batch-bar hidden">
+          <div>
+            <strong id="invBatchCountText">0 item(ns) selecionado(s)</strong>
+            <span class="inv-submeta" style="margin-left: 0.5rem;">Ações em lote com código de remessa único.</span>
+          </div>
+          <div class="inv-header-actions">
+            <button
+              type="button"
+              id="btnInvMovimentarLote"
+              class="btn btn-primary btn-sm"
+              data-requires-auth="true"
+              data-perm="inventario.movimentar"
+            >
+              Movimentar Selecionados
+            </button>
+            <button type="button" id="btnInvImprimirSelecionados" class="btn btn-secondary btn-sm">
+              Imprimir Etiquetas Selecionadas
+            </button>
+            <button type="button" id="btnInvLimparSelecao" class="btn btn-ghost btn-sm">
+              Limpar Seleção
+            </button>
+          </div>
+        </div>
+
+        <!-- Aba 1: Itens Tombados -->
+        <div id="invTabItens" class="inv-tab-panel">
+          <div class="table-wrapper table-responsive">
+            <table id="invItensTable" class="clean-table table-responsive-cards">
+              <thead>
+                <tr>
+                  <th style="width: 38px;">
+                    <input type="checkbox" id="invCheckAll" aria-label="Selecionar todos os itens visíveis" />
+                  </th>
+                  <th>Código Único</th>
+                  <th>Item / Descrição</th>
+                  <th>Categoria</th>
+                  <th>Estado</th>
+                  <th>Status</th>
+                  <th>Lotação Atual</th>
+                  <th>Lotação Anterior</th>
+                  <th>Entrada / Saída</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="invItensTbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Aba 2: Estoque & Consumíveis -->
+        <div id="invTabConsumiveis" class="inv-tab-panel hidden">
+          <div class="table-wrapper table-responsive">
+            <table id="invLotesTable" class="clean-table table-responsive-cards">
+              <thead>
+                <tr>
+                  <th>Lote</th>
+                  <th>Modo</th>
+                  <th>Material / Descrição</th>
+                  <th>Categoria</th>
+                  <th>Entrada</th>
+                  <th>Saldo Depósito</th>
+                  <th>Mínimo</th>
+                  <th>Data Entrada</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="invLotesTbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Aba 3: Histórico & Termos Drive -->
+        <div id="invTabHistorico" class="inv-tab-panel hidden">
+          <div class="table-wrapper table-responsive">
+            <table id="invMovsTable" class="clean-table table-responsive-cards">
+              <thead>
+                <tr>
+                  <th>Data / Hora</th>
+                  <th>Remessa</th>
+                  <th>Tipo</th>
+                  <th>Item / Lote</th>
+                  <th>Qtd.</th>
+                  <th>Origem</th>
+                  <th>Destino</th>
+                  <th>Recebedor</th>
+                  <th>Termo Drive</th>
+                </tr>
+              </thead>
+              <tbody id="invMovsTbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

@@ -66,6 +66,12 @@ window.OlymposRouter = (function() {
       subtitle: 'Localização cartográfica, cadastro atualizado das unidades de ensino e distribuição territorial da rede.',
       category: 'gestao'
     },
+    'inventario': {
+      eyebrow: 'A FORJA DE HEFESTO • PATRIMÔNIO & ALMOXARIFADO',
+      title: 'Inventário Patrimonial e Controle de Estoque.',
+      subtitle: 'Controle de bens tombados com código único e QR Code, insumos consumíveis, lotações por escola e termos de entrega no Google Drive.',
+      category: 'gestao'
+    },
     'calendario': {
       eyebrow: 'CALENDÁRIO ESCOLAR & AGENDA INTERSETORIAL • SMEB 2026–2027',
       title: 'Calendário Escolar e Planejamento.',
@@ -213,7 +219,11 @@ window.OlymposRouter = (function() {
       targetSubtab = 'auditoria';
     }
 
-    if (!sessaoAtiva && !PUBLIC_PAGES.includes(pageId)) {
+    const isPublicQrLookup =
+      (pageId === 'inventario' && /[?&](?:item|codigo|lote)=/i.test(preservedQuery)) ||
+      (pageId === 'certificados' && /[?&](?:v|token|cert|id)=/i.test(preservedQuery));
+
+    if (!sessaoAtiva && !PUBLIC_PAGES.includes(pageId) && !isPublicQrLookup) {
       if (window.OlymposApp && typeof window.OlymposApp.showToast === 'function') {
         window.OlymposApp.showToast('Faça login para acessar este módulo restrito.', true);
       }
@@ -222,7 +232,7 @@ window.OlymposRouter = (function() {
       }
       pageId = 'visao-geral';
       targetSubtab = null;
-    } else if (sessaoAtiva && window.OlymposApp && typeof window.OlymposApp.podeAcessarPagina === 'function') {
+    } else if (sessaoAtiva && !isPublicQrLookup && window.OlymposApp && typeof window.OlymposApp.podeAcessarPagina === 'function') {
       const checkPage = targetSubtab === 'licencas' ? 'licencas' : (targetSubtab === 'auditoria' ? 'auditoria' : pageId);
       if (!window.OlymposApp.podeAcessarPagina(checkPage)) {
         if (typeof window.OlymposApp.showToast === 'function') {
@@ -237,7 +247,7 @@ window.OlymposRouter = (function() {
     if (document.body) {
       document.body.setAttribute('data-active-page', pageId);
     }
-    const nextHash = '#' + pageId + (pageId === 'certificados' ? preservedQuery : '');
+    const nextHash = '#' + pageId + ((pageId === 'certificados' || pageId === 'inventario') ? preservedQuery : '');
     if (window.location.hash !== nextHash) {
       if (replaceState) {
         window.history.replaceState(null, '', nextHash);
