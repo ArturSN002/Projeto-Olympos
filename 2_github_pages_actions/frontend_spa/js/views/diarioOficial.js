@@ -133,7 +133,7 @@ window.OlymposViews.diarioOficial = (function() {
       const codigo = item.codigo_femurn || item.edicao || (item.numero_ato ? ('Ato ' + item.numero_ato) : (ner.numero_ato ? ('Ato ' + ner.numero_ato) : ''));
       const urlMateria = ner.url_materia || ner.link_pdf || '';
       const urlDrive = item.url_drive || item.url_arquivo || item.urlDrive || '';
-      const url = urlDrive || urlMateria || 'https://drive.google.com/drive/folders/1qGq5uqxOtN_V63itUheYatLIcj5R86O3';
+      const url = urlDrive || urlMateria || 'https://drive.google.com/drive/folders/17Dq3ST3Vv5soKFpvol9jL_gtixdxXqLp';
       if (codigo && codigosVistos.has(codigo)) return;
       if (url && urlsVistas.has(url) && !codigo) return;
       if (url) urlsVistas.add(url);

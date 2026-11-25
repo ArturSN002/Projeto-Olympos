@@ -59,11 +59,12 @@ interface AcervoInstanceState {
 const instances = new Map<string, AcervoInstanceState>();
 
 const SUBCATEGORIA_LABELS: Record<string, string> = {
-  GERAL: 'Geral',
+  GERAL: 'Expedidas (Docs)',
   LICENCA: 'Licença',
   LICENCA_PUBLICADA: 'Licença Publicada',
   READAPTACAO: 'Readaptação',
-  FEMURN_PUBLICADA: 'FEMURN Publicada'
+  FEMURN_PUBLICADA: 'Publicadas (SMEB)',
+  OUTRAS_SECRETARIAS: 'Outras Secretarias (Publicadas)'
 };
 
 function esc(val: unknown): string {
@@ -126,11 +127,12 @@ function montarShellAcervo(root: HTMLElement, st: AcervoInstanceState): void {
         (st.config.showSubcategoriaFilter
           ? `<select id="${prefix}-subcat" class="input-clean acervo-select" aria-label="Filtrar subcategoria">` +
               '<option value="TODAS">Todas as Pastas 2026</option>' +
-              '<option value="GERAL">Portarias Gerais</option>' +
+              '<option value="GERAL">Portarias Expedidas (Docs)</option>' +
+              '<option value="FEMURN_PUBLICADA">Portarias Publicadas (SMEB)</option>' +
+              '<option value="OUTRAS_SECRETARIAS">Outras Secretarias (Publicadas)</option>' +
               '<option value="LICENCA">Licenças (Ativas)</option>' +
               '<option value="LICENCA_PUBLICADA">Licenças Publicadas</option>' +
               '<option value="READAPTACAO">Readaptações</option>' +
-              '<option value="FEMURN_PUBLICADA">Publicadas na FEMURN</option>' +
             '</select>'
           : '') +
         `<input type="month" id="${prefix}-month" class="input-clean acervo-month-input" aria-label="Filtrar por mês e ano" title="Filtrar por mês de emissão" />` +
@@ -141,6 +143,11 @@ function montarShellAcervo(root: HTMLElement, st: AcervoInstanceState): void {
           '<option value="nome_desc">Nome (Z → A)</option>' +
           '<option value="numero_desc">Número (maior → menor)</option>' +
           '<option value="numero_asc">Número (menor → maior)</option>' +
+        '</select>' +
+        `<select id="${prefix}-pagesize" class="input-clean acervo-select" aria-label="Itens por página" title="Quantidade por página">` +
+          '<option value="25">25 por página</option>' +
+          '<option value="50" selected>50 por página</option>' +
+          '<option value="100">100 por página</option>' +
         '</select>' +
       '</div>' +
       '<div class="acervo-actions-bar">' +
@@ -172,6 +179,19 @@ function montarShellAcervo(root: HTMLElement, st: AcervoInstanceState): void {
       st.setorFiltro = setorEl.value || 'TODOS';
       st.page = 1;
       void consultarDocumentos(st);
+    });
+  }
+
+  const pageSizeEl = document.getElementById(`${prefix}-pagesize`) as HTMLSelectElement | null;
+  if (pageSizeEl) {
+    pageSizeEl.value = String(st.pageSize);
+    pageSizeEl.addEventListener('change', () => {
+      const nextSize = parseInt(pageSizeEl.value, 10);
+      if (nextSize > 0) {
+        st.pageSize = nextSize;
+        st.page = 1;
+        void consultarDocumentos(st);
+      }
     });
   }
 
@@ -544,7 +564,7 @@ function executarSyncDrive(st: AcervoInstanceState): void {
 
   window.OlymposApi.chamar(
     'documentos_sincronizar_pastas',
-    { tipo: st.config.tipo, forcarCompleto: false },
+    { tipo: st.config.tipo, forcarCompleto: true },
     (res: any) => {
       st.syncing = false;
       if (syncBtn) {
@@ -579,7 +599,7 @@ export function mountDocumentosAcervo(config: AcervoMountConfig): void {
     st = {
       config,
       page: 1,
-      pageSize: 25,
+      pageSize: 50,
       total: 0,
       searchTerm: '',
       subcategoria: 'TODAS',

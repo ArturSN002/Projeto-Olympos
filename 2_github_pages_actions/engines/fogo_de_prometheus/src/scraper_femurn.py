@@ -61,19 +61,35 @@ FEMURN_SEARCH_URL = "https://www.diariomunicipal.com.br/femurn/pesquisar"
 MAX_PDFS_POR_LOTE_WEBHOOK = 10
 
 FOLDER_PORTARIAS_2026 = "1QEewN0R3bCksLxLhmOSFq20EQYI3g64Q"
+FOLDER_PORTARIAS_PUBLICADAS_SMEB = "17Dq3ST3Vv5soKFpvol9jL_gtixdxXqLp"
+FOLDER_ATOS_OUTRAS_SECRETARIAS = "1XpO4UjGT5DhCwl1KrPiNy0p0em9HFFFN"
 FOLDER_GABINETE_2026 = "16YaFjfO6DRPVzJtRzLsynrOI0llNXQ8L"
 FOLDER_JURIDICO_2026 = "1N6UgdyGTVdIP4PW02dDBstsi4LIhgmRJ"
 FOLDER_PLANILHAS_DIARIO = "1aj514v29gytXH9j5LY_V76ap9XIblwHS"
 
 
-def obter_pasta_drive_destino(categoria: str, entidade: str) -> str:
-    """Determina a pasta oficial de 2026 no Google Drive conforme a categoria do ato."""
+def obter_pasta_drive_destino(
+    categoria: str,
+    entidade: str,
+    orgao: str = "",
+    relevancia_smeb: bool | None = None,
+) -> str:
+    """Determina a pasta oficial de 2026 no Google Drive conforme relevância SMEB, entidade e categoria do ato."""
     entidade_upper = str(entidade or "").upper()
+    orgao_upper = str(orgao or "").upper()
     cat_upper = str(categoria or "").upper()
+
+    if relevancia_smeb is False:
+        return FOLDER_ATOS_OUTRAS_SECRETARIAS
+    if relevancia_smeb is None and orgao_upper:
+        is_smeb_org = ("EDUCAC" in orgao_upper or "EDUCAÇ" in orgao_upper or "SMEB" in orgao_upper)
+        if not is_smeb_org and "CÂMARA" not in entidade_upper and "CAMARA" not in entidade_upper:
+            return FOLDER_ATOS_OUTRAS_SECRETARIAS
+
     if "CÂMARA" in entidade_upper or "CAMARA" in entidade_upper:
         return FOLDER_JURIDICO_2026
     if cat_upper in ("PORTARIA", "NOMEACAO_DIRETOR", "REPUBLICACAO"):
-        return FOLDER_PORTARIAS_2026
+        return FOLDER_PORTARIAS_PUBLICADAS_SMEB
     return FOLDER_GABINETE_2026
 
 
@@ -1127,10 +1143,16 @@ def executar_ciclo_pesquisa(
             if ia_meta and ia_meta.get("titulo_canonico"):
                 tit_oficial = ia_meta["titulo_canonico"]
 
-            # Opção A: Upload de PDF no Drive apenas para atos relevantes à SMEB (evita lotar Drive da Educação)
+            # Upload de PDFs no Drive: SMEB para pastas da Educação; Portarias/Atos normativos de outras secretarias para 1XpO4...
             url_drive_sa = ""
-            if pdf_bytes and relevancia_smeb:
-                pasta_id = obter_pasta_drive_destino(categoria, entidade_alvo)
+            eh_portaria_ou_normativo = categoria in ("PORTARIA", "NOMEACAO_DIRETOR", "REPUBLICACAO", "NORMATIVO_JURIDICO")
+            if pdf_bytes and (relevancia_smeb or eh_portaria_ou_normativo):
+                pasta_id = obter_pasta_drive_destino(
+                    categoria,
+                    entidade_alvo,
+                    orgao=secretaria_origem or orgao_alvo or "",
+                    relevancia_smeb=relevancia_smeb,
+                )
                 sa_drive_res = upload_pdf_direto_drive(pdf_bytes, nome_arq, pasta_id)
                 if sa_drive_res:
                     url_drive_sa = sa_drive_res.get("url", "")

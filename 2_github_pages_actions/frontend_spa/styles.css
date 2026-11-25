@@ -4567,17 +4567,54 @@ html.light-theme .table-clean tbody tr:nth-child(even) {
   overflow: hidden;
 }
 
-/* Chips da Agenda Intersetorial no Grid */
+/* Chips da Agenda Intersetorial no Grid (Cores distintas por tipo de evento) */
 .cal-event-chip.agenda_intersetorial,
-.cal-event-chip.agenda,
-.cal-event-chip.reuniao,
-.cal-event-chip.capacitacao {
-  background: rgba(139, 92, 246, 0.14) !important;
-  color: #7C3AED !important;
-  border: 1px solid rgba(139, 92, 246, 0.32) !important;
-  border-left: 3px solid #8B5CF6 !important;
+.cal-event-chip.agenda {
+  background: rgba(124, 58, 237, 0.14) !important;
+  color: #6D28D9 !important;
+  border: 1px solid rgba(124, 58, 237, 0.32) !important;
+  border-left: 3px solid #7C3AED !important;
   font-weight: 600;
 }
+
+.cal-event-chip.reuniao {
+  background: rgba(37, 99, 235, 0.14) !important;
+  color: #1D4ED8 !important;
+  border: 1px solid rgba(37, 99, 235, 0.34) !important;
+  border-left: 3px solid #2563EB !important;
+  font-weight: 600;
+}
+
+.cal-event-chip.capacitacao {
+  background: rgba(5, 150, 105, 0.14) !important;
+  color: #047857 !important;
+  border: 1px solid rgba(5, 150, 105, 0.34) !important;
+  border-left: 3px solid #059669 !important;
+  font-weight: 600;
+}
+
+.cal-event-chip.visita_tecnica {
+  background: rgba(217, 119, 6, 0.15) !important;
+  color: #B45309 !important;
+  border: 1px solid rgba(217, 119, 6, 0.36) !important;
+  border-left: 3px solid #D97706 !important;
+  font-weight: 600;
+}
+
+.cal-event-chip.audiencia {
+  background: rgba(219, 39, 119, 0.14) !important;
+  color: #BE185D !important;
+  border: 1px solid rgba(219, 39, 119, 0.34) !important;
+  border-left: 3px solid #DB2777 !important;
+  font-weight: 600;
+}
+
+[data-theme="dark"] .cal-event-chip.agenda_intersetorial,
+[data-theme="dark"] .cal-event-chip.agenda { color: #C4B5FD !important; }
+[data-theme="dark"] .cal-event-chip.reuniao { color: #93C5FD !important; }
+[data-theme="dark"] .cal-event-chip.capacitacao { color: #6EE7B7 !important; }
+[data-theme="dark"] .cal-event-chip.visita_tecnica { color: #FCD34D !important; }
+[data-theme="dark"] .cal-event-chip.audiencia { color: #F9A8D4 !important; }
 
 .cal-day-tag.agenda {
   background: rgba(139, 92, 246, 0.18) !important;
@@ -4698,13 +4735,38 @@ html.light-theme .table-clean tbody tr:nth-child(even) {
 .cal-pill-badge.exame { background: rgba(225, 29, 72, 0.15); color: #E11D48; }
 .cal-pill-badge.bimestre { background: var(--bg-tonal); color: var(--text-secondary); border: 1px solid var(--border-hairline); }
 .cal-pill-badge.agenda_intersetorial,
-.cal-pill-badge.agenda,
-.cal-pill-badge.reuniao,
-.cal-pill-badge.capacitacao {
-  background: rgba(139, 92, 246, 0.16) !important;
+.cal-pill-badge.agenda {
+  background: rgba(124, 58, 237, 0.16) !important;
   color: #7C3AED !important;
-  border: 1px solid rgba(139, 92, 246, 0.35) !important;
+  border: 1px solid rgba(124, 58, 237, 0.35) !important;
 }
+.cal-pill-badge.reuniao {
+  background: rgba(37, 99, 235, 0.16) !important;
+  color: #2563EB !important;
+  border: 1px solid rgba(37, 99, 235, 0.35) !important;
+}
+.cal-pill-badge.capacitacao {
+  background: rgba(5, 150, 105, 0.16) !important;
+  color: #059669 !important;
+  border: 1px solid rgba(5, 150, 105, 0.35) !important;
+}
+.cal-pill-badge.visita_tecnica {
+  background: rgba(217, 119, 6, 0.16) !important;
+  color: #D97706 !important;
+  border: 1px solid rgba(217, 119, 6, 0.35) !important;
+}
+.cal-pill-badge.audiencia {
+  background: rgba(219, 39, 119, 0.16) !important;
+  color: #DB2777 !important;
+  border: 1px solid rgba(219, 39, 119, 0.35) !important;
+}
+
+[data-theme="dark"] .cal-pill-badge.agenda_intersetorial,
+[data-theme="dark"] .cal-pill-badge.agenda { color: #C4B5FD !important; }
+[data-theme="dark"] .cal-pill-badge.reuniao { color: #93C5FD !important; }
+[data-theme="dark"] .cal-pill-badge.capacitacao { color: #6EE7B7 !important; }
+[data-theme="dark"] .cal-pill-badge.visita_tecnica { color: #FCD34D !important; }
+[data-theme="dark"] .cal-pill-badge.audiencia { color: #F9A8D4 !important; }
 
 .cal-timeline-title {
   font-size: 14px;
@@ -7152,7 +7214,8 @@ body.is-visitante #page-visao-geral .stats-grid,
 body.is-visitante #visaoGeralAuthStatsGrid,
 body.is-visitante #statCardAgendaEventos,
 body.is-visitante #heroTelemetryStrip,
-body.is-visitante #heroTelemetryAgendaCard {
+body.is-visitante #heroTelemetryAgendaCard,
+body:not([data-active-page="visao-geral"]) #heroTelemetryStrip {
   display: none !important;
 }
 

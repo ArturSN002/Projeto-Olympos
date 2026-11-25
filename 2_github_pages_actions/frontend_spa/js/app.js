@@ -1236,6 +1236,18 @@ window.OlymposApp = (function() {
       el.setAttribute('aria-hidden', visivel ? 'false' : 'true');
     });
 
+    const telemetryStrip = document.getElementById('heroTelemetryStrip') || document.querySelector('.telemetry-strip');
+    if (telemetryStrip) {
+      const paginaAtualStrip =
+        (window.OlymposRouter && typeof window.OlymposRouter.getPaginaAtual === 'function' && window.OlymposRouter.getPaginaAtual()) ||
+        (document.body && document.body.getAttribute('data-active-page')) ||
+        'visao-geral';
+      const mostrarTelemetryStrip = Boolean(isAuth && paginaAtualStrip === 'visao-geral');
+      telemetryStrip.classList.toggle('hidden', !mostrarTelemetryStrip);
+      telemetryStrip.style.display = mostrarTelemetryStrip ? '' : 'none';
+      telemetryStrip.setAttribute('aria-hidden', mostrarTelemetryStrip ? 'false' : 'true');
+    }
+
     document.querySelectorAll('[data-visitante-only="true"]').forEach(function(el) {
       const visivel = !isAuth;
       el.classList.toggle('hidden', !visivel);

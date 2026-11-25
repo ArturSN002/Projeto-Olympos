@@ -44,6 +44,29 @@ window.OlymposViews.calendario = (function() {
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
   ];
 
+  var CORES_CATEGORIA_AGENDA = {
+    reuniao: '#2563EB',
+    capacitacao: '#059669',
+    visita_tecnica: '#D97706',
+    audiencia: '#DB2777',
+    agenda_intersetorial: '#7C3AED'
+  };
+
+  function obterCorCategoriaEvento(cat) {
+    var key = String(cat || 'agenda_intersetorial').trim();
+    return CORES_CATEGORIA_AGENDA[key] || CORES_CATEGORIA_AGENDA.agenda_intersetorial;
+  }
+
+  function ehCategoriaAgendaCustom(cat) {
+    return (
+      cat === 'agenda_intersetorial' ||
+      cat === 'reuniao' ||
+      cat === 'capacitacao' ||
+      cat === 'visita_tecnica' ||
+      cat === 'audiencia'
+    );
+  }
+
   var DIAS_SEMANA_NOMES = [
     'Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira',
     'Quinta-feira', 'Sexta-feira', 'Sábado'
@@ -1105,6 +1128,10 @@ window.OlymposViews.calendario = (function() {
     var agoraIso = new Date().toISOString();
     var anoEvt = evento.dataInicio ? parseInt(evento.dataInicio.split('-')[0], 10) : selectedYear;
 
+    var catNorm = evento.categoria || 'agenda_intersetorial';
+    var corCategoria = obterCorCategoriaEvento(catNorm);
+    var corFinal = (evento.cor && evento.cor !== '#8B5CF6') ? evento.cor : corCategoria;
+
     var dadosNormalizados = {
       id: id || ('age_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5)),
       ano: anoEvt,
@@ -1113,12 +1140,12 @@ window.OlymposViews.calendario = (function() {
       dataFim: evento.dataFim || evento.dataInicio,
       horario: evento.horario || '',
       setor: evento.setor || 'Gabinete SMEB',
-      categoria: evento.categoria || 'agenda_intersetorial',
+      categoria: catNorm,
       local: evento.local || '',
       descricao: evento.descricao || '',
       publicoAlvo: evento.publicoAlvo || '',
       letivo: false, // RIGOR LDB: eventos da agenda intersetorial NUNCA alteram os 203 dias letivos
-      cor: evento.cor || '#8B5CF6',
+      cor: corFinal,
       icone: evento.icone || '🗓️',
       custom: true,
       status: evento.status || 'PENDENTE',
@@ -1711,7 +1738,7 @@ window.OlymposViews.calendario = (function() {
       if (counts[ev.categoria] !== undefined) {
         counts[ev.categoria]++;
       }
-      if (ev.custom || ev.categoria === 'agenda_intersetorial' || ev.categoria === 'reuniao' || ev.categoria === 'capacitacao') {
+      if (ev.custom || ehCategoriaAgendaCustom(ev.categoria)) {
         counts.agenda++;
       }
       var st = (ev.status || 'PENDENTE').toUpperCase();
@@ -1875,7 +1902,7 @@ window.OlymposViews.calendario = (function() {
       if (activeCategory !== 'todos') {
         atendeFiltro = eventosDoDia.some(function(ev) {
           if (activeCategory === 'agenda_intersetorial') {
-            return ev.custom || ev.categoria === 'agenda_intersetorial' || ev.categoria === 'reuniao' || ev.categoria === 'capacitacao';
+            return ev.custom || ehCategoriaAgendaCustom(ev.categoria);
           }
           if (activeCategory === 'pendentes') {
             return (ev.status || 'PENDENTE').toUpperCase() !== 'CONCLUIDO';
@@ -1901,7 +1928,7 @@ window.OlymposViews.calendario = (function() {
       var ehMatricula = eventosDoDia.some(function(ev) { return ev.categoria === 'matricula'; });
       var ehExame = eventosDoDia.some(function(ev) { return ev.categoria === 'exame'; });
       var ehAgenda = eventosDoDia.some(function(ev) {
-        return ev.custom || ev.categoria === 'agenda_intersetorial' || ev.categoria === 'reuniao' || ev.categoria === 'capacitacao';
+        return ev.custom || ehCategoriaAgendaCustom(ev.categoria);
       });
 
       var classes = ['cal-day-cell'];
@@ -1943,8 +1970,8 @@ window.OlymposViews.calendario = (function() {
 
       // Ordenar eventos para priorizar visualização de chips da agenda intersetorial
       eventosDoDia.sort(function(a, b) {
-        var aPri = (a.custom || a.categoria === 'agenda_intersetorial' || a.categoria === 'reuniao' || a.categoria === 'capacitacao') ? 1 : 0;
-        var bPri = (b.custom || b.categoria === 'agenda_intersetorial' || b.categoria === 'reuniao' || b.categoria === 'capacitacao') ? 1 : 0;
+        var aPri = (a.custom || ehCategoriaAgendaCustom(a.categoria)) ? 1 : 0;
+        var bPri = (b.custom || ehCategoriaAgendaCustom(b.categoria)) ? 1 : 0;
         return bPri - aPri;
       });
 
@@ -2058,7 +2085,7 @@ window.OlymposViews.calendario = (function() {
         : '';
       var periodoFormatado = formatarPeriodoEvento(ev.dataInicio, ev.dataFim);
 
-      html += '<div class="cal-timeline-item ' + ev.categoria + '">';
+      html += '<div class="cal-timeline-item ' + ev.categoria + '" style="border-left: 4px solid ' + escapeAttr(obterCorCategoriaEvento(ev.categoria)) + ';">';
       html += '  <div class="cal-timeline-marker">' + iconeSvg + '</div>';
       html += '  <div class="cal-timeline-content">';
       html += '    <div class="cal-timeline-header" style="display:flex; justify-content:space-between; align-items:center;">';
@@ -2238,7 +2265,7 @@ window.OlymposViews.calendario = (function() {
           : '<span class="pill-badge pill-amber" style="font-size:10px; margin-left:6px;">' + (window.OlymposIcons ? window.OlymposIcons.ui('hourglass') : '') + ' Pendente</span>';
         var evIconSvg = window.OlymposIcons ? window.OlymposIcons.fromEmojiOrKey(ev.icone, ev.categoria || 'agenda_intersetorial') : '';
         var editSvg = window.OlymposIcons ? window.OlymposIcons.fromEmojiOrKey('edit') : '';
-        html += '<div class="cal-modal-event-card ' + ev.categoria + '">';
+        html += '<div class="cal-modal-event-card ' + ev.categoria + '" style="border-left: 4px solid ' + escapeAttr(obterCorCategoriaEvento(ev.categoria)) + ';">';
         html += '  <div class="cal-modal-event-head">';
         html += '    <span class="cal-modal-event-icon">' + evIconSvg + '</span>';
         html += '    <div style="flex:1;">';
