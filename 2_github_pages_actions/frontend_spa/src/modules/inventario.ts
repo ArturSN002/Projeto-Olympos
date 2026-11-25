@@ -88,6 +88,7 @@ interface InventarioMovimentacao {
   item_id: string | null;
   lote_id: string | null;
   tipo_movimentacao: string;
+  tipo_termo?: string | null;
   quantidade: number;
   origem_nome: string;
   destino_nome: string;
@@ -156,6 +157,7 @@ const MOV_LABELS: Record<string, string> = {
   REPOSICAO_CONSUMIVEL: 'Reposição de Estoque',
   SAIDA_ESCOLA: 'Saída p/ Escola',
   SAIDA_SETOR: 'Saída p/ Setor',
+  EMPRESTIMO: 'Empréstimo Patrimonial',
   TRANSFERENCIA: 'Transferência entre Locais',
   RETORNO_DEPOSITO: 'Devolução ao Depósito',
   ENVIO_MANUTENCAO: 'Envio Manutenção',
@@ -184,7 +186,9 @@ const state = {
   anexos: [] as InventarioAnexo[],
   escolas: [] as EscolaRef[],
   selectedIds: new Set<string>(),
-  movTargetIds: [] as string[],
+  cartUnitarioIds: [] as string[],
+  cartConsumiveis: [] as Array<{ loteId: string; quantidade: number }>,
+  excluirTarget: null as null | { tipo: 'ITEM' | 'LOTE'; id: string; codigo: string; nome: string; avisoExtra?: string },
   dossieItem: null as InventarioItem | null,
   stopCameraFn: null as null | (() => void),
   lastQrHandled: ''
@@ -217,6 +221,11 @@ function getSb(): any {
 function temPerm(perm: string): boolean {
   const rbac = (window as any).OlymposRbac;
   return Boolean(rbac && typeof rbac.temPermissao === 'function' && rbac.temPermissao(perm));
+}
+
+function podeExcluirModerador(): boolean {
+  const rbac = (window as any).OlymposRbac;
+  return temPerm('inventario.excluir') && Boolean(rbac && typeof rbac.isModerador === 'function' && rbac.isModerador());
 }
 
 function getHashQrCodigo(): string {
@@ -552,6 +561,7 @@ function renderTabelaItens(): void {
   if (!tbody) return;
   const rows = getItensFiltrados();
   const podeMovimentar = temPerm('inventario.movimentar');
+  const podeExcluir = podeExcluirModerador();
 
   if (rows.length === 0) {
     tbody.innerHTML =
@@ -597,6 +607,11 @@ function renderTabelaItens(): void {
                   ? `<button type="button" class="btn btn-primary btn-sm inv-btn-mover" data-id="${esc(it.id)}">Movimentar</button>`
                   : ''
               }
+              ${
+                podeExcluir
+                  ? `<button type="button" class="btn btn-danger btn-sm inv-btn-excluir-item" data-id="${esc(it.id)}">Excluir</button>`
+                  : ''
+              }
             </div>
           </td>
         </tr>`;
@@ -614,6 +629,7 @@ function renderTabelaLotes(): void {
   const q = ((document.getElementById('invSearchInput') as HTMLInputElement | null)?.value || '').trim().toLowerCase();
   const cat = (document.getElementById('invFilterCategoria') as HTMLSelectElement | null)?.value || '';
   const podeMovimentar = temPerm('inventario.movimentar');
+  const podeExcluir = podeExcluirModerador();
 
   const rows = state.lotes.filter((l) => {
     if (cat && l.categoria !== cat) return false;
@@ -652,11 +668,19 @@ function renderTabelaLotes(): void {
           <td>${isCons ? `${esc(l.estoque_minimo)} ${esc(l.unidade_medida)}` : '—'}</td>
           <td data-sort-value="${esc(l.data_entrada_deposito)}">${esc(fmtDataBr(l.data_entrada_deposito))}</td>
           <td>
-            ${
-              isCons && podeMovimentar
-                ? `<button type="button" class="btn btn-primary btn-sm inv-btn-cons-mov" data-lote-id="${esc(l.id)}">Movimentar Saldo</button>`
-                : `<button type="button" class="btn btn-secondary btn-sm inv-btn-filtrar-lote" data-lote-id="${esc(l.id)}">Ver Itens</button>`
-            }
+            <div class="inv-header-actions">
+              ${
+                isCons && podeMovimentar
+                  ? `<button type="button" class="btn btn-primary btn-sm inv-btn-cons-cart" data-lote-id="${esc(l.id)}">+ Incluir na Saída</button>
+                     <button type="button" class="btn btn-secondary btn-sm inv-btn-cons-mov" data-lote-id="${esc(l.id)}">Ajustar / Repor</button>`
+                  : `<button type="button" class="btn btn-secondary btn-sm inv-btn-filtrar-lote" data-lote-id="${esc(l.id)}">Ver Itens</button>`
+              }
+              ${
+                podeExcluir
+                  ? `<button type="button" class="btn btn-danger btn-sm inv-btn-excluir-lote" data-lote-id="${esc(l.id)}">Excluir</button>`
+                  : ''
+              }
+            </div>
           </td>
         </tr>`;
       })
@@ -668,23 +692,61 @@ function renderTabelaLotes(): void {
 function renderTabelaMovs(): void {
   const tbody = document.getElementById('invMovsTbody');
   if (!tbody) return;
+  const q = ((document.getElementById('invSearchInput') as HTMLInputElement | null)?.value || '').trim().toLowerCase();
   const itemById = new Map(state.itens.map((i) => [i.id, i]));
   const loteById = new Map(state.lotes.map((l) => [l.id, l]));
+  const podeMovimentar = temPerm('inventario.movimentar');
 
-  if (state.movs.length === 0) {
+  const rows = state.movs.filter((m) => {
+    if (!q) return true;
+    const it = m.item_id ? itemById.get(m.item_id) : undefined;
+    const lt = m.lote_id ? loteById.get(m.lote_id) : undefined;
+    const hay = [
+      m.remessa_codigo,
+      MOV_LABELS[m.tipo_movimentacao] || m.tipo_movimentacao,
+      m.tipo_termo,
+      m.origem_nome,
+      m.destino_nome,
+      m.destino_ambiente,
+      m.recebido_por_nome,
+      it?.codigo_unico,
+      it?.nome_detalhado,
+      lt?.codigo_lote,
+      lt?.nome_item
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+    return hay.includes(q);
+  });
+
+  if (rows.length === 0) {
     tbody.innerHTML =
-      '<tr><td colspan="9" style="text-align:center; padding: 1.5rem; color: var(--text-muted);">Nenhuma movimentação registrada até o momento.</td></tr>';
+      '<tr><td colspan="9" style="text-align:center; padding: 1.5rem; color: var(--text-muted);">Nenhuma movimentação encontrada para o filtro atual.</td></tr>';
   } else {
-    tbody.innerHTML = state.movs
+    tbody.innerHTML = rows
       .map((m) => {
         const it = m.item_id ? itemById.get(m.item_id) : undefined;
         const lt = m.lote_id ? loteById.get(m.lote_id) : undefined;
         const ref = it ? `${it.codigo_unico} • ${it.nome_detalhado}` : lt ? `${lt.codigo_lote} • ${lt.nome_item}` : 'Remessa';
+        const isEntrada = m.tipo_movimentacao === 'ENTRADA_DEPOSITO' || m.tipo_movimentacao === 'REPOSICAO_CONSUMIVEL';
+        const termoBadge = !isEntrada && m.tipo_termo
+          ? `<div class="inv-submeta">Termo de ${m.tipo_termo === 'EMPRESTIMO' ? 'Empréstimo' : 'Entrega'}</div>`
+          : '';
+        let termoCell = '<span class="inv-submeta">—</span>';
+        if (m.termo_drive_url) {
+          termoCell = `<a href="${esc(m.termo_drive_url)}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">Abrir Docs</a>`;
+        } else if (podeMovimentar && !isEntrada) {
+          termoCell = `<button type="button" class="btn btn-secondary btn-sm inv-btn-gerar-termo-retro" data-remessa="${esc(m.remessa_codigo)}">Gerar Termo</button>`;
+        }
         return `
         <tr>
           <td data-sort-value="${esc(m.realizado_em)}">${esc(fmtDataHoraBr(m.realizado_em))}</td>
           <td><span class="inv-code-pill">${esc(m.remessa_codigo)}</span></td>
-          <td>${esc(MOV_LABELS[m.tipo_movimentacao] || m.tipo_movimentacao)}</td>
+          <td>
+            ${esc(MOV_LABELS[m.tipo_movimentacao] || m.tipo_movimentacao)}
+            ${termoBadge}
+          </td>
           <td>${esc(ref)}</td>
           <td>${esc(m.quantidade || 1)}</td>
           <td>${esc(m.origem_nome)}</td>
@@ -693,13 +755,7 @@ function renderTabelaMovs(): void {
             ${m.destino_ambiente ? `<div class="inv-submeta">${esc(m.destino_ambiente)}</div>` : ''}
           </td>
           <td>${esc(m.recebido_por_nome || '—')}</td>
-          <td>
-            ${
-              m.termo_drive_url
-                ? `<a href="${esc(m.termo_drive_url)}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">Abrir Docs</a>`
-                : '<span class="inv-submeta">—</span>'
-            }
-          </td>
+          <td>${termoCell}</td>
         </tr>`;
       })
       .join('');
@@ -846,33 +902,140 @@ function atualizarDestinoMovUI(): void {
   if (nomeEl && destTipo === 'BAIXADO') nomeEl.value = 'Baixa Patrimonial Definitiva';
 }
 
-function abrirModalMovimentar(itemIds: string[]): void {
-  if (!itemIds || itemIds.length === 0) return;
-  state.movTargetIds = [...itemIds];
+function popularPickersCarrinhoMov(): void {
+  const unitSel = document.getElementById('invMovAddUnitarioSelect') as HTMLSelectElement | null;
+  if (unitSel) {
+    const escolhidos = new Set(state.cartUnitarioIds);
+    const disponiveis = state.itens.filter((i) => !escolhidos.has(i.id) && i.status_item !== 'BAIXADO');
+    unitSel.innerHTML =
+      '<option value="">+ Selecione bem unitário disponível...</option>' +
+      disponiveis
+        .map(
+          (i) =>
+            `<option value="${esc(i.id)}">${esc(i.codigo_unico)} — ${esc(i.nome_detalhado)} (${esc(i.lotacao_atual_nome)})</option>`
+        )
+        .join('');
+  }
+
+  const consSel = document.getElementById('invMovAddConsumivelSelect') as HTMLSelectElement | null;
+  if (consSel) {
+    const disponiveisCons = state.lotes.filter(
+      (l) => l.modo_rastreio === 'CONSUMIVEL_QUANTITATIVO' && Number(l.saldo_atual_deposito) > 0
+    );
+    consSel.innerHTML =
+      '<option value="">+ Selecione consumível em estoque...</option>' +
+      disponiveisCons
+        .map(
+          (l) =>
+            `<option value="${esc(l.id)}">${esc(l.codigo_lote)} — ${esc(l.nome_item)} (Saldo: ${esc(l.saldo_atual_deposito)} ${esc(l.unidade_medida)})</option>`
+        )
+        .join('');
+  }
+}
+
+function renderCarrinhoMov(): void {
+  const listEl = document.getElementById('invMovCartList');
+  const resumo = document.getElementById('invMovResumoText');
+  const unitRows = state.cartUnitarioIds
+    .map((id) => state.itens.find((i) => i.id === id))
+    .filter((i): i is InventarioItem => Boolean(i));
+  const consRows = state.cartConsumiveis
+    .map((entry) => ({ entry, lote: state.lotes.find((l) => l.id === entry.loteId) }))
+    .filter((x): x is { entry: { loteId: string; quantidade: number }; lote: InventarioLote } => Boolean(x.lote));
+
+  const totalTipos = unitRows.length + consRows.length;
+  const totalUnidades = unitRows.length + consRows.reduce((acc, c) => acc + Math.max(1, Number(c.entry.quantidade || 1)), 0);
+
+  if (resumo) {
+    resumo.textContent =
+      totalTipos === 0
+        ? 'Nenhum item na remessa — adicione abaixo'
+        : `${unitRows.length} bem(ns) unitário(s) + ${consRows.length} lote(s) consumível(eis) (${totalUnidades} un. total)`;
+  }
+
+  if (listEl) {
+    if (totalTipos === 0) {
+      listEl.innerHTML =
+        '<div class="inv-submeta" style="padding: 0.4rem 0;">Selecione itens na tabela ou utilize os seletores acima para montar uma remessa multi-item.</div>';
+    } else {
+      const unitHtml = unitRows
+        .map(
+          (it) => `
+          <div class="inv-cart-row">
+            <div>
+              <span class="inv-code-pill">${esc(it.codigo_unico)}</span>
+              <strong style="margin-left: 0.45rem;">${esc(it.nome_detalhado)}</strong>
+              <span class="inv-submeta" style="margin-left: 0.35rem;">(Origem: ${esc(it.lotacao_atual_nome)})</span>
+            </div>
+            <div class="inv-cart-row-actions">
+              <span class="status-badge info">1 UN</span>
+              <button type="button" class="btn btn-ghost btn-sm inv-cart-rm-unit" data-id="${esc(it.id)}">Remover</button>
+            </div>
+          </div>`
+        )
+        .join('');
+
+      const consHtml = consRows
+        .map(
+          ({ entry, lote }) => `
+          <div class="inv-cart-row">
+            <div>
+              <span class="inv-code-pill">${esc(lote.codigo_lote)}</span>
+              <strong style="margin-left: 0.45rem;">${esc(lote.nome_item)}</strong>
+              <span class="inv-submeta" style="margin-left: 0.35rem;">(Saldo: ${esc(lote.saldo_atual_deposito)} ${esc(lote.unidade_medida)})</span>
+            </div>
+            <div class="inv-cart-row-actions">
+              <input
+                type="number"
+                class="form-input inv-cart-qty-input inv-cart-cons-qty"
+                data-lote-id="${esc(lote.id)}"
+                min="1"
+                max="${Math.max(1, Number(lote.saldo_atual_deposito || 1))}"
+                value="${esc(entry.quantidade)}"
+                aria-label="Quantidade de ${esc(lote.nome_item)}"
+              />
+              <span class="inv-submeta">${esc(lote.unidade_medida)}</span>
+              <button type="button" class="btn btn-ghost btn-sm inv-cart-rm-cons" data-lote-id="${esc(lote.id)}">Remover</button>
+            </div>
+          </div>`
+        )
+        .join('');
+
+      listEl.innerHTML = unitHtml + consHtml;
+    }
+  }
+
+  popularPickersCarrinhoMov();
+}
+
+function abrirModalMovimentar(
+  itemIds: string[] = [],
+  consumiveisInit: Array<{ loteId: string; quantidade: number }> = []
+): void {
   const form = document.getElementById('formInvMov') as HTMLFormElement | null;
   if (form) form.reset();
 
-  const items = state.itens.filter((i) => itemIds.includes(i.id));
-  const resumo = document.getElementById('invMovResumoText');
-  if (resumo) {
-    resumo.textContent =
-      items.length === 1
-        ? `${items[0].codigo_unico} — ${items[0].nome_detalhado}`
-        : `${items.length} itens selecionados (${items
-            .slice(0, 3)
-            .map((i) => i.codigo_unico)
-            .join(', ')}${items.length > 3 ? '...' : ''})`;
-  }
+  state.cartUnitarioIds = Array.from(new Set(itemIds.filter(Boolean)));
+  state.cartConsumiveis = consumiveisInit
+    .filter((c) => c && c.loteId && Number(c.quantidade) > 0)
+    .map((c) => ({ loteId: c.loteId, quantidade: Number(c.quantidade) }));
+
+  renderCarrinhoMov();
   atualizarDestinoMovUI();
   openModal('modalInventarioMovimentar');
 }
 
 async function handleSubmitMovimentar(e: Event): Promise<void> {
   e.preventDefault();
-  if (state.movTargetIds.length === 0) return;
+  if (state.cartUnitarioIds.length === 0 && state.cartConsumiveis.length === 0) {
+    toast('Adicione ao menos 1 bem unitário ou 1 material consumível na remessa.', true);
+    return;
+  }
   const btn = document.getElementById('btnInvMovSubmit') as HTMLButtonElement | null;
 
   const tipoMov = (document.getElementById('invMovTipo') as HTMLSelectElement).value;
+  const tipoTermoEl = document.getElementById('invMovTipoTermo') as HTMLSelectElement | null;
+  const tipoTermo = (tipoTermoEl?.value || (tipoMov === 'EMPRESTIMO' ? 'EMPRESTIMO' : 'ENTREGA')).toUpperCase();
   const destTipo = (document.getElementById('invMovDestinoTipo') as HTMLSelectElement).value;
   const escolaId = (document.getElementById('invMovEscolaSelect') as HTMLSelectElement).value;
   const setorCode = (document.getElementById('invMovSetorSelect') as HTMLSelectElement).value;
@@ -905,16 +1068,21 @@ async function handleSubmitMovimentar(e: Event): Promise<void> {
     destNome = LOTACAO_LABELS[destTipo] || destTipo;
   }
 
-  const targetItemsBefore = state.itens.filter((i) => state.movTargetIds.includes(i.id));
+  const targetItemsBefore = state.itens.filter((i) => state.cartUnitarioIds.includes(i.id));
   const origemNome = targetItemsBefore[0]?.lotacao_atual_nome || 'Depósito Central SMEB';
 
   if (btn) btn.disabled = true;
   try {
     const sb = getSb();
-    const { data, error } = await sb.rpc('rpc_inventario_movimentar_itens', {
+    const { data, error } = await sb.rpc('rpc_inventario_registrar_remessa_mista', {
       p_payload: {
-        item_ids: state.movTargetIds,
+        item_ids: state.cartUnitarioIds,
+        consumiveis: state.cartConsumiveis.map((c) => ({
+          lote_id: c.loteId,
+          quantidade: Number(c.quantidade)
+        })),
         tipo_movimentacao: tipoMov,
+        tipo_termo: tipoTermo,
         destino_tipo: destTipo,
         destino_escola_id: destTipo === 'ESCOLA' ? escolaId : null,
         destino_setor_codigo: destTipo === 'SETOR_SEDE' ? setorCode : null,
@@ -933,7 +1101,7 @@ async function handleSubmitMovimentar(e: Event): Promise<void> {
       try {
         await enviarAnexoInventarioDrive({
           file: anexoFile,
-          itemId: state.movTargetIds.length === 1 ? state.movTargetIds[0] : null,
+          itemId: state.cartUnitarioIds.length === 1 && state.cartConsumiveis.length === 0 ? state.cartUnitarioIds[0] : null,
           remessaCodigo: remessa,
           tipoAnexo: 'FOTO_ENTREGA',
           codigoRef: remessa,
@@ -947,9 +1115,43 @@ async function handleSubmitMovimentar(e: Event): Promise<void> {
     if (gerarTermo && remessa) {
       try {
         const session = (window as any).OlymposApp?.getSession?.();
+        const itensTermo = Array.isArray(data?.itens_termo) && data.itens_termo.length > 0
+          ? data.itens_termo
+          : [
+              ...targetItemsBefore.map((it) => ({
+                modo: 'UNITARIO' as const,
+                codigoUnico: it.codigo_unico,
+                nomeDetalhado: it.nome_detalhado,
+                marcaModelo: it.marca_modelo || '',
+                numeroSerie: it.numero_serie || '',
+                tombamento: it.tombamento_prefeitura || '',
+                categoria: CATEGORIA_LABELS[it.categoria] || it.categoria,
+                estadoConservacao: ESTADO_LABELS[estado || it.estado_conservacao] || it.estado_conservacao,
+                quantidade: 1,
+                unidade: 'UN'
+              })),
+              ...state.cartConsumiveis
+                .map((c) => {
+                  const lt = state.lotes.find((l) => l.id === c.loteId);
+                  if (!lt) return null;
+                  return {
+                    modo: 'CONSUMIVEL' as const,
+                    codigoUnico: lt.codigo_lote,
+                    nomeDetalhado: lt.nome_item,
+                    marcaModelo: lt.marca_modelo || '',
+                    categoria: CATEGORIA_LABELS[lt.categoria] || lt.categoria,
+                    estadoConservacao: 'NOVO',
+                    quantidade: c.quantidade,
+                    unidade: lt.unidade_medida || 'UN'
+                  };
+                })
+                .filter((x): x is NonNullable<typeof x> => Boolean(x))
+            ];
+
         const termoRes = await gerarTermoEntregaDrive({
           remessaCodigo: remessa,
           tipoMovimentacao: MOV_LABELS[tipoMov] || tipoMov,
+          tipoTermo: tipoTermo === 'EMPRESTIMO' ? 'EMPRÉSTIMO' : 'ENTREGA',
           origemNome,
           destinoNome: destNome,
           destinoAmbiente: ambiente,
@@ -958,18 +1160,9 @@ async function handleSubmitMovimentar(e: Event): Promise<void> {
           recebidoPorCargo: recebidoCargo,
           motivoObservacao: motivo,
           operadorNome: session?.nome || session?.email || 'Servidor SMEB',
-          itens: targetItemsBefore.map((it) => ({
-            codigoUnico: it.codigo_unico,
-            nomeDetalhado: it.nome_detalhado,
-            numeroSerie: it.numero_serie || '',
-            tombamento: it.tombamento_prefeitura || '',
-            categoria: CATEGORIA_LABELS[it.categoria] || it.categoria,
-            estadoConservacao: ESTADO_LABELS[estado || it.estado_conservacao] || it.estado_conservacao,
-            quantidade: 1,
-            unidade: 'UN'
-          }))
+          itens: itensTermo
         });
-        toast(`Movimentação ${remessa} salva e Termo gerado no Google Docs!`, false);
+        toast(`Remessa ${remessa} salva e Termo de ${tipoTermo === 'EMPRESTIMO' ? 'Empréstimo' : 'Entrega'} gerado no Google Docs!`, false);
         if (termoRes.docUrl) {
           window.open(termoRes.docUrl, '_blank', 'noopener,noreferrer');
         }
@@ -981,6 +1174,8 @@ async function handleSubmitMovimentar(e: Event): Promise<void> {
     }
 
     state.selectedIds.clear();
+    state.cartUnitarioIds = [];
+    state.cartConsumiveis = [];
     closeModal('modalInventarioMovimentar');
     await carregarDadosCompletos();
   } catch (err: any) {
@@ -1080,6 +1275,10 @@ async function abrirDossieItem(item: InventarioItem): Promise<void> {
   }
 
   renderDossieAnexosEHistorico(item);
+  const btnExcluirDossie = document.getElementById('btnInvDossieExcluir');
+  if (btnExcluirDossie) {
+    btnExcluirDossie.classList.toggle('hidden', !podeExcluirModerador());
+  }
   openModal('modalInventarioDossie');
 }
 
@@ -1206,6 +1405,193 @@ async function handleSubmitEditarItem(e: Event): Promise<void> {
     toast(err?.message || 'Erro ao atualizar cadastro do bem.', true);
   } finally {
     if (btn) btn.disabled = false;
+  }
+}
+
+function abrirModalExcluirModerador(
+  tipo: 'ITEM' | 'LOTE',
+  id: string,
+  codigo: string,
+  nome: string,
+  avisoExtra?: string
+): void {
+  if (!podeExcluirModerador()) {
+    toast('Apenas o Moderador tem permissão para excluir itens ou lotes do inventário.', true);
+    return;
+  }
+  state.excluirTarget = { tipo, id, codigo, nome, avisoExtra };
+  const resumo = document.getElementById('invExcluirAlvoResumo');
+  const extra = document.getElementById('invExcluirAvisoExtra');
+  const motivoEl = document.getElementById('invExcluirMotivo') as HTMLTextAreaElement | null;
+  if (resumo) {
+    resumo.textContent = `${tipo === 'LOTE' ? 'Lote/Consumível' : 'Item Unitário'}: ${codigo} — ${nome}`;
+  }
+  if (extra) {
+    extra.textContent =
+      avisoExtra ||
+      'A exclusão removerá definitivamente o registro (utilize apenas para corrigir cadastros feitos por engano).';
+  }
+  if (motivoEl) motivoEl.value = '';
+  openModal('modalInventarioExcluirModerador');
+}
+
+async function handleConfirmarExclusaoModerador(e: Event): Promise<void> {
+  e.preventDefault();
+  if (!state.excluirTarget) return;
+  if (!podeExcluirModerador()) {
+    toast('Operação restrita ao perfil Moderador.', true);
+    return;
+  }
+  const btn = document.getElementById('btnInvExcluirConfirm') as HTMLButtonElement | null;
+  const motivo = ((document.getElementById('invExcluirMotivo') as HTMLTextAreaElement | null)?.value || '').trim();
+  const { tipo, id, codigo } = state.excluirTarget;
+
+  if (motivo.length < 3) {
+    toast('Informe um motivo com pelo menos 3 caracteres.', true);
+    return;
+  }
+
+  if (btn) btn.disabled = true;
+  try {
+    const sb = getSb();
+    const { error } = await sb.rpc('rpc_inventario_excluir_registro', {
+      p_tipo: tipo,
+      p_id: id,
+      p_motivo: motivo
+    });
+
+    if (error) {
+      const msg = String(error.message || '');
+      const code = String((error as any).code || '');
+      const rpcAusente =
+        code === 'PGRST202' ||
+        code === '42883' ||
+        msg.includes('Could not find the function') ||
+        msg.includes('does not exist');
+
+      if (!rpcAusente) {
+        throw error;
+      }
+
+      // Fallback protegido por RLS exclusiva de Moderador (ALTER POLICY na Migration 051)
+      if (tipo === 'ITEM') {
+        const itemAtual = state.itens.find((it) => it.id === id);
+        const { error: delItemErr } = await sb.from('inventario_itens').delete().eq('id', id);
+        if (delItemErr) throw delItemErr;
+
+        if (itemAtual?.lote_id) {
+          const { data: remItens } = await sb
+            .from('inventario_itens')
+            .select('id,status_item')
+            .eq('lote_id', itemAtual.lote_id);
+          const rest = Array.isArray(remItens) ? remItens : [];
+          if (rest.length > 0) {
+            const emEstoque = rest.filter((r: any) => r.status_item === 'EM_ESTOQUE').length;
+            await sb
+              .from('inventario_catalogo_lotes')
+              .update({ quantidade_entrada: rest.length, saldo_atual_deposito: emEstoque })
+              .eq('id', itemAtual.lote_id);
+          } else {
+            await sb.from('inventario_movimentacoes').delete().eq('lote_id', itemAtual.lote_id);
+            await sb.from('inventario_anexos').delete().eq('lote_id', itemAtual.lote_id);
+            await sb.from('inventario_catalogo_lotes').delete().eq('id', itemAtual.lote_id);
+          }
+        }
+      } else {
+        const { error: delItensErr } = await sb.from('inventario_itens').delete().eq('lote_id', id);
+        if (delItensErr) throw delItensErr;
+        const { error: delMovErr } = await sb.from('inventario_movimentacoes').delete().eq('lote_id', id);
+        if (delMovErr) throw delMovErr;
+        const { error: delAnexoErr } = await sb.from('inventario_anexos').delete().eq('lote_id', id);
+        if (delAnexoErr) throw delAnexoErr;
+        const { error: delLoteErr } = await sb.from('inventario_catalogo_lotes').delete().eq('id', id);
+        if (delLoteErr) throw delLoteErr;
+      }
+    }
+
+    state.selectedIds.delete(id);
+    if (state.dossieItem?.id === id) {
+      state.dossieItem = null;
+      closeModal('modalInventarioDossie');
+    }
+    state.excluirTarget = null;
+    closeModal('modalInventarioExcluirModerador');
+    toast(`Registro ${codigo} excluído pelo Moderador.`);
+    await carregarDadosCompletos();
+  } catch (err: any) {
+    toast(err?.message || 'Não foi possível excluir o registro.', true);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function gerarTermoRetroativoPorRemessa(remessaCodigo: string, triggerBtn?: HTMLButtonElement | null): Promise<void> {
+  const movsRem = state.movs.filter((m) => m.remessa_codigo === remessaCodigo);
+  if (movsRem.length === 0) {
+    toast(`Movimentação ${remessaCodigo} não localizada.`, true);
+    return;
+  }
+
+  const itemById = new Map(state.itens.map((i) => [i.id, i]));
+  const loteById = new Map(state.lotes.map((l) => [l.id, l]));
+  const first = movsRem[0];
+  const session = (window as any).OlymposApp?.getSession?.();
+
+  const itensDocs = movsRem.map((m) => {
+    const it = m.item_id ? itemById.get(m.item_id) : undefined;
+    const lt = m.lote_id ? loteById.get(m.lote_id) : undefined;
+    if (it) {
+      return {
+        modo: 'UNITARIO' as const,
+        codigoUnico: it.codigo_unico,
+        nomeDetalhado: it.nome_detalhado,
+        marcaModelo: it.marca_modelo || '',
+        numeroSerie: it.numero_serie || '',
+        tombamento: it.tombamento_prefeitura || '',
+        categoria: CATEGORIA_LABELS[it.categoria] || it.categoria,
+        estadoConservacao: ESTADO_LABELS[it.estado_conservacao] || it.estado_conservacao,
+        quantidade: Number(m.quantidade || 1),
+        unidade: 'UN'
+      };
+    }
+    return {
+      modo: 'CONSUMIVEL' as const,
+      codigoUnico: lt?.codigo_lote || remessaCodigo,
+      nomeDetalhado: lt?.nome_item || 'Material / Lote Inventário',
+      marcaModelo: lt?.marca_modelo || '',
+      categoria: lt ? CATEGORIA_LABELS[lt.categoria] || lt.categoria : '',
+      quantidade: Number(m.quantidade || 1),
+      unidade: lt?.unidade_medida || 'UN'
+    };
+  });
+
+  const tipoTermo =
+    first.tipo_termo === 'EMPRESTIMO' || first.tipo_movimentacao === 'EMPRESTIMO' ? 'EMPRÉSTIMO' : 'ENTREGA';
+
+  if (triggerBtn) triggerBtn.disabled = true;
+  try {
+    const termoRes = await gerarTermoEntregaDrive({
+      remessaCodigo,
+      tipoMovimentacao: MOV_LABELS[first.tipo_movimentacao] || first.tipo_movimentacao,
+      tipoTermo,
+      origemNome: first.origem_nome || 'Depósito Central SMEB',
+      destinoNome: first.destino_nome || 'Unidade Escolar / Setor',
+      destinoAmbiente: first.destino_ambiente || '',
+      recebidoPorNome: first.recebido_por_nome || '',
+      recebidoPorCargo: first.recebido_por_cargo || '',
+      motivoObservacao: first.motivo_observacao || '',
+      operadorNome: session?.nome || session?.email || 'Servidor SMEB',
+      itens: itensDocs
+    });
+    toast(`Termo Docs gerado e vinculado à remessa ${remessaCodigo}!`);
+    if (termoRes.docUrl) {
+      window.open(termoRes.docUrl, '_blank', 'noopener,noreferrer');
+    }
+    await carregarDadosCompletos();
+  } catch (err: any) {
+    toast(err?.message || `Falha ao gerar Termo Docs da remessa ${remessaCodigo}.`, true);
+  } finally {
+    if (triggerBtn) triggerBtn.disabled = false;
   }
 }
 
@@ -1339,6 +1725,7 @@ function bindEventsOnce(): void {
   });
 
   document.getElementById('btnInvNovaEntrada')?.addEventListener('click', abrirModalEntrada);
+  document.getElementById('btnInvNovaSaida')?.addEventListener('click', () => abrirModalMovimentar([], []));
   document.getElementById('btnInvRecarregar')?.addEventListener('click', () => void recarregar());
   document.getElementById('btnInvLerQr')?.addEventListener('click', () => {
     openModal('modalInventarioQrScanner');
@@ -1414,7 +1801,72 @@ function bindEventsOnce(): void {
   });
 
   document.getElementById('btnInvMovimentarLote')?.addEventListener('click', () => {
-    abrirModalMovimentar(Array.from(state.selectedIds));
+    abrirModalMovimentar(Array.from(state.selectedIds), []);
+  });
+
+  document.getElementById('btnInvMovAddUnitario')?.addEventListener('click', () => {
+    const sel = document.getElementById('invMovAddUnitarioSelect') as HTMLSelectElement | null;
+    const id = sel?.value || '';
+    if (!id) {
+      toast('Selecione um bem unitário para adicionar à remessa.', true);
+      return;
+    }
+    if (!state.cartUnitarioIds.includes(id)) {
+      state.cartUnitarioIds.push(id);
+      renderCarrinhoMov();
+    }
+  });
+
+  document.getElementById('btnInvMovAddConsumivel')?.addEventListener('click', () => {
+    const sel = document.getElementById('invMovAddConsumivelSelect') as HTMLSelectElement | null;
+    const qtdEl = document.getElementById('invMovAddConsumivelQtd') as HTMLInputElement | null;
+    const loteId = sel?.value || '';
+    const qtd = Math.max(1, parseInt(qtdEl?.value || '1', 10) || 1);
+    if (!loteId) {
+      toast('Selecione um material consumível em estoque.', true);
+      return;
+    }
+    const lote = state.lotes.find((l) => l.id === loteId);
+    const destTipo = (document.getElementById('invMovDestinoTipo') as HTMLSelectElement | null)?.value || 'ESCOLA';
+    if (lote && destTipo !== 'DEPOSITO' && qtd > Number(lote.saldo_atual_deposito || 0)) {
+      toast(`Saldo insuficiente para ${lote.nome_item} (disponível: ${lote.saldo_atual_deposito}).`, true);
+      return;
+    }
+    const existing = state.cartConsumiveis.find((c) => c.loteId === loteId);
+    if (existing) {
+      existing.quantidade += qtd;
+    } else {
+      state.cartConsumiveis.push({ loteId, quantidade: qtd });
+    }
+    if (qtdEl) qtdEl.value = '1';
+    renderCarrinhoMov();
+  });
+
+  document.getElementById('invMovCartList')?.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    const rmUnit = target.closest('.inv-cart-rm-unit') as HTMLElement | null;
+    if (rmUnit?.dataset.id) {
+      state.cartUnitarioIds = state.cartUnitarioIds.filter((id) => id !== rmUnit.dataset.id);
+      renderCarrinhoMov();
+      return;
+    }
+    const rmCons = target.closest('.inv-cart-rm-cons') as HTMLElement | null;
+    if (rmCons?.dataset.loteId) {
+      state.cartConsumiveis = state.cartConsumiveis.filter((c) => c.loteId !== rmCons.dataset.loteId);
+      renderCarrinhoMov();
+    }
+  });
+
+  document.getElementById('invMovCartList')?.addEventListener('change', (e) => {
+    const inp = (e.target as HTMLElement).closest('.inv-cart-cons-qty') as HTMLInputElement | null;
+    if (!inp?.dataset.loteId) return;
+    const entry = state.cartConsumiveis.find((c) => c.loteId === inp.dataset.loteId);
+    if (!entry) return;
+    const maxVal = parseInt(inp.max || '5000', 10) || 5000;
+    const val = Math.max(1, Math.min(maxVal, parseInt(inp.value || '1', 10) || 1));
+    entry.quantidade = val;
+    inp.value = String(val);
+    renderCarrinhoMov();
   });
 
   document.getElementById('invItensTbody')?.addEventListener('click', (e) => {
@@ -1439,15 +1891,41 @@ function bindEventsOnce(): void {
 
     const moverBtn = target.closest('.inv-btn-mover') as HTMLElement | null;
     if (moverBtn && moverBtn.dataset.id) {
-      abrirModalMovimentar([moverBtn.dataset.id]);
+      abrirModalMovimentar([moverBtn.dataset.id], []);
+      return;
+    }
+
+    const exclBtn = target.closest('.inv-btn-excluir-item') as HTMLElement | null;
+    if (exclBtn && exclBtn.dataset.id) {
+      const item = state.itens.find((i) => i.id === exclBtn.dataset.id);
+      if (item) {
+        abrirModalExcluirModerador('ITEM', item.id, item.codigo_unico, item.nome_detalhado);
+      }
     }
   });
 
   document.getElementById('invLotesTbody')?.addEventListener('click', (e) => {
     const target = e.target as HTMLElement;
+    const cartConsBtn = target.closest('.inv-btn-cons-cart') as HTMLElement | null;
+    if (cartConsBtn && cartConsBtn.dataset.loteId) {
+      abrirModalMovimentar([], [{ loteId: cartConsBtn.dataset.loteId, quantidade: 1 }]);
+      return;
+    }
     const consBtn = target.closest('.inv-btn-cons-mov') as HTMLElement | null;
     if (consBtn && consBtn.dataset.loteId) {
       abrirModalConsumivel(consBtn.dataset.loteId);
+      return;
+    }
+    const exclLoteBtn = target.closest('.inv-btn-excluir-lote') as HTMLElement | null;
+    if (exclLoteBtn && exclLoteBtn.dataset.loteId) {
+      const lote = state.lotes.find((l) => l.id === exclLoteBtn.dataset.loteId);
+      if (lote) {
+        const avisoFilhos =
+          lote.modo_rastreio === 'UNITARIO_CODIGO'
+            ? `Atenção: todos os itens unitários vinculados ao lote ${lote.codigo_lote} também serão excluídos definitivamente.`
+            : undefined;
+        abrirModalExcluirModerador('LOTE', lote.id, lote.codigo_lote, lote.nome_item, avisoFilhos);
+      }
       return;
     }
     const loteBtn = target.closest('.inv-btn-filtrar-lote') as HTMLElement | null;
@@ -1461,16 +1939,29 @@ function bindEventsOnce(): void {
     }
   });
 
+  document.getElementById('invMovsTbody')?.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    const retroBtn = target.closest('.inv-btn-gerar-termo-retro') as HTMLButtonElement | null;
+    if (retroBtn?.dataset.remessa) {
+      void gerarTermoRetroativoPorRemessa(retroBtn.dataset.remessa, retroBtn);
+    }
+  });
+
   document.getElementById('invEntradaModo')?.addEventListener('change', atualizarCamposModoEntrada);
   document.getElementById('formInvEntrada')?.addEventListener('submit', (e) => void handleSubmitEntrada(e));
 
   document.getElementById('invMovTipo')?.addEventListener('change', (e) => {
     const tipo = (e.target as HTMLSelectElement).value;
     const destSel = document.getElementById('invMovDestinoTipo') as HTMLSelectElement | null;
+    const termoSel = document.getElementById('invMovTipoTermo') as HTMLSelectElement | null;
+    if (termoSel) {
+      termoSel.value = tipo === 'EMPRESTIMO' ? 'EMPRESTIMO' : 'ENTREGA';
+    }
     if (destSel) {
       const autoMap: Record<string, string> = {
         SAIDA_ESCOLA: 'ESCOLA',
         SAIDA_SETOR: 'SETOR_SEDE',
+        EMPRESTIMO: 'ESCOLA',
         RETORNO_DEPOSITO: 'DEPOSITO',
         ENVIO_MANUTENCAO: 'EXTERNO_MANUTENCAO',
         BAIXA_PATRIMONIAL: 'BAIXADO'
@@ -1521,10 +2012,21 @@ function bindEventsOnce(): void {
     ]);
   });
 
+  document.getElementById('btnInvDossieCopiarQr')?.addEventListener('click', async () => {
+    if (!state.dossieItem) return;
+    const link = buildInventarioItemUrl(state.dossieItem.codigo_unico);
+    try {
+      await navigator.clipboard.writeText(link);
+      toast(`Link QR copiado: ${state.dossieItem.codigo_unico}`);
+    } catch {
+      toast(`URL QR: ${link}`);
+    }
+  });
+
   document.getElementById('btnInvDossieMovimentar')?.addEventListener('click', () => {
     if (!state.dossieItem) return;
     closeModal('modalInventarioDossie');
-    abrirModalMovimentar([state.dossieItem.id]);
+    abrirModalMovimentar([state.dossieItem.id], []);
   });
 
   document.getElementById('btnInvDossieEditar')?.addEventListener('click', () => {
@@ -1532,8 +2034,14 @@ function bindEventsOnce(): void {
     abrirModalEditarItem(state.dossieItem);
   });
 
+  document.getElementById('btnInvDossieExcluir')?.addEventListener('click', () => {
+    if (!state.dossieItem) return;
+    abrirModalExcluirModerador('ITEM', state.dossieItem.id, state.dossieItem.codigo_unico, state.dossieItem.nome_detalhado);
+  });
+
   document.getElementById('formInvDossieAnexo')?.addEventListener('submit', (e) => void handleSubmitDossieAnexo(e));
   document.getElementById('formInvEditarItem')?.addEventListener('submit', (e) => void handleSubmitEditarItem(e));
+  document.getElementById('formInvExcluirModerador')?.addEventListener('submit', (e) => void handleConfirmarExclusaoModerador(e));
 
   document.getElementById('formInvScannerManual')?.addEventListener('submit', (e) => {
     e.preventDefault();

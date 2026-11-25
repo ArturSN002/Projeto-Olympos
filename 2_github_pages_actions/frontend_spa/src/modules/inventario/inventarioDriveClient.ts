@@ -36,6 +36,7 @@ export interface UploadAnexoResult {
 export interface GerarTermoEntregaParams {
   remessaCodigo: string;
   tipoMovimentacao: string;
+  tipoTermo?: 'ENTREGA' | 'EMPRESTIMO' | 'EMPRÉSTIMO';
   origemNome: string;
   destinoNome: string;
   destinoAmbiente?: string;
@@ -45,8 +46,10 @@ export interface GerarTermoEntregaParams {
   motivoObservacao?: string;
   operadorNome?: string;
   itens: Array<{
+    modo?: 'UNITARIO' | 'CONSUMIVEL';
     codigoUnico: string;
     nomeDetalhado: string;
+    marcaModelo?: string;
     numeroSerie?: string;
     tombamento?: string;
     categoria?: string;
@@ -294,6 +297,7 @@ export async function gerarTermoEntregaDrive(params: GerarTermoEntregaParams): P
   const gasRes = await chamarGasAction<any>('inventario_gerar_termo_entrega', {
     remessaCodigo: params.remessaCodigo,
     tipoMovimentacao: params.tipoMovimentacao,
+    tipoTermo: params.tipoTermo || 'ENTREGA',
     origemNome: params.origemNome,
     destinoNome: params.destinoNome,
     destinoAmbiente: params.destinoAmbiente || '',

@@ -152,7 +152,7 @@
   </div>
 </div>
 
-<!-- Modal 2: Movimentar / Destinar Itens Unitários -->
+<!-- Modal 2: Movimentar / Destinar Múltiplos Itens (Entrega ou Empréstimo) -->
 <div
   id="modalInventarioMovimentar"
   class="modal-backdrop hidden"
@@ -162,26 +162,59 @@
 >
   <div class="modal-card modal-card-lg">
     <div class="modal-header">
-      <h3 id="modalInvMovTitle" class="modal-title">Movimentar Itens Patrimoniais</h3>
+      <h3 id="modalInvMovTitle" class="modal-title">Nova Saída / Empréstimo (Múltiplos Itens)</h3>
       <button type="button" class="modal-close-btn" data-inv-close-modal="modalInventarioMovimentar" aria-label="Fechar modal">&times;</button>
     </div>
     <form id="formInvMov" class="modal-body" style="display: grid; gap: 14px;">
-      <div id="invMovResumoBox" class="inv-meta-item">
-        <small>Itens incluídos na remessa</small>
-        <strong id="invMovResumoText">0 item(ns)</strong>
+      <div class="inv-cart-box">
+        <div class="inv-cart-header">
+          <div>
+            <small class="inv-kpi-label" style="display: block;">Itens da Remessa (mesmo destino)</small>
+            <strong id="invMovResumoText">0 item(ns) selecionado(s)</strong>
+          </div>
+          <span class="inv-submeta">Combine bens unitários e materiais consumíveis em 1 Termo</span>
+        </div>
+
+        <div class="inv-cart-picker-grid">
+          <div class="inv-cart-picker-row">
+            <label for="invMovAddUnitarioSelect" class="sr-only">Adicionar bem unitário à remessa</label>
+            <select id="invMovAddUnitarioSelect" class="form-input">
+              <option value="">+ Selecione bem unitário disponível...</option>
+            </select>
+            <button type="button" id="btnInvMovAddUnitario" class="btn btn-secondary btn-sm">+ Adicionar Bem</button>
+          </div>
+          <div class="inv-cart-picker-row">
+            <label for="invMovAddConsumivelSelect" class="sr-only">Adicionar consumível à remessa</label>
+            <select id="invMovAddConsumivelSelect" class="form-input">
+              <option value="">+ Selecione consumível em estoque...</option>
+            </select>
+            <input type="number" id="invMovAddConsumivelQtd" class="form-input inv-cart-qty-input" min="1" step="1" value="1" aria-label="Quantidade de consumível" />
+            <button type="button" id="btnInvMovAddConsumivel" class="btn btn-secondary btn-sm">+ Adicionar Consumível</button>
+          </div>
+        </div>
+
+        <div id="invMovCartList" class="inv-cart-list"></div>
       </div>
 
-      <div class="inv-field-grid-2">
+      <div class="inv-field-grid-3">
         <div>
           <label for="invMovTipo" class="form-label">Tipo de Movimentação *</label>
           <select id="invMovTipo" class="form-input" required>
             <option value="SAIDA_ESCOLA">Saída / Destinação para Escola</option>
             <option value="SAIDA_SETOR">Saída / Alocação em Setor da SMEB</option>
+            <option value="EMPRESTIMO">Empréstimo de Bens / Materiais</option>
             <option value="TRANSFERENCIA">Transferência entre Locais</option>
             <option value="RETORNO_DEPOSITO">Devolução ao Depósito Central</option>
             <option value="ENVIO_MANUTENCAO">Envio para Manutenção</option>
             <option value="RETORNO_MANUTENCAO">Retorno de Manutenção</option>
             <option value="BAIXA_PATRIMONIAL" data-perm="inventario.baixar_ajustar">Baixa Patrimonial</option>
+          </select>
+        </div>
+        <div>
+          <label for="invMovTipoTermo" class="form-label">Natureza do Termo Docs *</label>
+          <select id="invMovTipoTermo" class="form-input" required>
+            <option value="ENTREGA">Termo de Entrega</option>
+            <option value="EMPRESTIMO">Termo de Empréstimo</option>
           </select>
         </div>
         <div>
@@ -257,7 +290,7 @@
         <div style="display: flex; align-items: center; gap: 0.5rem; padding-top: 1.4rem;">
           <input type="checkbox" id="invMovGerarTermo" checked />
           <label for="invMovGerarTermo" class="form-label" style="margin: 0; cursor: pointer;">
-            Gerar Termo de Entrega automático no Google Docs
+            Gerar Termo de Entrega / Empréstimo automático no Google Docs (modelo oficial SMEB)
           </label>
         </div>
       </div>
@@ -355,6 +388,7 @@
           <div id="invDossieCodigoPill" class="inv-code-pill" style="margin-bottom: 0.45rem;">—</div>
           <div style="display: grid; gap: 0.4rem;">
             <button type="button" id="btnInvDossieImprimirQr" class="btn btn-secondary btn-sm">Imprimir Etiqueta</button>
+            <button type="button" id="btnInvDossieCopiarQr" class="btn btn-ghost btn-sm">Copiar Link QR</button>
             <button
               type="button"
               id="btnInvDossieMovimentar"
@@ -372,6 +406,15 @@
               data-perm="inventario.baixar_ajustar"
             >
               Editar / Tombamento
+            </button>
+            <button
+              type="button"
+              id="btnInvDossieExcluir"
+              class="btn btn-danger btn-sm hidden"
+              data-requires-auth="true"
+              data-perm="inventario.excluir"
+            >
+              Excluir Bem (Moderador)
             </button>
           </div>
         </div>
@@ -511,5 +554,46 @@
         <button type="button" class="btn btn-ghost btn-sm" data-inv-close-modal="modalInventarioQrScanner">Fechar</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- Modal 7: Exclusão Definitiva Exclusiva do Moderador -->
+<div
+  id="modalInventarioExcluirModerador"
+  class="modal-backdrop hidden"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="modalInvExcluirTitle"
+>
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 id="modalInvExcluirTitle" class="modal-title">Excluir Registro (Moderador)</h3>
+      <button type="button" class="modal-close-btn" data-inv-close-modal="modalInventarioExcluirModerador" aria-label="Fechar modal">&times;</button>
+    </div>
+    <form id="formInvExcluirModerador" class="modal-body" style="display: grid; gap: 12px;">
+      <div class="inv-meta-item" style="border-color: rgba(220, 38, 38, 0.45); background: rgba(220, 38, 38, 0.08);">
+        <small style="color: #ef4444;">Ação Irreversível • Exclusiva Moderador</small>
+        <strong id="invExcluirAlvoResumo">—</strong>
+        <div id="invExcluirAvisoExtra" class="inv-submeta" style="margin-top: 4px;">
+          O registro será removido definitivamente (utilize apenas para corrigir cadastros feitos por engano).
+        </div>
+      </div>
+      <div>
+        <label for="invExcluirMotivo" class="form-label">Motivo / Justificativa para Auditoria *</label>
+        <textarea
+          id="invExcluirMotivo"
+          class="form-input"
+          rows="2"
+          required
+          minlength="3"
+          maxlength="240"
+          placeholder="Ex.: Lote cadastrado em duplicidade / erro de digitação na entrada..."
+        ></textarea>
+      </div>
+      <div class="modal-footer" style="padding: 0; margin-top: 4px;">
+        <button type="button" class="btn btn-ghost btn-sm" data-inv-close-modal="modalInventarioExcluirModerador">Cancelar</button>
+        <button type="submit" id="btnInvExcluirConfirm" class="btn btn-danger btn-sm">Confirmar Exclusão Definitiva</button>
+      </div>
+    </form>
   </div>
 </div>
