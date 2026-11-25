@@ -187,7 +187,7 @@ def collect_documents_from_supabase(
     st_diario, diario_rows = http_fn(
         "GET",
         f"{supabase_url}/rest/v1/publicacoes_diario"
-        "?select=id,codigo_femurn,data_publicacao,titulo,ato_tipo,orgao,secretaria_origem,resumo_ia,tags_ia,relevancia_smeb,texto_completo,resumo"
+        "?select=id,codigo_femurn,data_publicacao,titulo,ato_tipo,orgao,secretaria_origem,resumo_ia,tags_ia,relevancia_smeb,conteudo_ner"
         "&order=data_publicacao.desc&limit=250",
         headers=hdrs,
         timeout=25,
@@ -196,7 +196,7 @@ def collect_documents_from_supabase(
         st_diario, diario_rows = http_fn(
             "GET",
             f"{supabase_url}/rest/v1/publicacoes_diario"
-            "?select=id,codigo_femurn,data_publicacao,titulo,ato_tipo,orgao,resumo,conteudo_ner"
+            "?select=id,codigo_femurn,data_publicacao,titulo,ato_tipo,conteudo_ner"
             "&order=data_publicacao.desc&limit=250",
             headers=hdrs,
             timeout=25,
@@ -207,15 +207,22 @@ def collect_documents_from_supabase(
         for r in diario_rows:
             fid = str(r.get("codigo_femurn") or r.get("id") or "").strip()
             ner = r.get("conteudo_ner") if isinstance(r.get("conteudo_ner"), dict) else {}
-            body = str(r.get("texto_completo") or r.get("resumo") or ner.get("resumo_texto") or r.get("titulo") or "").strip()
+            body = str(
+                r.get("resumo_ia")
+                or ner.get("texto_completo")
+                or ner.get("resumo_texto")
+                or ner.get("resumo")
+                or r.get("titulo")
+                or ""
+            ).strip()
             if not fid or not body:
                 continue
             titulo = str(r.get("titulo") or f"Ato FEMURN {fid}").strip()
-            sec_orig = str(r.get("secretaria_origem") or r.get("orgao") or "SMEB").strip()
+            sec_orig = str(r.get("secretaria_origem") or r.get("orgao") or ner.get("secretaria_origem") or "SMEB").strip()
             resumo_ia = str(r.get("resumo_ia") or ner.get("resumo_ia") or "").strip()
             tags_ia = r.get("tags_ia") if isinstance(r.get("tags_ia"), list) else (ner.get("tags_ia") if isinstance(ner.get("tags_ia"), list) else [])
             extra_ia = []
-            if resumo_ia:
+            if resumo_ia and resumo_ia != body:
                 extra_ia.append(f"Resumo IA: {resumo_ia}")
             if tags_ia:
                 extra_ia.append(f"Tags IA: {', '.join(str(t) for t in tags_ia[:8])}")
@@ -256,13 +263,15 @@ def collect_documents_from_supabase(
         for r in emitted_rows:
             num = r.get("numero")
             ano = r.get("ano")
-            fid = f"{num}/{ano}" if (num is not None and ano is not None) else str(r.get("id") or "").strip()
+            raw_id = str(r.get("id") or "").strip()
+            setor = str(r.get("setor_codigo") or r.get("sigla_setor") or "GABINETE").strip()
+            num_label = f"{num}/{ano}" if (num is not None and ano is not None) else raw_id
+            fid = f"{setor}:{num_label}:{raw_id}" if (raw_id and num_label != raw_id) else (num_label or raw_id)
             tipo_raw = str(r.get("tipo") or "OFICIO").upper()
             fonte_tipo = "PORTARIA" if "PORTARIA" in tipo_raw else "OFICIO"
-            titulo = str(r.get("assunto_ou_titulo") or r.get("nome_arquivo") or f"{fonte_tipo} {fid}").strip()
+            titulo = str(r.get("assunto_ou_titulo") or r.get("nome_arquivo") or f"{fonte_tipo} {num_label}").strip()
             destinatario = str(r.get("destinatario_ou_servidor") or "").strip()
-            setor = str(r.get("setor_codigo") or r.get("sigla_setor") or "GABINETE").strip()
-            texto = f"{fonte_tipo} {fid} — {titulo}\nSetor: {setor}\nDestinatário/Servidor: {destinatario or 'N/A'}\nArquivo: {r.get('nome_arquivo') or ''}"
+            texto = f"{fonte_tipo} {num_label} — {titulo}\nSetor: {setor}\nDestinatário/Servidor: {destinatario or 'N/A'}\nArquivo: {r.get('nome_arquivo') or ''}"
             if fid and texto.strip():
                 docs.append(
                     {
@@ -535,6 +544,13 @@ def run_incremental_ingestion(
             )
             existing_hashes[(fonte_tipo, fonte_id, c_idx)] = c_hash
 
+    # Deduplica conflitos potenciais na mesma execução antes do upsert em lotes de 50 linhas
+    dedup_rows: dict[tuple[str, str, int], dict[str, Any]] = {}
+    for row in batch_rows:
+        dedup_key = (str(row.get("fonte_tipo") or ""), str(row.get("fonte_id") or ""), int(row.get("chunk_index") or 0))
+        dedup_rows[dedup_key] = row
+    batch_rows = list(dedup_rows.values())
+
     # Upsert em lotes de 50 linhas
     hdrs = _supabase_headers(
         service_key,
@@ -546,11 +562,12 @@ def run_incremental_ingestion(
     )
     for idx in range(0, len(batch_rows), 50):
         chunk_batch = batch_rows[idx : idx + 50]
-        st, _ = http_fn("POST", upsert_url, headers=hdrs, body=chunk_batch, timeout=30)
+        st, resp_up = http_fn("POST", upsert_url, headers=hdrs, body=chunk_batch, timeout=30)
         if 200 <= st < 300:
             stats["chunks_upserted"] += len(chunk_batch)
         else:
             stats["erros_upsert"] += len(chunk_batch)
+            print(f"[ORACULO INGEST WARN] upsert batch HTTP {st}: {resp_up}")
 
     # Atualiza protótipos das personas de forma incremental quando há chave Gemini
     if gemini_api_key and PROTOTYPES_JSON_PATH.is_file():
