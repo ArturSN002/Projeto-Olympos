@@ -2409,39 +2409,63 @@ html.light-theme .badge-blue {
   border: 1px solid var(--border-hairline);
   border-radius: 18px;
   background: var(--bg-elevated);
+  border: 1px solid var(--border-hairline);
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
 }
 
 .clean-table,
 .table-clean {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13.5px;
+  font-size: 14px;
+  line-height: 1.55;
 }
 
 .clean-table th,
 .table-clean th {
   text-align: left;
-  padding: 13px 16px;
+  padding: 16px 20px;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   color: var(--text-muted);
   background: var(--bg-surface);
   border-bottom: 1px solid var(--border-hairline);
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
 
 .clean-table td,
 .table-clean td {
-  padding: 13px 16px;
+  padding: 17px 20px;
   border-bottom: 1px solid var(--border-hairline);
   vertical-align: middle;
+  line-height: 1.55;
 }
 
 .clean-table tbody tr:last-child td,
 .table-clean tbody tr:last-child td {
   border-bottom: none;
+}
+
+.clean-table tbody tr:nth-child(even),
+.table-clean tbody tr:nth-child(even) {
+  background: rgba(148, 163, 184, 0.04);
+}
+
+[data-theme="light"] .clean-table tbody tr:nth-child(even),
+[data-theme="light"] .table-clean tbody tr:nth-child(even),
+html.light-theme .clean-table tbody tr:nth-child(even),
+html.light-theme .table-clean tbody tr:nth-child(even) {
+  background: rgba(15, 23, 42, 0.018);
+}
+
+.clean-table tbody tr,
+.table-clean tbody tr {
+  transition: background-color 0.16s ease;
 }
 
 .clean-table tbody tr:hover,
@@ -2598,7 +2622,9 @@ html.light-theme .badge-blue {
   width: 100%;
   max-width: 660px;
   max-height: calc(100vh - 32px);
+  max-height: 90dvh;
   overflow-y: auto;
+  scroll-behavior: smooth;
   background: var(--bg-elevated);
   border: 1px solid var(--border-hairline);
   border-radius: 28px;
@@ -2621,6 +2647,10 @@ html.light-theme .badge-blue {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background: var(--bg-elevated);
 }
 
 .modal-body {
@@ -2635,6 +2665,9 @@ html.light-theme .badge-blue {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  position: sticky;
+  bottom: 0;
+  z-index: 4;
 }
 
 .demo-profiles-grid {
@@ -8844,5 +8877,265 @@ body.has-active-toast .back-to-top-fab {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* ==========================================================================
+   ONDA 9 (V4.9): VISÃO GERAL ACOLHEDORA, TABELAS ESPAÇOSAS & RESPONSIVIDADE
+   ========================================================================== */
+
+/* Contêiner ergonômico para leitura e tabelas em Ultrawide (2K / 4K / 21:9) */
+@media (min-width: 1920px) {
+  .editorial-hero,
+  .app-main {
+    max-width: min(var(--container-max), 1760px);
+  }
+}
+
+/* Cartões Mobile Mais Espaçosos em .table-responsive-cards */
+@media (max-width: 768px), (max-width: 680px) {
+  .table-responsive-cards tr {
+    padding: 16px 18px;
+    margin-bottom: 14px;
+    border-radius: 16px;
+  }
+  .table-responsive-cards td {
+    padding: 7px 0 !important;
+    font-size: 13.5px !important;
+    line-height: 1.55 !important;
+  }
+  .table-responsive-cards td[data-label]:not([data-label="Unidade Escolar"]):not([data-label="Ato Oficial"]):not([data-label="Título do Arquivo"]):not([data-label="Documento"]):not([data-label="Ações"]):not([data-label="Acesso"])::before {
+    font-size: 11px;
+    letter-spacing: 0.05em;
+  }
+}
+
+/* Visão Geral Acolhedora — Boas-Vindas ao Cidadão / Visitante */
+.visitante-welcome-hero {
+  background: linear-gradient(135deg, var(--bg-surface) 0%, var(--bg-elevated) 100%);
+  border: 1px solid var(--border-hairline);
+  border-radius: var(--radius-card, 24px);
+  padding: clamp(22px, 3vw, 34px);
+  margin-bottom: 24px;
+}
+
+.visitante-welcome-top {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(260px, 1fr);
+  gap: 22px;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.visitante-welcome-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--bg-tonal);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-hairline);
+}
+
+.visitante-welcome-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 2.2vw, 1.85rem);
+  font-weight: 700;
+  line-height: 1.22;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+  margin: 12px 0 10px;
+}
+
+.visitante-welcome-lead {
+  font-size: 0.98rem;
+  line-height: 1.62;
+  color: var(--text-secondary);
+  max-width: 64ch;
+  margin: 0;
+}
+
+.visitante-welcome-cta-box {
+  background: var(--bg-tonal);
+  border: 1px solid var(--border-hairline);
+  border-radius: 18px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.visitante-cta-title {
+  font-family: var(--font-display);
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.visitante-cta-sub {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.visitante-quick-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.visitante-quick-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 168px;
+  padding: 20px;
+  border-radius: 18px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-hairline);
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.visitante-quick-card:hover,
+.visitante-quick-card:focus-visible {
+  transform: translateY(-3px);
+  border-color: var(--accent-gold-border, var(--accent-primary));
+  box-shadow: var(--shadow-card);
+  outline: none;
+}
+
+.visitante-qc-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--bg-tonal);
+  border: 1px solid var(--border-hairline);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-gold);
+}
+
+.visitante-qc-icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.visitante-qc-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.visitante-qc-desc {
+  font-size: 0.86rem;
+  line-height: 1.52;
+  color: var(--text-secondary);
+}
+
+.visitante-qc-link {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--accent-link, var(--accent-primary));
+}
+
+body.is-visitante #heroTelemetryStrip,
+body.is-visitante .hero-telemetry-grid {
+  grid-template-columns: minmax(0, 440px);
+}
+
+@media (max-width: 1024px) {
+  .visitante-quick-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .visitante-welcome-top {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .visitante-quick-grid {
+    grid-template-columns: 1fr;
+  }
+  .visitante-quick-card {
+    min-height: 0;
+  }
+}
+
+/* Polimento Topbar Atual & Modais Touch-Friendly */
+.nav-link,
+.nav-dropdown-trigger,
+.btn-workspace-companion,
+.user-capsule-btn {
+  min-height: 40px;
+}
+
+.modal-close-btn,
+.modal-header .icon-capsule-btn {
+  min-width: 40px;
+  min-height: 40px;
+}
+
+@media (max-width: 768px) {
+  .nav-link,
+  .nav-dropdown-trigger,
+  .btn-workspace-companion,
+  .user-capsule-btn,
+  .modal-close-btn,
+  .modal-header .icon-capsule-btn {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 375px) {
+  .masthead-upper {
+    gap: 8px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+}
+
+/* Grids Responsivos Complementares (Diário Oficial, Ofícios & Mapa Escolas) */
+.diario-controls-toolbar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+  gap: 10px;
+  width: 100%;
+}
+
+.oficio-meta-grid {
+  display: grid;
+  grid-template-columns: minmax(170px, 0.7fr) minmax(260px, 1.6fr) minmax(220px, 1fr);
+  gap: 14px;
+}
+
+@media (max-width: 960px) {
+  .oficio-meta-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+#mapaEscolasCearaMirim {
+  height: clamp(360px, 54vh, 560px);
+}
+
+@media (max-width: 640px) {
+  #mapaEscolasCearaMirim {
+    height: 320px;
   }
 }

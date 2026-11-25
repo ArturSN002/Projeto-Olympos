@@ -1,5 +1,56 @@
         <section class="page-view active" id="page-visao-geral">
-          <div class="stats-grid">
+          <!-- ACOLHIMENTO AO CIDADÃO / VISITANTE (EXCLUSIVO MODO VISITANTE) -->
+          <div id="visitanteWelcomeHero" class="surface-card visitante-welcome-hero" data-visitante-only="true">
+            <div class="visitante-welcome-top">
+              <div class="visitante-welcome-copy">
+                <span class="visitante-welcome-badge">
+                  <span class="svg-icon-inline" data-icon="olymposLogo"></span>
+                  <span>Portal Público • SMEB Ceará-Mirim/RN</span>
+                </span>
+                <h2 id="visitanteGreetingTitle" class="visitante-welcome-title">Olá! Seja bem-vindo(a) ao Portal da Educação.</h2>
+                <p class="visitante-welcome-lead">
+                  Aqui você acompanha de forma simples e transparente as escolas municipais, o Diário Oficial da educação, o calendário letivo e as notícias oficiais de Ceará-Mirim — sem precisar de cadastro.
+                </p>
+              </div>
+              <div class="visitante-welcome-cta-box">
+                <div class="visitante-cta-title">É servidor(a) ou gestor(a) da SMEB?</div>
+                <p class="visitante-cta-sub">Acesse com sua conta institucional para emitir ofícios, gerir pendências e acompanhar seu setor.</p>
+                <button type="button" id="btnVisitanteEntrarConta" class="btn btn-primary btn-sm">
+                  <span class="svg-icon-inline" data-icon="lock"></span>
+                  <span>Entrar com Conta Institucional</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="visitante-quick-grid">
+              <a href="#escolas" class="visitante-quick-card" data-nav-target="escolas">
+                <span class="visitante-qc-icon" data-persona-icon="hera"></span>
+                <strong class="visitante-qc-title">Escolas Municipais</strong>
+                <span class="visitante-qc-desc">Localize unidades no mapa, veja endereço, etapas de ensino e o(a) gestor(a) escolar.</span>
+                <span class="visitante-qc-link">Explorar mapa →</span>
+              </a>
+              <a href="#diario-oficial" class="visitante-quick-card" data-nav-target="diario-oficial">
+                <span class="visitante-qc-icon" data-persona-icon="helio"></span>
+                <strong class="visitante-qc-title">Diário Oficial &amp; Atos</strong>
+                <span class="visitante-qc-desc">Consulte portarias, decretos, editais e publicações da educação municipal atualizados.</span>
+                <span class="visitante-qc-link">Consultar atos →</span>
+              </a>
+              <a href="#calendario" class="visitante-quick-card" data-nav-target="calendario">
+                <span class="visitante-qc-icon" data-persona-icon="cronos"></span>
+                <strong class="visitante-qc-title">Calendário &amp; Eventos</strong>
+                <span class="visitante-qc-desc">Acompanhe o calendário letivo, datas comemorativas e eventos públicos da rede.</span>
+                <span class="visitante-qc-link">Ver calendário →</span>
+              </a>
+              <a href="#municipalNewsSection" id="btnVisitanteIrNoticias" class="visitante-quick-card">
+                <span class="visitante-qc-icon" data-persona-icon="hermes"></span>
+                <strong class="visitante-qc-title">Notícias de Ceará-Mirim</strong>
+                <span class="visitante-qc-desc">Fique por dentro dos comunicados oficiais da Prefeitura e da Câmara Municipal.</span>
+                <span class="visitante-qc-link">Ler notícias →</span>
+              </a>
+            </div>
+          </div>
+
+          <div class="stats-grid" id="visaoGeralAuthStatsGrid" data-requires-auth="true">
             <div class="stat-card" id="statCardProximoOficio" data-requires-auth="true">
               <div class="stat-top">
                 <span class="stat-label" id="statLabelProximoOficio">Olho de Apolo • Próximo Ofício</span>
@@ -52,7 +103,7 @@
               <div>
                 <span class="section-eyebrow">AGENDA ESCOLAR • COMPROMISSOS EXTERNOS</span>
                 <h3 class="section-title" style="font-size: 1.15rem;">Próximos Eventos &amp; Audiências Externas</h3>
-                <p class="section-desc">Monitore e conclua compromissos da agenda intersetorial diretamente pela Visão Geral.</p>
+                <p id="widgetAgendaDesc" class="section-desc">Acompanhe os compromissos públicos e eventos da agenda escolar da SMEB.</p>
               </div>
               <div class="header-actions">
                 <a href="#calendario" class="btn btn-secondary btn-sm" style="font-size: 12px; display: inline-flex; align-items: center; gap: 4px;">
@@ -96,8 +147,8 @@
             <div class="card-header-row">
               <div>
                 <span class="section-eyebrow">OPERAÇÕES MODULARES</span>
-                <h2 class="section-title">Frentes de Automação Documental e Inteligência</h2>
-                <p class="section-desc">Cada módulo opera em página dedicada para redação oficial, gestão funcional e acompanhamento documental da SMEB.</p>
+                <h2 id="operacoesModularesTitle" class="section-title">Frentes de Automação Documental e Inteligência</h2>
+                <p id="operacoesModularesDesc" class="section-desc">Cada módulo opera em página dedicada para redação oficial, gestão funcional e acompanhamento documental da SMEB.</p>
               </div>
               <div class="header-actions" id="operacoesModularesDriveActions" style="display: flex; gap: 8px; flex-wrap: wrap;">
                 <a href="https://drive.google.com/drive/folders/1W9mGmQCrX8BRPsGcK_vqUwfXw1dRmSya" target="_blank" rel="noopener" class="folder-chip" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE"><span class="svg-icon-inline" data-icon="folderDrive"></span> Pasta Central Olympo <span class="external-arrow">↗</span></a>
@@ -171,7 +222,7 @@
                 <div>
                   <div class="qm-category">Quadro Funcional Unificado</div>
                   <div class="qm-title">Consulta de Servidores</div>
-                  <div class="qm-desc">Dossiê funcional, pesquisa multirrede por nome/matrícula e filtros dinâmicos de Ceará-Mirim, Natal, Parnamirim, SGA e Governo do RN.</div>
+                  <div class="qm-desc">Dossiê funcional, pesquisa multirrede por nome/matrícula e filtros dinâmicos em 16 entes públicos monitorados no RN.</div>
                 </div>
                 <span class="qm-action">Abrir página dedicada →</span>
               </div>

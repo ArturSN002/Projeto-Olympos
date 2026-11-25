@@ -16,12 +16,58 @@ window.OlymposViews.visaoGeral = (function() {
   const PREFEITURA_SITE_URL = 'https://cearamirim.rn.gov.br/';
   const CAMARA_SITE_URL = 'https://www.cearamirim.rn.leg.br/';
 
+  function atualizarSaudacaoVisitante() {
+    const sessao = (window.OlymposApp && typeof window.OlymposApp.getSession === 'function')
+      ? window.OlymposApp.getSession()
+      : null;
+    const isAuth = Boolean(sessao && sessao.perfil);
+
+    const hora = new Date().getHours();
+    const saudacao = hora < 12 ? 'Bom dia' : (hora < 18 ? 'Boa tarde' : 'Boa noite');
+
+    const titleEl = document.getElementById('visitanteGreetingTitle');
+    if (titleEl) {
+      titleEl.textContent = saudacao + '! Seja bem-vindo(a) ao Portal da Educação.';
+    }
+
+    const agendaDescEl = document.getElementById('widgetAgendaDesc');
+    if (agendaDescEl) {
+      agendaDescEl.textContent = isAuth
+        ? 'Monitore e conclua compromissos da agenda intersetorial diretamente pela Visão Geral.'
+        : 'Acompanhe os próximos eventos, audiências e datas públicas da rede municipal de ensino.';
+    }
+
+    const modTitleEl = document.getElementById('operacoesModularesTitle');
+    const modDescEl = document.getElementById('operacoesModularesDesc');
+    if (modTitleEl) {
+      modTitleEl.textContent = isAuth
+        ? 'Frentes de Automação Documental e Inteligência'
+        : 'Serviços Públicos e Consultas Abertas ao Cidadão';
+    }
+    if (modDescEl) {
+      modDescEl.textContent = isAuth
+        ? 'Cada módulo opera em página dedicada para redação oficial, gestão funcional e acompanhamento documental da SMEB.'
+        : 'Explore o Diário Oficial e o Mapa de Escolas da rede municipal com acesso direto e transparente.';
+    }
+  }
+
   function init() {
     bindEvents();
     bindSpotlightInteractions();
+    atualizarSaudacaoVisitante();
     renderizarConstelacao17Personas(lastOverviewData ? lastOverviewData.memorias : null);
     atualizarTelemetriaCientifica();
     renderizarWidgetEventosAgenda();
+    if (window.OlymposIcons && typeof window.OlymposIcons.hydrateAll === 'function') {
+      window.OlymposIcons.hydrateAll();
+    }
+    if (typeof document !== 'undefined' && typeof document.querySelectorAll === 'function' && window.OlymposIcons && typeof window.OlymposIcons.get === 'function') {
+      document.querySelectorAll('.visitante-qc-icon[data-persona-icon]').forEach(function(badge) {
+        if (!badge.innerHTML) {
+          badge.innerHTML = window.OlymposIcons.get(badge.getAttribute('data-persona-icon')) || '';
+        }
+      });
+    }
     if (!newsLoaded && !newsLoading) {
       carregarNoticiasMunicipais(false);
     } else {
@@ -84,6 +130,11 @@ window.OlymposViews.visaoGeral = (function() {
     const kpiPendentes = document.getElementById('kpiAgendaPendentes');
     if (!container) return;
 
+    const sessao = (window.OlymposApp && typeof window.OlymposApp.getSession === 'function')
+      ? window.OlymposApp.getSession()
+      : null;
+    const isAuth = Boolean(sessao && sessao.perfil);
+
     let eventos = [];
     if (window.OlymposViews && window.OlymposViews.calendario && typeof window.OlymposViews.calendario.obterEventosAgendaCustom === 'function') {
       eventos = window.OlymposViews.calendario.obterEventosAgendaCustom();
@@ -101,7 +152,7 @@ window.OlymposViews.visaoGeral = (function() {
       container.innerHTML = `
         <div class="empty-state-card" style="padding: 24px; text-align: center; background: var(--bg-surface); border-radius: var(--radius-md); border: 1px solid var(--border-hairline);">
           <span class="svg-icon-inline" style="width: 2rem; height: 2rem; margin-bottom: 6px;">${window.OlymposIcons ? window.OlymposIcons.ui('party') : ''}</span>
-          <p style="margin: 0; color: var(--text-muted); font-size: 0.88rem;">Todos os eventos externos e compromissos da agenda estão concluídos.</p>
+          <p style="margin: 0; color: var(--text-muted); font-size: 0.88rem;">Nenhum evento externo pendente no momento. Confira o calendário letivo completo para datas da rede.</p>
         </div>
       `;
       return;
@@ -114,20 +165,23 @@ window.OlymposViews.visaoGeral = (function() {
 
     const html = pendentes.map(function(ev) {
       const dataFmt = ev.dataInicio ? (ev.dataInicio.split('-').reverse().join('/')) : '--';
+      const acaoEl = isAuth
+        ? `<button type="button" class="btn btn-primary btn-sm" style="font-size: 0.78rem; padding: 6px 12px; white-space: nowrap;" onclick="window.concluirEventoAgenda('${ev.id}')">
+            ${window.OlymposIcons ? window.OlymposIcons.ui('check') : ''} Concluir
+          </button>`
+        : `<span class="pill-badge pill-blue" style="font-size: 0.72rem; white-space: nowrap;">Evento Público</span>`;
       return `
-        <div class="evento-agenda-card" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: var(--bg-surface); border: 1px solid var(--border-hairline); border-radius: var(--radius-md); gap: 12px; margin-bottom: 8px;">
-          <div style="flex: 1; min-width: 0;">
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+        <div class="evento-agenda-card" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background: var(--bg-surface); border: 1px solid var(--border-hairline); border-radius: var(--radius-md); gap: 12px; margin-bottom: 8px; flex-wrap: wrap;">
+          <div style="flex: 1 1 240px; min-width: 0;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap;">
               <span class="pill-badge pill-amber" style="font-size: 0.68rem;">${window.OlymposIcons ? window.OlymposIcons.ui('hourglass') : ''} Pendente</span>
               <span style="font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono);">${dataFmt}${ev.horario ? ' • ' + ev.horario : ''}</span>
               ${ev.setor ? `<span style="font-size: 0.72rem; color: var(--text-secondary); background: var(--bg-tonal); padding: 1px 6px; border-radius: 4px;">${ev.setor}</span>` : ''}
             </div>
-            <h5 style="margin: 0 0 2px 0; font-size: 0.92rem; font-weight: 600; color: var(--text-primary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${window.OlymposApp ? window.OlymposApp.escapeHtml(ev.titulo) : ev.titulo}</h5>
-            ${ev.local ? `<p style="margin: 0; font-size: 0.78rem; color: var(--text-secondary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${window.OlymposIcons ? window.OlymposIcons.ui('mapPin') : ''} ${window.OlymposApp ? window.OlymposApp.escapeHtml(ev.local) : ev.local}</p>` : ''}
+            <h5 style="margin: 0 0 2px 0; font-size: 0.94rem; font-weight: 600; color: var(--text-primary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${window.OlymposApp ? window.OlymposApp.escapeHtml(ev.titulo) : ev.titulo}</h5>
+            ${ev.local ? `<p style="margin: 0; font-size: 0.8rem; color: var(--text-secondary); text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${window.OlymposIcons ? window.OlymposIcons.ui('mapPin') : ''} ${window.OlymposApp ? window.OlymposApp.escapeHtml(ev.local) : ev.local}</p>` : ''}
           </div>
-          <button type="button" class="btn btn-primary btn-sm" style="font-size: 0.78rem; padding: 4px 10px; white-space: nowrap;" onclick="window.concluirEventoAgenda('${ev.id}')">
-            ${window.OlymposIcons ? window.OlymposIcons.ui('check') : ''} Concluir
-          </button>
+          ${acaoEl}
         </div>
       `;
     }).join('');
@@ -196,6 +250,28 @@ window.OlymposViews.visaoGeral = (function() {
     bindClick('homeOpenAllMemoriasBtn', function() {
       if (window.OlymposRouter) window.OlymposRouter.navegarPara('personas');
     });
+    bindClick('btnVisitanteEntrarConta', function() {
+      if (window.OlymposApp && typeof window.OlymposApp.solicitarLogin === 'function') {
+        window.OlymposApp.solicitarLogin();
+      } else {
+        const userBtn = document.getElementById('userSessionBtn');
+        if (userBtn && typeof userBtn.click === 'function') userBtn.click();
+      }
+    });
+    bindClick('btnVisitanteIrNoticias', function(e) {
+      if (e && typeof e.preventDefault === 'function') e.preventDefault();
+      const newsEl = document.getElementById('municipalNewsSection');
+      if (newsEl && typeof newsEl.scrollIntoView === 'function') {
+        newsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function' && !window._olymposVisaoAuthBound) {
+      window._olymposVisaoAuthBound = true;
+      window.addEventListener('olympos:auth-changed', function() {
+        atualizarSaudacaoVisitante();
+        renderizarWidgetEventosAgenda();
+      });
+    }
 
     const newsFiltersEl = document.getElementById('municipalNewsFilters');
     if (newsFiltersEl && !newsFiltersEl._bound) {
@@ -726,6 +802,7 @@ window.OlymposViews.visaoGeral = (function() {
     init: init,
     recarregar: carregarDados,
     resetarEstadoLogout: resetarEstadoLogout,
+    atualizarSaudacaoVisitante: atualizarSaudacaoVisitante,
     carregarNoticiasMunicipais: carregarNoticiasMunicipais,
     renderizarWidgetEventosAgenda: renderizarWidgetEventosAgenda,
     atualizarTelemetriaCientifica: atualizarTelemetriaCientifica,

@@ -297,9 +297,20 @@ window.OlymposRouter = (function() {
     const titleElem = document.getElementById('pageHeaderTitle');
     const subtitleElem = document.getElementById('pageHeaderSubtitle');
 
-    if (eyebrowElem) eyebrowElem.textContent = meta.eyebrow;
-    if (titleElem) titleElem.textContent = meta.title;
-    if (subtitleElem) subtitleElem.textContent = meta.subtitle;
+    const sessaoAtual = (window.OlymposApp && typeof window.OlymposApp.getSession === 'function')
+      ? window.OlymposApp.getSession()
+      : null;
+    const isAuth = Boolean(sessaoAtual && sessaoAtual.perfil);
+
+    if (pageId === 'visao-geral' && !isAuth) {
+      if (eyebrowElem) eyebrowElem.textContent = 'SECRETARIA MUNICIPAL DE EDUCAÇÃO BÁSICA • CEARÁ-MIRIM/RN';
+      if (titleElem) titleElem.textContent = 'Bem-vindo ao Portal Olympos da Educação.';
+      if (subtitleElem) subtitleElem.textContent = 'Acompanhe o Diário Oficial do município, localize escolas da rede municipal no mapa, consulte o calendário letivo e leia as notícias oficiais de Ceará-Mirim.';
+    } else {
+      if (eyebrowElem) eyebrowElem.textContent = meta.eyebrow;
+      if (titleElem) titleElem.textContent = meta.title;
+      if (subtitleElem) subtitleElem.textContent = meta.subtitle;
+    }
 
     document.body.classList.remove('nav-drawer-open');
     const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -328,6 +339,9 @@ window.OlymposRouter = (function() {
         }
       }
 
+      if (window.OlymposApp && typeof window.OlymposApp.aplicarControleAcessoModularEDrive === 'function') {
+        window.OlymposApp.aplicarControleAcessoModularEDrive();
+      }
       if (window.OlymposRbac && typeof window.OlymposRbac.aplicarAtributosPermissaoDom === 'function') {
         window.OlymposRbac.aplicarAtributosPermissaoDom();
       }

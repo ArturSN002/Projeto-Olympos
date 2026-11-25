@@ -1037,6 +1037,9 @@ window.OlymposApp = (function() {
       if (window.OlymposViews.visaoGeral && typeof window.OlymposViews.visaoGeral.resetarEstadoLogout === 'function') {
         window.OlymposViews.visaoGeral.resetarEstadoLogout();
       }
+      if (window.OlymposViews.visaoGeral && typeof window.OlymposViews.visaoGeral.atualizarSaudacaoVisitante === 'function') {
+        window.OlymposViews.visaoGeral.atualizarSaudacaoVisitante();
+      }
       if (window.OlymposViews.escolas && typeof window.OlymposViews.escolas.atualizarPermissoesMapa === 'function') {
         window.OlymposViews.escolas.atualizarPermissoesMapa();
       }
@@ -1334,11 +1337,25 @@ window.OlymposApp = (function() {
     }
 
     if (window.OlymposViews) {
+      if (window.OlymposViews.visaoGeral && typeof window.OlymposViews.visaoGeral.atualizarSaudacaoVisitante === 'function') {
+        window.OlymposViews.visaoGeral.atualizarSaudacaoVisitante();
+      }
       if (window.OlymposViews.escolas && typeof window.OlymposViews.escolas.atualizarPermissoesMapa === 'function') {
         window.OlymposViews.escolas.atualizarPermissoesMapa();
       }
       if (window.OlymposViews.papiroCadmo && typeof window.OlymposViews.papiroCadmo.atualizarPermissoesMapa === 'function') {
         window.OlymposViews.papiroCadmo.atualizarPermissoesMapa();
+      }
+    }
+    if (window.OlymposRouter && typeof window.OlymposRouter.getPaginaAtual === 'function' && window.OlymposRouter.getPaginaAtual() === 'visao-geral') {
+      const vgMeta = window.OlymposRouter.PAGES && window.OlymposRouter.PAGES['visao-geral'];
+      if (vgMeta) {
+        const eb = document.getElementById('pageHeaderEyebrow');
+        const tt = document.getElementById('pageHeaderTitle');
+        const sb = document.getElementById('pageHeaderSubtitle');
+        if (eb) eb.textContent = vgMeta.eyebrow;
+        if (tt) tt.textContent = vgMeta.title;
+        if (sb) sb.textContent = vgMeta.subtitle;
       }
     }
 

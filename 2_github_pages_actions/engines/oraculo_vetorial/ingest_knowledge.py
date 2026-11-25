@@ -372,6 +372,7 @@ def collect_memorias_from_gas(
         gas_url,
         body={
             "action": action,
+            "dados": {},
             "gateway_proxy": True,
             "gateway_timestamp": int(ts),
             "gateway_nonce": nonce,
