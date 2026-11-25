@@ -196,21 +196,24 @@ def collect_documents_from_supabase(
         st_diario, diario_rows = http_fn(
             "GET",
             f"{supabase_url}/rest/v1/publicacoes_diario"
-            "?select=id,codigo_femurn,data_publicacao,titulo,ato_tipo,texto_completo,resumo"
+            "?select=id,codigo_femurn,data_publicacao,titulo,ato_tipo,orgao,resumo,conteudo_ner"
             "&order=data_publicacao.desc&limit=250",
             headers=hdrs,
             timeout=25,
         )
+    if st_diario != 200:
+        print(f"[ORACULO INGEST WARN] publicacoes_diario HTTP {st_diario}: {diario_rows}")
     if st_diario == 200 and isinstance(diario_rows, list):
         for r in diario_rows:
             fid = str(r.get("codigo_femurn") or r.get("id") or "").strip()
-            body = str(r.get("texto_completo") or r.get("resumo") or r.get("titulo") or "").strip()
+            ner = r.get("conteudo_ner") if isinstance(r.get("conteudo_ner"), dict) else {}
+            body = str(r.get("texto_completo") or r.get("resumo") or ner.get("resumo_texto") or r.get("titulo") or "").strip()
             if not fid or not body:
                 continue
             titulo = str(r.get("titulo") or f"Ato FEMURN {fid}").strip()
             sec_orig = str(r.get("secretaria_origem") or r.get("orgao") or "SMEB").strip()
-            resumo_ia = str(r.get("resumo_ia") or "").strip()
-            tags_ia = r.get("tags_ia") if isinstance(r.get("tags_ia"), list) else []
+            resumo_ia = str(r.get("resumo_ia") or ner.get("resumo_ia") or "").strip()
+            tags_ia = r.get("tags_ia") if isinstance(r.get("tags_ia"), list) else (ner.get("tags_ia") if isinstance(ner.get("tags_ia"), list) else [])
             extra_ia = []
             if resumo_ia:
                 extra_ia.append(f"Resumo IA: {resumo_ia}")
@@ -233,26 +236,40 @@ def collect_documents_from_supabase(
     st_docs, emitted_rows = http_fn(
         "GET",
         f"{supabase_url}/rest/v1/documentos_emitidos"
-        "?select=id,tipo,numero_formatado,titulo,assunto,drive_url,setor,criado_em"
+        "?select=id,tipo,numero,ano,nome_arquivo,assunto_ou_titulo,destinatario_ou_servidor,drive_url,setor_codigo,sigla_setor,criado_em"
         "&order=criado_em.desc&limit=300",
         headers=hdrs,
         timeout=25,
     )
+    if st_docs != 200:
+        st_docs, emitted_rows = http_fn(
+            "GET",
+            f"{supabase_url}/rest/v1/documentos_emitidos"
+            "?select=id,tipo,numero,ano,nome_arquivo,assunto_ou_titulo,destinatario_ou_servidor,drive_url,criado_em"
+            "&order=criado_em.desc&limit=300",
+            headers=hdrs,
+            timeout=25,
+        )
+    if st_docs != 200:
+        print(f"[ORACULO INGEST WARN] documentos_emitidos HTTP {st_docs}: {emitted_rows}")
     if st_docs == 200 and isinstance(emitted_rows, list):
         for r in emitted_rows:
-            fid = str(r.get("numero_formatado") or r.get("id") or "").strip()
+            num = r.get("numero")
+            ano = r.get("ano")
+            fid = f"{num}/{ano}" if (num is not None and ano is not None) else str(r.get("id") or "").strip()
             tipo_raw = str(r.get("tipo") or "OFICIO").upper()
             fonte_tipo = "PORTARIA" if "PORTARIA" in tipo_raw else "OFICIO"
-            titulo = str(r.get("titulo") or r.get("assunto") or f"{fonte_tipo} {fid}").strip()
-            assunto = str(r.get("assunto") or "").strip()
-            texto = f"{fonte_tipo} {fid} — {titulo}\nSetor: {r.get('setor') or 'SMEB'}\nAssunto: {assunto}"
+            titulo = str(r.get("assunto_ou_titulo") or r.get("nome_arquivo") or f"{fonte_tipo} {fid}").strip()
+            destinatario = str(r.get("destinatario_ou_servidor") or "").strip()
+            setor = str(r.get("setor_codigo") or r.get("sigla_setor") or "GABINETE").strip()
+            texto = f"{fonte_tipo} {fid} — {titulo}\nSetor: {setor}\nDestinatário/Servidor: {destinatario or 'N/A'}\nArquivo: {r.get('nome_arquivo') or ''}"
             if fid and texto.strip():
                 docs.append(
                     {
                         "fonte_tipo": fonte_tipo,
                         "fonte_id": fid,
                         "titulo": titulo[:220],
-                        "url_fonte": str(r.get("drive_url") or ( "#portarias" if fonte_tipo == "PORTARIA" else "#oficios" )),
+                        "url_fonte": str(r.get("drive_url") or ("#portarias" if fonte_tipo == "PORTARIA" else "#oficios")),
                         "persona_tag": "apolo",
                         "rbac_min_role": "PEDAGOGICO_EVENTOS",
                         "texto": texto,
@@ -263,26 +280,29 @@ def collect_documents_from_supabase(
     st_snip, snip_rows = http_fn(
         "GET",
         f"{supabase_url}/rest/v1/modelos_snippets"
-        "?select=id,titulo,categoria,tags,corpo_texto,atualizado_em&limit=200",
+        "?select=id,titulo,categoria,persona_tag,conteudo_texto,variaveis_suportadas,atualizado_em&limit=200",
         headers=hdrs,
         timeout=25,
     )
+    if st_snip != 200:
+        print(f"[ORACULO INGEST WARN] modelos_snippets HTTP {st_snip}: {snip_rows}")
     if st_snip == 200 and isinstance(snip_rows, list):
         for r in snip_rows:
             fid = str(r.get("id") or "").strip()
             titulo = str(r.get("titulo") or "Modelo Institucional").strip()
-            corpo = str(r.get("corpo_texto") or "").strip()
+            corpo = str(r.get("conteudo_texto") or "").strip()
             if fid and corpo:
-                tags = ", ".join(r.get("tags") or [])
+                vars_sup = r.get("variaveis_suportadas")
+                vars_txt = ", ".join(vars_sup) if isinstance(vars_sup, list) else str(vars_sup or "")
                 docs.append(
                     {
                         "fonte_tipo": "MODELO_SNIPPET",
                         "fonte_id": fid,
                         "titulo": titulo[:220],
                         "url_fonte": "#oficios",
-                        "persona_tag": "temis",
+                        "persona_tag": str(r.get("persona_tag") or "temis").lower(),
                         "rbac_min_role": "PEDAGOGICO_EVENTOS",
-                        "texto": f"Modelo Institucional ({r.get('categoria') or 'GERAL'}): {titulo}\nTags: {tags}\n\n{corpo}",
+                        "texto": f"Modelo Institucional ({r.get('categoria') or 'GERAL'}): {titulo}\nVariáveis: {vars_txt}\n\n{corpo}",
                     }
                 )
 
@@ -347,11 +367,15 @@ def collect_memorias_from_gas(
             "gateway_timestamp": int(ts),
             "gateway_nonce": nonce,
             "gateway_signature": sig,
+            "gateway_user_id": "cron-oraculo-ingest",
+            "gateway_user_role": "MODERADOR",
+            "gateway_user_email": "cron-oraculo@smeb.cearamirim.rn.gov.br",
             "token": secret_token,
         },
         timeout=25,
     )
-    if status != 200 or not isinstance(resp, dict):
+    if status != 200 or not isinstance(resp, dict) or resp.get("ok") is False:
+        print(f"[ORACULO INGEST WARN] memorias_listar GAS status={status}, resp={resp}")
         return []
 
     items = resp.get("memorias") or (resp.get("data") or {}).get("memorias") or []
@@ -619,7 +643,7 @@ def main() -> int:
     supabase_url = _normalize_supabase_url(os.getenv("SUPABASE_URL", ""))
     service_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
     gemini_key = os.getenv("GEMINI_API_KEY", "").strip()
-    gas_url = os.getenv("GAS_WEBAPP_URL", "").strip()
+    gas_url = (os.getenv("GAS_WEBHOOK_URL") or os.getenv("GAS_WEBAPP_URL") or "").strip()
     secret_tok = os.getenv("OLYMPOS_SECRET_TOKEN", "").strip()
 
     if not supabase_url or not service_key:

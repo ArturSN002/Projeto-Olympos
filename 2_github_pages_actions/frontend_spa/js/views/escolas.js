@@ -26,6 +26,7 @@ window.OlymposViews.escolas = (function() {
   var activeRedeFilter = 'todas';
   var activeSegmentFilter = 'todos';
   var currentSearchTerm = '';
+  var sortModeEscolas = 'nome_asc';
   var paginaTabelaAtual = 1;
   var ITENS_TABELA_POR_PAGINA = 15;
 
@@ -211,6 +212,20 @@ window.OlymposViews.escolas = (function() {
 
     copia.cor = copia.cor || corEsperada;
     copia.icone = copia.icone || iconeEsperado;
+    copia.diretor = String(copia.diretor || '').trim();
+
+    if (!copia.diretor && typeof window !== 'undefined' && Array.isArray(window.BANCO_SEMENTE_ESCOLAS)) {
+      var nomeNormEsc = String(copia.nome || '').toLowerCase().trim();
+      var sementeMatch = window.BANCO_SEMENTE_ESCOLAS.find(function(s) {
+        if (!s || !s.diretor) return false;
+        if (copia.id && s.id === copia.id) return true;
+        if (copia.inep && s.inep && String(s.inep) === String(copia.inep)) return true;
+        return nomeNormEsc && String(s.nome || '').toLowerCase().trim() === nomeNormEsc;
+      });
+      if (sementeMatch && sementeMatch.diretor) {
+        copia.diretor = String(sementeMatch.diretor).trim();
+      }
+    }
 
     return copia;
   }
@@ -757,6 +772,7 @@ window.OlymposViews.escolas = (function() {
       var redeClass = 'pill-rede-' + (rede.toLowerCase());
 
       var icPin = window.OlymposIcons ? window.OlymposIcons.fromEmojiOrKey('mapPin') : '';
+      var icUser = window.OlymposIcons ? window.OlymposIcons.fromEmojiOrKey('user') : '';
       var icEdit = window.OlymposIcons ? window.OlymposIcons.fromEmojiOrKey('edit') : '';
       var icTrash = window.OlymposIcons ? window.OlymposIcons.fromEmojiOrKey('trash') : '';
       var icCompass = window.OlymposIcons ? window.OlymposIcons.fromEmojiOrKey('compass') : '';
@@ -769,6 +785,7 @@ window.OlymposViews.escolas = (function() {
           )
         : '';
 
+      var diretorNome = String(escola.diretor || '').trim() || 'Não informado';
       var popupHtml =
         '<div class="cadmo-map-popup escola-map-popup">' +
           '<div class="escola-popup-header">' +
@@ -777,6 +794,7 @@ window.OlymposViews.escolas = (function() {
           '</div>' +
           '<strong class="escola-popup-title">' + escapeHtml(escola.nome) + '</strong>' +
           '<div class="escola-popup-segmentos">' + segmentosHtml + '</div>' +
+          '<div class="escola-popup-detail escola-popup-diretor">' + icUser + ' <strong>Gestor(a) / Diretor(a):</strong> ' + escapeHtml(diretorNome) + '</div>' +
           (escola.bairroDistrito ? '<div class="escola-popup-detail">' + icPin + ' <strong>Bairro/Distrito:</strong> ' + escapeHtml(escola.bairroDistrito) + '</div>' : '') +
           (escola.endereco ? '<div class="escola-popup-address">' + escapeHtml(escola.endereco) + '</div>' : '') +
           (escola.inep ? '<div class="escola-popup-detail">INEP: <code>' + escapeHtml(escola.inep) + '</code></div>' : '') +
@@ -868,6 +886,7 @@ window.OlymposViews.escolas = (function() {
         var strBairro = String(item.bairroDistrito || '').toLowerCase();
         var strEndereco = String(item.endereco || '').toLowerCase();
         var strInep = String(item.inep || '').toLowerCase();
+        var strDiretor = String(item.diretor || '').toLowerCase();
         var strRede = rede.toLowerCase();
         var strSegs = segmentos.join(' ').toLowerCase();
 
@@ -875,6 +894,7 @@ window.OlymposViews.escolas = (function() {
                           strBairro.includes(termoNormalizado) ||
                           strEndereco.includes(termoNormalizado) ||
                           strInep.includes(termoNormalizado) ||
+                          strDiretor.includes(termoNormalizado) ||
                           strRede.includes(termoNormalizado) ||
                           strSegs.includes(termoNormalizado) ||
                           catLow.includes(termoNormalizado);
@@ -952,6 +972,47 @@ window.OlymposViews.escolas = (function() {
     if (elPrivadas) elPrivadas.textContent = privadas;
   }
 
+  function ordenarListaEscolas(lista) {
+    var modo = String(sortModeEscolas || 'nome_asc');
+    var cmp = function(a, b) {
+      return String(a || '').localeCompare(String(b || ''), 'pt-BR', { numeric: true, sensitivity: 'base' });
+    };
+    var copia = lista.slice();
+    copia.sort(function(a, b) {
+      if (modo === 'nome_desc') return cmp(b.nome, a.nome);
+      if (modo === 'rede_asc') return cmp(a.rede || 'Municipal', b.rede || 'Municipal') || cmp(a.nome, b.nome);
+      if (modo === 'rede_desc') return cmp(b.rede || 'Municipal', a.rede || 'Municipal') || cmp(a.nome, b.nome);
+      if (modo === 'segmentos_asc') return cmp((a.segmentos || []).join(', '), (b.segmentos || []).join(', ')) || cmp(a.nome, b.nome);
+      if (modo === 'segmentos_desc') return cmp((b.segmentos || []).join(', '), (a.segmentos || []).join(', ')) || cmp(a.nome, b.nome);
+      if (modo === 'zona_asc') return cmp(a.zona || 'Urbana', b.zona || 'Urbana') || cmp(a.nome, b.nome);
+      if (modo === 'zona_desc') return cmp(b.zona || 'Urbana', a.zona || 'Urbana') || cmp(a.nome, b.nome);
+      if (modo === 'bairro_asc') return cmp(a.bairroDistrito || '', b.bairroDistrito || '') || cmp(a.nome, b.nome);
+      if (modo === 'bairro_desc') return cmp(b.bairroDistrito || '', a.bairroDistrito || '') || cmp(a.nome, b.nome);
+      if (modo === 'diretor_asc') return cmp(a.diretor || '', b.diretor || '') || cmp(a.nome, b.nome);
+      return cmp(a.nome, b.nome);
+    });
+    return copia;
+  }
+
+  function atualizarIndicadoresSortEscolas() {
+    var tbl = document.getElementById('tabelaEscolas');
+    if (!tbl) return;
+    var parts = String(sortModeEscolas || 'nome_asc').split('_');
+    var activeCol = parts[0];
+    var activeDir = parts[1] === 'desc' ? 'descending' : 'ascending';
+    tbl.querySelectorAll('th[data-escola-sort]').forEach(function(th) {
+      var col = th.getAttribute('data-escola-sort');
+      var ind = th.querySelector('.th-sort-indicator');
+      if (col === activeCol) {
+        th.setAttribute('aria-sort', activeDir);
+        if (ind) ind.textContent = activeDir === 'ascending' ? '▲' : '▼';
+      } else {
+        th.setAttribute('aria-sort', 'none');
+        if (ind) ind.textContent = '↕';
+      }
+    });
+  }
+
   /**
    * Renderiza a listagem tabular das escolas
    */
@@ -961,7 +1022,8 @@ window.OlymposViews.escolas = (function() {
     var pagBar = document.getElementById('escolasPaginacaoBar');
     if (!tbody) return;
 
-    var lista = obterEscolasFiltradas();
+    var lista = ordenarListaEscolas(obterEscolasFiltradas());
+    atualizarIndicadoresSortEscolas();
     var totalAcervo = obterEscolas().length;
 
     if (lista.length === 0) {
@@ -1004,7 +1066,7 @@ window.OlymposViews.escolas = (function() {
       html +=     iconBadgeHtml;
       html +=     '<div>';
       html +=       '<strong style="color: var(--text-main); font-size: 13px;">' + escapeHtml(escola.nome) + '</strong>';
-      html +=       '<div style="font-size: 11px; color: var(--text-muted);">' + escapeHtml(catInst) + (escola.inep ? ' • INEP: <code>' + escapeHtml(escola.inep) + '</code>' : '') + '</div>';
+      html +=       '<div style="font-size: 11px; color: var(--text-muted);">' + escapeHtml(catInst) + (escola.inep ? ' • INEP: <code>' + escapeHtml(escola.inep) + '</code>' : '') + (escola.diretor ? ' • Gestor(a): ' + escapeHtml(escola.diretor) : '') + '</div>';
       html +=     '</div>';
       html +=   '</div>';
       html += '</td>';
@@ -1104,6 +1166,40 @@ window.OlymposViews.escolas = (function() {
         activeZonaFilter = selZona.value || 'todas';
         paginaTabelaAtual = 1;
         renderizarInterface();
+      });
+    }
+
+    var selSortEsc = document.getElementById('escolaSortSelect');
+    if (selSortEsc && !selSortEsc._bound) {
+      selSortEsc._bound = true;
+      selSortEsc.addEventListener('change', function() {
+        sortModeEscolas = selSortEsc.value || 'nome_asc';
+        paginaTabelaAtual = 1;
+        renderizarTabela();
+      });
+    }
+
+    var tblEsc = document.getElementById('tabelaEscolas');
+    if (tblEsc && !tblEsc._sortBound) {
+      tblEsc._sortBound = true;
+      tblEsc.querySelectorAll('th[data-escola-sort]').forEach(function(th) {
+        var toggleSort = function() {
+          var col = th.getAttribute('data-escola-sort') || 'nome';
+          if (sortModeEscolas === col + '_asc') sortModeEscolas = col + '_desc';
+          else sortModeEscolas = col + '_asc';
+          if (selSortEsc && Array.from(selSortEsc.options).some(function(o) { return o.value === sortModeEscolas; })) {
+            selSortEsc.value = sortModeEscolas;
+          }
+          paginaTabelaAtual = 1;
+          renderizarTabela();
+        };
+        th.addEventListener('click', toggleSort);
+        th.addEventListener('keydown', function(ev) {
+          if (ev.key === 'Enter' || ev.key === ' ') {
+            ev.preventDefault();
+            toggleSort();
+          }
+        });
       });
     }
 

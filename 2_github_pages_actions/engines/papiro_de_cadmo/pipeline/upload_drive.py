@@ -62,20 +62,41 @@ def upload_via_gas_webhook(caminho_csv: Path, folder_id: str) -> Optional[str]:
 
     try:
         import base64
+        import hashlib
+        import hmac
+        import time
+        import uuid
         import requests
 
         nome_arquivo = caminho_csv.name
         conteudo_bytes = caminho_csv.read_bytes()
         conteudo_b64 = base64.b64encode(conteudo_bytes).decode("utf-8")
 
+        action = "upload_drive_file"
         payload = {
             "token": token,
-            "action": "upload_drive_file",
+            "action": action,
+            "dados": {},
             "folder_id": folder_id,
             "filename": nome_arquivo,
             "content_base64": conteudo_b64,
             "mimetype": "text/csv"
         }
+        if token:
+            ts = str(int(time.time() * 1000))
+            nonce = str(uuid.uuid4())
+            canonical = f"{action}:{ts}:{nonce}:{{}}"
+            sig = hmac.new(token.encode("utf-8"), canonical.encode("utf-8"), hashlib.sha256).hexdigest()
+            payload.update(
+                {
+                    "gateway_proxy": True,
+                    "gateway_timestamp": int(ts),
+                    "gateway_nonce": nonce,
+                    "gateway_signature": sig,
+                    "gateway_user_id": "cron-papiro-drive",
+                    "gateway_user_role": "MODERADOR",
+                }
+            )
 
         resp = requests.post(webhook_url, json=payload, timeout=60)
         if 200 <= resp.status_code < 300:
@@ -83,6 +104,9 @@ def upload_via_gas_webhook(caminho_csv: Path, folder_id: str) -> Optional[str]:
                 data = resp.json()
             except Exception:
                 data = {}
+            if isinstance(data, dict) and data.get("ok") is False:
+                logger.warning(f"[DRIVE FALLBACK GAS] WebApp rejeitou upload: {data.get('mensagem') or data}")
+                return None
             file_id = data.get("file_id") or data.get("id") or "gas_uploaded"
             logger.info(f"[DRIVE FALLBACK GAS] Upload via WebApp concluído com sucesso! ID: {file_id}")
             return file_id

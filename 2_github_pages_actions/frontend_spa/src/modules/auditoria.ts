@@ -29,6 +29,7 @@ export interface BackupRunRow {
 
 let logsCache: AuditLogRow[] = [];
 let backupRunsCache: BackupRunRow[] = [];
+let auditSortBy: 'timestamp_desc' | 'timestamp_asc' | 'action_asc' | 'action_desc' | 'table_name_asc' | 'table_name_desc' | 'role_at_action_asc' | 'role_at_action_desc' = 'timestamp_desc';
 let paginaAtual = 1;
 const ITENS_POR_PAGINA = 20;
 
@@ -72,18 +73,67 @@ function formatarUtc(iso: string | null | undefined): string {
   return d.toLocaleString('pt-BR', { timeZone: 'UTC' });
 }
 
+function ordenarLogsCache(): AuditLogRow[] {
+  const cmp = (a: unknown, b: unknown) =>
+    String(a || '').localeCompare(String(b || ''), 'pt-BR', { numeric: true, sensitivity: 'base' });
+  const copy = logsCache.slice();
+  copy.sort((a, b) => {
+    switch (auditSortBy) {
+      case 'timestamp_asc':
+        return Date.parse(a.timestamp || '') - Date.parse(b.timestamp || '');
+      case 'action_asc':
+        return cmp(a.action, b.action) || (Date.parse(b.timestamp || '') - Date.parse(a.timestamp || ''));
+      case 'action_desc':
+        return cmp(b.action, a.action) || (Date.parse(b.timestamp || '') - Date.parse(a.timestamp || ''));
+      case 'table_name_asc':
+        return cmp(a.table_name, b.table_name) || (Date.parse(b.timestamp || '') - Date.parse(a.timestamp || ''));
+      case 'table_name_desc':
+        return cmp(b.table_name, a.table_name) || (Date.parse(b.timestamp || '') - Date.parse(a.timestamp || ''));
+      case 'role_at_action_asc':
+        return cmp(a.role_at_action, b.role_at_action) || (Date.parse(b.timestamp || '') - Date.parse(a.timestamp || ''));
+      case 'role_at_action_desc':
+        return cmp(b.role_at_action, a.role_at_action) || (Date.parse(b.timestamp || '') - Date.parse(a.timestamp || ''));
+      case 'timestamp_desc':
+      default:
+        return Date.parse(b.timestamp || '') - Date.parse(a.timestamp || '');
+    }
+  });
+  return copy;
+}
+
+function atualizarIndicadoresAudit(): void {
+  const tbl = document.getElementById('tabelaAuditoriaLogs');
+  if (!tbl) return;
+  const dirDesc = auditSortBy.endsWith('_desc');
+  const colAtiva = auditSortBy.replace(/_(?:asc|desc)$/, '');
+  tbl.querySelectorAll<HTMLElement>('th[data-audit-sort]').forEach((th) => {
+    const col = th.getAttribute('data-audit-sort') || '';
+    const ind = th.querySelector('.th-sort-indicator');
+    if (col === colAtiva) {
+      th.setAttribute('aria-sort', dirDesc ? 'descending' : 'ascending');
+      if (ind) ind.textContent = dirDesc ? '▼' : '▲';
+    } else {
+      th.setAttribute('aria-sort', 'none');
+      if (ind) ind.textContent = '↕';
+    }
+  });
+}
+
 function renderTabela(): void {
   const tbody = document.getElementById('tabelaAuditoriaBody');
   if (!tbody) return;
 
-  if (!logsCache.length) {
+  const ordenados = ordenarLogsCache();
+  atualizarIndicadoresAudit();
+
+  if (!ordenados.length) {
     tbody.innerHTML = '<tr><td colspan="5" class="text-muted text-center" style="padding:24px;">Nenhum evento encontrado para os filtros informados.</td></tr>';
     return;
   }
 
   const pag = window.OlymposPagination && typeof window.OlymposPagination.paginarLista === 'function'
-    ? window.OlymposPagination.paginarLista(logsCache, paginaAtual, ITENS_POR_PAGINA)
-    : { items: logsCache.slice(0, ITENS_POR_PAGINA), paginaAtual: 1, totalItens: logsCache.length };
+    ? window.OlymposPagination.paginarLista(ordenados, paginaAtual, ITENS_POR_PAGINA)
+    : { items: ordenados.slice(0, ITENS_POR_PAGINA), paginaAtual: 1, totalItens: ordenados.length };
 
   paginaAtual = pag.paginaAtual;
 
@@ -373,6 +423,29 @@ function bindEvents(): void {
   bind('subtabBtnAuditoriaSaudeDr', 'click', () => alternarSubtabAuditoria('saude-dr'));
   bind('btnAtualizarBackupRuns', 'click', () => { void carregarBackupRuns(); });
   bind('btnVerificarAnomaliasAgora', 'click', () => { void executarVerificacaoAnomalias(); });
+
+  const tblAudit = document.getElementById('tabelaAuditoriaLogs') as any;
+  if (tblAudit && !tblAudit._auditSortBound) {
+    tblAudit._auditSortBound = true;
+    tblAudit.querySelectorAll('th[data-audit-sort]').forEach((th: HTMLElement) => {
+      const toggleAudit = () => {
+        const col = th.getAttribute('data-audit-sort') || 'timestamp';
+        const defDir = col === 'timestamp' ? 'desc' : 'asc';
+        if (auditSortBy === `${col}_asc`) auditSortBy = `${col}_desc` as any;
+        else if (auditSortBy === `${col}_desc`) auditSortBy = `${col}_asc` as any;
+        else auditSortBy = `${col}_${defDir}` as any;
+        paginaAtual = 1;
+        renderTabela();
+      };
+      th.addEventListener('click', toggleAudit);
+      th.addEventListener('keydown', (ev: KeyboardEvent) => {
+        if (ev.key === 'Enter' || ev.key === ' ') {
+          ev.preventDefault();
+          toggleAudit();
+        }
+      });
+    });
+  }
 }
 
 const auditoriaView = {

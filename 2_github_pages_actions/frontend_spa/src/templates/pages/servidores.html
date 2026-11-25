@@ -5,7 +5,7 @@
               <div>
                 <span class="section-eyebrow">DOSSIÊ FUNCIONAL MULTIRREDE • BASE CONSOLIDADA</span>
                 <h2 class="section-title">Consulta Integrada de Servidores Públicos</h2>
-                <p class="section-desc">Consulte vínculos funcionais ativos, carga horária semanal acumulada, lotação e auditoria constitucional (CF/88 Art. 37, XVI) dos 5 entes monitorados.</p>
+                <p class="section-desc">Consulte vínculos funcionais ativos, carga horária semanal acumulada, lotação e auditoria constitucional (CF/88 Art. 37, XVI) dos 16 entes públicos monitorados no RN.</p>
               </div>
               <div class="button-group">
                 <button type="button" id="btnExportarServidoresCsv" class="btn btn-secondary btn-sm" title="Exportar resultado filtrado em CSV">
@@ -55,7 +55,7 @@
                   <span class="pill-badge pill-amber">CF/88 Art. 37</span>
                 </div>
                 <div class="stat-value" id="kpiServidoresMultiplos">--</div>
-                <div class="stat-meta">Servidores com múltiplos vínculos</div>
+                <div class="stat-meta">Servidores únicos com múltiplos vínculos (1 por pessoa)</div>
               </div>
             </div>
 
@@ -124,8 +124,22 @@
                   <select id="filtroVinculosSelect" class="input-clean filter-select-modern" data-filtro-select="vinculos" title="Filtrar por Auditoria CF/88">
                     <option value="todos" data-filtro-vinculos="todos" selected>Todos os Vínculos</option>
                     <option value="unico" data-filtro-vinculos="unico">Vínculo Único</option>
+                    <option value="multiplos" data-filtro-vinculos="multiplos">Múltiplos Vínculos (2+)</option>
                     <option value="duplo" data-filtro-vinculos="duplo">Acúmulo Lícito (≤ 60h)</option>
-                    <option value="alerta" data-filtro-vinculos="alerta">Alerta CF/88 (> 60h)</option>
+                    <option value="alerta" data-filtro-vinculos="alerta">Alerta CF/88 (&gt; 60h)</option>
+                  </select>
+                </div>
+
+                <div class="filter-select-field">
+                  <label for="filtroOrdemServidoresSelect" class="filter-select-label"><span class="svg-icon-inline" data-icon="arrowUpDown"></span> Ordenação</label>
+                  <select id="filtroOrdemServidoresSelect" class="input-clean filter-select-modern" title="Ordenar listagem de servidores">
+                    <option value="nome_asc" selected>Nome (A → Z)</option>
+                    <option value="nome_desc">Nome (Z → A)</option>
+                    <option value="cargo_asc">Cargo Principal (A → Z)</option>
+                    <option value="cargo_desc">Cargo Principal (Z → A)</option>
+                    <option value="ente_asc">Ente Federativo (A → Z)</option>
+                    <option value="lotacao_asc">Lotação Principal (A → Z)</option>
+                    <option value="vinculos_desc">Mais Vínculos / CF/88</option>
                   </select>
                 </div>
               </div>
@@ -139,16 +153,16 @@
 
             <!-- VISUALIZAÇÃO EM TABELA SINTÉTICA -->
             <div id="servidoresContainerTabela" class="table-wrapper table-responsive">
-              <table class="clean-table table-responsive-cards" id="tabelaServidoresGeral">
+              <table class="clean-table table-responsive-cards" id="tabelaServidoresGeral" data-custom-sort="true">
                 <thead>
                   <tr>
-                    <th>Servidor(a)</th>
-                    <th style="width: 140px;">Matrícula(s)</th>
-                    <th style="width: 160px;">Ente(s)</th>
-                    <th>Cargo Principal</th>
-                    <th style="width: 130px;">Ref. Transparência</th>
-                    <th>Lotação Principal</th>
-                    <th style="width: 130px;">Auditoria CF/88</th>
+                    <th class="th-sortable" data-sort-col="nome" role="button" tabindex="0" aria-sort="ascending">Servidor(a) <span class="th-sort-indicator" aria-hidden="true">▲</span></th>
+                    <th class="th-sortable" data-sort-col="matricula" role="button" tabindex="0" aria-sort="none" style="width: 140px;">Matrícula(s) <span class="th-sort-indicator" aria-hidden="true">↕</span></th>
+                    <th class="th-sortable" data-sort-col="ente" role="button" tabindex="0" aria-sort="none" style="width: 160px;">Ente(s) <span class="th-sort-indicator" aria-hidden="true">↕</span></th>
+                    <th class="th-sortable" data-sort-col="cargo" role="button" tabindex="0" aria-sort="none">Cargo Principal <span class="th-sort-indicator" aria-hidden="true">↕</span></th>
+                    <th class="th-sortable" data-sort-col="referencia" role="button" tabindex="0" aria-sort="none" style="width: 130px;">Ref. Transparência <span class="th-sort-indicator" aria-hidden="true">↕</span></th>
+                    <th class="th-sortable" data-sort-col="lotacao" role="button" tabindex="0" aria-sort="none">Lotação Principal <span class="th-sort-indicator" aria-hidden="true">↕</span></th>
+                    <th class="th-sortable" data-sort-col="vinculos" role="button" tabindex="0" aria-sort="none" style="width: 130px;">Auditoria CF/88 <span class="th-sort-indicator" aria-hidden="true">↕</span></th>
                     <th class="text-right" style="width: 110px;">Ações</th>
                   </tr>
                 </thead>

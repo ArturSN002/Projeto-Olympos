@@ -475,16 +475,20 @@ window.OlymposViews.visaoGeral = (function() {
         : ('Série Setorial • Próximo Ofício (' + (info ? info.siglaOficio : setorAtual) + ')');
     }
 
+    // Gabinete e Moderador seguem exclusivamente os contadores reais da Memória de Apolo (Google Docs)
+    if (isModOuGab) {
+      return;
+    }
+
     if (window.OlymposSupabase && typeof window.OlymposSupabase.listarNumeracaoVisivel === 'function') {
       try {
         const resNum = await window.OlymposSupabase.listarNumeracaoVisivel(2026);
         if (resNum && resNum.ok && Array.isArray(resNum.oficios)) {
-          const alvo = setorAtual === 'MODERADOR' ? 'GABINETE' : setorAtual;
-          const item = resNum.oficios.find(function(n) { return n.setor_codigo === alvo; }) || resNum.oficios[0];
+          const item = resNum.oficios.find(function(n) { return n.setor_codigo === setorAtual; });
           if (item) {
             const elOf = document.getElementById('kpiProximoOficio');
             const elUltOf = document.getElementById('kpiUltimoOficio');
-            const sigla = item.sigla_documento || 'GS';
+            const sigla = item.sigla_documento || setorAtual;
             if (elOf) elOf.textContent = 'Nº ' + item.proximo_numero + ' (' + sigla + ')';
             if (elUltOf) {
               elUltOf.innerHTML = '<span>Último emitido: Nº ' + (item.ultimo_numero || 0) + ' • Série ' + sigla + '</span>';
@@ -504,22 +508,40 @@ window.OlymposViews.visaoGeral = (function() {
 
     if (data.numeracao) {
       const n = data.numeracao;
-      const ofVal = (n.proximoOficio2026 !== undefined && n.proximoOficio2026 !== null)
+      const apoloIndisponivel = n.fonteApoloDisponivel === false || n.origem === 'INDISPONIVEL';
+      const rawOf = (n.proximoOficio2026 !== undefined && n.proximoOficio2026 !== null)
         ? n.proximoOficio2026
         : ((n.proximoOficio !== undefined && n.proximoOficio !== null) ? n.proximoOficio : null);
-      const ptVal = (n.proximaPortaria2026 !== undefined && n.proximaPortaria2026 !== null)
+      const rawPt = (n.proximaPortaria2026 !== undefined && n.proximaPortaria2026 !== null)
         ? n.proximaPortaria2026
         : ((n.proximaPortaria !== undefined && n.proximaPortaria !== null) ? n.proximaPortaria : null);
-      const ultOf = (n.ultimoOficio2026 !== undefined && n.ultimoOficio2026 !== null)
-        ? n.ultimoOficio2026
-        : (ofVal !== null ? (ofVal - 1) : null);
-      const ultPt = (n.ultimaPortaria2026 !== undefined && n.ultimaPortaria2026 !== null)
-        ? n.ultimaPortaria2026
-        : (ptVal !== null ? (ptVal - 1) : null);
+      const ofVal = !apoloIndisponivel && rawOf !== null && !isNaN(Number(rawOf)) ? Number(rawOf) : null;
+      const ptVal = !apoloIndisponivel && rawPt !== null && !isNaN(Number(rawPt)) ? Number(rawPt) : null;
+      const ultOf = (ofVal !== null)
+        ? ((n.ultimoOficio2026 !== undefined && n.ultimoOficio2026 !== null) ? Number(n.ultimoOficio2026) : Math.max(0, ofVal - 1))
+        : null;
+      const ultPt = (ptVal !== null)
+        ? ((n.ultimaPortaria2026 !== undefined && n.ultimaPortaria2026 !== null) ? Number(n.ultimaPortaria2026) : Math.max(0, ptVal - 1))
+        : null;
       const rawMemUrl = (n.arquivoUrl && String(n.arquivoUrl).includes('docs.google.com/document/d/'))
         ? n.arquivoUrl
         : '';
       const memUrl = rawMemUrl || APOLO_MEMORIA_URL;
+
+      if (!apoloIndisponivel && (ofVal !== null || ptVal !== null)) {
+        window.OlymposApoloCache = Object.assign({}, n, {
+          origem: 'MEMORIA_APOLO',
+          fonteApoloDisponivel: true,
+          proximoOficio2026: ofVal,
+          ultimoOficio2026: ultOf,
+          proximaPortaria2026: ptVal,
+          ultimaPortaria2026: ultPt,
+          arquivoUrl: memUrl
+        });
+        if (typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
+          window.dispatchEvent(new CustomEvent('olympos:apolo-numeracao-atualizada', { detail: window.OlymposApoloCache }));
+        }
+      }
 
       const elOf = document.getElementById('kpiProximoOficio');
       const elUltOf = document.getElementById('kpiUltimoOficio');
@@ -529,14 +551,14 @@ window.OlymposViews.visaoGeral = (function() {
       if (isModOuGab) {
         if (elOf) elOf.textContent = ofVal !== null ? ('Nº ' + ofVal) : '--';
         if (elUltOf) {
-          elUltOf.innerHTML = '<span>Último emitido: ' + (ultOf !== null ? ('Nº ' + ultOf) : '--') + '</span>' +
+          elUltOf.innerHTML = '<span>' + (ultOf !== null ? ('Último emitido: Nº ' + ultOf) : 'Aguardando Memória de Apolo') + '</span>' +
             '<a href="' + window.OlymposApp.escapeHtml(memUrl) + '" target="_blank" rel="noopener" class="folder-chip" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE,RH_COMISSAO,PEDAGOGICO_EVENTOS,JURIDICO">Memória de Apolo ↗</a>';
         }
       }
 
       if (elPt) elPt.textContent = isModOuGab && ptVal !== null ? ('Nº ' + ptVal) : '--';
       if (elUltPt) {
-        elUltPt.innerHTML = '<span>Última emitida: ' + (isModOuGab && ultPt !== null ? ('Nº ' + ultPt) : '--') + '</span>' +
+        elUltPt.innerHTML = '<span>' + (isModOuGab && ultPt !== null ? ('Última emitida: Nº ' + ultPt) : (isModOuGab ? 'Aguardando Memória de Apolo' : 'Exclusivo do Gabinete')) + '</span>' +
           '<a href="' + window.OlymposApp.escapeHtml(memUrl) + '" target="_blank" rel="noopener" class="folder-chip" data-requires-auth="true" data-access-roles="MODERADOR,ADMIN_GABINETE">Memória de Apolo ↗</a>';
       }
 
@@ -547,15 +569,22 @@ window.OlymposViews.visaoGeral = (function() {
       const inOf = document.getElementById('inputProximoOficioMd');
       const inPt = document.getElementById('inputProximaPortariaMd');
       const inSig = document.getElementById('inputSignatarioMd');
-      if (inOf && ofVal !== null && isModOuGab) inOf.value = ofVal;
-      if (inPt && ptVal !== null && isModOuGab) inPt.value = ptVal;
+      if (inOf && isModOuGab) {
+        inOf.value = ofVal !== null ? String(ofVal) : '';
+        inOf.placeholder = '--';
+      }
+      if (inPt && isModOuGab) {
+        inPt.value = ptVal !== null ? String(ptVal) : '';
+        inPt.placeholder = '--';
+      }
       if (inSig && (n.signatarioTitular || n.signatario)) {
         inSig.value = n.signatarioTitular || n.signatario;
       }
 
       const inputOficioForm = document.getElementById('oficioNumeroInput');
-      if (inputOficioForm && !inputOficioForm.value && ofVal !== null && isModOuGab) {
-        inputOficioForm.value = String(ofVal);
+      if (inputOficioForm && !(inputOficioForm.dataset && inputOficioForm.dataset.userEdited) && isModOuGab) {
+        inputOficioForm.value = ofVal !== null ? String(ofVal) : '';
+        inputOficioForm.placeholder = '--';
       }
     }
 
@@ -640,9 +669,11 @@ window.OlymposViews.visaoGeral = (function() {
 
     const rbac = window.OlymposRbac;
     const setorAtual = (rbac && typeof rbac.getSetorAtual === 'function' && rbac.getSetorAtual()) || 'GABINETE';
+    const isModOuGab = setorAtual === 'MODERADOR' || setorAtual === 'GABINETE';
     const alvoSetor = setorAtual === 'MODERADOR' ? 'GABINETE' : setorAtual;
 
-    if (window.OlymposSupabase && typeof window.OlymposSupabase.reservarNumeroDocumento === 'function') {
+    // Setores especializados (não Gabinete/Moderador) utilizam série setorial no Supabase
+    if (!isModOuGab && window.OlymposSupabase && typeof window.OlymposSupabase.reservarNumeroDocumento === 'function') {
       try {
         const resRpc = await window.OlymposSupabase.reservarNumeroDocumento(tipo, alvoSetor, 2026, desc);
         if (resRpc && resRpc.ok) {
@@ -650,20 +681,28 @@ window.OlymposViews.visaoGeral = (function() {
             tipo + ' reservado (' + (resRpc.sigla_documento || alvoSetor) + '): Nº ' + resRpc.numero_formatado + ' (Próximo: ' + resRpc.proximo_numero + ')'
           );
           void carregarNumeracaoSetorVisaoGeral();
-          if (alvoSetor !== 'GABINETE') return;
+          return;
         }
       } catch (_eRpc) {
-        // Fallback legado para Gabinete se RPC Onda 7 ainda não aplicada
+        // segue para fallback GAS
       }
     }
 
+    // Gabinete e Moderador reservam prioritariamente na Memória de Apolo (_memoria_apolo)
     window.OlymposApi.chamar('reservar_numero_md', { tipo: tipo, detalhe: desc }, function(res) {
       if (res && res.ok) {
         const codigo = res.numeroFormatado || res.codigoOficial || (res.numeroReservado + '/2026');
-        window.OlymposApp.showToast(tipo + ' reservado: Nº ' + codigo + ' (Próximo: ' + res.proximoDisponivel + ')');
+        window.OlymposApp.showToast(tipo + ' reservado na Memória de Apolo: Nº ' + codigo + ' (Próximo: ' + res.proximoDisponivel + ')');
+        if (res.numeracaoAtualizada) {
+          atualizarKpis({ numeracao: Object.assign({ origem: 'MEMORIA_APOLO', fonteApoloDisponivel: true }, res.numeracaoAtualizada) });
+          if (window.OlymposSupabase && typeof window.OlymposSupabase.sincronizarNumeracaoGabinete === 'function') {
+            window.OlymposSupabase.sincronizarNumeracaoGabinete(res.numeracaoAtualizada);
+          }
+        }
+        isLoaded = false;
         carregarDados();
       } else {
-        window.OlymposApp.showToast((res && res.mensagem) || 'Falha ao reservar número.', true);
+        window.OlymposApp.showToast((res && res.mensagem) || 'Falha ao reservar número na Memória de Apolo.', true);
       }
     }, function(err) {
       window.OlymposApp.showToast('Erro ao reservar número: ' + err.message, true);
@@ -674,6 +713,9 @@ window.OlymposViews.visaoGeral = (function() {
     isLoaded = false;
     isLoadingOverview = false;
     lastOverviewData = null;
+    if (typeof window !== 'undefined') {
+      delete window.OlymposApoloCache;
+    }
     definirEstadoInicialNumeracao();
     atualizarTelemetriaCientifica();
     const elChamados = document.getElementById('heroTelemetryChamados');

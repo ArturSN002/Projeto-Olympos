@@ -20,6 +20,7 @@ window.OlymposViews.certificados = (function() {
   let isCatalogLoaded = false;
   let currentParticipants = [];
   let currentMetadata = {};
+  let sortModeParticipantes = 'linha_asc';
   let paginaParticipantes = 1;
   const ITENS_PARTICIPANTES_POR_PAGINA = 20;
 
@@ -32,17 +33,47 @@ window.OlymposViews.certificados = (function() {
   }
 
   async function verificarTokenUrl() {
-    const hash = window.location.hash || '';
-    let token = '';
-    if (hash.includes('?v=')) {
-      token = hash.split('?v=')[1];
-    } else if (window.location.search && window.location.search.includes('v=')) {
-      const match = window.location.search.match(/v=([^&]+)/);
-      if (match) token = match[1];
-    }
-    if (!token) return;
+    const existingBadge = document.getElementById('liraCryptoValidationBadge');
+    if (existingBadge) existingBadge.remove();
 
-    token = decodeURIComponent(token);
+    const hash = String(window.location.hash || '');
+    const hashQuery = hash.indexOf('?') !== -1 ? hash.slice(hash.indexOf('?') + 1) : '';
+    const searchQuery = String(window.location.search || '').replace(/^\?/, '');
+
+    let token = '';
+    let fromHash = false;
+    let isExplicitCertParam = false;
+
+    if (hashQuery) {
+      const hashParams = new URLSearchParams(hashQuery);
+      const tHash = hashParams.get('cert_token') || hashParams.get('v') || '';
+      if (tHash) {
+        token = tHash.trim();
+        fromHash = true;
+        isExplicitCertParam = hashParams.has('cert_token');
+      }
+    }
+
+    if (!token && searchQuery) {
+      const searchParams = new URLSearchParams(searchQuery);
+      if (searchParams.has('cert_token')) {
+        token = String(searchParams.get('cert_token') || '').trim();
+        isExplicitCertParam = true;
+      } else if (searchParams.has('v')) {
+        const candidate = String(searchParams.get('v') || '').trim();
+        // Ignora parâmetros ?v= usados como cache-buster (ex.: ?v=20261124 ou ?v=3.0)
+        // Token ECDSA assinado possui exatamente 2 segmentos Base64URL separados por ponto
+        if (/^[A-Za-z0-9\-_]{12,}\.[A-Za-z0-9\-_]{12,}$/.test(candidate)) {
+          token = candidate;
+        }
+      }
+    }
+
+    if (!token) return;
+    if (!fromHash && !isExplicitCertParam && !/^[A-Za-z0-9\-_]{12,}\.[A-Za-z0-9\-_]{12,}$/.test(token)) {
+      return;
+    }
+
     if (window.OlymposCertificadosCrypto) {
       const res = await window.OlymposCertificadosCrypto.verificarCertificadoOffline(token);
       exibirBadgeAutenticidade(res);
@@ -57,7 +88,7 @@ window.OlymposViews.certificados = (function() {
     if (!badge) {
       badge = document.createElement('div');
       badge.id = 'liraCryptoValidationBadge';
-      badge.style.cssText = 'padding:14px; margin-bottom:16px; border-radius:10px; font-size:13px; line-height:1.5; display:block;';
+      badge.style.cssText = 'position:relative; padding:14px 40px 14px 14px; margin-bottom:16px; border-radius:10px; font-size:13px; line-height:1.5; display:block;';
       if (container.firstChild) {
         container.insertBefore(badge, container.firstChild);
       } else {
@@ -65,10 +96,13 @@ window.OlymposViews.certificados = (function() {
       }
     }
 
+    const closeBtnHtml = '<button type="button" id="liraCryptoValidationCloseBtn" aria-label="Fechar aviso de verificação" style="position:absolute; top:8px; right:10px; background:transparent; border:none; color:inherit; cursor:pointer; font-size:16px; line-height:1; opacity:0.75;">×</button>';
+
     if (resultado && resultado.valido) {
       const c = resultado.certificado || {};
       badge.className = 'pill-badge pill-green';
-      badge.innerHTML = '<strong>' + (window.OlymposIcons ? window.OlymposIcons.ui('check') : '') + ' Certificado Autêntico Verificado</strong><br>' +
+      badge.innerHTML = closeBtnHtml +
+        '<strong>' + (window.OlymposIcons ? window.OlymposIcons.ui('check') : '') + ' Certificado Autêntico Verificado</strong><br>' +
         'Titular: <strong>' + (window.OlymposApp ? window.OlymposApp.escapeHtml(c.recipient_name || '--') : (c.recipient_name || '--')) + '</strong> • ' +
         'Evento: <strong>' + (window.OlymposApp ? window.OlymposApp.escapeHtml(c.event_name || '--') : (c.event_name || '--')) + '</strong> • ' +
         'Carga Horária: <strong>' + (c.hours || '--') + 'h</strong> • ' +
@@ -76,8 +110,16 @@ window.OlymposViews.certificados = (function() {
         '<span style="font-size:11px;opacity:0.8;">(validado offline em ' + (resultado.tempoMs || '<2') + 'ms)</span>';
     } else {
       badge.className = 'pill-badge pill-amber';
-      badge.innerHTML = '<strong>' + (window.OlymposIcons ? window.OlymposIcons.ui('alertTriangle') : '') + ' Assinatura Inválida ou Não Reconhecida</strong><br>' +
+      badge.innerHTML = closeBtnHtml +
+        '<strong>' + (window.OlymposIcons ? window.OlymposIcons.ui('alertTriangle') : '') + ' Assinatura Inválida ou Não Reconhecida</strong><br>' +
         'O token fornecido não pôde ser autenticado pela chave pública institucional da SMEB Ceará-Mirim/RN.';
+    }
+
+    const closeBtn = document.getElementById('liraCryptoValidationCloseBtn');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', function() {
+        badge.remove();
+      });
     }
   }
 
@@ -184,6 +226,42 @@ window.OlymposViews.certificados = (function() {
     if (btnRecarregar && !btnRecarregar._bound) {
       btnRecarregar._bound = true;
       btnRecarregar.addEventListener('click', carregarParticipantesAba);
+    }
+
+    const selSort = document.getElementById('liraSortParticipantesSelect');
+    if (selSort && !selSort._bound) {
+      selSort._bound = true;
+      selSort.addEventListener('change', function() {
+        sortModeParticipantes = selSort.value || 'linha_asc';
+        paginaParticipantes = 1;
+        renderizarPaginaParticipantes();
+      });
+    }
+
+    const tblLira = document.getElementById('liraTabelaParticipantes');
+    if (tblLira && !tblLira._sortBound) {
+      tblLira._sortBound = true;
+      tblLira.querySelectorAll('th[data-lira-sort]').forEach(function(th) {
+        const toggleLira = function() {
+          const col = th.getAttribute('data-lira-sort') || 'linha';
+          const defDir = (col === 'nota' || col === 'carga') ? 'desc' : 'asc';
+          if (sortModeParticipantes === col + '_asc') sortModeParticipantes = col + '_desc';
+          else if (sortModeParticipantes === col + '_desc') sortModeParticipantes = col + '_asc';
+          else sortModeParticipantes = col + '_' + defDir;
+          if (selSort && Array.from(selSort.options).some(function(o) { return o.value === sortModeParticipantes; })) {
+            selSort.value = sortModeParticipantes;
+          }
+          paginaParticipantes = 1;
+          renderizarPaginaParticipantes();
+        };
+        th.addEventListener('click', toggleLira);
+        th.addEventListener('keydown', function(ev) {
+          if (ev.key === 'Enter' || ev.key === ' ') {
+            ev.preventDefault();
+            toggleLira();
+          }
+        });
+      });
     }
   }
 
@@ -292,13 +370,60 @@ window.OlymposViews.certificados = (function() {
     });
   }
 
+  function ordenarParticipantesLista(lista) {
+    const modo = String(sortModeParticipantes || 'linha_asc');
+    const cmp = function(a, b) {
+      return String(a || '').localeCompare(String(b || ''), 'pt-BR', { numeric: true, sensitivity: 'base' });
+    };
+    const parseNum = function(v) {
+      const m = String(v || '').replace(',', '.').match(/\d+(?:\.\d+)?/);
+      return m ? Number(m[0]) : -1;
+    };
+    const copia = (lista || []).slice();
+    copia.sort(function(a, b) {
+      if (modo === 'linha_desc') return (Number(b.linha || 0) - Number(a.linha || 0));
+      if (modo === 'nome_asc') return cmp(a.nome, b.nome);
+      if (modo === 'nome_desc') return cmp(b.nome, a.nome);
+      if (modo === 'email_asc') return cmp(a.email, b.email);
+      if (modo === 'email_desc') return cmp(b.email, a.email);
+      if (modo === 'nota_desc') return (parseNum(b.nota) - parseNum(a.nota)) || cmp(a.nome, b.nome);
+      if (modo === 'nota_asc') return (parseNum(a.nota) - parseNum(b.nota)) || cmp(a.nome, b.nome);
+      if (modo === 'carga_desc') return (parseNum(b.cargaHoraria || currentMetadata.period) - parseNum(a.cargaHoraria || currentMetadata.period)) || cmp(a.nome, b.nome);
+      if (modo === 'carga_asc') return (parseNum(a.cargaHoraria || currentMetadata.period) - parseNum(b.cargaHoraria || currentMetadata.period)) || cmp(a.nome, b.nome);
+      if (modo === 'status_asc') return cmp(a.emailStatus || 'Não enviado', b.emailStatus || 'Não enviado') || cmp(a.nome, b.nome);
+      if (modo === 'status_desc') return cmp(b.emailStatus || 'Não enviado', a.emailStatus || 'Não enviado') || cmp(a.nome, b.nome);
+      return (Number(a.linha || 0) - Number(b.linha || 0));
+    });
+    return copia;
+  }
+
+  function atualizarIndicadoresSortParticipantes() {
+    const tbl = document.getElementById('liraTabelaParticipantes');
+    if (!tbl) return;
+    const parts = String(sortModeParticipantes || 'linha_asc').split('_');
+    const colAtiva = parts[0];
+    const dirAtiva = parts[1] === 'desc' ? 'descending' : 'ascending';
+    tbl.querySelectorAll('th[data-lira-sort]').forEach(function(th) {
+      const c = th.getAttribute('data-lira-sort');
+      const ind = th.querySelector('.th-sort-indicator');
+      if (c === colAtiva) {
+        th.setAttribute('aria-sort', dirAtiva);
+        if (ind) ind.textContent = dirAtiva === 'ascending' ? '▲' : '▼';
+      } else {
+        th.setAttribute('aria-sort', 'none');
+        if (ind) ind.textContent = '↕';
+      }
+    });
+  }
+
   function renderizarPaginaParticipantes() {
     const tbody = document.getElementById('liraTabelaParticipantesBody');
     const contagem = document.getElementById('liraParticipantesContagem');
     const pagBar = document.getElementById('certificadosPaginacaoBar');
     if (!tbody) return;
 
-    const lista = currentParticipants || [];
+    const lista = ordenarParticipantesLista(currentParticipants || []);
+    atualizarIndicadoresSortParticipantes();
     if (lista.length === 0) {
       if (contagem) {
         contagem.textContent = '0 participante(s) cadastrado(s)' + (currentMetadata.eventName ? ' • Evento: ' + currentMetadata.eventName : '');
@@ -336,13 +461,13 @@ window.OlymposViews.certificados = (function() {
       }
 
       html += '<tr>' +
-        '<td style="font-family:monospace; font-size:11.5px; color:var(--text-muted);">' + (p.linha || '--') + '</td>' +
-        '<td><strong>' + escape(p.nome) + '</strong></td>' +
-        '<td style="font-size:12px;">' + escape(p.email) + '</td>' +
-        '<td style="font-size:12px; text-align:center;">' + (p.nota ? escape(p.nota) : '<span class="text-muted">--</span>') + '</td>' +
-        '<td style="font-size:12px; text-align:center;">' + (p.cargaHoraria ? escape(p.cargaHoraria) : '<span class="text-muted">' + (currentMetadata.period || '--') + '</span>') + '</td>' +
-        '<td>' + pdfCell + '</td>' +
-        '<td>' + statusCell + '</td>' +
+        '<td data-label="Linha" style="font-family:monospace; font-size:11.5px; color:var(--text-muted);">' + (p.linha || '--') + '</td>' +
+        '<td data-label="Nome Completo"><strong>' + escape(p.nome) + '</strong></td>' +
+        '<td data-label="E-mail" style="font-size:12px;">' + escape(p.email) + '</td>' +
+        '<td data-label="Nota" style="font-size:12px; text-align:center;">' + (p.nota ? escape(p.nota) : '<span class="text-muted">--</span>') + '</td>' +
+        '<td data-label="Carga Horária" style="font-size:12px; text-align:center;">' + (p.cargaHoraria ? escape(p.cargaHoraria) : '<span class="text-muted">' + (currentMetadata.period || '--') + '</span>') + '</td>' +
+        '<td data-label="Certificado (PDF)">' + pdfCell + '</td>' +
+        '<td data-label="Status Envio">' + statusCell + '</td>' +
       '</tr>';
     });
 

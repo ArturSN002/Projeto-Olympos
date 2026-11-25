@@ -27,7 +27,7 @@ window.OlymposViews.oficios = (function() {
       codigo: 'GABINETE',
       nome: 'Gabinete da Secretaria',
       siglaOficio: 'GS',
-      pisoOficio2026: 155
+      pisoOficio2026: null
     };
     const itemNum = numeracaoSetoresCache.find(function(n) { return n.setor_codigo === setorCod; });
     const badgeEl = document.getElementById('oficioSerieBadge');
@@ -42,33 +42,70 @@ window.OlymposViews.oficios = (function() {
       pastaEl.textContent = setorCod === 'GABINETE' ? 'Ofícios 2026 (Raiz GS)' : ('Ofícios 2026 - ' + info.siglaOficio);
     }
 
-    let proxLiveVal = itemNum && itemNum.proximo_numero ? Number(itemNum.proximo_numero) : null;
-    if (!proxLiveVal && setorCod === 'GABINETE') {
-      const kpiElem = document.getElementById('kpiProximoOficio');
-      const txtKpi = kpiElem && kpiElem.textContent ? String(kpiElem.textContent) : '';
-      const m = txtKpi && txtKpi.indexOf('--') === -1 ? txtKpi.match(/\d+/) : null;
-      if (m) proxLiveVal = Number(m[0]);
+    let proxLiveVal = null;
+    if (setorCod === 'GABINETE') {
+      // Gabinete segue exclusivamente a Memória de Apolo (sem seed estático 155)
+      const apoloCache = (typeof window !== 'undefined' && window.OlymposApoloCache) ? window.OlymposApoloCache : null;
+      if (apoloCache && apoloCache.fonteApoloDisponivel !== false && Number(apoloCache.proximoOficio2026) > 0) {
+        proxLiveVal = Number(apoloCache.proximoOficio2026);
+      } else {
+        const kpiElem = document.getElementById('kpiProximoOficio');
+        const txtKpi = kpiElem && kpiElem.textContent ? String(kpiElem.textContent) : '';
+        const m = txtKpi && txtKpi.indexOf('--') === -1 ? txtKpi.match(/\d+/) : null;
+        if (m) proxLiveVal = Number(m[0]);
+      }
+    } else {
+      proxLiveVal = itemNum && itemNum.proximo_numero ? Number(itemNum.proximo_numero) : null;
     }
 
     if (proxEl) {
-      proxEl.textContent = proxLiveVal
-        ? (String(proxLiveVal).padStart(3, '0') + '/2026')
-        : ('-- (Piso ' + String(info.pisoOficio2026 || 1).padStart(3, '0') + '/2026)');
+      if (proxLiveVal) {
+        proxEl.textContent = String(proxLiveVal).padStart(3, '0') + '/2026';
+      } else if (setorCod === 'GABINETE') {
+        proxEl.textContent = '-- (Memória de Apolo)';
+      } else {
+        proxEl.textContent = '-- (Piso ' + String(info.pisoOficio2026 || 1).padStart(3, '0') + '/2026)';
+      }
     }
     const userEdited = Boolean(inputNum && inputNum.dataset && inputNum.dataset.userEdited);
-    if (inputNum && !userEdited && proxLiveVal) {
-      inputNum.value = String(proxLiveVal);
+    if (inputNum && !userEdited) {
+      if (proxLiveVal) {
+        inputNum.value = String(proxLiveVal);
+      } else if (setorCod === 'GABINETE') {
+        inputNum.value = '';
+        inputNum.placeholder = '--';
+      }
     }
   }
 
   async function carregarNumeracaoSetorialOficios() {
-    if (window.OlymposSupabase && typeof window.OlymposSupabase.listarNumeracaoVisivel === 'function') {
+    const setorCod = getSetorAlvoOficio();
+    if (setorCod !== 'GABINETE' && window.OlymposSupabase && typeof window.OlymposSupabase.listarNumeracaoVisivel === 'function') {
       try {
         const res = await window.OlymposSupabase.listarNumeracaoVisivel(2026);
         if (res && res.ok && Array.isArray(res.oficios)) {
           numeracaoSetoresCache = res.oficios;
         }
       } catch (_eNum) {}
+    } else if (setorCod === 'GABINETE') {
+      const hasApoloCache = Boolean(
+        typeof window !== 'undefined' &&
+        window.OlymposApoloCache &&
+        window.OlymposApoloCache.fonteApoloDisponivel !== false &&
+        Number(window.OlymposApoloCache.proximoOficio2026) > 0
+      );
+      if (!hasApoloCache && window.OlymposSupabase && typeof window.OlymposSupabase.carregarNumeracaoGabinete === 'function') {
+        try {
+          const cab = await window.OlymposSupabase.carregarNumeracaoGabinete();
+          if (cab && Number(cab.proximoOficio2026) > 0) {
+            window.OlymposApoloCache = cab;
+          }
+        } catch (_eCab) {}
+      }
+      if ((!window.OlymposApoloCache || !window.OlymposApoloCache.proximoOficio2026) &&
+          window.OlymposViews && window.OlymposViews.visaoGeral && typeof window.OlymposViews.visaoGeral.recarregar === 'function') {
+        window.OlymposViews.visaoGeral.recarregar();
+      }
     }
     atualizarBannerSerieSetorial();
   }
@@ -121,6 +158,13 @@ window.OlymposViews.oficios = (function() {
         const iframe = document.getElementById('oficioDocsEmbedIframe');
         if (wrap) wrap.classList.add('hidden');
         if (iframe) iframe.setAttribute('src', 'about:blank');
+      });
+    }
+
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function' && !window._olymposOficiosApoloBound) {
+      window._olymposOficiosApoloBound = true;
+      window.addEventListener('olympos:apolo-numeracao-atualizada', function() {
+        atualizarBannerSerieSetorial();
       });
     }
   }

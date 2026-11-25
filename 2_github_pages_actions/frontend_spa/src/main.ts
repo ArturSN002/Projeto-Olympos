@@ -27,6 +27,7 @@ import { initShortcuts } from './core/shortcuts';
 import { initNotifications } from './core/notifications';
 import { initChatBadge } from './core/chatBadge';
 import { bindNavPrefetch } from './core/routeLoader';
+import { initTableStandard } from './core/tableStandard';
 
 // 3. Controlador central e roteador (carregam módulos de página sob demanda)
 import '../js/router.js';
@@ -37,6 +38,7 @@ initShortcuts();
 initNotifications();
 initChatBadge();
 bindNavPrefetch();
+initTableStandard();
 
 // Ponte lazy para Tour Guiado de Onboarding (mantém driver.js fora do entry bundle)
 if (typeof window !== 'undefined' && !window.OlymposOnboarding) {

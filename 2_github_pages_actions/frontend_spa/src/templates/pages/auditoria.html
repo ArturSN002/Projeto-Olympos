@@ -72,14 +72,14 @@
                   </div>
                 </div>
 
-                <div class="table-wrapper">
-                  <table class="clean-table table-responsive-cards" id="tabelaAuditoriaLogs">
+                <div class="table-wrapper table-responsive">
+                  <table class="clean-table table-responsive-cards" id="tabelaAuditoriaLogs" data-custom-sort="true">
                     <thead>
                       <tr>
-                        <th>Data/Hora (UTC)</th>
-                        <th>Ação</th>
-                        <th>Tabela / Recurso</th>
-                        <th>Ator / Papel</th>
+                        <th class="th-sortable" data-audit-sort="timestamp" role="button" tabindex="0" aria-sort="descending">Data/Hora (UTC) <span class="th-sort-indicator" aria-hidden="true">▼</span></th>
+                        <th class="th-sortable" data-audit-sort="action" role="button" tabindex="0" aria-sort="none">Ação <span class="th-sort-indicator" aria-hidden="true">↕</span></th>
+                        <th class="th-sortable" data-audit-sort="table_name" role="button" tabindex="0" aria-sort="none">Tabela / Recurso <span class="th-sort-indicator" aria-hidden="true">↕</span></th>
+                        <th class="th-sortable" data-audit-sort="role_at_action" role="button" tabindex="0" aria-sort="none">Ator / Papel <span class="th-sort-indicator" aria-hidden="true">↕</span></th>
                         <th>Detalhes (Diff JSON)</th>
                       </tr>
                     </thead>

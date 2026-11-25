@@ -9,13 +9,13 @@ window.OlymposRouter = (function() {
     'visao-geral': {
       eyebrow: 'GOVERNANÇA EXECUTIVA • SMEB 2026',
       title: 'Inteligência documental e governança pública.',
-      subtitle: 'Painel central da Secretaria Municipal de Educação Básica de Ceará-Mirim: numeração sequencial oficial, atalhos operacionais e constelação das 17 personas Olympos.',
+      subtitle: 'Painel central da Secretaria Municipal de Educação Básica de Ceará-Mirim: numeração sequencial oficial, atalhos operacionais e constelação das 22 memórias operacionais Olympos.',
       category: 'gabinete'
     },
     'oficios': {
       eyebrow: 'REDAÇÃO OFICIAL • PADRÃO PR/2018',
-      title: 'Emissão de Ofícios do Gabinete.',
-      subtitle: 'Geração imediata de expedientes oficiais formatados no Google Docs com numeração sequencial automática.',
+      title: 'Emissão de Ofícios Institucionais.',
+      subtitle: 'Geração imediata de expedientes oficiais formatados no Google Docs com numeração sequencial por setor ou Gabinete.',
       category: 'atos'
     },
     'portarias': {
@@ -45,7 +45,7 @@ window.OlymposRouter = (function() {
     'diario-oficial': {
       eyebrow: 'PUBLICAÇÕES OFICIAIS • MONITORAMENTO DIÁRIO',
       title: 'Vigilância do Diário Oficial FEMURN.',
-      subtitle: 'Acompanhamento diário dos atos da FEMURN e do Diário Oficial de interesse da educação municipal.',
+      subtitle: 'Acompanhamento diário dos atos da FEMURN, Diário Oficial de Ceará-Mirim e triagem inteligente com Gemma / Gemini.',
       category: 'inteligencia'
     },
     'papiro-cadmo': {
@@ -57,7 +57,7 @@ window.OlymposRouter = (function() {
     'servidores': {
       eyebrow: 'QUADRO FUNCIONAL UNIFICADO • RN & MUNICÍPIOS',
       title: 'Consulta Integrada de Servidores Públicos.',
-      subtitle: 'Pesquisa cadastral, dossiê funcional detalhado, lotação e auditoria de vínculos de Ceará-Mirim, Natal, Parnamirim, São Gonçalo do Amarante e Governo do RN (SEEC).',
+      subtitle: 'Pesquisa cadastral, dossiê funcional detalhado, lotação e auditoria de vínculos em 16 entes públicos monitorados no RN (Ceará-Mirim, Natal, SEEC/RN e parceiros).',
       category: 'gestao'
     },
     'escolas': {
@@ -85,7 +85,7 @@ window.OlymposRouter = (function() {
       category: 'inteligencia'
     },
     'oraculo': {
-      eyebrow: 'ORÁCULO VETORIAL • GEMINI EMBEDDING 2 ($0)',
+      eyebrow: 'ORÁCULO VETORIAL • GEMINI EMBEDDING 2 (ZERO CUSTO)',
       title: 'Oráculo Semântico & Citação Oficial.',
       subtitle: 'Pesquisa em linguagem natural nas normas, atos FEMURN, portarias, ofícios e memórias autorizadas com zero alucinação.',
       category: 'inteligencia'
@@ -138,22 +138,40 @@ window.OlymposRouter = (function() {
   let suppressNextHashChange = false;
   let navSequence = 0;
 
+  function extrairRotaEQueryHash(rawHash) {
+    const clean = String(rawHash || '').replace(/^#/, '').trim();
+    const qIdx = clean.indexOf('?');
+    if (qIdx >= 0) {
+      return {
+        route: clean.slice(0, qIdx).trim() || 'visao-geral',
+        query: clean.slice(qIdx)
+      };
+    }
+    return {
+      route: clean || 'visao-geral',
+      query: ''
+    };
+  }
+
   function init() {
     window.addEventListener('hashchange', function() {
       if (suppressNextHashChange) {
         suppressNextHashChange = false;
         return;
       }
-      const hash = window.location.hash.replace('#', '').trim();
-      navegarPara(hash || 'visao-geral', true);
+      const parsed = extrairRotaEQueryHash(window.location.hash);
+      navegarPara(parsed.route, true, parsed.query);
     });
 
-    const initialHash = window.location.hash.replace('#', '').trim();
-    navegarPara(initialHash || 'visao-geral', true);
+    const parsedInit = extrairRotaEQueryHash(window.location.hash);
+    navegarPara(parsedInit.route, true, parsedInit.query);
   }
 
-  function navegarPara(pageId, replaceState) {
+  function navegarPara(pageId, replaceState, hashQueryOpt) {
     let targetSubtab = null;
+    const parsedArg = extrairRotaEQueryHash(pageId);
+    pageId = parsedArg.route;
+    const preservedQuery = (hashQueryOpt !== undefined ? hashQueryOpt : parsedArg.query) || '';
     if (pageId === 'pendencias') {
       pageId = 'chamados';
     }
@@ -219,12 +237,13 @@ window.OlymposRouter = (function() {
     if (document.body) {
       document.body.setAttribute('data-active-page', pageId);
     }
-    if (window.location.hash !== '#' + pageId) {
+    const nextHash = '#' + pageId + (pageId === 'certificados' ? preservedQuery : '');
+    if (window.location.hash !== nextHash) {
       if (replaceState) {
-        window.history.replaceState(null, '', '#' + pageId);
+        window.history.replaceState(null, '', nextHash);
       } else {
         suppressNextHashChange = true;
-        window.location.hash = '#' + pageId;
+        window.location.hash = nextHash;
       }
     }
 

@@ -158,19 +158,31 @@
                     <option value="Rural" data-filtro-zona="Rural">Zona Rural</option>
                   </select>
                 </div>
+
+                <div class="filter-select-field">
+                  <label for="escolaSortSelect" class="filter-select-label"><span class="svg-icon-inline" data-icon="arrowUpDown"></span> Ordenação</label>
+                  <select id="escolaSortSelect" class="input-clean filter-select-modern" title="Ordenar unidades escolares">
+                    <option value="nome_asc" selected>Unidade Escolar (A → Z)</option>
+                    <option value="nome_desc">Unidade Escolar (Z → A)</option>
+                    <option value="rede_asc">Rede de Ensino (A → Z)</option>
+                    <option value="zona_asc">Zona (Urbana / Rural)</option>
+                    <option value="bairro_asc">Bairro / Distrito (A → Z)</option>
+                    <option value="diretor_asc">Gestor(a) / Diretor(a) (A → Z)</option>
+                  </select>
+                </div>
               </div>
             </div>
 
             <!-- TABELA DE UNIDADES ESCOLARES -->
-            <div class="table-wrapper">
-              <table class="clean-table table-responsive-cards" id="tabelaEscolas">
+            <div class="table-wrapper table-responsive">
+              <table class="clean-table table-responsive-cards" id="tabelaEscolas" data-custom-sort="true">
                 <thead>
                   <tr>
-                    <th>Unidade Escolar</th>
-                    <th style="width: 110px;">Rede</th>
-                    <th style="width: 200px;">Segmentos Atendidos</th>
-                    <th style="width: 90px;">Zona</th>
-                    <th style="width: 140px;">Bairro / Distrito</th>
+                    <th class="th-sortable" data-escola-sort="nome" role="button" tabindex="0" aria-sort="ascending">Unidade Escolar <span class="th-sort-indicator" aria-hidden="true">▲</span></th>
+                    <th class="th-sortable" data-escola-sort="rede" role="button" tabindex="0" aria-sort="none" style="width: 110px;">Rede <span class="th-sort-indicator" aria-hidden="true">↕</span></th>
+                    <th class="th-sortable" data-escola-sort="segmentos" role="button" tabindex="0" aria-sort="none" style="width: 200px;">Segmentos Atendidos <span class="th-sort-indicator" aria-hidden="true">↕</span></th>
+                    <th class="th-sortable" data-escola-sort="zona" role="button" tabindex="0" aria-sort="none" style="width: 90px;">Zona <span class="th-sort-indicator" aria-hidden="true">↕</span></th>
+                    <th class="th-sortable" data-escola-sort="bairro" role="button" tabindex="0" aria-sort="none" style="width: 140px;">Bairro / Distrito <span class="th-sort-indicator" aria-hidden="true">↕</span></th>
                     <th style="width: 160px;">Coordenadas</th>
                     <th class="text-right" style="width: 150px;">Ações</th>
                   </tr>

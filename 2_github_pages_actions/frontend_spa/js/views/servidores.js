@@ -15,6 +15,7 @@ window.OlymposViews.servidores = (function() {
   var filtroCargo = 'todos';
   var filtroRegime = 'todos';
   var filtroVinculos = 'todos';
+  var ordenacaoAtiva = 'nome_asc';
   var paginaAtual = 1;
   var itensPorPagina = 20;
   var debounceTimer = null;
@@ -68,6 +69,13 @@ window.OlymposViews.servidores = (function() {
       .trim();
   }
 
+  function normalizarChavePessoa(nome) {
+    return normalizarTexto(nome)
+      .replace(/[^\w\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
   function normalizarMatricula(mat) {
     return String(mat || '').replace(/[^0-9a-zA-Z]/g, '').toLowerCase().replace(/^0+/, '');
   }
@@ -102,7 +110,7 @@ window.OlymposViews.servidores = (function() {
     var ordemNomes = [];
 
     rawServidores.forEach(function(s) {
-      var nomeNorm = normalizarTexto(s.nome || s.n);
+      var nomeNorm = normalizarChavePessoa(s.nome || s.n);
       if (!nomeNorm) return;
 
       var mesRefItem = String(s.mesReferencia || s.r || 'N/I').trim();
@@ -365,8 +373,9 @@ window.OlymposViews.servidores = (function() {
       // 5. Filtro Vínculos / CF/88
       if (filtroVinculos !== 'todos') {
         if (filtroVinculos === 'unico' && d.vinculos.length !== 1) return false;
+        if (filtroVinculos === 'multiplos' && d.vinculos.length <= 1) return false;
         if (filtroVinculos === 'duplo' && (d.vinculos.length !== 2 || !d.auditoria.licito)) return false;
-        if (filtroVinculos === 'alerta' && (d.auditoria.licito && d.vinculos.length <= 1)) return false;
+        if (filtroVinculos === 'alerta' && d.auditoria.licito) return false;
       }
 
       return true;
@@ -440,16 +449,18 @@ window.OlymposViews.servidores = (function() {
 
     if (!kpiTotalEl) return;
 
-    var totalPessoas = todosDossies.length;
     var totalVinculos = 0;
     var municipaisCount = 0;
     var estaduaisCount = 0;
-    var multiplosCount = 0;
+    var pessoasMultiplosSet = new Set();
+    var totalVinculosEmMultiplos = 0;
 
     todosDossies.forEach(function(d) {
       totalVinculos += d.vinculos.length;
       if (d.vinculos.length > 1) {
-        multiplosCount++;
+        var chavePessoa = normalizarChavePessoa(d.nome);
+        if (chavePessoa) pessoasMultiplosSet.add(chavePessoa);
+        totalVinculosEmMultiplos += d.vinculos.length;
       }
       d.vinculos.forEach(function(v) {
         var e = normalizarTexto(v.enteId || v.ente);
@@ -462,12 +473,20 @@ window.OlymposViews.servidores = (function() {
       });
     });
 
+    var multiplosPessoasUnicas = pessoasMultiplosSet.size;
+
     // Atualiza os contadores exclusivamente a partir dos dados verdadeiros carregados
     if (totalVinculos >= 40000 || kpiTotalEl.textContent === '--') {
       kpiTotalEl.textContent = totalVinculos.toLocaleString('pt-BR');
       if (kpiMunEl) kpiMunEl.textContent = municipaisCount.toLocaleString('pt-BR');
       if (kpiEstEl) kpiEstEl.textContent = estaduaisCount.toLocaleString('pt-BR');
-      if (kpiMultEl) kpiMultEl.textContent = multiplosCount.toLocaleString('pt-BR');
+      if (kpiMultEl) {
+        kpiMultEl.textContent = multiplosPessoasUnicas.toLocaleString('pt-BR');
+        kpiMultEl.title = multiplosPessoasUnicas.toLocaleString('pt-BR') +
+          ' servidores únicos com 2 ou mais vínculos (' +
+          totalVinculosEmMultiplos.toLocaleString('pt-BR') +
+          ' vínculos acumulados; contagem = 1 por pessoa)';
+      }
     }
   }
 
@@ -556,6 +575,50 @@ window.OlymposViews.servidores = (function() {
     if (paginaAtual < 1) paginaAtual = 1;
   }
 
+  function ordenarDossies(lista, criterio) {
+    var modo = String(criterio || 'nome_asc');
+    var copia = lista.slice();
+    var cmp = function(a, b) {
+      return String(a || '').localeCompare(String(b || ''), 'pt-BR', { numeric: true, sensitivity: 'base' });
+    };
+    copia.sort(function(a, b) {
+      if (modo === 'nome_desc') return cmp(b.nome, a.nome);
+      if (modo === 'cargo_asc') return cmp(a.cargos[0] || '', b.cargos[0] || '') || cmp(a.nome, b.nome);
+      if (modo === 'cargo_desc') return cmp(b.cargos[0] || '', a.cargos[0] || '') || cmp(a.nome, b.nome);
+      if (modo === 'ente_asc') return cmp(a.entes.join('; '), b.entes.join('; ')) || cmp(a.nome, b.nome);
+      if (modo === 'ente_desc') return cmp(b.entes.join('; '), a.entes.join('; ')) || cmp(a.nome, b.nome);
+      if (modo === 'lotacao_asc') return cmp(a.lotacoes[0] || '', b.lotacoes[0] || '') || cmp(a.nome, b.nome);
+      if (modo === 'lotacao_desc') return cmp(b.lotacoes[0] || '', a.lotacoes[0] || '') || cmp(a.nome, b.nome);
+      if (modo === 'matricula_asc') return cmp(a.matriculas.join(','), b.matriculas.join(',')) || cmp(a.nome, b.nome);
+      if (modo === 'matricula_desc') return cmp(b.matriculas.join(','), a.matriculas.join(',')) || cmp(a.nome, b.nome);
+      if (modo === 'referencia_desc') return cmp(b.mesReferencia || '', a.mesReferencia || '') || cmp(a.nome, b.nome);
+      if (modo === 'referencia_asc') return cmp(a.mesReferencia || '', b.mesReferencia || '') || cmp(a.nome, b.nome);
+      if (modo === 'vinculos_desc') return (b.vinculos.length - a.vinculos.length) || (b.cargaHorariaTotal - a.cargaHorariaTotal) || cmp(a.nome, b.nome);
+      if (modo === 'vinculos_asc') return (a.vinculos.length - b.vinculos.length) || (a.cargaHorariaTotal - b.cargaHorariaTotal) || cmp(a.nome, b.nome);
+      return cmp(a.nome, b.nome);
+    });
+    return copia;
+  }
+
+  function atualizarIndicadoresOrdenacaoServidores() {
+    var tbl = document.getElementById('tabelaServidoresGeral');
+    if (!tbl) return;
+    var parts = String(ordenacaoAtiva || 'nome_asc').split('_');
+    var activeCol = parts[0];
+    var activeDir = parts[1] === 'desc' ? 'descending' : 'ascending';
+    tbl.querySelectorAll('th[data-sort-col]').forEach(function(th) {
+      var col = th.getAttribute('data-sort-col');
+      var ind = th.querySelector('.th-sort-indicator');
+      if (col === activeCol) {
+        th.setAttribute('aria-sort', activeDir);
+        if (ind) ind.textContent = activeDir === 'ascending' ? '▲' : '▼';
+      } else {
+        th.setAttribute('aria-sort', 'none');
+        if (ind) ind.textContent = '↕';
+      }
+    });
+  }
+
   /**
    * Recalcula a busca completa, filtros e re-renderiza
    */
@@ -563,7 +626,8 @@ window.OlymposViews.servidores = (function() {
     var todos = carregarTodosDossies();
     atualizarKpis(todos);
 
-    listaFiltradaCache = filtrarDossies(todos);
+    listaFiltradaCache = ordenarDossies(filtrarDossies(todos), ordenacaoAtiva);
+    atualizarIndicadoresOrdenacaoServidores();
     paginaAtual = 1;
     atualizarViewComCache();
   }
@@ -994,6 +1058,41 @@ window.OlymposViews.servidores = (function() {
       selVinculos.addEventListener('change', function() {
         filtroVinculos = selVinculos.value || 'todos';
         atualizarConsultaCompleta();
+      });
+    }
+
+    var selOrdem = document.getElementById('filtroOrdemServidoresSelect');
+    if (selOrdem && !selOrdem._bound) {
+      selOrdem._bound = true;
+      selOrdem.addEventListener('change', function() {
+        ordenacaoAtiva = selOrdem.value || 'nome_asc';
+        atualizarConsultaCompleta();
+      });
+    }
+
+    var tblServ = document.getElementById('tabelaServidoresGeral');
+    if (tblServ && !tblServ._sortBound) {
+      tblServ._sortBound = true;
+      tblServ.querySelectorAll('th[data-sort-col]').forEach(function(th) {
+        var toggleCol = function() {
+          var col = th.getAttribute('data-sort-col') || 'nome';
+          var cur = String(ordenacaoAtiva || 'nome_asc');
+          var defaultDir = (col === 'vinculos' || col === 'referencia') ? 'desc' : 'asc';
+          if (cur === col + '_asc') ordenacaoAtiva = col + '_desc';
+          else if (cur === col + '_desc') ordenacaoAtiva = col + '_asc';
+          else ordenacaoAtiva = col + '_' + defaultDir;
+          if (selOrdem && Array.from(selOrdem.options).some(function(o) { return o.value === ordenacaoAtiva; })) {
+            selOrdem.value = ordenacaoAtiva;
+          }
+          atualizarConsultaCompleta();
+        };
+        th.addEventListener('click', toggleCol);
+        th.addEventListener('keydown', function(ev) {
+          if (ev.key === 'Enter' || ev.key === ' ') {
+            ev.preventDefault();
+            toggleCol();
+          }
+        });
       });
     }
 

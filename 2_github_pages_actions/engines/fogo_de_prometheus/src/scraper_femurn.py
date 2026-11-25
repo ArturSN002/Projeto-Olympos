@@ -1090,33 +1090,75 @@ def executar_ciclo_pesquisa(
     return publicacoes_coletadas
 
 
+def _assinar_payload_webhook_gas(payload_base: dict, token: str, action: str = "fogo_prometheus") -> dict:
+    """Adiciona metadados HMAC anti-replay compatíveis com 01_router_main.gs ao payload do webhook."""
+    import hashlib
+    import hmac
+    import uuid
+
+    clean_token = str(token or "").strip()
+    assinado = dict(payload_base)
+    assinado["action"] = action
+    assinado["token"] = clean_token
+    assinado.setdefault("dados", {})
+    if clean_token:
+        ts = str(int(time.time() * 1000))
+        nonce = str(uuid.uuid4())
+        canonical = f"{action}:{ts}:{nonce}:{{}}"
+        sig = hmac.new(clean_token.encode("utf-8"), canonical.encode("utf-8"), hashlib.sha256).hexdigest()
+        assinado.update(
+            {
+                "gateway_proxy": True,
+                "gateway_timestamp": int(ts),
+                "gateway_nonce": nonce,
+                "gateway_signature": sig,
+                "gateway_user_id": "cron-prometheus",
+                "gateway_user_role": "MODERADOR",
+            }
+        )
+    return assinado
+
+
 def enviar_lotes_webhook(webhook_url, token, dt_ini, lista_final):
     """Envia as publicações em lotes (chunks) com retry para evitar estouro de payload/timeout no GAS."""
     if not lista_final:
-        payload_vazio = {
-            "token": token,
-            "modulo": "fogo_prometheus",
-            "data_referencia": dt_ini,
-            "total_publicacoes": 0,
-            "publicacoes": []
-        }
+        payload_vazio = _assinar_payload_webhook_gas(
+            {
+                "modulo": "fogo_prometheus",
+                "data_referencia": dt_ini,
+                "total_publicacoes": 0,
+                "publicacoes": [],
+            },
+            token,
+        )
         resp = requests.post(webhook_url, json=payload_vazio, timeout=90)
         print(f"[WEBHOOK GAS - Lote Vazio] Status {resp.status_code}: {resp.text}")
         return
 
     for idx in range(0, len(lista_final), MAX_PDFS_POR_LOTE_WEBHOOK):
         fatia = lista_final[idx:idx + MAX_PDFS_POR_LOTE_WEBHOOK]
-        payload = {
-            "token": token,
-            "modulo": "fogo_prometheus",
-            "data_referencia": dt_ini,
-            "total_publicacoes": len(fatia),
-            "publicacoes": fatia
-        }
+        payload = _assinar_payload_webhook_gas(
+            {
+                "modulo": "fogo_prometheus",
+                "data_referencia": dt_ini,
+                "total_publicacoes": len(fatia),
+                "publicacoes": fatia,
+            },
+            token,
+        )
         for tentativa in range(1, 4):
             try:
                 resp = requests.post(webhook_url, json=payload, timeout=90)
                 print(f"[WEBHOOK GAS - Lote {idx // MAX_PDFS_POR_LOTE_WEBHOOK + 1}] Status {resp.status_code}: {resp.text}")
+                try:
+                    data_resp = resp.json()
+                    if isinstance(data_resp, dict) and data_resp.get("ok") is False:
+                        print(
+                            f"[WEBHOOK GAS AVISO] GAS rejeitou lote ({data_resp.get('code') or 'ERR'}): "
+                            f"{data_resp.get('mensagem') or 'verifique OLYMPOS_SECRET_TOKEN entre GitHub e ScriptProperties'}"
+                        )
+                except Exception:
+                    pass
                 break
             except requests.RequestException as err:
                 print(f"[AVISO] Falha na tentativa {tentativa}/3 de envio ao Webhook: {err}")

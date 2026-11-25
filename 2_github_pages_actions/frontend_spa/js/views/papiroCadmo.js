@@ -2946,11 +2946,11 @@ window.OlymposViews.papiroCadmo = (function() {
     paginaDocentes = pag.paginaAtual;
 
     let html = '<div style="margin-bottom: 8px; font-size: 12px; color: var(--text-muted); display:flex; justify-content:space-between; align-items:center;">' +
-      '<span>Exibindo <strong>' + pag.inicio + '–' + pag.fim + '</strong> de <strong>' + docentesFiltrados.length + '</strong> servidores ativos (5 Entes Monitorados)</span>' +
+      '<span>Exibindo <strong>' + pag.inicio + '–' + pag.fim + '</strong> de <strong>' + docentesFiltrados.length + '</strong> servidores ativos (16 Entes Monitorados)</span>' +
       '<span class="pill-badge pill-gold" style="font-size:11px;">Navegação Paginada • ' + ITENS_DOCENTES_POR_PAGINA + ' por página</span>' +
       '</div>';
 
-    html += '<div class="table-responsive" style="max-height: 480px; overflow-y: auto;">' +
+    html += '<div class="table-wrapper table-responsive" style="max-height: 480px; overflow-y: auto;">' +
       '<table class="clean-table table-responsive-cards" style="width:100%; font-size:12.5px;">' +
         '<thead>' +
           '<tr>' +
@@ -3386,7 +3386,7 @@ window.OlymposViews.papiroCadmo = (function() {
       '<span class="pill-badge pill-gold" style="font-size:11px;">Termos de Cooperação Intermunicipais</span>' +
       '</div>';
 
-    html += '<div class="table-responsive" style="max-height: 480px; overflow-y: auto;">' +
+    html += '<div class="table-wrapper table-responsive" style="max-height: 480px; overflow-y: auto;">' +
       '<table class="clean-table table-responsive-cards" style="width:100%; font-size:12px;">' +
         '<thead>' +
           '<tr>' +

@@ -54,7 +54,16 @@
                   <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700;">Participantes da Aba</h3>
                   <span id="liraParticipantesContagem" style="font-size: 12.5px; color: var(--text-muted);">Nenhuma aba carregada</span>
                 </div>
-                <div class="button-group" style="display: flex; gap: 8px;">
+                <div class="button-group" style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                  <select id="liraSortParticipantesSelect" class="input-clean" style="min-width: 185px; font-size: 12.5px; padding: 6px 10px;" aria-label="Ordenar participantes">
+                    <option value="linha_asc" selected>Ordem da Planilha</option>
+                    <option value="nome_asc">Nome (A → Z)</option>
+                    <option value="nome_desc">Nome (Z → A)</option>
+                    <option value="email_asc">E-mail (A → Z)</option>
+                    <option value="nota_desc">Maior Nota</option>
+                    <option value="carga_desc">Maior Carga Horária</option>
+                    <option value="status_asc">Status de Envio</option>
+                  </select>
                   <button type="button" id="liraColarLoteBtn" class="btn btn-secondary btn-sm"><span class="svg-icon-inline" data-icon="clipboard"></span> Colar em Lote</button>
                   <button type="button" id="liraRecarregarParticipantesBtn" class="btn btn-secondary btn-sm"><span class="svg-icon-inline" data-icon="refresh"></span> Atualizar Lista</button>
                 </div>
@@ -82,17 +91,17 @@
               </form>
 
               <!-- Grade de Participantes -->
-              <div class="table-wrapper" style="max-height: 440px; overflow-y: auto;">
-                <table class="clean-table" id="liraTabelaParticipantes">
+              <div class="table-wrapper table-responsive" style="max-height: 440px; overflow-y: auto;">
+                <table class="clean-table table-responsive-cards" id="liraTabelaParticipantes" data-custom-sort="true">
                   <thead>
                     <tr>
-                      <th style="width: 50px;">Linha</th>
-                      <th>Nome Completo</th>
-                      <th>E-mail</th>
-                      <th style="width: 90px;">Nota</th>
-                      <th style="width: 110px;">Carga Horária</th>
+                      <th class="th-sortable" data-lira-sort="linha" role="button" tabindex="0" aria-sort="ascending" style="width: 72px;">Linha <span class="th-sort-indicator" aria-hidden="true">▲</span></th>
+                      <th class="th-sortable" data-lira-sort="nome" role="button" tabindex="0" aria-sort="none">Nome Completo <span class="th-sort-indicator" aria-hidden="true">↕</span></th>
+                      <th class="th-sortable" data-lira-sort="email" role="button" tabindex="0" aria-sort="none">E-mail <span class="th-sort-indicator" aria-hidden="true">↕</span></th>
+                      <th class="th-sortable" data-lira-sort="nota" role="button" tabindex="0" aria-sort="none" style="width: 90px;">Nota <span class="th-sort-indicator" aria-hidden="true">↕</span></th>
+                      <th class="th-sortable" data-lira-sort="carga" role="button" tabindex="0" aria-sort="none" style="width: 120px;">Carga Horária <span class="th-sort-indicator" aria-hidden="true">↕</span></th>
                       <th style="width: 150px;">Certificado (PDF)</th>
-                      <th style="width: 130px;">Status Envio</th>
+                      <th class="th-sortable" data-lira-sort="status" role="button" tabindex="0" aria-sort="none" style="width: 130px;">Status Envio <span class="th-sort-indicator" aria-hidden="true">↕</span></th>
                     </tr>
                   </thead>
                   <tbody id="liraTabelaParticipantesBody">

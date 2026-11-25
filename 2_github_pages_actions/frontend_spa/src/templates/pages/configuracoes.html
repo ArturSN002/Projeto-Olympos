@@ -188,7 +188,14 @@
                     <h3 class="section-title" style="font-size: 1.15rem;">Gerenciamento de Usuários e Permissões</h3>
                     <p class="section-desc" style="margin-bottom: 0;">Consulte, cadastre, edite perfis e gerencie operadores autorizados do Hub Olympos.</p>
                   </div>
-                  <div style="display: flex; gap: 8px;">
+                  <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                    <select id="usuariosSortSelect" class="input-clean" style="min-width: 175px; font-size: 12.5px; padding: 6px 10px;" aria-label="Ordenar operadores">
+                      <option value="nome_asc" selected>Operador (A → Z)</option>
+                      <option value="nome_desc">Operador (Z → A)</option>
+                      <option value="role_asc">Perfil de Acesso (A → Z)</option>
+                      <option value="dept_asc">Lotação / Setor (A → Z)</option>
+                      <option value="status_asc">Status (Ativos primeiro)</option>
+                    </select>
                     <button type="button" id="btnRecarregarUsuarios" class="btn btn-secondary btn-sm" style="display: inline-flex; align-items: center; gap: 6px;" onclick="window.OlymposViews.configuracoes.carregarUsuarios()">
                       <span class="svg-icon-inline" data-icon="refreshSync"></span><span>Atualizar Lista</span>
                     </button>
@@ -198,8 +205,8 @@
                   </div>
                 </div>
 
-                <div id="tabelaUsuariosContainer" class="table-wrapper">
-                  <table class="clean-table" id="tabelaUsuarios">
+                <div id="tabelaUsuariosContainer" class="table-wrapper table-responsive">
+                  <table class="clean-table table-responsive-cards" id="tabelaUsuarios" data-custom-sort="true">
                     <thead>
                       <tr>
                         <th>Operador / Nome</th>

@@ -308,13 +308,13 @@ function renderizarTabela(st: AcervoInstanceState): void {
     return '';
   };
 
-  let html = '<table class="clean-table table-responsive-cards" style="font-size: 13px;">';
+  let html = '<table class="clean-table table-responsive-cards" data-custom-sort="true" style="font-size: 13px;">';
   html += '<thead><tr>' +
-    `<th style="width: 104px;"><button type="button" class="acervo-sort-th-btn" data-acervo-sort-col="numero" title="Ordenar por número">Nº / Ano${sortArrow('numero')}</button></th>` +
+    `<th class="th-sortable" style="width: 104px;"><button type="button" class="acervo-sort-th-btn" data-acervo-sort-col="numero" title="Ordenar por número">Nº / Ano${sortArrow('numero')}</button></th>` +
     (showSubcat ? '<th style="width: 150px;">Pasta</th>' : '') +
     (showSetorCol ? '<th style="width: 110px;">Setor</th>' : '') +
-    `<th><button type="button" class="acervo-sort-th-btn" data-acervo-sort-col="nome" title="Ordenar por nome">Documento &amp; Destinatário / Assunto${sortArrow('nome')}</button></th>` +
-    `<th style="width: 118px;"><button type="button" class="acervo-sort-th-btn" data-acervo-sort-col="data" title="Ordenar por data">Data${sortArrow('data')}</button></th>` +
+    `<th class="th-sortable"><button type="button" class="acervo-sort-th-btn" data-acervo-sort-col="nome" title="Ordenar por nome">Documento &amp; Destinatário / Assunto${sortArrow('nome')}</button></th>` +
+    `<th class="th-sortable" style="width: 118px;"><button type="button" class="acervo-sort-th-btn" data-acervo-sort-col="data" title="Ordenar por data">Data${sortArrow('data')}</button></th>` +
     '<th class="text-right" style="width: 245px;">Ações</th>' +
   '</tr></thead><tbody>';
 

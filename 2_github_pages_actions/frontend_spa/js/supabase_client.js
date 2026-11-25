@@ -949,13 +949,19 @@ window.OlymposSupabase = (function() {
           .maybeSingle();
         if (!error && data && data.conteudo && typeof data.conteudo === 'object') {
           const c = data.conteudo;
-          // Ignora registro de seed estático inicial que não veio de sincronização real do Drive (_memoria_apolo.md)
+          // Aceita exclusivamente registro sincronizado da Memória de Apolo (Google Docs _memoria_apolo)
+          const hasValidOf = Number.isInteger(Number(c.proximoOficio2026)) && Number(c.proximoOficio2026) > 0;
+          const hasValidPt = Number.isInteger(Number(c.proximaPortaria2026)) && Number(c.proximaPortaria2026) > 0;
+          const isRealApolo = Boolean(c.sincronizadoDrive) &&
+            c.origem === 'MEMORIA_APOLO' &&
+            c.fonteApoloDisponivel !== false &&
+            (hasValidOf || hasValidPt);
           const isStaticSeed = !c.sincronizadoDrive &&
             c.atualizadoEm === '2026-11-07T14:00:00Z' &&
             Number(c.proximoOficio2026) === 155 &&
-            Number(c.proximaPortaria2026) === 412;
-          if (!isStaticSeed) {
-            console.log('[Olympos Supabase] Conteúdo dinâmico recebido do catálogo [numeracao_gabinete]:', c);
+            (Number(c.proximaPortaria2026) === 412 || Number(c.proximaPortaria2026) === 163);
+          if (isRealApolo && !isStaticSeed) {
+            console.log('[Olympos Supabase] Numeração da Memória de Apolo carregada:', c);
             return c;
           }
         }
@@ -966,18 +972,25 @@ window.OlymposSupabase = (function() {
         console.warn('[Olympos Supabase] Exceção ao consultar numeracao_gabinete:', err);
       }
     }
-    // Sem valores estáticos hardcoded: mantém estado "--" na UI até os dados reais serem carregados
+    // Sem valores estáticos hardcoded: mantém estado "--" na UI até os dados reais da Memória de Apolo serem carregados
     return null;
   }
 
   async function sincronizarNumeracaoGabinete(numeracao) {
     if (!numeracao || typeof numeracao !== 'object') return false;
+    if (numeracao.fonteApoloDisponivel === false || numeracao.origem === 'INDISPONIVEL') return false;
+    const hasOf = Number.isInteger(Number(numeracao.proximoOficio2026)) && Number(numeracao.proximoOficio2026) > 0;
+    const hasPt = Number.isInteger(Number(numeracao.proximaPortaria2026)) && Number(numeracao.proximaPortaria2026) > 0;
+    if (!hasOf && !hasPt) return false;
+
     const client = getClient();
     if (!client) return false;
     try {
       const sess = await getSession();
       if (!sess) return false;
       const conteudo = Object.assign({}, numeracao, {
+        origem: 'MEMORIA_APOLO',
+        fonteApoloDisponivel: true,
         sincronizadoDrive: true,
         atualizadoEm: new Date().toISOString()
       });

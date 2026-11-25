@@ -5,6 +5,7 @@ window.OlymposViews = window.OlymposViews || {};
 
 window.OlymposViews.busca = (function() {
   let resultadosCache = [];
+  let sortModeBusca = 'data_desc';
   let paginaAtual = 1;
   const ITENS_POR_PAGINA = 15;
 
@@ -36,6 +37,42 @@ window.OlymposViews.busca = (function() {
         });
       }
     });
+
+    const selSortBusca = document.getElementById('pageBuscaSortSelect');
+    if (selSortBusca && !selSortBusca._bound) {
+      selSortBusca._bound = true;
+      selSortBusca.addEventListener('change', function() {
+        sortModeBusca = selSortBusca.value || 'data_desc';
+        paginaAtual = 1;
+        renderizarResultados();
+      });
+    }
+
+    const tblBusca = document.getElementById('pageBuscaTable');
+    if (tblBusca && !tblBusca._sortBound) {
+      tblBusca._sortBound = true;
+      tblBusca.querySelectorAll('th[data-busca-sort]').forEach(function(th) {
+        const toggleBusca = function() {
+          const col = th.getAttribute('data-busca-sort') || 'data';
+          const defDir = (col === 'data' || col === 'ano') ? 'desc' : 'asc';
+          if (sortModeBusca === col + '_asc') sortModeBusca = col + '_desc';
+          else if (sortModeBusca === col + '_desc') sortModeBusca = col + '_asc';
+          else sortModeBusca = col + '_' + defDir;
+          if (selSortBusca && Array.from(selSortBusca.options).some(function(o) { return o.value === sortModeBusca; })) {
+            selSortBusca.value = sortModeBusca;
+          }
+          paginaAtual = 1;
+          renderizarResultados();
+        };
+        th.addEventListener('click', toggleBusca);
+        th.addEventListener('keydown', function(ev) {
+          if (ev.key === 'Enter' || ev.key === ' ') {
+            ev.preventDefault();
+            toggleBusca();
+          }
+        });
+      });
+    }
   }
 
   function ocultarPaginacao() {
@@ -43,19 +80,68 @@ window.OlymposViews.busca = (function() {
     if (bar) bar.classList.add('hidden');
   }
 
+  function parseDataBuscaTs(item) {
+    const raw = String((item && (item.dataCriacao || item.dataModificacao)) || '').trim();
+    const mBr = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+    if (mBr) return Date.UTC(Number(mBr[3]), Number(mBr[2]) - 1, Number(mBr[1]));
+    const ts = Date.parse(raw);
+    return isNaN(ts) ? 0 : ts;
+  }
+
+  function ordenarResultadosBusca(lista) {
+    const modo = String(sortModeBusca || 'data_desc');
+    const cmp = function(a, b) {
+      return String(a || '').localeCompare(String(b || ''), 'pt-BR', { numeric: true, sensitivity: 'base' });
+    };
+    const copia = (lista || []).slice();
+    copia.sort(function(a, b) {
+      if (modo === 'data_asc') return (parseDataBuscaTs(a) - parseDataBuscaTs(b)) || cmp(a.nome, b.nome);
+      if (modo === 'nome_asc') return cmp(a.nome, b.nome);
+      if (modo === 'nome_desc') return cmp(b.nome, a.nome);
+      if (modo === 'setor_asc') return cmp(a.setor, b.setor) || cmp(a.nome, b.nome);
+      if (modo === 'setor_desc') return cmp(b.setor, a.setor) || cmp(a.nome, b.nome);
+      if (modo === 'ano_asc') return (Number(a.ano || 0) - Number(b.ano || 0)) || cmp(a.nome, b.nome);
+      if (modo === 'ano_desc') return (Number(b.ano || 0) - Number(a.ano || 0)) || (parseDataBuscaTs(b) - parseDataBuscaTs(a));
+      return (parseDataBuscaTs(b) - parseDataBuscaTs(a)) || cmp(a.nome, b.nome);
+    });
+    return copia;
+  }
+
+  function atualizarIndicadoresSortBusca() {
+    const tbl = document.getElementById('pageBuscaTable');
+    if (!tbl) return;
+    const parts = String(sortModeBusca || 'data_desc').split('_');
+    const colAtiva = parts[0];
+    const dirAtiva = parts[1] === 'desc' ? 'descending' : 'ascending';
+    tbl.querySelectorAll('th[data-busca-sort]').forEach(function(th) {
+      const c = th.getAttribute('data-busca-sort');
+      const ind = th.querySelector('.th-sort-indicator');
+      if (c === colAtiva) {
+        th.setAttribute('aria-sort', dirAtiva);
+        if (ind) ind.textContent = dirAtiva === 'ascending' ? '▲' : '▼';
+      } else {
+        th.setAttribute('aria-sort', 'none');
+        if (ind) ind.textContent = '↕';
+      }
+    });
+  }
+
   function renderizarResultados() {
     const tbody = document.getElementById('pageBuscaTableBody');
     if (!tbody) return;
 
-    if (!Array.isArray(resultadosCache) || resultadosCache.length === 0) {
+    const ordenada = ordenarResultadosBusca(resultadosCache);
+    atualizarIndicadoresSortBusca();
+
+    if (!Array.isArray(ordenada) || ordenada.length === 0) {
       ocultarPaginacao();
       tbody.innerHTML = '<tr><td colspan="5" class="text-muted text-center" style="padding: 28px;">Nenhum documento encontrado para os termos informados.</td></tr>';
       return;
     }
 
     const pag = (window.OlymposPagination && typeof window.OlymposPagination.paginarLista === 'function')
-      ? window.OlymposPagination.paginarLista(resultadosCache, paginaAtual, ITENS_POR_PAGINA)
-      : { items: resultadosCache, paginaAtual: 1, totalPaginas: 1, totalItens: resultadosCache.length, inicio: 1, fim: resultadosCache.length };
+      ? window.OlymposPagination.paginarLista(ordenada, paginaAtual, ITENS_POR_PAGINA)
+      : { items: ordenada, paginaAtual: 1, totalPaginas: 1, totalItens: ordenada.length, inicio: 1, fim: ordenada.length };
     paginaAtual = pag.paginaAtual;
 
     tbody.innerHTML = '';

@@ -1187,7 +1187,7 @@
     total_acervo: 47270,
     total_municipais: 27108,
     total_estaduais: 20162,
-    total_multiplos: 3615,
+    total_multiplos: 3654,
     total_entes: 15,
     por_ente: {
       "Governo do Estado do Rio Grande do Norte": 20162,

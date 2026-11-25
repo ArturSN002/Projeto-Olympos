@@ -2449,6 +2449,39 @@ html.light-theme .badge-blue {
   background: var(--bg-surface);
 }
 
+.clean-table th.th-sortable,
+.table-clean th.th-sortable {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.clean-table th.th-sortable:hover,
+.clean-table th.th-sortable:focus-visible {
+  color: var(--text-main);
+  background: var(--bg-tonal);
+  outline: none;
+}
+
+.clean-table th.th-sortable[aria-sort="ascending"],
+.clean-table th.th-sortable[aria-sort="descending"] {
+  color: var(--accent-primary, var(--text-main));
+}
+
+.th-sort-indicator {
+  display: inline-block;
+  margin-left: 5px;
+  font-size: 10px;
+  opacity: 0.65;
+  vertical-align: middle;
+}
+
+.clean-table th.th-sortable[aria-sort="ascending"] .th-sort-indicator,
+.clean-table th.th-sortable[aria-sort="descending"] .th-sort-indicator {
+  opacity: 1;
+}
+
 /* ==========================================================================
    ARQUITETURA 2 FRENTES CALLOUT & SCHEMA CHIPS
    ========================================================================== */
@@ -5287,6 +5320,20 @@ html.light-theme .cal-modal-badge.cal-badge-purple {
   color: #334155 !important;
   font-size: 11.5px;
   margin-bottom: 3px;
+}
+
+.escola-popup-diretor {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  padding: 4px 7px;
+  margin: 4px 0 6px 0;
+  border-radius: 6px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  color: #0F172A !important;
+  font-size: 11.5px;
 }
 
 .escola-popup-detail strong {

@@ -6,6 +6,8 @@ from datetime import datetime, timezone
 import gzip
 import json
 import logging
+import re
+import unicodedata
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 import pandas as pd
@@ -45,10 +47,26 @@ def gerar_catalogos_frontend(csv_path: Optional[Path] = None) -> Dict[str, Any]:
     total_estaduais = int(is_estadual.sum())
     total_municipais = total_acervo - total_estaduais
 
-    # Cálculo de múltiplos vínculos (auditoria constitucional)
-    nomes_counts = df["nome_completo"].str.strip().str.upper().value_counts()
-    multiplos_nomes = nomes_counts[nomes_counts > 1]
-    total_multiplos = len(multiplos_nomes)
+    # Cálculo de múltiplos vínculos (auditoria constitucional: 1 contagem por pessoa única)
+    def _norm_chave_pessoa(nome_val: Any) -> str:
+        nfkd = unicodedata.normalize("NFKD", str(nome_val or "").strip())
+        sem_acento = "".join(c for c in nfkd if not unicodedata.combining(c))
+        limpo = re.sub(r"[^\w\s]", " ", sem_acento).lower()
+        return re.sub(r"\s+", " ", limpo).strip()
+
+    vinculos_por_pessoa: Dict[str, set] = {}
+    for _, row in df.iterrows():
+        chave_pessoa = _norm_chave_pessoa(row.get("nome_completo", ""))
+        if not chave_pessoa:
+            continue
+        vid = (
+            str(row.get("ente_origem", "")).strip(),
+            sanitizar_matricula(row.get("matricula", "")),
+            str(row.get("cargo_funcao", "")).strip(),
+        )
+        vinculos_por_pessoa.setdefault(chave_pessoa, set()).add(vid)
+
+    total_multiplos = sum(1 for vids in vinculos_por_pessoa.values() if len(vids) > 1)
 
     resumo_kpis = {
         "competencia": csv_path.stem.replace("servidores-intermunicipais-", ""),

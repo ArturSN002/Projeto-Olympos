@@ -42,24 +42,47 @@ function buildMatrizFallback(): MatrizMap {
   return out;
 }
 
+function getApoloCache(): any {
+  const w = window as any;
+  const c = w && w.OlymposApoloCache ? w.OlymposApoloCache : null;
+  if (c && c.fonteApoloDisponivel !== false && c.origem === 'MEMORIA_APOLO') {
+    return c;
+  }
+  return null;
+}
+
 function buildNumeracaoFallback(): { oficios: any[]; portaria: any | null } {
-  const oficios = SETORES_ORGANIZACIONAIS.filter((s) => s.codigo !== 'MODERADOR').map((s) => ({
-    tipo_documento: 'OFICIO',
-    ano: 2026,
-    setor_codigo: s.codigo,
-    setor_nome: s.nome,
-    sigla_documento: s.siglaOficio,
-    proximo_numero: s.pisoOficio2026,
-    ultimo_numero: Math.max(0, s.pisoOficio2026 - 1)
-  }));
+  const apolo = getApoloCache();
+  const oficios = SETORES_ORGANIZACIONAIS.filter((s) => s.codigo !== 'MODERADOR').map((s) => {
+    const isGab = s.codigo === 'GABINETE';
+    const apoloProx = isGab && apolo && Number(apolo.proximoOficio2026) > 0 ? Number(apolo.proximoOficio2026) : null;
+    const apoloUlt = isGab && apolo && apolo.ultimoOficio2026 !== null && apolo.ultimoOficio2026 !== undefined
+      ? Number(apolo.ultimoOficio2026)
+      : (apoloProx ? Math.max(0, apoloProx - 1) : null);
+    return {
+      tipo_documento: 'OFICIO',
+      ano: 2026,
+      setor_codigo: s.codigo,
+      setor_nome: s.nome,
+      sigla_documento: s.siglaOficio,
+      proximo_numero: isGab ? apoloProx : s.pisoOficio2026,
+      ultimo_numero: isGab ? apoloUlt : Math.max(0, s.pisoOficio2026 - 1),
+      fonte_apolo: isGab
+    };
+  });
+  const apoloPt = apolo && Number(apolo.proximaPortaria2026) > 0 ? Number(apolo.proximaPortaria2026) : null;
+  const apoloPtUlt = apolo && apolo.ultimaPortaria2026 !== null && apolo.ultimaPortaria2026 !== undefined
+    ? Number(apolo.ultimaPortaria2026)
+    : (apoloPt ? Math.max(0, apoloPt - 1) : null);
   const portaria = {
     tipo_documento: 'PORTARIA',
     ano: 2026,
     setor_codigo: 'GABINETE',
     setor_nome: 'Gabinete da Secretaria',
     sigla_documento: 'SMEB',
-    proximo_numero: 163,
-    ultimo_numero: 162
+    proximo_numero: apoloPt,
+    ultimo_numero: apoloPtUlt,
+    fonte_apolo: true
   };
   return { oficios, portaria };
 }
@@ -150,15 +173,82 @@ async function carregarDadosCompletos(): Promise<void> {
     try {
       if (typeof supa.listarNumeracaoVisivel === 'function') {
         const num = await supa.listarNumeracaoVisivel(2026);
+        const apolo = getApoloCache();
         if (num && num.ok) {
+          const oficiosSetoriais = Array.isArray(num.oficios)
+            ? num.oficios.map((item: any) => {
+                if (item.setor_codigo === 'GABINETE') {
+                  const proxAp = apolo && Number(apolo.proximoOficio2026) > 0 ? Number(apolo.proximoOficio2026) : null;
+                  const ultAp = apolo && apolo.ultimoOficio2026 !== null && apolo.ultimoOficio2026 !== undefined
+                    ? Number(apolo.ultimoOficio2026)
+                    : (proxAp ? Math.max(0, proxAp - 1) : null);
+                  return {
+                    ...item,
+                    proximo_numero: proxAp,
+                    ultimo_numero: ultAp,
+                    fonte_apolo: true
+                  };
+                }
+                return item;
+              })
+            : buildNumeracaoFallback().oficios;
+          const ptAp = apolo && Number(apolo.proximaPortaria2026) > 0 ? Number(apolo.proximaPortaria2026) : null;
+          const ptUltAp = apolo && apolo.ultimaPortaria2026 !== null && apolo.ultimaPortaria2026 !== undefined
+            ? Number(apolo.ultimaPortaria2026)
+            : (ptAp ? Math.max(0, ptAp - 1) : null);
           numeracaoData = {
-            oficios: Array.isArray(num.oficios) ? num.oficios : buildNumeracaoFallback().oficios,
-            portaria: num.portaria || buildNumeracaoFallback().portaria
+            oficios: oficiosSetoriais,
+            portaria: num.portaria
+              ? { ...num.portaria, proximo_numero: ptAp, ultimo_numero: ptUltAp, fonte_apolo: true }
+              : buildNumeracaoFallback().portaria
           };
         }
       }
     } catch {
       // keep fallback
+    }
+
+    // Se Apolo ainda não estiver no cache local, consulta overview_get em background
+    if (!getApoloCache() && (window as any).OlymposApi && typeof (window as any).OlymposApi.chamar === 'function') {
+      await new Promise<void>((resolve) => {
+        (window as any).OlymposApi.chamar(
+          'overview_get',
+          {},
+          (res: any) => {
+            const d = res && res.data ? res.data : res;
+            if (d && d.numeracao && d.numeracao.fonteApoloDisponivel !== false) {
+              (window as any).OlymposApoloCache = {
+                ...d.numeracao,
+                origem: 'MEMORIA_APOLO',
+                fonteApoloDisponivel: true
+              };
+              const apoloNow = getApoloCache();
+              if (apoloNow) {
+                numeracaoData.oficios = (numeracaoData.oficios || []).map((it: any) =>
+                  it.setor_codigo === 'GABINETE'
+                    ? {
+                        ...it,
+                        proximo_numero: apoloNow.proximoOficio2026 ?? null,
+                        ultimo_numero: apoloNow.ultimoOficio2026 ?? null,
+                        fonte_apolo: true
+                      }
+                    : it
+                );
+                if (numeracaoData.portaria) {
+                  numeracaoData.portaria = {
+                    ...numeracaoData.portaria,
+                    proximo_numero: apoloNow.proximaPortaria2026 ?? null,
+                    ultimo_numero: apoloNow.ultimaPortaria2026 ?? null,
+                    fonte_apolo: true
+                  };
+                }
+              }
+            }
+            resolve();
+          },
+          () => resolve()
+        );
+      });
     }
   }
 }
@@ -437,13 +527,13 @@ function renderNumeracaoSetorial(): string {
         <div class="rbac-num-head">
           <div>
             <div style="font-weight:700; font-size:0.92rem;">Portarias 2026 — Gabinete</div>
-            <div style="font-size:0.75rem; color:var(--text-muted);">Exclusivo Gabinete + Moderador • Sigla: <strong>${esc(port.sigla_documento || 'SMEB')}</strong></div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">Exclusivo Gabinete + Moderador (Memória de Apolo) • Sigla: <strong>${esc(port.sigla_documento || 'SMEB')}</strong></div>
           </div>
           <span class="pill-badge pill-purple" style="font-size:0.7rem;">Portarias</span>
         </div>
-        <div style="font-size:0.8rem; color:var(--text-secondary);">Último emitido: <strong>${esc(port.ultimo_numero ?? 0)}</strong></div>
+        <div style="font-size:0.8rem; color:var(--text-secondary);">Último emitido: <strong>${esc(port.ultimo_numero ?? '--')}</strong></div>
         <div class="rbac-num-actions">
-          <input type="number" min="1" class="input-clean rbac-num-input" data-tipo="PORTARIA" data-setor="GABINETE" value="${esc(port.proximo_numero ?? 163)}" style="width:100px;" ${!schemaReady ? 'disabled' : ''} />
+          <input type="number" min="1" class="input-clean rbac-num-input" data-tipo="PORTARIA" data-setor="GABINETE" placeholder="--" value="${port.proximo_numero !== null && port.proximo_numero !== undefined ? esc(port.proximo_numero) : ''}" style="width:100px;" ${!schemaReady ? 'disabled' : ''} />
           <button type="button" class="btn btn-primary btn-sm rbac-btn-save-num" data-tipo="PORTARIA" data-setor="GABINETE" ${!schemaReady ? 'disabled' : ''}>Salvar Próximo Nº</button>
         </div>
       </div>
@@ -452,28 +542,32 @@ function renderNumeracaoSetorial(): string {
 
   const oficiosCards = (numeracaoData.oficios || [])
     .map(
-      (n: any) => `
+      (n: any) => {
+        const isGab = n.setor_codigo === 'GABINETE';
+        const hasVal = n.proximo_numero !== null && n.proximo_numero !== undefined;
+        return `
       <div class="rbac-num-card">
         <div class="rbac-num-head">
           <div>
             <div style="font-weight:700; font-size:0.9rem;">${esc(n.setor_nome || n.setor_codigo)}</div>
-            <div style="font-size:0.75rem; color:var(--text-muted);">Pasta: Ofícios 2026 - <strong>${esc(n.sigla_documento || '')}</strong></div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">${isGab ? 'Memória de Apolo • Pasta: Ofícios 2026' : `Pasta: Ofícios 2026 - <strong>${esc(n.sigla_documento || '')}</strong>`}</div>
           </div>
           <span class="setor-pill">${esc(n.sigla_documento || 'OF')}</span>
         </div>
-        <div style="font-size:0.8rem; color:var(--text-secondary);">Último emitido: <strong>${esc(n.ultimo_numero ?? 0)}</strong></div>
+        <div style="font-size:0.8rem; color:var(--text-secondary);">Último emitido: <strong>${esc(n.ultimo_numero ?? (isGab ? '--' : 0))}</strong></div>
         <div class="rbac-num-actions">
-          <input type="number" min="1" class="input-clean rbac-num-input" data-tipo="OFICIO" data-setor="${esc(n.setor_codigo)}" value="${esc(n.proximo_numero ?? 1)}" style="width:100px;" ${!schemaReady ? 'disabled' : ''} />
+          <input type="number" min="1" class="input-clean rbac-num-input" data-tipo="OFICIO" data-setor="${esc(n.setor_codigo)}" placeholder="--" value="${hasVal ? esc(n.proximo_numero) : (isGab ? '' : '1')}" style="width:100px;" ${!schemaReady ? 'disabled' : ''} />
           <button type="button" class="btn btn-secondary btn-sm rbac-btn-save-num" data-tipo="OFICIO" data-setor="${esc(n.setor_codigo)}" ${!schemaReady ? 'disabled' : ''}>Salvar Próximo Nº</button>
         </div>
       </div>
-    `
+    `;
+      }
     )
     .join('');
 
   return `
     <div style="font-size:0.84rem; color:var(--text-secondary); margin-bottom:14px;">
-      Controle global dos contadores de 2026. Gabinete inicia Ofícios em <strong>155</strong> (<code>GS</code>) e Portarias em <strong>163</strong> (<code>SMEB</code>); os outros 8 setores iniciam Ofícios próprios em <strong>001/2026</strong>.
+      Controle global dos contadores de 2026. O <strong>Gabinete da Secretaria</strong> (e Moderador) segue exclusivamente os valores reais da <strong>Memória de Apolo</strong> (<code>GS</code> para Ofícios e <code>SMEB</code> para Portarias); os outros 8 setores utilizam séries próprias iniciadas em <strong>001/2026</strong>.
     </div>
     <div class="rbac-num-grid">
       ${portCard}

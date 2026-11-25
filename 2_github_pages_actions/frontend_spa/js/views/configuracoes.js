@@ -7,6 +7,7 @@ window.OlymposViews.configuracoes = (function() {
   let usuariosLista = [];
   let subtabAtiva = 'conexao';
   let paginaUsuarios = 1;
+  let sortModeUsuarios = 'nome_asc';
   const ITENS_USUARIOS_POR_PAGINA = 15;
   const pingHistory = [];
 
@@ -99,6 +100,11 @@ window.OlymposViews.configuracoes = (function() {
     // Usuários: Atualizar lista
     bind('btnRecarregarUsuarios', 'click', function() {
       carregarUsuarios();
+    });
+    bind('usuariosSortSelect', 'change', function() {
+      sortModeUsuarios = this.value || 'nome_asc';
+      paginaUsuarios = 1;
+      renderizarTabelaUsuarios();
     });
 
     // Modal Editar Usuário
@@ -244,9 +250,33 @@ window.OlymposViews.configuracoes = (function() {
     const currentUserId = (session && (session.id || (session.user && session.user.id) || (session.profile && session.profile.id))) || '';
     const currentEmail = String((session && (session.email || session.usuario || (session.user && session.user.email))) || '').trim().toLowerCase();
 
+    const ordenarListaUsuarios = function(lista) {
+      const copy = lista.slice();
+      const mode = sortModeUsuarios || 'nome_asc';
+      const cmp = function(a, b) { return String(a || '').localeCompare(String(b || ''), 'pt-BR', { sensitivity: 'base' }); };
+      copy.sort(function(a, b) {
+        const na = a.full_name || a.nome || a.email || '';
+        const nb = b.full_name || b.nome || b.email || '';
+        const ra = (a.setor_codigo || a.role || '');
+        const rb = (b.setor_codigo || b.role || '');
+        const da = (a.department || a.departamento || '');
+        const db = (b.department || b.departamento || '');
+        const sa = a.ativo !== false ? 0 : 1;
+        const sb = b.ativo !== false ? 0 : 1;
+        if (mode === 'nome_desc') return cmp(nb, na);
+        if (mode === 'role_asc') return cmp(ra, rb) || cmp(na, nb);
+        if (mode === 'setor_asc') return cmp(da, db) || cmp(na, nb);
+        if (mode === 'status_asc') return (sa - sb) || cmp(na, nb);
+        return cmp(na, nb);
+      });
+      return copy;
+    };
+
+    const listaOrdenada = ordenarListaUsuarios(usuariosLista);
+
     const pag = (window.OlymposPagination && typeof window.OlymposPagination.paginarLista === 'function')
-      ? window.OlymposPagination.paginarLista(usuariosLista, paginaUsuarios, ITENS_USUARIOS_POR_PAGINA)
-      : { items: usuariosLista, paginaAtual: 1, totalPaginas: 1, totalItens: usuariosLista.length, inicio: 1, fim: usuariosLista.length };
+      ? window.OlymposPagination.paginarLista(listaOrdenada, paginaUsuarios, ITENS_USUARIOS_POR_PAGINA)
+      : { items: listaOrdenada, paginaAtual: 1, totalPaginas: 1, totalItens: listaOrdenada.length, inicio: 1, fim: listaOrdenada.length };
     paginaUsuarios = pag.paginaAtual;
 
     const getRoleBadge = function(userObj) {
@@ -287,19 +317,19 @@ window.OlymposViews.configuracoes = (function() {
       const isAtivo = u.ativo !== false;
 
       return `
-        <tr style="border-bottom: 1px solid var(--border-hairline);">
-          <td style="padding: 12px 14px;">
+        <tr>
+          <td data-label="Operador">
             <div style="font-weight: 600; color: var(--text-primary);">${nomeSafe}</div>
             <div style="font-size: 0.76rem; color: var(--text-muted); font-family: var(--font-mono);">${emailSafe}</div>
           </td>
-          <td style="padding: 12px 14px;">${getRoleBadge(u)}</td>
-          <td style="padding: 12px 14px; font-size: 0.85rem; color: var(--text-secondary);">${deptSafe}</td>
-          <td style="padding: 12px 14px;">
+          <td data-label="Perfil de Acesso">${getRoleBadge(u)}</td>
+          <td data-label="Lotação / Setor" style="font-size: 0.85rem; color: var(--text-secondary);">${deptSafe}</td>
+          <td data-label="Status">
             <span class="pill-badge ${isAtivo ? 'pill-green' : 'pill-red'}" style="font-size: 0.7rem;">
               ${isAtivo ? (window.OlymposIcons ? window.OlymposIcons.ui('check') : '') + ' Ativo' : (window.OlymposIcons ? window.OlymposIcons.ui('close') : '') + ' Suspenso'}
             </span>
           </td>
-          <td style="padding: 12px 14px; text-align: right; white-space: nowrap;">
+          <td data-label="Ações" style="text-align: right; white-space: nowrap;">
             <div style="display: inline-flex; gap: 6px;">
               <button type="button" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; padding: 4px 8px; display: inline-flex; align-items: center; gap: 4px;" onclick="window.OlymposViews.configuracoes.abrirModalEditarUsuario('${u.id}')">
                 <span class="svg-icon-inline" style="width: 13px; height: 13px;">${window.OlymposIcons ? window.OlymposIcons.ui('edit') : ''}</span> Editar
@@ -313,16 +343,24 @@ window.OlymposViews.configuracoes = (function() {
       `;
     }).join('');
 
+    const thSortAttr = function(colKey, label, extraStyle) {
+      const ativoAsc = sortModeUsuarios === (colKey + '_asc');
+      const ativoDesc = sortModeUsuarios === (colKey + '_desc');
+      const ind = ativoAsc ? '▲' : (ativoDesc ? '▼' : '⇅');
+      return '<th class="th-sortable" data-usr-sort="' + colKey + '" style="cursor:pointer;' + (extraStyle || '') + '">' +
+        label + ' <span class="th-sort-indicator">' + ind + '</span></th>';
+    };
+
     container.innerHTML = `
-      <div style="overflow-x: auto;">
-        <table class="table-clean" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem;">
+      <div class="table-wrapper table-responsive">
+        <table class="clean-table table-responsive-cards" data-custom-sort="true" style="width: 100%; font-size: 0.88rem;">
           <thead>
-            <tr style="background: var(--bg-tonal); border-bottom: 1px solid var(--border-hairline); color: var(--text-muted); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.5px;">
-              <th style="padding: 10px 14px;">Operador</th>
-              <th style="padding: 10px 14px;">Perfil de Acesso</th>
-              <th style="padding: 10px 14px;">Lotação / Departamento</th>
-              <th style="padding: 10px 14px;">Status</th>
-              <th style="padding: 10px 14px; text-align: right;">Ações</th>
+            <tr>
+              ${thSortAttr('nome', 'Operador')}
+              ${thSortAttr('role', 'Perfil de Acesso')}
+              ${thSortAttr('setor', 'Lotação / Setor')}
+              ${thSortAttr('status', 'Status')}
+              <th style="text-align: right;">Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -331,6 +369,21 @@ window.OlymposViews.configuracoes = (function() {
         </table>
       </div>
     `;
+
+    container.querySelectorAll('th[data-usr-sort]').forEach(function(th) {
+      th.addEventListener('click', function() {
+        const col = th.getAttribute('data-usr-sort');
+        if (col === 'nome') {
+          sortModeUsuarios = (sortModeUsuarios === 'nome_asc') ? 'nome_desc' : 'nome_asc';
+        } else {
+          sortModeUsuarios = col + '_asc';
+        }
+        const sel = document.getElementById('usuariosSortSelect');
+        if (sel) sel.value = sortModeUsuarios;
+        paginaUsuarios = 1;
+        renderizarTabelaUsuarios();
+      });
+    });
 
     if (window.OlymposPagination && typeof window.OlymposPagination.renderizarControles === 'function') {
       const pagRes = window.OlymposPagination.renderizarControles({

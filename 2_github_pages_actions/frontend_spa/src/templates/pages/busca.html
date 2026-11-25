@@ -21,6 +21,17 @@
                   <option value="2025">Acervo 2025 (Histórico)</option>
                 </select>
               </div>
+              <div class="field-group">
+                <label for="pageBuscaSortSelect">Ordenação</label>
+                <select id="pageBuscaSortSelect" class="input-clean">
+                  <option value="data_desc" selected>Criação (mais recentes)</option>
+                  <option value="data_asc">Criação (mais antigos)</option>
+                  <option value="nome_asc">Título (A → Z)</option>
+                  <option value="nome_desc">Título (Z → A)</option>
+                  <option value="setor_asc">Setor / Subpasta (A → Z)</option>
+                  <option value="ano_desc">Ano (2026 → 2025)</option>
+                </select>
+              </div>
               <div>
                 <button id="pageBuscaExecBtn" class="btn btn-primary" style="height: 41px;">Pesquisar Acervo</button>
               </div>
@@ -39,14 +50,14 @@
               Digite um termo ou selecione um filtro rápido para varrer as pastas oficiais.
             </div>
 
-            <div class="table-wrapper">
-              <table class="clean-table table-responsive-cards">
+            <div class="table-wrapper table-responsive">
+              <table class="clean-table table-responsive-cards" id="pageBuscaTable" data-custom-sort="true">
                 <thead>
                   <tr>
-                    <th style="width: 85px;">Ano</th>
-                    <th style="width: 240px;">Setor / Subpasta</th>
-                    <th style="width: 115px;">Criação</th>
-                    <th>Título do Arquivo</th>
+                    <th class="th-sortable" data-busca-sort="ano" role="button" tabindex="0" aria-sort="none" style="width: 85px;">Ano <span class="th-sort-indicator" aria-hidden="true">↕</span></th>
+                    <th class="th-sortable" data-busca-sort="setor" role="button" tabindex="0" aria-sort="none" style="width: 240px;">Setor / Subpasta <span class="th-sort-indicator" aria-hidden="true">↕</span></th>
+                    <th class="th-sortable" data-busca-sort="data" role="button" tabindex="0" aria-sort="descending" style="width: 115px;">Criação <span class="th-sort-indicator" aria-hidden="true">▼</span></th>
+                    <th class="th-sortable" data-busca-sort="nome" role="button" tabindex="0" aria-sort="none">Título do Arquivo <span class="th-sort-indicator" aria-hidden="true">↕</span></th>
                     <th class="text-right" style="width: 150px;">Acesso</th>
                   </tr>
                 </thead>
