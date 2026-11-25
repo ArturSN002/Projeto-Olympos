@@ -272,10 +272,10 @@ window.OlymposRouter = (function() {
       heroDualActions.setAttribute('aria-hidden', showHeroActions ? 'false' : 'true');
     }
 
-    // ISOLAMENTO DA TELEMETRIA: Exibe a fita de telemetria EXCLUSIVAMENTE na Visão Geral
+    // ISOLAMENTO DA TELEMETRIA: Exibe a fita de telemetria EXCLUSIVAMENTE na Visão Geral para operadores autenticados
     const telemetryStrip = document.getElementById('heroTelemetryStrip') || document.querySelector('.telemetry-strip');
     if (telemetryStrip) {
-      const showTelemetry = (pageId === 'visao-geral');
+      const showTelemetry = (pageId === 'visao-geral') && Boolean(sessaoAtiva && sessaoAtiva.perfil);
       telemetryStrip.classList.toggle('hidden', !showTelemetry);
       telemetryStrip.style.display = showTelemetry ? '' : 'none';
     }

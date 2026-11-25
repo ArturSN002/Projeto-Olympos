@@ -7148,8 +7148,12 @@ body.is-visitante #heroTelemetryStrip {
   grid-template-columns: 1fr;
 }
 
-body.is-visitante #page-visao-geral .stats-grid {
-  grid-template-columns: 1fr;
+body.is-visitante #page-visao-geral .stats-grid,
+body.is-visitante #visaoGeralAuthStatsGrid,
+body.is-visitante #statCardAgendaEventos,
+body.is-visitante #heroTelemetryStrip,
+body.is-visitante #heroTelemetryAgendaCard {
+  display: none !important;
 }
 
 body.is-visitante #page-visao-geral .quick-modules-grid {
@@ -7615,23 +7619,42 @@ button.btn-mini:disabled {
 /* Central de Notificações (Sino + Drawer Lazy) */
 .notif-bell-btn {
   position: relative;
+  overflow: visible !important;
 }
 
 .notif-badge {
   position: absolute;
-  top: -5px;
-  right: -5px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  border-radius: 999px;
+  top: -6px;
+  right: -6px;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  aspect-ratio: 1 / 1;
+  padding: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: #dc2626;
   color: #ffffff;
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 800;
-  line-height: 18px;
-  text-align: center;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
   border: 2px solid var(--bg-surface, #ffffff);
+  box-sizing: border-box;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.notif-badge.is-wide {
+  font-size: 8.5px;
+  letter-spacing: -0.04em;
+}
+
+.notif-badge.hidden {
+  display: none !important;
 }
 
 .notif-drawer-backdrop {
@@ -8570,12 +8593,29 @@ button.btn-mini:disabled {
     height: 30px !important;
     font-size: 11px !important;
   }
+  .masthead-controls .notif-badge {
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    font-size: 9.5px;
+    top: -5px;
+    right: -5px;
+  }
 }
 
 @media (max-width: 480px) {
   .masthead-controls {
     gap: 6px;
     flex-shrink: 0;
+  }
+  .masthead-controls .notif-badge {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    font-size: 9px;
+    top: -4px;
+    right: -4px;
+    border-width: 1.5px;
   }
   .masthead-controls .icon-capsule-btn,
   .masthead-controls #topWorkspaceBtn.btn-workspace-companion,

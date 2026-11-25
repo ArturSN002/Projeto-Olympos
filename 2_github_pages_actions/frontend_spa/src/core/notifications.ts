@@ -90,6 +90,7 @@ function atualizarBadgeNoHeader(): void {
   const count = naoLidasCountSignal.value;
   if (badge) {
     badge.textContent = count > 99 ? '99+' : String(count);
+    badge.classList.toggle('is-wide', count > 99);
     badge.classList.toggle('hidden', count <= 0);
   }
   if (btn) {
