@@ -77,30 +77,39 @@ def obter_pasta_drive_destino(categoria: str, entidade: str) -> str:
     return FOLDER_GABINETE_2026
 
 
+def _criar_cliente_drive_sa():
+    """Inicializa cliente Google Drive v3 autenticado via GCP_SA_KEY quando disponível."""
+    sa_json = os.environ.get("GCP_SA_KEY", "").strip()
+    if not sa_json:
+        return None
+    from google.oauth2 import service_account
+    from googleapiclient.discovery import build
+
+    try:
+        sa_info = json.loads(sa_json)
+    except json.JSONDecodeError:
+        sa_info = json.loads(base64.b64decode(sa_json).decode("utf-8"))
+
+    credentials = service_account.Credentials.from_service_account_info(
+        sa_info,
+        scopes=["https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/drive"]
+    )
+    return build("drive", "v3", credentials=credentials)
+
+
 def upload_pdf_direto_drive(pdf_bytes: bytes, nome_arquivo: str, folder_id: str):
     """
     Realiza upload direto do PDF no Google Drive via Google Cloud Service Account (GCP_SA_KEY).
     Elimina a necessidade de tráfego pesado de pdf_base64 no webhook do GAS.
     """
-    sa_json = os.environ.get("GCP_SA_KEY", "").strip()
-    if not sa_json or not pdf_bytes:
+    if not pdf_bytes:
         return None
 
     try:
-        from google.oauth2 import service_account
-        from googleapiclient.discovery import build
+        service = _criar_cliente_drive_sa()
+        if not service:
+            return None
         from googleapiclient.http import MediaInMemoryUpload
-
-        try:
-            sa_info = json.loads(sa_json)
-        except json.JSONDecodeError:
-            sa_info = json.loads(base64.b64decode(sa_json).decode("utf-8"))
-
-        credentials = service_account.Credentials.from_service_account_info(
-            sa_info,
-            scopes=["https://www.googleapis.com/auth/drive.file", "https://www.googleapis.com/auth/drive"]
-        )
-        service = build("drive", "v3", credentials=credentials)
 
         # Checa existência prévia para idempotência
         query = f"'{folder_id}' in parents and name = '{nome_arquivo}' and trashed = false"
@@ -124,6 +133,82 @@ def upload_pdf_direto_drive(pdf_bytes: bytes, nome_arquivo: str, folder_id: str)
             return {"file_id": file_id, "url": link}
     except Exception as err:
         print(f"[AVISO] Upload direto via Service Account falhou (fallback para Base64/GAS): {err}")
+        return None
+
+
+def upload_planilha_diaria_drive(caminho_csv: str, dt_referencia: str, folder_id: str = FOLDER_PLANILHAS_DIARIO):
+    """
+    Envia a planilha diária CSV do FEMURN diretamente para FOLDER_PLANILHAS_DIARIO
+    (1aj514v29gytXH9j5LY_V76ap9XIblwHS) como Google Planilha, evitando criação na raiz do Drive.
+    """
+    if not caminho_csv or not os.path.isfile(caminho_csv):
+        return None
+
+    try:
+        service = _criar_cliente_drive_sa()
+        if not service:
+            return None
+        from googleapiclient.http import MediaInMemoryUpload
+
+        with open(caminho_csv, "rb") as f:
+            csv_bytes = f.read()
+        if not csv_bytes:
+            return None
+
+        nome_sheet = os.path.splitext(os.path.basename(caminho_csv))[0]
+        nome_escapado = nome_sheet.replace("'", "\\'")
+        sheet_mime = "application/vnd.google-apps.spreadsheet"
+        media = MediaInMemoryUpload(csv_bytes, mimetype="text/csv", resumable=False)
+
+        # 1. Procura diretamente na pasta oficial do Diário
+        q_pasta = (
+            f"'{folder_id}' in parents and name = '{nome_escapado}' "
+            f"and mimeType = '{sheet_mime}' and trashed = false"
+        )
+        res_pasta = service.files().list(q=q_pasta, fields="files(id, name, webViewLink)").execute()
+        existentes = res_pasta.get("files", [])
+
+        if existentes:
+            file_id = existentes[0]["id"]
+            updated = service.files().update(fileId=file_id, media_body=media, fields="id, webViewLink").execute()
+            link = updated.get("webViewLink") or f"https://docs.google.com/spreadsheets/d/{file_id}/edit"
+            print(f"[DRIVE SA PLANILHA] Planilha diária atualizada na pasta {folder_id}: {nome_sheet} (ID: {file_id})")
+            return {"file_id": file_id, "url": link, "folder_id": folder_id}
+
+        # 2. Saneamento: caso exista na raiz do Drive, move para folder_id e atualiza
+        q_raiz = (
+            f"'root' in parents and name = '{nome_escapado}' "
+            f"and mimeType = '{sheet_mime}' and trashed = false"
+        )
+        res_raiz = service.files().list(q=q_raiz, fields="files(id, parents, webViewLink)").execute()
+        na_raiz = res_raiz.get("files", [])
+        if na_raiz:
+            file_id = na_raiz[0]["id"]
+            prev_parents = ",".join(na_raiz[0].get("parents") or ["root"])
+            moved = service.files().update(
+                fileId=file_id,
+                addParents=folder_id,
+                removeParents=prev_parents,
+                media_body=media,
+                fields="id, webViewLink"
+            ).execute()
+            link = moved.get("webViewLink") or f"https://docs.google.com/spreadsheets/d/{file_id}/edit"
+            print(f"[DRIVE SA PLANILHA] Planilha movida da raiz para pasta {folder_id}: {nome_sheet} (ID: {file_id})")
+            return {"file_id": file_id, "url": link, "folder_id": folder_id}
+
+        # 3. Cria diretamente dentro da pasta oficial (nunca na raiz)
+        meta = {
+            "name": nome_sheet,
+            "parents": [folder_id],
+            "mimeType": sheet_mime,
+        }
+        created = service.files().create(body=meta, media_body=media, fields="id, webViewLink").execute()
+        file_id = created.get("id")
+        link = created.get("webViewLink") or f"https://docs.google.com/spreadsheets/d/{file_id}/edit"
+        print(f"[DRIVE SA PLANILHA] Nova planilha criada em {folder_id}: {nome_sheet} (ID: {file_id})")
+        return {"file_id": file_id, "url": link, "folder_id": folder_id}
+    except Exception as err:
+        print(f"[AVISO] Upload da planilha diária para pasta {folder_id} falhou: {err}")
         return None
 
 KEYWORDS_EDUCACAO = [
@@ -1577,7 +1662,9 @@ def main():
     dt_ini, _ = obter_intervalo_datas()
 
     # Opção A: Planilha e webhook GAS focam nos atos relevantes à SMEB; Supabase guarda 100% do município
-    gerar_planilha_diaria_csv(lista_smeb, dt_ini)
+    caminho_csv = gerar_planilha_diaria_csv(lista_smeb, dt_ini)
+    if caminho_csv:
+        upload_planilha_diaria_drive(caminho_csv, dt_ini, FOLDER_PLANILHAS_DIARIO)
 
     if sincronizar_supabase_publicacoes(lista_final, dt_ini):
         registrar_notificacoes_femurn(lista_smeb or lista_final[:5], dt_ini)
