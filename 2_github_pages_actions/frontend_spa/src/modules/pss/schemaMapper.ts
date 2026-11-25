@@ -11,6 +11,7 @@ import {
   resolveConditionalMapping,
   type PssEdital
 } from './pssUtils';
+import { assertSafeSpreadsheetFile, sanitizeSheetRows } from '../../core/safeSpreadsheet';
 
 interface MapperState {
   headers: string[];
@@ -27,12 +28,13 @@ const mapperState: MapperState = {
 };
 
 async function parseLocalFileRows(file: File): Promise<{ headers: string[]; rows: Array<Record<string, unknown>> }> {
+  assertSafeSpreadsheetFile(file);
   const lower = file.name.toLowerCase();
   if (lower.endsWith('.csv') || lower.endsWith('.txt')) {
     const Papa = (await import('papaparse')).default;
     const text = await file.text();
     const parsed = Papa.parse<Record<string, unknown>>(text, { header: true, skipEmptyLines: true });
-    const rows = Array.isArray(parsed.data) ? parsed.data : [];
+    const rows = sanitizeSheetRows<Record<string, unknown>>(Array.isArray(parsed.data) ? parsed.data : []);
     const headers = parsed.meta?.fields || Object.keys(rows[0] || {});
     return { headers, rows };
   }
@@ -42,7 +44,9 @@ async function parseLocalFileRows(file: File): Promise<{ headers: string[]; rows
   const wb = XLSX.read(buf, { type: 'array' });
   const sheetName = wb.SheetNames[0];
   const sheet = wb.Sheets[sheetName];
-  const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '' });
+  const rows = sanitizeSheetRows<Record<string, unknown>>(
+    XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '' })
+  );
   const headers = Object.keys(rows[0] || {});
   return { headers, rows };
 }

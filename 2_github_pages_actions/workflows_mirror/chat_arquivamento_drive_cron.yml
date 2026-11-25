@@ -1,5 +1,8 @@
 name: "Olympos — Arquivamento Incremental Chat Grupos Drive"
 
+permissions:
+  contents: read
+
 on:
   schedule:
     # Aos domingos as 05:00 UTC (02:00 BRT)

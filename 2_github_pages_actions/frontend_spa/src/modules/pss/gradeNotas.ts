@@ -11,6 +11,7 @@ import {
   type PssSegmento
 } from './pssUtils';
 import type { PssInscricaoResumo } from './triagemPanel';
+import { assertSafeSpreadsheetFile, sanitizeRowsForExport, sanitizeSheetRows } from '../../core/safeSpreadsheet';
 
 export interface PssCriterioAvaliacao {
   id: string;
@@ -232,7 +233,7 @@ export function renderGradeNotasPanel(
       return base;
     });
     const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(sheetRows);
+    const ws = XLSX.utils.json_to_sheet(sanitizeRowsForExport(sheetRows));
     XLSX.utils.book_append_sheet(wb, ws, 'Notas_Banca');
     const fileName = `Banca_${edital.numero_edital.replace(/[^\w-]+/g, '_')}_${(seg?.cargo_nome || 'Geral').replace(/\s+/g, '_')}.xlsx`;
     XLSX.writeFile(wb, fileName);
@@ -242,11 +243,14 @@ export function renderGradeNotasPanel(
   container.querySelector<HTMLInputElement>('#pssImportBancaXlsxInput')?.addEventListener('change', async (ev) => {
     const file = (ev.target as HTMLInputElement).files?.[0];
     if (!file) return;
+    assertSafeSpreadsheetFile(file);
     const { crits, inscs } = getFilteredContext();
     const XLSX = await import('xlsx');
     const buf = await file.arrayBuffer();
     const wb = XLSX.read(buf, { type: 'array' });
-    const rows = XLSX.utils.sheet_to_json<Record<string, any>>(wb.Sheets[wb.SheetNames[0]], { defval: 0 });
+    const rows = sanitizeSheetRows<Record<string, any>>(
+      XLSX.utils.sheet_to_json<Record<string, any>>(wb.Sheets[wb.SheetNames[0]], { defval: 0 })
+    );
     const inscByNum = new Map(inscs.map((i) => [i.numero_inscricao, i.id]));
     const payloads: any[] = [];
     const avisos: string[] = [];

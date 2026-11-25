@@ -1,5 +1,8 @@
 name: "Olympos — Fogo de Prometheus (Monitor Diário FEMURN)"
 
+permissions:
+  contents: read
+
 on:
   schedule:
     # 03:10 UTC = 00:10 BRT (Horário de Brasília), Segunda a Sexta

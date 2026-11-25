@@ -29,19 +29,20 @@ jobs:
         with:
           enablement: true
 
-      - name: 3. Configurar Node.js 20 e Cache NPM
-        uses: actions/setup-node@v4
+      - name: 3. Configurar Node.js 22 e Cache NPM
+        uses: actions/setup-node@v6
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
           cache-dependency-path: "2_github_pages_actions/frontend_spa/package.json"
 
-      - name: 4. Instalar Dependências e Build Vite (Code Splitting)
+      - name: 4. Instalar Dependências, Auditoria NPM e Build Vite (Code Splitting)
         working-directory: "2_github_pages_actions/frontend_spa"
         env:
           VITE_CARTO_API_KEY: ${{ secrets.CARTO_API_KEY }}
         run: |
           if [ -f package-lock.json ]; then npm ci; else npm install; fi
+          npm audit --omit=dev --audit-level=high
           npm run build
 
       - name: 5. Empacotar Bundle Otimizado (dist/)

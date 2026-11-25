@@ -1,5 +1,8 @@
 name: "Olympos — Backup DR Criptografado Supabase (Semanal)"
 
+permissions:
+  contents: read
+
 on:
   schedule:
     # Domingos 06:00 UTC = 03:00 BRT (Horário de Brasília)

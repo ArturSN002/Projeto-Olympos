@@ -10,6 +10,7 @@ import '../styles/onda6.css';
 import chatHtml from '../templates/pages/chat.html?raw';
 import { subscribeChatRoomRealtime, ChatRoomSubscriptionHandle, ChatRealtimeRow } from './comunicacao/realtimeClient';
 import { chatUnreadByRoomSignal, onChatUnreadUpdated, refreshChatUnreadCounts } from '../core/chatBadge';
+import { sanitizeRowsForExport } from '../core/safeSpreadsheet';
 
 export const routeId = 'chat';
 export const htmlTemplate = chatHtml;
@@ -685,7 +686,7 @@ async function handleExportXlsxLocal(): Promise<void> {
     };
   });
 
-  const ws = XLSX.utils.json_to_sheet(rows);
+  const ws = XLSX.utils.json_to_sheet(sanitizeRowsForExport(rows));
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Historico_Chat');
   const safeName = (room.displayName || 'Chat_SMEB').replace(/[^a-zA-Z0-9_-]+/g, '_').slice(0, 40);

@@ -6,6 +6,7 @@
 import '../styles/onda3.css';
 import '../styles/relatoriosPrint.css';
 import relatoriosHtml from '../templates/pages/relatorios.html?raw';
+import { sanitizeRowsForExport } from '../core/safeSpreadsheet';
 
 export const routeId = 'relatorios';
 export const htmlTemplate = relatoriosHtml;
@@ -608,7 +609,7 @@ export function construirWorkbookRelatorioXlsx(XLSX: any, rel: RelatorioMensalNo
     { Indicador: 'SLA Médio Útil', Valor: formatarSlaMinutos(rel.slaMedioMinutos) },
     { Indicador: 'Publicações FEMURN', Valor: rel.femurnTotal }
   ];
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(resumoRows), 'Resumo');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sanitizeRowsForExport(resumoRows)), 'Resumo');
 
   const oficiosPortariasRows = [
     { Tipo: 'OFICIO', Subcategoria: 'GERAL', Quantidade: rel.oficiosTotal },
@@ -629,7 +630,9 @@ export function construirWorkbookRelatorioXlsx(XLSX: any, rel: RelatorioMensalNo
   ];
   XLSX.utils.book_append_sheet(
     wb,
-    XLSX.utils.json_to_sheet(oficiosPortariasRows.length ? oficiosPortariasRows : [{ Info: 'Sem documentos no período' }]),
+    XLSX.utils.json_to_sheet(
+      sanitizeRowsForExport(oficiosPortariasRows.length ? oficiosPortariasRows : [{ Info: 'Sem documentos no período' }])
+    ),
     'Oficios_Portarias'
   );
 
@@ -652,7 +655,7 @@ export function construirWorkbookRelatorioXlsx(XLSX: any, rel: RelatorioMensalNo
           SLA_Medio_Formatado: formatarSlaMinutos(rel.slaMedioMinutos)
         }
       ];
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(pendenciasSlaRows), 'Pendencias_SLA');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sanitizeRowsForExport(pendenciasSlaRows)), 'Pendencias_SLA');
 
   const femurnRows =
     rel.femurnLista.length > 0
@@ -669,7 +672,7 @@ export function construirWorkbookRelatorioXlsx(XLSX: any, rel: RelatorioMensalNo
               Quantidade: f.total
             }))
           : [{ Info: `Total de publicações FEMURN em ${rel.competencia}: ${rel.femurnTotal}` }]);
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(femurnRows), 'FEMURN');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sanitizeRowsForExport(femurnRows)), 'FEMURN');
 
   return wb;
 }

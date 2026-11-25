@@ -1,5 +1,8 @@
 name: "Olympos — Ingestão Vetorial Incremental do Oráculo ($0)"
 
+permissions:
+  contents: read
+
 on:
   schedule:
     # Diariamente às 04:15 BRT (07:15 UTC) — custo $0 com gemini-embedding-2 incremental por SHA-256

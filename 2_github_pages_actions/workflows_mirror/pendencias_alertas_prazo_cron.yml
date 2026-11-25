@@ -1,5 +1,8 @@
 name: "Olympos — Alertas Preventivos de Prazo (Pendências 48h/24h)"
 
+permissions:
+  contents: read
+
 on:
   schedule:
     # A cada 2h de segunda a sexta, 07h-17h BRT (10:00-20:00 UTC)

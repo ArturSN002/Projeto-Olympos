@@ -6,6 +6,7 @@
  */
 
 import '../styles/onda3.css';
+import { assertSafeSpreadsheetFile, sanitizeSheetRows } from './safeSpreadsheet';
 
 export type BatchMode = 'HOMERO' | 'ORFEU';
 
@@ -282,6 +283,7 @@ const COLUMNS_BY_MODE: Record<BatchMode, Array<{ key: string; label: string; pla
 };
 
 async function parseFileToRows(file: File, mode: BatchMode): Promise<Array<Record<string, string>>> {
+  assertSafeSpreadsheetFile(file);
   const lower = file.name.toLowerCase();
   if (lower.endsWith('.csv') || file.type === 'text/csv') {
     const PapaModule = await import('papaparse');
@@ -292,7 +294,7 @@ async function parseFileToRows(file: File, mode: BatchMode): Promise<Array<Recor
       skipEmptyLines: 'greedy',
       transformHeader: (h: string) => h.trim()
     });
-    const list = Array.isArray(parsed.data) ? parsed.data : [];
+    const list = sanitizeSheetRows<Record<string, unknown>>(Array.isArray(parsed.data) ? parsed.data : []);
     return list
       .filter((r) => r && Object.values(r).some((v) => String(v ?? '').trim() !== ''))
       .map((r) => mapRawRowToMode(r, mode));
@@ -305,7 +307,9 @@ async function parseFileToRows(file: File, mode: BatchMode): Promise<Array<Recor
     const firstSheetName = wb.SheetNames[0];
     if (!firstSheetName) return [];
     const sheet = wb.Sheets[firstSheetName];
-    const jsonRows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '', raw: false });
+    const jsonRows = sanitizeSheetRows<Record<string, unknown>>(
+      XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: '', raw: false })
+    );
     return jsonRows
       .filter((r) => r && Object.values(r).some((v) => String(v ?? '').trim() !== ''))
       .map((r) => mapRawRowToMode(r, mode));

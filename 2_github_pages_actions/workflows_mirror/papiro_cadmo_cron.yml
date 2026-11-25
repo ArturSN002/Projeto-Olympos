@@ -1,5 +1,8 @@
 name: "Olympos — O Papiro de Cadmo (ETL Mensal de Servidores RN)"
 
+permissions:
+  contents: read
+
 on:
   schedule:
     # Executa todo dia 12 às 03:00 UTC (após fechamento das folhas municipais e SEEC/RN)

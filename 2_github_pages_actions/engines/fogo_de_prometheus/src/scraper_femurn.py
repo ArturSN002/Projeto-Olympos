@@ -772,7 +772,7 @@ def listar_orgaos_entidade(page, entidade_alvo: str) -> list[str]:
 
 def carregar_codigos_ja_catalogados_ia(supabase_url: str | None = None, service_key: str | None = None) -> set[str]:
     """Consulta no Supabase quais codigo_femurn já possuem catalogado_por_ia=true para evitar reuso de cota."""
-    url_base = _normalizar_supabase_url(supabase_url or os.getenv("SUPABASE_URL"))
+    url_base = _normalize_supabase_url(supabase_url or os.getenv("SUPABASE_URL"))
     key = (service_key or os.getenv("SUPABASE_SERVICE_ROLE_KEY") or "").strip()
     if not url_base or not key or not hasattr(requests, "get"):
         return set()
