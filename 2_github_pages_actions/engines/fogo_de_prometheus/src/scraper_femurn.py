@@ -483,13 +483,60 @@ def formatar_data_por_extenso(data_str):
     return str(data_str)
 
 
+def extrair_titulo_h5_materia(html_str: str) -> str:
+    """Extrai o título oficial da matéria a partir do <h5> dentro de <div id='materia'> na página FEMURN."""
+    if not html_str or not isinstance(html_str, str):
+        return ""
+    raw_h5 = ""
+    if BeautifulSoup is not None:
+        try:
+            soup = BeautifulSoup(html_str, "html.parser")
+            h5_el = (
+                soup.select_one("div#materia h5")
+                or soup.select_one("div.materia h5")
+                or soup.select_one("div.documento__corpo h5")
+            )
+            if h5_el is not None:
+                raw_h5 = h5_el.get_text(" ", strip=True)
+        except Exception:
+            raw_h5 = ""
+    if not raw_h5:
+        m_div = re.search(
+            r'<div[^>]+id=["\']materia["\'][^>]*>[\s\S]{0,1200}?<h5[^>]*>([\s\S]*?)</h5>',
+            html_str,
+            re.IGNORECASE,
+        )
+        if not m_div:
+            m_div = re.search(
+                r'<div[^>]+class=["\'][^"\']*\bmateria\b[^"\']*["\'][^>]*>[\s\S]{0,1200}?<h5[^>]*>([\s\S]*?)</h5>',
+                html_str,
+                re.IGNORECASE,
+            )
+        if m_div:
+            raw_h5 = re.sub(r"<[^>]+>", " ", m_div.group(1))
+    clean = re.sub(r"\s+", " ", str(raw_h5 or "")).strip()
+    return clean[:240]
+
+
+def sanitizar_nome_arquivo_materia(titulo: str, cod_id: str = "") -> str:
+    """Sanitiza o título oficial (h5) para nome de arquivo PDF seguro no Drive/SO."""
+    base = re.sub(r'[\\/:*?"<>|\r\n\t]+', " - ", str(titulo or ""))
+    base = re.sub(r"\s{2,}", " ", base)
+    base = re.sub(r"(?:\s*-\s*){2,}", " - ", base).strip(" .-_")
+    if not base:
+        base = f"Materia_FEMURN_{cod_id}" if cod_id else "Materia_FEMURN"
+    if len(base) > 140:
+        base = base[:140].rstrip(" .-_")
+    return f"{base}.pdf"
+
+
 def formatar_nome_arquivo_oficial(categoria, numero_ato, data_circulacao, orgao="SMEB", cod_id=""):
     """
-    Padroniza o nome do arquivo oficial capturado no Diário Oficial.
+    Padroniza o nome do arquivo oficial capturado no Diário Oficial (fallback quando <h5> não está disponível).
     Exemplo: 'Portaria - SMEB nº 163 de 29 de Outubro de 2026.pdf'
     """
     cat_upper = str(categoria or "").upper()
-    tipo = "Portaria"
+    tipo = "Ato Oficial"
     if "REPUBLIC" in cat_upper:
         tipo = "Republicação"
     elif "TERMO_JUSTIFICATIVA" in cat_upper or "JUSTIFICATIVA" in cat_upper:
@@ -502,18 +549,18 @@ def formatar_nome_arquivo_oficial(categoria, numero_ato, data_circulacao, orgao=
         tipo = "Decreto"
     elif "LEI" in cat_upper:
         tipo = "Lei"
+    elif "NORMATIVO" in cat_upper:
+        tipo = "Ato Normativo"
     elif "RESOLU" in cat_upper:
         tipo = "Resolução"
     elif "AVISO" in cat_upper:
         tipo = "Aviso"
     elif "PARECER" in cat_upper:
         tipo = "Parecer"
-    elif "OUTRO" in cat_upper:
-        tipo = "Ato Oficial"
-    elif "PERMUTA" in cat_upper:
+    elif "PORTARIA" in cat_upper or "PERMUTA" in cat_upper or "NOMEACAO" in cat_upper or "DIRETOR" in cat_upper:
         tipo = "Portaria"
-    elif "NOMEACAO" in cat_upper or "DIRETOR" in cat_upper:
-        tipo = "Portaria"
+    elif "GABINETE" in cat_upper:
+        tipo = "Ato do Gabinete"
 
     orgao_str = str(orgao or "SMEB").strip()
     orgao_norm = normalizar_texto_sem_acentos(orgao_str)
@@ -988,13 +1035,15 @@ def executar_ciclo_pesquisa(
 
             texto_html = ""
             pdf_bytes = b""
+            titulo_h5 = ""
 
             # 6.1 Tenta buscar a versão HTML de visualização (/femurn/materia/CODIGO) se disponível
             url_vis = url_mat.replace("/download/materia/", "/materia/")
             url_dl = url_mat if "/download/materia/" in url_mat else url_mat.replace("/materia/", "/download/materia/")
 
-            # Busca via cliente HTTP do contexto Playwright (não dispara erro net::ERR_ABORTED de navegação)
-            for candidate_url in ([url_dl, url_vis] if url_dl != url_vis else [url_mat]):
+            # Busca via cliente HTTP do contexto Playwright (prioriza /materia/ para extrair div#materia > h5)
+            candidate_urls = [url_vis, url_dl] if url_dl != url_vis else [url_mat]
+            for candidate_url in candidate_urls:
                 try:
                     resp = page.request.get(candidate_url, timeout=30000)
                     if not resp.ok:
@@ -1006,6 +1055,9 @@ def executar_ciclo_pesquisa(
                         pdf_bytes = raw_bytes
                     elif b"<html" in raw_bytes[:800].lower() or b"<!doctype" in raw_bytes[:800].lower() or "html" in ct:
                         html_str = raw_bytes.decode("utf-8", errors="replace")
+                        cand_h5 = extrair_titulo_h5_materia(html_str)
+                        if cand_h5 and (not titulo_h5 or len(cand_h5) > len(titulo_h5)):
+                            titulo_h5 = cand_h5
                         if BeautifulSoup is not None:
                             soup = BeautifulSoup(html_str, "html.parser")
                             texto_extraido = soup.get_text(separator="\n", strip=True)
@@ -1065,7 +1117,7 @@ def executar_ciclo_pesquisa(
             else:
                 cod_id = datetime.now().strftime("%H%M%S")
 
-            # Extrair primeira linha relevante como título do ato
+            # Extrair título oficial prioritariamente do <h5> dentro de div#materia
             match_titulo = re.search(
                 r"((?:REPUBLICA[ÇC][ÃA]O(?:\s+POR\s+INCORRE[ÇC][ÃA]O)?|REPUBLICAD[OA](?:\s+POR\s+INCORRE[ÇC][ÃA]O)?|"
                 r"PORTARIA|EDITAL|DECRETO|LEI|EXTRATO|AVISO|TERMO|RESOLU[ÇC][ÃA]O)"
@@ -1074,7 +1126,7 @@ def executar_ciclo_pesquisa(
                 texto_integral,
                 re.IGNORECASE
             )
-            titulo_ato = match_titulo.group(1).strip()[:100] if match_titulo else f"Ato_FEMURN_{cod_id}"
+            titulo_ato = titulo_h5 or (match_titulo.group(1).strip()[:180] if match_titulo else f"Ato_FEMURN_{cod_id}")
 
             pdf_b64 = base64.b64encode(pdf_bytes).decode("utf-8") if pdf_bytes else ""
             categoria = classificar_tipo_ato(f"{titulo_ato} {texto_integral[:600]}", orgao_origem=orgao_alvo or "")
@@ -1132,16 +1184,21 @@ def executar_ciclo_pesquisa(
                         if mat_ia not in (entidades_ner.get("matriculas") or []):
                             entidades_ner.setdefault("matriculas", []).append(mat_ia)
 
-            # Padronização Oficial de Título e Nome de Arquivo
-            nome_arq, tit_oficial = formatar_nome_arquivo_oficial(
-                categoria=categoria,
-                numero_ato=entidades_ner.get("numero_ato"),
-                data_circulacao=data_circ_item,
-                orgao=secretaria_origem or orgao_alvo or "SMEB",
-                cod_id=cod_id
-            )
-            if ia_meta and ia_meta.get("titulo_canonico"):
-                tit_oficial = ia_meta["titulo_canonico"]
+            # Padronização de Título e Nome de Arquivo:
+            # Sempre prioriza o <h5> extraído de div#materia quando disponível; não sobrescreve por "Portaria - ...".
+            if titulo_h5:
+                tit_oficial = titulo_h5
+                nome_arq = sanitizar_nome_arquivo_materia(titulo_h5, cod_id=cod_id)
+            else:
+                nome_arq, tit_oficial = formatar_nome_arquivo_oficial(
+                    categoria=categoria,
+                    numero_ato=entidades_ner.get("numero_ato"),
+                    data_circulacao=data_circ_item,
+                    orgao=secretaria_origem or orgao_alvo or "SMEB",
+                    cod_id=cod_id
+                )
+                if ia_meta and ia_meta.get("titulo_canonico"):
+                    tit_oficial = ia_meta["titulo_canonico"]
 
             # Upload de PDFs no Drive: SMEB para pastas da Educação; Portarias/Atos normativos de outras secretarias para 1XpO4...
             url_drive_sa = ""
@@ -1226,8 +1283,9 @@ def _assinar_payload_webhook_gas(payload_base: dict, token: str, action: str = "
     return assinado
 
 
-def enviar_lotes_webhook(webhook_url, token, dt_ini, lista_final):
-    """Envia as publicações em lotes (chunks) com retry para evitar estouro de payload/timeout no GAS."""
+def enviar_lotes_webhook(webhook_url, token, dt_ini, lista_final) -> dict:
+    """Envia as publicações em lotes (chunks) ao GAS e retorna mapa codigo -> urlDrive gerado."""
+    urls_drive_por_codigo = {}
     if not lista_final:
         payload_vazio = _assinar_payload_webhook_gas(
             {
@@ -1240,7 +1298,7 @@ def enviar_lotes_webhook(webhook_url, token, dt_ini, lista_final):
         )
         resp = requests.post(webhook_url, json=payload_vazio, timeout=90)
         print(f"[WEBHOOK GAS - Lote Vazio] Status {resp.status_code}: {resp.text}")
-        return
+        return urls_drive_por_codigo
 
     for idx in range(0, len(lista_final), MAX_PDFS_POR_LOTE_WEBHOOK):
         fatia = lista_final[idx:idx + MAX_PDFS_POR_LOTE_WEBHOOK]
@@ -1264,6 +1322,13 @@ def enviar_lotes_webhook(webhook_url, token, dt_ini, lista_final):
                             f"[WEBHOOK GAS AVISO] GAS rejeitou lote ({data_resp.get('code') or 'ERR'}): "
                             f"{data_resp.get('mensagem') or 'verifique OLYMPOS_SECRET_TOKEN entre GitHub e ScriptProperties'}"
                         )
+                    elif isinstance(data_resp, dict) and isinstance(data_resp.get("detalhes"), list):
+                        for det in data_resp["detalhes"]:
+                            if isinstance(det, dict):
+                                c_det = str(det.get("codigo") or "").strip().upper()
+                                u_det = str(det.get("urlDrive") or det.get("url_drive") or "").strip()
+                                if c_det and u_det:
+                                    urls_drive_por_codigo[c_det] = u_det
                 except Exception:
                     pass
                 break
@@ -1271,6 +1336,8 @@ def enviar_lotes_webhook(webhook_url, token, dt_ini, lista_final):
                 print(f"[AVISO] Falha na tentativa {tentativa}/3 de envio ao Webhook: {err}")
                 if tentativa < 3:
                     time.sleep(3 * tentativa)
+
+    return urls_drive_por_codigo
 
 
 def _normalize_supabase_url(raw_url: str | None) -> str:
@@ -1337,8 +1404,6 @@ def sincronizar_supabase_publicacoes(publicacoes: list, dt_referencia: str) -> b
             "matriculas": matriculas,
             "url_drive": url_drive,
             "url_planilha_backup": url_backup_sheet,
-            "resumo": str(pub.get("resumo_ia") or pub.get("resumo_texto") or "")[:1000] if (pub.get("resumo_ia") or pub.get("resumo_texto")) else "",
-            "texto_completo": str(pub.get("texto_completo") or pub.get("resumo_texto") or "")[:12000] if (pub.get("texto_completo") or pub.get("resumo_texto")) else "",
             "escopo_orgao": str(pub.get("escopo_orgao") or "SMEB"),
             "secretaria_origem": str(pub.get("secretaria_origem") or pub.get("orgao") or "SMEB"),
             "relevancia_smeb": bool(pub.get("relevancia_smeb", True)),
@@ -1683,6 +1748,30 @@ def main():
 
     dt_ini, _ = obter_intervalo_datas()
 
+    webhook_url = os.getenv("GAS_WEBHOOK_URL")
+    token = os.getenv("OLYMPOS_SECRET_TOKEN")
+    chat_webhook_url = os.getenv("GOOGLE_CHAT_WEBHOOK_URL", "").strip()
+
+    # Envia primeiro ao Webhook GAS para obter URLs reais do Google Drive antes de persistir no CSV/Supabase
+    if webhook_url:
+        urls_gas = enviar_lotes_webhook(webhook_url, token, dt_ini, lista_smeb) or {}
+        if urls_gas:
+            for pub in lista_final:
+                cod_u = str(pub.get("codigo_identificador") or "").strip().upper()
+                if cod_u and not pub.get("url_drive") and urls_gas.get(cod_u):
+                    pub["url_drive"] = urls_gas[cod_u]
+    else:
+        payload = {
+            "token": token,
+            "modulo": "fogo_prometheus",
+            "data_referencia": dt_ini,
+            "total_publicacoes": len(lista_final),
+            "total_smeb": len(lista_smeb),
+            "total_outros_municipais": total_outros_municipais,
+            "publicacoes": lista_final
+        }
+        print(json.dumps(payload, indent=2, ensure_ascii=False))
+
     # Opção A: Planilha e webhook GAS focam nos atos relevantes à SMEB; Supabase guarda 100% do município
     caminho_csv = gerar_planilha_diaria_csv(lista_smeb, dt_ini)
     if caminho_csv:
@@ -1707,24 +1796,6 @@ def main():
             )
     except Exception as err_radar:
         print(f"[RADAR PREDITIVO AVISO] Execução opcional falhou sem bloquear scraper: {err_radar}")
-
-    webhook_url = os.getenv("GAS_WEBHOOK_URL")
-    token = os.getenv("OLYMPOS_SECRET_TOKEN")
-    chat_webhook_url = os.getenv("GOOGLE_CHAT_WEBHOOK_URL", "").strip()
-
-    if webhook_url:
-        enviar_lotes_webhook(webhook_url, token, dt_ini, lista_smeb)
-    else:
-        payload = {
-            "token": token,
-            "modulo": "fogo_prometheus",
-            "data_referencia": dt_ini,
-            "total_publicacoes": len(lista_final),
-            "total_smeb": len(lista_smeb),
-            "total_outros_municipais": total_outros_municipais,
-            "publicacoes": lista_final
-        }
-        print(json.dumps(payload, indent=2, ensure_ascii=False))
 
     # Sugestão 3.4.3: Enviar resumo executivo SMEB + nota de atos municipais gerais para o Google Chat
     if chat_webhook_url:

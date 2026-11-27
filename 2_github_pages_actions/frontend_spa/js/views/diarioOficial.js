@@ -313,7 +313,7 @@ window.OlymposViews.diarioOficial = (function() {
 
       if (stElem) {
         stElem.textContent = sw.webhookAtivo
-          ? 'Atualizações Diárias Ativas (00:10 BRT)'
+          ? 'Atualizações Diárias Ativas (06h–08h BRT)'
           : 'Acervo do Diário Oficial Conectado • Base Atualizada';
       }
       if (lrElem) {

@@ -1,20 +1,22 @@
 /**
  * Guarda de Sessão Zero-Trust:
- * 1. Timeout por inatividade (30 min para MODERADOR/ADMIN_GABINETE; 60 min demais perfis) c/ aviso 2 min antes.
- * 2. Bloqueio progressivo contra tentativas inválidas de login.
- * 3. Registro de sessões ativas e revogação global ("Encerrar em todos os dispositivos").
+ * 1. Timeout por inatividade (mínimo 6h: 6h para MODERADOR/ADMIN_GABINETE; 8h demais perfis) c/ aviso 5 min antes.
+ * 2. Verificação real por timestamp (`visibilitychange` + guarda contra suspensão de aba).
+ * 3. Bloqueio progressivo contra tentativas inválidas de login e revogação global de sessões.
  */
 
-const IDLE_MS_CRITICAL = 30 * 60 * 1000;
-const IDLE_MS_STANDARD = 60 * 60 * 1000;
-const WARNING_BEFORE_MS = 2 * 60 * 1000;
+const IDLE_MS_CRITICAL = 6 * 60 * 60 * 1000; // 6 horas (mínimo exigido)
+const IDLE_MS_STANDARD = 8 * 60 * 60 * 1000; // 8 horas para perfis operacionais
+const WARNING_BEFORE_MS = 5 * 60 * 1000; // aviso 5 minutos antes
 const LOCKOUT_STORAGE_KEY = 'olympos_login_attempts_v1';
 
 let idleTimer: ReturnType<typeof setTimeout> | null = null;
 let warnTimer: ReturnType<typeof setTimeout> | null = null;
 let monitoringActive = false;
+let listenersBound = false;
 let lastActivityTs = Date.now();
 let currentIdleLimitMs = IDLE_MS_STANDARD;
+let warningShownForCycle = false;
 
 function isCriticalRole(role?: string | null): boolean {
   const r = String(role || '').trim().toUpperCase();
@@ -32,48 +34,87 @@ function clearTimers(): void {
   }
 }
 
+function executarLogoutPorInatividade(): void {
+  const app = (window as any).OlymposApp;
+  monitoringActive = false;
+  clearTimers();
+  if (app && typeof app.showToast === 'function') {
+    app.showToast('Sessão encerrada automaticamente após período de inatividade.', true);
+  }
+  if (app && typeof app.fazerLogout === 'function') {
+    app.fazerLogout();
+  }
+}
+
 function scheduleIdleChecks(): void {
   clearTimers();
   if (!monitoringActive) return;
 
-  const warnDelay = Math.max(1000, currentIdleLimitMs - WARNING_BEFORE_MS);
-  warnTimer = setTimeout(() => {
-    const app = (window as any).OlymposApp;
-    if (app && typeof app.showToast === 'function') {
-      app.showToast('Sessão expirará em 2 minutos por inatividade. Interaja para manter o acesso.', true);
+  const elapsed = Math.max(0, Date.now() - lastActivityTs);
+  const remaining = Math.max(0, currentIdleLimitMs - elapsed);
+  if (remaining === 0) {
+    executarLogoutPorInatividade();
+    return;
+  }
+
+  const warnDelay = remaining - WARNING_BEFORE_MS;
+  if (!warningShownForCycle) {
+    if (warnDelay <= 0) {
+      warningShownForCycle = true;
+      const app = (window as any).OlymposApp;
+      if (app && typeof app.showToast === 'function') {
+        app.showToast('Sessão expirará em menos de 5 minutos por inatividade. Interaja para manter o acesso.', true);
+      }
+    } else {
+      warnTimer = setTimeout(() => {
+        if (!monitoringActive) return;
+        warningShownForCycle = true;
+        const app = (window as any).OlymposApp;
+        if (app && typeof app.showToast === 'function') {
+          app.showToast('Sessão expirará em 5 minutos por inatividade. Interaja para manter o acesso.', true);
+        }
+      }, warnDelay);
     }
-  }, warnDelay);
+  }
 
   idleTimer = setTimeout(() => {
-    const app = (window as any).OlymposApp;
-    monitoringActive = false;
-    clearTimers();
-    if (app && typeof app.showToast === 'function') {
-      app.showToast('Sessão encerrada automaticamente por inatividade.', true);
+    if (!monitoringActive) return;
+    // Confere tempo real decorrido para evitar falsos logouts em caso de drift/suspensão
+    const realElapsed = Date.now() - lastActivityTs;
+    if (realElapsed < currentIdleLimitMs - 1000) {
+      scheduleIdleChecks();
+      return;
     }
-    if (app && typeof app.fazerLogout === 'function') {
-      app.fazerLogout();
-    }
-  }, currentIdleLimitMs);
+    executarLogoutPorInatividade();
+  }, remaining);
 }
 
 function onUserActivity(): void {
   const now = Date.now();
   if (now - lastActivityTs < 5000) return;
   lastActivityTs = now;
+  warningShownForCycle = false;
   if (monitoringActive) {
     scheduleIdleChecks();
   }
 }
 
+function onVisibilityChange(): void {
+  if (!monitoringActive || typeof document === 'undefined' || document.visibilityState !== 'visible') return;
+  scheduleIdleChecks();
+}
+
 export function startIdleMonitor(role?: string | null): void {
   currentIdleLimitMs = isCriticalRole(role) ? IDLE_MS_CRITICAL : IDLE_MS_STANDARD;
   lastActivityTs = Date.now();
+  warningShownForCycle = false;
 
-  if (!monitoringActive && typeof document !== 'undefined') {
+  if (!listenersBound && typeof document !== 'undefined') {
+    listenersBound = true;
     ['mousemove', 'keydown', 'click', 'touchstart', 'scroll'].forEach((evt) => {
       document.addEventListener(evt, onUserActivity, { passive: true });
     });
+    document.addEventListener('visibilitychange', onVisibilityChange);
   }
   monitoringActive = true;
   scheduleIdleChecks();

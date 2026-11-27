@@ -246,7 +246,15 @@ def chamar_modelo_google_ai(
             }
             return st, txt, tokens
         if st == 429:
+            print(f"[IA-CATALOGER] Modelo {modelo} retornou HTTP 429 (rate limit).")
             return 429, "", {"in": 0, "out": 0}
+        err_snippet = ""
+        try:
+            err_snippet = json.dumps(data, ensure_ascii=False) if isinstance(data, dict) else str(data or "")
+        except Exception:
+            err_snippet = str(data or "")
+        err_snippet = err_snippet.replace(api_key, "***") if api_key else err_snippet
+        print(f"[IA-CATALOGER] Modelo {modelo} retornou HTTP {st}: {err_snippet[:220]}")
         if st >= 500 and tentativa == 0:
             sleep_fn(1.0)
             continue

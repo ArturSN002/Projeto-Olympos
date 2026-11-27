@@ -146,8 +146,9 @@ function montarShellAcervo(root: HTMLElement, st: AcervoInstanceState): void {
         '</select>' +
         `<select id="${prefix}-pagesize" class="input-clean acervo-select" aria-label="Itens por página" title="Quantidade por página">` +
           '<option value="25">25 por página</option>' +
-          '<option value="50" selected>50 por página</option>' +
-          '<option value="100">100 por página</option>' +
+          '<option value="50">50 por página</option>' +
+          '<option value="100" selected>100 por página</option>' +
+          '<option value="1000">Todos (até 1000)</option>' +
         '</select>' +
       '</div>' +
       '<div class="acervo-actions-bar">' +
@@ -344,11 +345,20 @@ function renderizarTabela(st: AcervoInstanceState): void {
       : `--/${row.ano || 2026}`;
     const subcatLbl = SUBCATEGORIA_LABELS[row.subcategoria] || row.subcategoria;
     const siglaSetorLbl = row.sigla_setor || row.setor_codigo || 'GS';
-    const docsUrl = sanitizarUrlSegura(row.drive_url);
+    const isGdoc = !row.mime_type || row.mime_type === 'application/vnd.google-apps.document';
+    const fallbackView = row.drive_file_id
+      ? (isGdoc
+        ? `https://docs.google.com/document/d/${encodeURIComponent(row.drive_file_id)}/edit`
+        : `https://drive.google.com/file/d/${encodeURIComponent(row.drive_file_id)}/view`)
+      : '';
+    const docsUrl = sanitizarUrlSegura(row.drive_url || fallbackView);
     const fallbackPdf = row.drive_file_id
-      ? `https://docs.google.com/document/d/${encodeURIComponent(row.drive_file_id)}/export?format=pdf`
+      ? (isGdoc
+        ? `https://docs.google.com/document/d/${encodeURIComponent(row.drive_file_id)}/export?format=pdf`
+        : `https://drive.google.com/uc?export=download&id=${encodeURIComponent(row.drive_file_id)}`)
       : '';
     const pdfUrl = sanitizarUrlSegura(row.pdf_export_url || fallbackPdf);
+    const openLabel = isGdoc ? 'Abrir Docs' : (String(row.mime_type || '').includes('pdf') ? 'Abrir PDF' : 'Abrir Arquivo');
     const dataFmt = formatarDataHoraCurta(row.modificado_em || row.criado_em || row.sincronizado_em);
     const detalheSec = [row.destinatario_ou_servidor, row.assunto_ou_titulo]
       .filter((v) => Boolean(v && String(v).trim()))
@@ -365,8 +375,8 @@ function renderizarTabela(st: AcervoInstanceState): void {
       `<td data-label="Data">${esc(dataFmt)}</td>` +
       '<td data-label="Ações" class="text-right">' +
         '<div style="display: inline-flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end;">' +
-          (docsUrl ? `<a href="${esc(docsUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">Abrir Docs</a>` : '') +
-          (pdfUrl ? `<a href="${esc(pdfUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm">PDF</a>` : '') +
+          (docsUrl ? `<a href="${esc(docsUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">${esc(openLabel)}</a>` : '') +
+          (pdfUrl && pdfUrl !== docsUrl ? `<a href="${esc(pdfUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-sm">${isGdoc ? 'PDF' : 'Baixar'}</a>` : '') +
           (docsUrl ? `<button type="button" class="btn btn-ghost btn-sm" data-copy-doc-url="${esc(docsUrl)}" data-copy-doc-label="${esc(row.nome_arquivo)}">Copiar Link</button>` : '') +
         '</div>' +
       '</td>' +
@@ -572,7 +582,14 @@ function executarSyncDrive(st: AcervoInstanceState): void {
         syncBtn.textContent = 'Sincronizar Drive agora';
       }
       if (res && res.ok) {
-        window.OlymposApp?.showToast?.(res.mensagem || 'Acervo sincronizado com sucesso!');
+        const encontrados = Number(res.encontrados ?? res.sincronizados ?? 0);
+        const sincronizados = Number(res.sincronizados ?? 0);
+        const msg = res.mensagem || `${encontrados} encontrado(s), ${sincronizados} sincronizado(s) com sucesso!`;
+        const houveIncompleto = Array.isArray(res.detalhes) && res.detalhes.some((d: any) => d && d.incompleto);
+        window.OlymposApp?.showToast?.(
+          houveIncompleto ? `${msg} (Varredura parcial por limite de tempo; clique novamente para continuar.)` : msg,
+          false
+        );
         st.page = 1;
         void consultarDocumentos(st);
       } else {
@@ -599,7 +616,7 @@ export function mountDocumentosAcervo(config: AcervoMountConfig): void {
     st = {
       config,
       page: 1,
-      pageSize: 50,
+      pageSize: 100,
       total: 0,
       searchTerm: '',
       subcategoria: 'TODAS',
@@ -614,6 +631,21 @@ export function mountDocumentosAcervo(config: AcervoMountConfig): void {
       debounceTimer: null
     };
     instances.set(config.containerId, st);
+  }
+
+  // Reavalia permissão de setor dinamicamente ao montar (evita travar em setor incorreto antes da hidratação RBAC)
+  const rbac = (window as any).OlymposRbac;
+  const canViewAllSectors = Boolean(
+    rbac && (rbac.isModerador?.() || rbac.temPermissao?.('oficios.ver_todos_setores'))
+  );
+  const meuSetor = (rbac && rbac.getSetorAtual?.()) || 'GABINETE';
+  const hadSetorSelect = Boolean(document.getElementById(`acervo-${config.tipo.toLowerCase()}-setor`));
+
+  if (config.tipo === 'OFICIO' && !canViewAllSectors) {
+    st.setorFiltro = meuSetor === 'MODERADOR' ? 'TODOS' : meuSetor;
+  } else if (config.tipo === 'OFICIO' && canViewAllSectors && !hadSetorSelect) {
+    st.setorFiltro = 'TODOS';
+    delete root.dataset.acervoMounted;
   }
 
   if (!root.dataset.acervoMounted) {

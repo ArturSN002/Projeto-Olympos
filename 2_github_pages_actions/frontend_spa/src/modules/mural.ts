@@ -60,6 +60,7 @@ let currentUserId = '';
 let currentUserRole = '';
 let currentUserDept = '';
 let mounted = false;
+let mountInFlight: Promise<void> | null = null;
 
 function esc(v: unknown): string {
   if (window.OlymposApp && typeof window.OlymposApp.escapeHtml === 'function') {
@@ -108,7 +109,12 @@ function showToast(msg: string, isErr = false): void {
 }
 
 function canModerateGabinete(): boolean {
-  return currentUserRole === 'MODERADOR' || currentUserRole === 'ADMIN_GABINETE';
+  const rbac = window.OlymposRbac;
+  if (rbac && (rbac.isModerador?.() || rbac.temPermissao?.('mural.moderar'))) {
+    return true;
+  }
+  const roleUp = currentUserRole.toUpperCase();
+  return roleUp === 'MODERADOR' || roleUp === 'ADMIN_GABINETE';
 }
 
 async function resolveSessionIdentity(): Promise<void> {
@@ -165,10 +171,17 @@ function applyFiltersAndRender(): void {
   }
 
   if (filtered.length === 0) {
+    const emptyMsg = allItems.length === 0
+      ? 'Nenhuma publicação registrada no Mural ainda. Crie o primeiro comunicado da equipe!'
+      : 'Nenhuma publicação encontrada para o filtro selecionado.';
     gridEl.innerHTML =
       '<div class="surface-card" style="grid-column: 1 / -1; text-align: center; padding: 32px;">' +
-        '<p class="page-subtitle" style="margin: 0;">Nenhuma publicação encontrada para o filtro selecionado.</p>' +
+        `<p class="page-subtitle" style="margin: 0 0 12px 0;">${emptyMsg}</p>` +
+        '<button type="button" id="btnMuralEmptyNovaPub" class="btn btn-primary btn-sm">+ Nova Publicação</button>' +
       '</div>';
+    document.getElementById('btnMuralEmptyNovaPub')?.addEventListener('click', () => {
+      openNovaPublicacaoModal();
+    });
     return;
   }
 
@@ -270,6 +283,17 @@ async function fetchMuralFeed(): Promise<void> {
 
   if (error) {
     if (statusEl) statusEl.textContent = 'Não foi possível carregar o feed do Mural.';
+    const gridEl = document.getElementById('muralFeedGrid');
+    if (gridEl) {
+      gridEl.innerHTML =
+        '<div class="surface-card" style="grid-column: 1 / -1; text-align: center; padding: 32px;">' +
+          `<p class="page-subtitle" style="margin: 0 0 12px 0; color: var(--danger);">Erro ao carregar o Mural: ${esc(error.message)}</p>` +
+          '<button type="button" id="btnMuralTentarNovamente" class="btn btn-secondary btn-sm">Tentar novamente</button>' +
+        '</div>';
+      document.getElementById('btnMuralTentarNovamente')?.addEventListener('click', () => {
+        void fetchMuralFeed();
+      });
+    }
     showToast('Erro ao carregar Mural: ' + error.message, true);
     return;
   }
@@ -328,6 +352,11 @@ function openNovaPublicacaoModal(prefill?: { titulo?: string; resumo?: string; c
 
   if (flagsWrap) {
     flagsWrap.classList.toggle('hidden', !canModerateGabinete());
+  }
+
+  const escopoEl = document.getElementById('muralSelectEscopo') as HTMLSelectElement | null;
+  if (kioskCheck && escopoEl) {
+    kioskCheck.disabled = escopoEl.value !== 'GERAL_SMEB';
   }
 
   window.OlymposModalManager?.openModal?.(modal);
@@ -507,6 +536,16 @@ function bindEventsOnce(): void {
     void handleSubmitPublicacao(ev);
   });
 
+  document.getElementById('muralSelectEscopo')?.addEventListener('change', (ev) => {
+    const val = ((ev.target as HTMLSelectElement | null)?.value || '').toUpperCase();
+    const kioskEl = document.getElementById('muralCheckKiosk') as HTMLInputElement | null;
+    if (kioskEl) {
+      const onlyGeneral = val === 'GERAL_SMEB';
+      kioskEl.disabled = !onlyGeneral;
+      if (!onlyGeneral) kioskEl.checked = false;
+    }
+  });
+
   page.querySelectorAll<HTMLButtonElement>('[data-mural-filter]').forEach((btn) => {
     btn.addEventListener('click', () => {
       activeFilter = (btn.dataset.muralFilter as MuralScopeFilter) || 'TODOS';
@@ -556,12 +595,20 @@ async function refreshMuralData(): Promise<void> {
 }
 
 export async function mount(): Promise<void> {
+  if (mountInFlight) return mountInFlight;
   mounted = true;
   bindEventsOnce();
-  await refreshMuralData();
-  if (mounted) {
-    consumeChatPrefill();
-  }
+  mountInFlight = (async () => {
+    try {
+      await refreshMuralData();
+      if (mounted) {
+        consumeChatPrefill();
+      }
+    } finally {
+      mountInFlight = null;
+    }
+  })();
+  return mountInFlight;
 }
 
 export function unmount(): void {

@@ -10,6 +10,7 @@ interface ModalStackEntry {
 }
 
 const activeStack: ModalStackEntry[] = [];
+const closingModals = new WeakSet<HTMLElement>();
 let observer: MutationObserver | null = null;
 let initialized = false;
 
@@ -103,7 +104,7 @@ export function getActiveModal(): HTMLElement | null {
   return activeStack[activeStack.length - 1].el;
 }
 
-export function closeModal(el?: HTMLElement | null): void {
+export function closeModal(el?: HTMLElement | null, opts?: { viaCloseButton?: boolean }): void {
   const target = el || getActiveModal();
   if (!target) return;
 
@@ -111,14 +112,23 @@ export function closeModal(el?: HTMLElement | null): void {
     return;
   }
 
-  // Aciona botão de fechamento nativo do modal quando disponível para preservar cleanup específico
-  const closeBtn = target.querySelector<HTMLElement>(
-    '#btnFecharNotifDrawer, #btnFecharModalAtalhos, #closeSetupModalBtn, #closeLoginScreenXBtn, #closeLoginModalBtn, .icon-capsule-btn[aria-label*="Fechar"], button[aria-label*="Fechar"], .modal-close-btn'
-  );
-  if (closeBtn && typeof closeBtn.click === 'function') {
-    closeBtn.click();
-    syncVisibleModals();
-    return;
+  // Evita recursão infinita quando o handler do botão .modal-close-btn chama closeModal(modal)
+  if (opts?.viaCloseButton && !closingModals.has(target)) {
+    const closeBtn = target.querySelector<HTMLElement>(
+      '#btnFecharNotifDrawer, #btnFecharModalAtalhos, #closeSetupModalBtn, #closeLoginScreenXBtn, #closeLoginModalBtn, .icon-capsule-btn[aria-label*="Fechar"], button[aria-label*="Fechar"], .modal-close-btn'
+    );
+    if (closeBtn && typeof closeBtn.click === 'function') {
+      closingModals.add(target);
+      try {
+        closeBtn.click();
+      } finally {
+        closingModals.delete(target);
+      }
+      if (!isElementVisible(target)) {
+        syncVisibleModals();
+        return;
+      }
+    }
   }
 
   target.classList.add('hidden');
@@ -186,7 +196,7 @@ function handleKeyDown(ev: KeyboardEvent): void {
     if (topModal.getAttribute('data-non-dismissible') !== 'true') {
       ev.preventDefault();
       ev.stopPropagation();
-      closeModal(topModal);
+      closeModal(topModal, { viaCloseButton: true });
     }
     return;
   }
@@ -218,6 +228,12 @@ export function initModalManager(): void {
   initialized = true;
 
   document.addEventListener('keydown', handleKeyDown, true);
+  document.addEventListener('click', (ev) => {
+    const topModal = getActiveModal();
+    if (!topModal || ev.target !== topModal) return;
+    if (topModal.getAttribute('data-non-dismissible') === 'true') return;
+    closeModal(topModal, { viaCloseButton: true });
+  });
 
   observer = new MutationObserver(() => {
     syncVisibleModals();
@@ -236,7 +252,9 @@ if (typeof window !== 'undefined') {
   window.OlymposModalManager = {
     init: initModalManager,
     open: openModal,
+    openModal,
     close: closeModal,
+    closeModal,
     getActiveModal,
     trapFocus
   };

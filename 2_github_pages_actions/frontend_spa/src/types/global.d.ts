@@ -25,6 +25,7 @@ interface Window {
   OlymposPiiMask?: any;
   OlymposTermoSigilo?: any;
   OlymposSessionGuard?: any;
+  OlymposRbac?: any;
   OlymposDocumentosAcervo?: any;
   OlymposOficioEditor?: any;
   OlymposNotifications?: any;

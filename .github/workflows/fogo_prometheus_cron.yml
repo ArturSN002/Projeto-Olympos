@@ -5,8 +5,13 @@ permissions:
 
 on:
   schedule:
-    # 03:10 UTC = 00:10 BRT (Horário de Brasília), Segunda a Sexta
-    - cron: '10 3 * * 1-5'
+    # Janela matinal 06h–08h BRT (UTC-3), Segunda a Sexta:
+    # 05:17 BRT — coleta antecipada para constar na interface às 06h00
+    - cron: '17 8 * * 1-5'
+    # 06:47 BRT — varredura intermediária para edições publicadas/atrasadas
+    - cron: '47 9 * * 1-5'
+    # 08:23 BRT — varredura final para edições tardias ou retificadas
+    - cron: '23 11 * * 1-5'
   workflow_dispatch:
     inputs:
       data_inicio:

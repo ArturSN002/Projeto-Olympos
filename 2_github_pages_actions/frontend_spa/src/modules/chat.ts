@@ -54,6 +54,7 @@ let badgeUnsubscribe: (() => void) | null = null;
 let sidebarSearch = '';
 let msgSearch = '';
 let hashLeaveBound = false;
+let mountInFlight: Promise<void> | null = null;
 
 function esc(v: unknown): string {
   if (window.OlymposApp && typeof window.OlymposApp.escapeHtml === 'function') {
@@ -483,9 +484,16 @@ async function handleSendOrEditMessage(ev?: Event): Promise<void> {
         showToast('Erro ao editar mensagem: ' + error.message, true);
         return;
       }
+      const editIso = new Date().toISOString();
+      const idx = messages.findIndex((m) => m.id === targetId);
+      if (idx >= 0) {
+        messages[idx] = { ...messages[idx], conteudo, editada_em: editIso };
+        renderMessages();
+      }
       editingMessageId = null;
       if (sendBtn) sendBtn.textContent = 'Enviar';
       input.value = '';
+      showToast('Mensagem atualizada.');
     } else {
       const { data, error } = await client
         .from('chat_mensagens')
@@ -573,14 +581,22 @@ async function handleMessageAction(action: string, msgId: number): Promise<void>
   if (action === 'excluir' && msg.remetente_id === currentUserId) {
     const client = window.OlymposSupabase?.getClient?.();
     if (!client) return;
+    const deletedIso = new Date().toISOString();
     const { error } = await client
       .from('chat_mensagens')
-      .update({ excluida_em: new Date().toISOString() })
+      .update({ excluida_em: deletedIso })
       .eq('id', msg.id)
       .eq('remetente_id', currentUserId);
     if (error) {
       showToast('Erro ao remover mensagem: ' + error.message, true);
+      return;
     }
+    const idx = messages.findIndex((m) => m.id === msg.id);
+    if (idx >= 0) {
+      messages[idx] = { ...messages[idx], excluida_em: deletedIso };
+      renderMessages();
+    }
+    showToast('Mensagem removida.');
   }
 }
 
@@ -705,7 +721,10 @@ function renderDirectoryModalList(filterText = ''): void {
   });
 
   if (candidates.length === 0) {
-    box.innerHTML = '<div class="chat-member-dept">Nenhum colega encontrado no diretório interno.</div>';
+    const msgVazia = directoryUsers.length <= 1
+      ? 'Nenhum outro colega cadastrado no diretório interno ainda (novos servidores aparecem aqui após cadastro em Ajustes > Usuários). Use <strong>+ Grupo</strong> para criar uma sala imediatamente.'
+      : 'Nenhum colega encontrado para o filtro digitado.';
+    box.innerHTML = `<div class="chat-member-dept">${msgVazia}</div>`;
     return;
   }
 
@@ -869,11 +888,14 @@ function bindEventsOnce(): void {
   });
 
   document.getElementById('btnNovoChatDireto')?.addEventListener('click', () => {
-    renderDirectoryModalList('');
+    const modal = document.getElementById('modalNovoChatDireto');
     const search = document.getElementById('chatDirSearch') as HTMLInputElement | null;
     if (search) search.value = '';
-    const modal = document.getElementById('modalNovoChatDireto');
+    renderDirectoryModalList('');
     if (modal) window.OlymposModalManager?.openModal?.(modal);
+    if (directoryUsers.length <= 1) {
+      void loadDirectory().then(() => renderDirectoryModalList(search?.value || ''));
+    }
   });
 
   document.getElementById('btnFecharChatDireto')?.addEventListener('click', () => {
@@ -896,6 +918,9 @@ function bindEventsOnce(): void {
     renderGroupMembersChecklist();
     const modal = document.getElementById('modalNovoChatGrupo');
     if (modal) window.OlymposModalManager?.openModal?.(modal);
+    if (directoryUsers.length <= 1) {
+      void loadDirectory().then(() => renderGroupMembersChecklist());
+    }
   });
 
   document.getElementById('btnFecharChatGrupo')?.addEventListener('click', () => {
@@ -944,16 +969,24 @@ async function refreshChatState(): Promise<void> {
 }
 
 export async function mount(): Promise<void> {
+  if (mountInFlight) return mountInFlight;
   bindEventsOnce();
   if (!badgeUnsubscribe) {
     badgeUnsubscribe = onChatUnreadUpdated(() => {
       renderRoomList();
     });
   }
-  await refreshChatState();
-  if (activeRoomId && rooms.some((r) => r.id === activeRoomId)) {
-    await openRoom(activeRoomId);
-  }
+  mountInFlight = (async () => {
+    try {
+      await refreshChatState();
+      if (activeRoomId && rooms.some((r) => r.id === activeRoomId)) {
+        await openRoom(activeRoomId);
+      }
+    } finally {
+      mountInFlight = null;
+    }
+  })();
+  return mountInFlight;
 }
 
 export function unmount(): void {
