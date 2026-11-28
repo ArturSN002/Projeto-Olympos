@@ -93,18 +93,47 @@ def obter_pasta_drive_destino(
     return FOLDER_GABINETE_2026
 
 
-def _criar_cliente_drive_sa():
-    """Inicializa cliente Google Drive v3 autenticado via GCP_SA_KEY quando disponível."""
+def _carregar_sa_info():
+    """Decodifica GCP_SA_KEY (JSON ou Base64) sem expor a chave privada."""
     sa_json = os.environ.get("GCP_SA_KEY", "").strip()
     if not sa_json:
         return None
+    try:
+        return json.loads(sa_json)
+    except json.JSONDecodeError:
+        return json.loads(base64.b64decode(sa_json).decode("utf-8"))
+
+
+def _obter_email_sa():
+    """Retorna o e-mail público da Service Account configurada em GCP_SA_KEY."""
+    try:
+        info = _carregar_sa_info()
+        if isinstance(info, dict):
+            return str(info.get("client_email") or "").strip()
+    except Exception:
+        pass
+    return ""
+
+
+def _diagnosticar_erro_drive_sa(err: Exception, folder_id: str, contexto: str):
+    """Emite diagnóstico claro caso uma pasta do Drive não esteja compartilhada com a SA."""
+    msg = str(err or "")
+    msg_low = msg.lower()
+    if "404" in msg_low or "notfound" in msg_low or "file not found" in msg_low or "insufficientpermissions" in msg_low or "403" in msg_low:
+        sa_email = _obter_email_sa() or "Service Account GCP_SA_KEY"
+        print(
+            f"[DRIVE SA DIAGNÓSTICO] ({contexto}) Pasta {folder_id} inacessível para a Service Account "
+            f"({sa_email}) — compartilhe a pasta no Google Drive como Editor com esse e-mail."
+        )
+
+
+def _criar_cliente_drive_sa():
+    """Inicializa cliente Google Drive v3 autenticado via GCP_SA_KEY quando disponível."""
+    sa_info = _carregar_sa_info()
+    if not sa_info:
+        return None
     from google.oauth2 import service_account
     from googleapiclient.discovery import build
-
-    try:
-        sa_info = json.loads(sa_json)
-    except json.JSONDecodeError:
-        sa_info = json.loads(base64.b64decode(sa_json).decode("utf-8"))
 
     credentials = service_account.Credentials.from_service_account_info(
         sa_info,
@@ -148,6 +177,7 @@ def upload_pdf_direto_drive(pdf_bytes: bytes, nome_arquivo: str, folder_id: str)
             print(f"[DRIVE SA OK] Novo PDF criado no Drive: {nome_arquivo} (ID: {file_id})")
             return {"file_id": file_id, "url": link}
     except Exception as err:
+        _diagnosticar_erro_drive_sa(err, folder_id, "PDF")
         print(f"[AVISO] Upload direto via Service Account falhou (fallback para Base64/GAS): {err}")
         return None
 
@@ -224,6 +254,7 @@ def upload_planilha_diaria_drive(caminho_csv: str, dt_referencia: str, folder_id
         print(f"[DRIVE SA PLANILHA] Nova planilha criada em {folder_id}: {nome_sheet} (ID: {file_id})")
         return {"file_id": file_id, "url": link, "folder_id": folder_id}
     except Exception as err:
+        _diagnosticar_erro_drive_sa(err, folder_id, "PLANILHA")
         print(f"[AVISO] Upload da planilha diária para pasta {folder_id} falhou: {err}")
         return None
 
@@ -263,6 +294,19 @@ def normalizar_texto_sem_acentos(texto):
     nfkd = unicodedata.normalize("NFKD", str(texto))
     sem_acento = "".join(c for c in nfkd if not unicodedata.combining(c))
     return sem_acento.lower()
+
+
+def resolver_datas_tentativa_autonoma(agora_brt: datetime | None = None) -> tuple[str, str]:
+    """
+    Para execução autônoma (sem data customizada):
+    retorna (dia_seguinte_br, dia_atual_br) no formato DD/MM/AAAA (America/Fortaleza).
+    Permite consultar primeiro o dia seguinte (coleta às 23:00 BRT) e, caso não haja
+    matérias publicadas, fazer fallback automático para o dia atual.
+    """
+    ref = agora_brt.astimezone(TZ_FORTALEZA) if agora_brt is not None else datetime.now(TZ_FORTALEZA)
+    dt_hoje = ref.strftime("%d/%m/%Y")
+    dt_amanha = (ref + timedelta(days=1)).strftime("%d/%m/%Y")
+    return dt_amanha, dt_hoje
 
 
 def obter_intervalo_datas():
@@ -945,10 +989,16 @@ def executar_ciclo_pesquisa(
     aplicar_filtro_keywords,
     lista_keywords=None,
     urls_ja_processadas=None,
-    codigos_ja_catalogados=None
+    codigos_ja_catalogados=None,
+    dt_ini_override: str | None = None,
+    dt_fim_override: str | None = None,
 ):
     publicacoes_coletadas = []
-    dt_ini, dt_fim = obter_intervalo_datas()
+    if dt_ini_override:
+        dt_ini = dt_ini_override
+        dt_fim = dt_fim_override or dt_ini_override
+    else:
+        dt_ini, dt_fim = obter_intervalo_datas()
     termos_filtro = lista_keywords if lista_keywords is not None else KEYWORDS_EDUCACAO
     if urls_ja_processadas is None:
         urls_ja_processadas = set()
@@ -1654,89 +1704,149 @@ def gerar_planilha_diaria_csv(publicacoes: list, dt_referencia: str, output_dir:
     return caminho
 
 
+def _executar_rodada_coleta(
+    page,
+    modo_coleta: str,
+    secao_custom: str,
+    urls_ja_processadas: set,
+    codigos_catalogados: set,
+    dt_ini_override: str | None = None,
+    dt_fim_override: str | None = None,
+) -> list:
+    """Executa uma rodada completa (INTEGRAL ou SMEB_ONLY) para um intervalo de datas."""
+    coletadas = []
+    if modo_coleta == "INTEGRAL" and not secao_custom:
+        orgaos_prefeitura = listar_orgaos_entidade(page, "Prefeitura Municipal de Ceará-Mirim")
+        if orgaos_prefeitura:
+            print(f"[PROMETHEUS INTEGRAL] {len(orgaos_prefeitura)} órgão(s) detectado(s) na Prefeitura Municipal de Ceará-Mirim.")
+            for org_nome in orgaos_prefeitura:
+                coletadas.extend(executar_ciclo_pesquisa(
+                    page,
+                    entidade_alvo="Prefeitura Municipal de Ceará-Mirim",
+                    orgao_alvo=org_nome,
+                    aplicar_filtro_keywords=False,
+                    urls_ja_processadas=urls_ja_processadas,
+                    codigos_ja_catalogados=codigos_catalogados,
+                    dt_ini_override=dt_ini_override,
+                    dt_fim_override=dt_fim_override,
+                ))
+        else:
+            coletadas.extend(executar_ciclo_pesquisa(
+                page,
+                entidade_alvo="Prefeitura Municipal de Ceará-Mirim",
+                orgao_alvo=None,
+                aplicar_filtro_keywords=False,
+                urls_ja_processadas=urls_ja_processadas,
+                codigos_ja_catalogados=codigos_catalogados,
+                dt_ini_override=dt_ini_override,
+                dt_fim_override=dt_fim_override,
+            ))
+
+        coletadas.extend(executar_ciclo_pesquisa(
+            page,
+            entidade_alvo="Câmara Municipal de Ceará-Mirim",
+            orgao_alvo=None,
+            aplicar_filtro_keywords=False,
+            urls_ja_processadas=urls_ja_processadas,
+            codigos_ja_catalogados=codigos_catalogados,
+            dt_ini_override=dt_ini_override,
+            dt_fim_override=dt_fim_override,
+        ))
+    else:
+        coletadas.extend(executar_ciclo_pesquisa(
+            page,
+            entidade_alvo="Prefeitura Municipal de Ceará-Mirim",
+            orgao_alvo="Secretaria Municipal de Educação Básica",
+            aplicar_filtro_keywords=False,
+            urls_ja_processadas=urls_ja_processadas,
+            codigos_ja_catalogados=codigos_catalogados,
+            dt_ini_override=dt_ini_override,
+            dt_fim_override=dt_fim_override,
+        ))
+        coletadas.extend(executar_ciclo_pesquisa(
+            page,
+            entidade_alvo="Prefeitura Municipal de Ceará-Mirim",
+            orgao_alvo="Gabinete do Prefeito",
+            aplicar_filtro_keywords=True,
+            lista_keywords=KEYWORDS_EDUCACAO,
+            urls_ja_processadas=urls_ja_processadas,
+            codigos_ja_catalogados=codigos_catalogados,
+            dt_ini_override=dt_ini_override,
+            dt_fim_override=dt_fim_override,
+        ))
+        coletadas.extend(executar_ciclo_pesquisa(
+            page,
+            entidade_alvo="Câmara Municipal de Ceará-Mirim",
+            orgao_alvo=None,
+            aplicar_filtro_keywords=True,
+            lista_keywords=KEYWORDS_LEGISLATIVO,
+            urls_ja_processadas=urls_ja_processadas,
+            codigos_ja_catalogados=codigos_catalogados,
+            dt_ini_override=dt_ini_override,
+            dt_fim_override=dt_fim_override,
+        ))
+        if secao_custom:
+            print(f"[PROMETHEUS] Executando ciclo para seção solicitada via SECAO_DIARIO_OFICIAL: {secao_custom}")
+            coletadas.extend(executar_ciclo_pesquisa(
+                page,
+                entidade_alvo="Prefeitura Municipal de Ceará-Mirim",
+                orgao_alvo=secao_custom,
+                aplicar_filtro_keywords=False,
+                urls_ja_processadas=urls_ja_processadas,
+                codigos_ja_catalogados=codigos_catalogados,
+                dt_ini_override=dt_ini_override,
+                dt_fim_override=dt_fim_override,
+            ))
+    return coletadas
+
+
 def main():
     todas_publicacoes = []
     urls_ja_processadas = set()
     modo_coleta = os.getenv("PROMETHEUS_MODO_COLETA", "INTEGRAL").strip().upper()
     secao_custom = os.getenv("SECAO_DIARIO_OFICIAL", "").strip()
     codigos_catalogados = carregar_codigos_ja_catalogados_ia()
+    has_custom_dates = bool(os.getenv("DATA_INICIO_CUSTOM", "").strip() or os.getenv("DATA_FIM_CUSTOM", "").strip())
+    dt_referencia_efetiva, _ = obter_intervalo_datas()
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         context = browser.new_context(locale="pt-BR")
         page = context.new_page()
 
-        if modo_coleta == "INTEGRAL" and not secao_custom:
-            # Coleta Integral 100% Município de Ceará-Mirim (todas as secretarias/órgãos + Câmara)
-            orgaos_prefeitura = listar_orgaos_entidade(page, "Prefeitura Municipal de Ceará-Mirim")
-            if orgaos_prefeitura:
-                print(f"[PROMETHEUS INTEGRAL] {len(orgaos_prefeitura)} órgão(s) detectado(s) na Prefeitura Municipal de Ceará-Mirim.")
-                for org_nome in orgaos_prefeitura:
-                    todas_publicacoes.extend(executar_ciclo_pesquisa(
-                        page,
-                        entidade_alvo="Prefeitura Municipal de Ceará-Mirim",
-                        orgao_alvo=org_nome,
-                        aplicar_filtro_keywords=False,
-                        urls_ja_processadas=urls_ja_processadas,
-                        codigos_ja_catalogados=codigos_catalogados
-                    ))
-            else:
-                # Fallback caso AJAX de órgãos falhe: busca SMEB + Gabinete + Prefeitura Geral
-                todas_publicacoes.extend(executar_ciclo_pesquisa(
-                    page,
-                    entidade_alvo="Prefeitura Municipal de Ceará-Mirim",
-                    orgao_alvo=None,
-                    aplicar_filtro_keywords=False,
-                    urls_ja_processadas=urls_ja_processadas,
-                    codigos_ja_catalogados=codigos_catalogados
-                ))
-
-            todas_publicacoes.extend(executar_ciclo_pesquisa(
-                page,
-                entidade_alvo="Câmara Municipal de Ceará-Mirim",
-                orgao_alvo=None,
-                aplicar_filtro_keywords=False,
-                urls_ja_processadas=urls_ja_processadas,
-                codigos_ja_catalogados=codigos_catalogados
-            ))
+        if has_custom_dates:
+            todas_publicacoes = _executar_rodada_coleta(
+                page, modo_coleta, secao_custom, urls_ja_processadas, codigos_catalogados
+            )
         else:
-            # Modo SMEB_ONLY / Seção customizada
-            todas_publicacoes.extend(executar_ciclo_pesquisa(
+            dt_amanha, dt_hoje = resolver_datas_tentativa_autonoma()
+            print(f"[PROMETHEUS AGENDA 23h] Tentativa 1 (dia seguinte): {dt_amanha}")
+            todas_publicacoes = _executar_rodada_coleta(
                 page,
-                entidade_alvo="Prefeitura Municipal de Ceará-Mirim",
-                orgao_alvo="Secretaria Municipal de Educação Básica",
-                aplicar_filtro_keywords=False,
-                urls_ja_processadas=urls_ja_processadas,
-                codigos_ja_catalogados=codigos_catalogados
-            ))
-            todas_publicacoes.extend(executar_ciclo_pesquisa(
-                page,
-                entidade_alvo="Prefeitura Municipal de Ceará-Mirim",
-                orgao_alvo="Gabinete do Prefeito",
-                aplicar_filtro_keywords=True,
-                lista_keywords=KEYWORDS_EDUCACAO,
-                urls_ja_processadas=urls_ja_processadas,
-                codigos_ja_catalogados=codigos_catalogados
-            ))
-            todas_publicacoes.extend(executar_ciclo_pesquisa(
-                page,
-                entidade_alvo="Câmara Municipal de Ceará-Mirim",
-                orgao_alvo=None,
-                aplicar_filtro_keywords=True,
-                lista_keywords=KEYWORDS_LEGISLATIVO,
-                urls_ja_processadas=urls_ja_processadas,
-                codigos_ja_catalogados=codigos_catalogados
-            ))
-            if secao_custom:
-                print(f"[PROMETHEUS] Executando ciclo para seção solicitada via SECAO_DIARIO_OFICIAL: {secao_custom}")
-                todas_publicacoes.extend(executar_ciclo_pesquisa(
+                modo_coleta,
+                secao_custom,
+                urls_ja_processadas,
+                codigos_catalogados,
+                dt_ini_override=dt_amanha,
+                dt_fim_override=dt_amanha,
+            )
+            dt_referencia_efetiva = dt_amanha
+
+            if not todas_publicacoes:
+                print(
+                    f"[PROMETHEUS FALLBACK] Nenhuma matéria encontrada para o dia seguinte ({dt_amanha}). "
+                    f"Executando Tentativa 2 com a data atual ({dt_hoje})."
+                )
+                todas_publicacoes = _executar_rodada_coleta(
                     page,
-                    entidade_alvo="Prefeitura Municipal de Ceará-Mirim",
-                    orgao_alvo=secao_custom,
-                    aplicar_filtro_keywords=False,
-                    urls_ja_processadas=urls_ja_processadas,
-                    codigos_ja_catalogados=codigos_catalogados
-                ))
+                    modo_coleta,
+                    secao_custom,
+                    urls_ja_processadas,
+                    codigos_catalogados,
+                    dt_ini_override=dt_hoje,
+                    dt_fim_override=dt_hoje,
+                )
+                dt_referencia_efetiva = dt_hoje
 
         browser.close()
 
@@ -1746,7 +1856,7 @@ def main():
     lista_smeb = [pub for pub in lista_final if pub.get("relevancia_smeb", True)]
     total_outros_municipais = max(0, len(lista_final) - len(lista_smeb))
 
-    dt_ini, _ = obter_intervalo_datas()
+    dt_ini = dt_referencia_efetiva
 
     webhook_url = os.getenv("GAS_WEBHOOK_URL")
     token = os.getenv("OLYMPOS_SECRET_TOKEN")

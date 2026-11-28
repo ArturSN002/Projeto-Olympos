@@ -11,6 +11,7 @@ import chatHtml from '../templates/pages/chat.html?raw';
 import { subscribeChatRoomRealtime, ChatRoomSubscriptionHandle, ChatRealtimeRow } from './comunicacao/realtimeClient';
 import { chatUnreadByRoomSignal, onChatUnreadUpdated, refreshChatUnreadCounts } from '../core/chatBadge';
 import { sanitizeRowsForExport } from '../core/safeSpreadsheet';
+import { uploadComunicacaoAnexo, createAnexoSignedUrl, validateAnexoFile } from './comunicacao/anexosStorage';
 
 export const routeId = 'chat';
 export const htmlTemplate = chatHtml;
@@ -55,6 +56,22 @@ let sidebarSearch = '';
 let msgSearch = '';
 let hashLeaveBound = false;
 let mountInFlight: Promise<void> | null = null;
+let pendingAnexoFile: File | null = null;
+
+function updatePendingAnexoBar(): void {
+  const bar = document.getElementById('chatPendingAnexoBar');
+  const inp = document.getElementById('chatInputAnexo') as HTMLInputElement | null;
+  if (!bar) return;
+  if (!pendingAnexoFile) {
+    bar.classList.add('hidden');
+    bar.innerHTML = '';
+    if (inp) inp.value = '';
+    return;
+  }
+  const kb = Math.max(1, Math.round(pendingAnexoFile.size / 1024));
+  bar.classList.remove('hidden');
+  bar.innerHTML = `<span>📎 <strong>${esc(pendingAnexoFile.name)}</strong> (${kb} KB)</span><button type="button" id="btnChatRemoverAnexo" class="btn btn-ghost btn-sm" aria-label="Remover anexo">Remover</button>`;
+}
 
 function esc(v: unknown): string {
   if (window.OlymposApp && typeof window.OlymposApp.escapeHtml === 'function') {
@@ -257,6 +274,7 @@ function renderActiveHeader(): void {
   const titleEl = document.getElementById('chatThreadTitle');
   const subEl = document.getElementById('chatThreadSub');
   const inputEl = document.getElementById('chatComposerInput') as HTMLTextAreaElement | null;
+  const attachBtn = document.getElementById('btnChatAnexarArquivo') as HTMLButtonElement | null;
   const sendBtn = document.getElementById('btnChatEnviar') as HTMLButtonElement | null;
   const toggleDriveBtn = document.getElementById('btnChatToggleDriveArchive');
   const exportDriveBtn = document.getElementById('btnChatExportarDrive');
@@ -266,6 +284,7 @@ function renderActiveHeader(): void {
     if (titleEl) titleEl.textContent = 'Selecione uma conversa';
     if (subEl) subEl.textContent = 'Escolha uma conversa direta ou grupo na lista ao lado.';
     if (inputEl) inputEl.disabled = true;
+    if (attachBtn) attachBtn.disabled = true;
     if (sendBtn) sendBtn.disabled = true;
     toggleDriveBtn?.classList.add('hidden');
     exportDriveBtn?.classList.add('hidden');
@@ -276,6 +295,7 @@ function renderActiveHeader(): void {
   if (titleEl) titleEl.textContent = room.displayName || 'Sala SMEB';
   if (subEl) subEl.textContent = room.displaySub || '';
   if (inputEl) inputEl.disabled = false;
+  if (attachBtn) attachBtn.disabled = false;
   if (sendBtn) sendBtn.disabled = false;
   exportXlsxBtn?.classList.remove('hidden');
 
@@ -325,6 +345,13 @@ function renderMessages(): void {
       const isDeleted = Boolean(m.excluida_em);
       const author = resolveAuthorLabel(m.remetente_id);
       const text = isDeleted ? '[Mensagem removida pelo autor]' : m.conteudo;
+      const anexoMeta = !isDeleted && m.referencia_entidade_json && typeof m.referencia_entidade_json === 'object'
+        ? (m.referencia_entidade_json as any).anexo
+        : null;
+      const anexoBtnHtml =
+        anexoMeta && anexoMeta.path
+          ? `<div class="chat-msg-anexo"><button type="button" class="btn btn-secondary btn-sm" data-msg-action="open-anexo" data-msg-id="${m.id}" data-anexo-path="${esc(anexoMeta.path)}">📎 ${esc(anexoMeta.nome || 'Abrir Anexo')}</button></div>`
+          : '';
 
       return `
         <div class="chat-message-row ${isMine ? 'is-mine' : ''} ${isDeleted ? 'is-deleted' : ''}" data-msg-id="${m.id}">
@@ -334,7 +361,7 @@ function renderMessages(): void {
             <span>• ${esc(formatHora(m.enviada_em))}</span>
             ${m.editada_em && !isDeleted ? '<span>(editada)</span>' : ''}
           </div>
-          <div class="chat-msg-bubble">${esc(text)}</div>
+          <div class="chat-msg-bubble">${esc(text)}${anexoBtnHtml}</div>
           ${
             !isDeleted
               ? `<div class="chat-msg-actions">
@@ -363,6 +390,8 @@ async function openRoom(salaId: string): Promise<void> {
 
   activeRoomId = salaId;
   editingMessageId = null;
+  pendingAnexoFile = null;
+  updatePendingAnexoBar();
   messages = [];
   oldestLoadedId = null;
   hasOlderMessages = false;
@@ -468,8 +497,10 @@ async function handleSendOrEditMessage(ev?: Event): Promise<void> {
   const sendBtn = document.getElementById('btnChatEnviar') as HTMLButtonElement | null;
   if (!client || !activeRoomId || !currentUserId || !input) return;
 
-  const conteudo = input.value.trim();
-  if (!conteudo) return;
+  const rawConteudo = input.value.trim();
+  const hasAnexo = editingMessageId === null && Boolean(pendingAnexoFile);
+  if (!rawConteudo && !hasAnexo) return;
+  const conteudo = rawConteudo || (pendingAnexoFile ? `📎 Anexo: ${pendingAnexoFile.name}` : '');
 
   if (sendBtn) sendBtn.disabled = true;
   try {
@@ -495,12 +526,23 @@ async function handleSendOrEditMessage(ev?: Event): Promise<void> {
       input.value = '';
       showToast('Mensagem atualizada.');
     } else {
+      let refJson: Record<string, any> | null = null;
+      if (pendingAnexoFile) {
+        const up = await uploadComunicacaoAnexo(pendingAnexoFile, {
+          kind: 'chat',
+          salaId: activeRoomId,
+          userId: currentUserId
+        });
+        refJson = { anexo: up };
+      }
+
       const { data, error } = await client
         .from('chat_mensagens')
         .insert({
           sala_id: activeRoomId,
           remetente_id: currentUserId,
-          conteudo
+          conteudo,
+          referencia_entidade_json: refJson
         })
         .select('id,sala_id,remetente_id,conteudo,referencia_entidade_json,editada_em,excluida_em,enviada_em')
         .single();
@@ -510,6 +552,8 @@ async function handleSendOrEditMessage(ev?: Event): Promise<void> {
         return;
       }
       input.value = '';
+      pendingAnexoFile = null;
+      updatePendingAnexoBar();
       if (data && !messages.some((m) => m.id === (data as ChatRealtimeRow).id)) {
         messages.push(data as ChatRealtimeRow);
         renderMessages();
@@ -517,6 +561,8 @@ async function handleSendOrEditMessage(ev?: Event): Promise<void> {
         if (pane) pane.scrollTop = pane.scrollHeight;
       }
     }
+  } catch (err: any) {
+    showToast(err?.message || 'Erro ao enviar mensagem ou anexo.', true);
   } finally {
     if (sendBtn) sendBtn.disabled = false;
     input.focus();
@@ -527,6 +573,19 @@ async function handleMessageAction(action: string, msgId: number): Promise<void>
   const msg = messages.find((m) => m.id === msgId);
   const room = rooms.find((r) => r.id === activeRoomId);
   if (!msg || !room) return;
+
+  if (action === 'open-anexo') {
+    const path = (msg.referencia_entidade_json as any)?.anexo?.path || '';
+    if (path) {
+      try {
+        const url = await createAnexoSignedUrl(path, 120);
+        window.open(url, '_blank', 'noopener,noreferrer');
+      } catch (err: any) {
+        showToast(err?.message || 'Não foi possível abrir anexo.', true);
+      }
+    }
+    return;
+  }
 
   if (action === 'pendencia') {
     try {
@@ -878,6 +937,31 @@ function bindEventsOnce(): void {
 
   document.getElementById('chatComposerForm')?.addEventListener('submit', (ev) => {
     void handleSendOrEditMessage(ev);
+  });
+
+  document.getElementById('btnChatAnexarArquivo')?.addEventListener('click', () => {
+    document.getElementById('chatInputAnexo')?.click();
+  });
+
+  document.getElementById('chatInputAnexo')?.addEventListener('change', (ev) => {
+    const file = (ev.target as HTMLInputElement)?.files?.[0] || null;
+    if (!file) return;
+    const valid = validateAnexoFile(file);
+    if (!valid.ok) {
+      showToast(valid.message, true);
+      (ev.target as HTMLInputElement).value = '';
+      return;
+    }
+    pendingAnexoFile = file;
+    updatePendingAnexoBar();
+  });
+
+  document.getElementById('chatPendingAnexoBar')?.addEventListener('click', (ev) => {
+    const btn = (ev.target as HTMLElement | null)?.closest<HTMLButtonElement>('#btnChatRemoverAnexo');
+    if (btn) {
+      pendingAnexoFile = null;
+      updatePendingAnexoBar();
+    }
   });
 
   document.getElementById('chatComposerInput')?.addEventListener('keydown', (ev) => {

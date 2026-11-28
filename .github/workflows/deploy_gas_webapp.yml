@@ -1,0 +1,63 @@
+name: "Olympos — Deploy WebApp GAS (clasp)"
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+    inputs:
+      descricao:
+        description: 'Descrição da versão implantada no Apps Script'
+        required: false
+        default: 'Deploy automatizado via GitHub Actions (clasp)'
+
+jobs:
+  deploy-gas:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: 1. Checkout do Monorepo Olympos
+        uses: actions/checkout@v6
+
+      - name: 2. Configurar Node.js 22
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: 3. Instalar CLI clasp
+        run: npm install -g @google/clasp
+
+      - name: 4. Preparar credenciais e staging seguro (.clasprc.json)
+        env:
+          CLASP_RC_JSON: ${{ secrets.CLASP_RC_JSON }}
+          GAS_SCRIPT_ID: ${{ secrets.GAS_SCRIPT_ID }}
+          GAS_DEPLOYMENT_ID: ${{ secrets.GAS_DEPLOYMENT_ID }}
+        run: |
+          if [ -z "$CLASP_RC_JSON" ] || [ -z "$GAS_SCRIPT_ID" ] || [ -z "$GAS_DEPLOYMENT_ID" ]; then
+            echo "::error::Secrets CLASP_RC_JSON, GAS_SCRIPT_ID e GAS_DEPLOYMENT_ID são obrigatórios."
+            exit 1
+          fi
+          SCRIPT_ID="$GAS_SCRIPT_ID"
+          DEPLOY_ID="$GAS_DEPLOYMENT_ID"
+          printf '%s' "$CLASP_RC_JSON" > "$HOME/.clasprc.json"
+          chmod 600 "$HOME/.clasprc.json"
+
+          STAGE_DIR=$(mktemp -d)
+          for f in hub-olympos-webapp/*.gs hub-olympos-webapp/*.js hub-olympos-webapp/*.html hub-olympos-webapp/appsscript.json; do
+            [ -e "$f" ] || continue
+            base=$(basename "$f")
+            if [ "$base" = "04_module_prometheus.gs" ]; then
+              cp "$f" "$STAGE_DIR/04_modules_prometheus.js"
+            elif [[ "$base" == *.gs ]]; then
+              cp "$f" "$STAGE_DIR/${base%.gs}.js"
+            else
+              cp "$f" "$STAGE_DIR/$base"
+            fi
+          done
+          printf '{"scriptId":"%s","rootDir":"."}\n' "$SCRIPT_ID" > "$STAGE_DIR/.clasp.json"
+
+          cd "$STAGE_DIR"
+          clasp push -f
+          clasp deploy -i "$DEPLOY_ID" -d "${{ github.event.inputs.descricao }}"
+          rm -f "$HOME/.clasprc.json"
+          rm -rf "$STAGE_DIR"

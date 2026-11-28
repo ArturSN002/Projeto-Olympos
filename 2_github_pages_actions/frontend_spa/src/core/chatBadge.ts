@@ -32,6 +32,7 @@ function renderHeaderChatBadge(): void {
     }
   }
   if (btnEl) {
+    btnEl.classList.toggle('has-unread', total > 0);
     btnEl.setAttribute(
       'aria-label',
       total > 0 ? `Chat Interno (${total} mensagens não lidas)` : 'Abrir Chat Interno'

@@ -59,6 +59,12 @@ DEFAULT_DISPATCH_GUARD_PATH = Path(tempfile.gettempdir()) / "olympos_radar_dispa
 DEFAULT_EMBEDDING_MODEL = "gemini-embedding-2-preview"
 FALLBACK_EMBEDDING_MODEL = "gemini-embedding-001"
 EMBEDDING_DIM = 768
+EMBEDDING_RPM_LIMIT = 75
+EMBEDDING_TPM_LIMIT = 25000
+EMBEDDING_RPD_LIMIT = 800
+EMBEDDING_SOFT_CAP_RPD = 680
+_EMBEDDING_RATE_WINDOW: list[tuple[float, int]] = []
+_EMBEDDING_RPD_COUNT = 0
 PUBLIC_LGPD_KEYS = ("n", "g", "m", "l", "e", "r")
 
 _TZ_FORTALEZA = timezone(timedelta(hours=-3))
@@ -426,13 +432,24 @@ def _gerar_embedding_gemini(
     dimensions: int = EMBEDDING_DIM,
 ) -> tuple[list[float] | None, str]:
     """
-    Chama Gemini Embedding 2 (Free Tier $0) para gerar vetor de 768 dimensões.
-    Retorna (vetor, modelo_usado) ou (None, modelo) sem lançar exceções em erro/cota 429.
+    Chama Gemini Embedding 2 (75 RPM / 25k TPM / 800 RPD) para gerar vetor de 768 dimensões.
+    Retorna (vetor, modelo_usado) ou (None, modelo) sem lançar exceções em erro/cota 429/402.
     """
+    global _EMBEDDING_RPD_COUNT
     clean_key = (api_key or "").strip()
     clean_text = (texto or "").strip()
-    if not clean_key or not clean_text:
+    if not clean_key or not clean_text or _EMBEDDING_RPD_COUNT >= EMBEDDING_SOFT_CAP_RPD:
         return None, model
+
+    import time as _time
+    tokens_est = max(1, (min(len(clean_text), 6000) + 3) // 4)
+    agora = _time.monotonic()
+    _EMBEDDING_RATE_WINDOW[:] = [e for e in _EMBEDDING_RATE_WINDOW if (agora - e[0]) < 60.0]
+    if len(_EMBEDDING_RATE_WINDOW) >= EMBEDDING_RPM_LIMIT or (sum(t for _, t in _EMBEDDING_RATE_WINDOW) + tokens_est) > EMBEDDING_TPM_LIMIT:
+        oldest = _EMBEDDING_RATE_WINDOW[0][0] if _EMBEDDING_RATE_WINDOW else agora
+        _time.sleep(min(60.05 - (agora - oldest), 61.0))
+        agora = _time.monotonic()
+        _EMBEDDING_RATE_WINDOW[:] = [e for e in _EMBEDDING_RATE_WINDOW if (agora - e[0]) < 60.0]
 
     modelos_tentativa = [model]
     if model == DEFAULT_EMBEDDING_MODEL and FALLBACK_EMBEDDING_MODEL not in modelos_tentativa:
@@ -456,11 +473,13 @@ def _gerar_embedding_gemini(
         }
 
         try:
+            _EMBEDDING_RATE_WINDOW.append((_time.monotonic(), tokens_est))
+            _EMBEDDING_RPD_COUNT += 1
             resp = _http_request("POST", endpoint, json_body=payload, headers=headers, timeout=15)
             status = getattr(resp, "status_code", 0)
             if status == 404 and modelo_atual != modelos_tentativa[-1]:
                 continue
-            if status == 429 or status < 200 or status >= 300:
+            if status in (402, 429) or status < 200 or status >= 300:
                 return None, modelo_atual
 
             data = resp.json() if hasattr(resp, "json") else json.loads(getattr(resp, "text", "{}"))

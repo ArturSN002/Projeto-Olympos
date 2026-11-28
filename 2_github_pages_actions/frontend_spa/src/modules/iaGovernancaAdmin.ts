@@ -5,6 +5,8 @@ interface QuotaModelInfo {
   usadas: number;
   soft_cap: number;
   hard_cap: number;
+  rpm_limit?: number;
+  tpm_limit?: number;
   erros_429: number;
 }
 
@@ -18,6 +20,7 @@ interface IaStatusPayload {
   };
   gemma: QuotaModelInfo;
   flash: QuotaModelInfo;
+  embedding: QuotaModelInfo;
 }
 
 function esc(val: unknown): string {
@@ -49,8 +52,9 @@ async function fetchStatusCotas(): Promise<IaStatusPayload> {
       triagem_assistiva_ativo: true,
       permitir_visitante_ia: false
     },
-    gemma: { modelo: 'gemma-4-31b-it', usadas: 0, soft_cap: 8500, hard_cap: 10000, erros_429: 0 },
-    flash: { modelo: 'gemini-3.5-flash-lite', usadas: 0, soft_cap: 340, hard_cap: 400, erros_429: 0 }
+    gemma: { modelo: 'gemma-4-31b-it', usadas: 0, soft_cap: 10200, hard_cap: 12000, rpm_limit: 25, tpm_limit: 14000, erros_429: 0 },
+    flash: { modelo: 'gemini-3.5-flash-lite', usadas: 0, soft_cap: 340, hard_cap: 400, rpm_limit: 10, tpm_limit: 200000, erros_429: 0 },
+    embedding: { modelo: 'gemini-embedding-2-preview', usadas: 0, soft_cap: 680, hard_cap: 800, rpm_limit: 75, tpm_limit: 25000, erros_429: 0 }
   };
 
   if (!supa || typeof supa.obterStatusCotasIa !== 'function') {
@@ -69,7 +73,8 @@ async function fetchStatusCotas(): Promise<IaStatusPayload> {
           permitir_visitante_ia: Boolean(res.flags?.permitir_visitante_ia)
         },
         gemma: res.modelos?.['gemma-4-31b-it'] || fallback.gemma,
-        flash: res.modelos?.['gemini-3.5-flash-lite'] || fallback.flash
+        flash: res.modelos?.['gemini-3.5-flash-lite'] || fallback.flash,
+        embedding: res.modelos?.['gemini-embedding-2-preview'] || fallback.embedding
       };
     }
   } catch {
@@ -82,6 +87,8 @@ function renderBar(label: string, badge: string, info: QuotaModelInfo): string {
   const hard = Math.max(1, Number(info.hard_cap || 1));
   const usadas = Math.max(0, Number(info.usadas || 0));
   const pct = Math.min(100, Math.round((usadas / hard) * 100));
+  const rpmLabel = info.rpm_limit ? `${info.rpm_limit} RPM` : '--';
+  const tpmLabel = info.tpm_limit ? `${Math.round(info.tpm_limit / 1000)}k TPM` : '--';
   return `
     <div class="ia-quota-card">
       <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
@@ -95,6 +102,7 @@ function renderBar(label: string, badge: string, info: QuotaModelInfo): string {
         <span><strong>${usadas}</strong> / ${hard.toLocaleString('pt-BR')} RPD</span>
         <span>Soft-cap: ${Number(info.soft_cap).toLocaleString('pt-BR')} • 429s: ${Number(info.erros_429 || 0)}</span>
       </div>
+      <div style="font-size:0.72rem; color:var(--text-muted); margin-top:4px;">Janela: ${esc(rpmLabel)} • ${esc(tpmLabel)}</div>
     </div>
   `;
 }
@@ -110,16 +118,17 @@ function renderPanel(root: HTMLElement, st: IaStatusPayload): void {
     <div class="ia-gov-panel">
       <div class="card-header-row" style="margin-bottom:10px;">
         <div>
-          <span class="section-eyebrow">ONDA 8 • GOVERNANÇA DE IA HÍBRIDA (MODO MODERADOR)</span>
-          <h3 class="section-title" style="font-size:1.12rem;">Cotas Diárias RPD &amp; Controles de Inteligência Artificial</h3>
-          <p class="section-desc" style="margin-bottom:0;">Monitoramento do teto gratuito: Gemma 4 31B para alto volume (10k RPD) e Gemini 3.5 Flash Lite para síntese especialista no Oráculo (400 RPD).</p>
+          <span class="section-eyebrow">ONDA 12 • GOVERNANÇA DE IA HÍBRIDA (MODO MODERADOR)</span>
+          <h3 class="section-title" style="font-size:1.12rem;">Cotas Diárias RPD / RPM / TPM &amp; Controles de IA</h3>
+          <p class="section-desc" style="margin-bottom:0;">Limites oficiais: Gemma 4 31B (25 RPM • 14k TPM • 12k RPD), Gemini 3.5 Flash Lite (10 RPM • 200k TPM • 400 RPD) e Gemini Embedding 2 (75 RPM • 25k TPM • 800 RPD).</p>
         </div>
         <button type="button" id="btnIaRecarregarCotas" class="btn btn-secondary btn-sm">Atualizar Cotas</button>
       </div>
       ${aviso}
       <div class="ia-quota-grid">
-        ${renderBar('Gemma 4 31B', 'Alto Volume • 10k RPD', st.gemma)}
-        ${renderBar('Gemini 3.5 Flash Lite', 'Especialista • 400 RPD', st.flash)}
+        ${renderBar('Gemma 4 31B', '25 RPM • 14k TPM • 12k RPD', st.gemma)}
+        ${renderBar('Gemini 3.5 Flash Lite', '10 RPM • 200k TPM • 400 RPD', st.flash)}
+        ${renderBar('Gemini Embedding 2', '75 RPM • 25k TPM • 800 RPD', st.embedding)}
       </div>
       <div class="ia-flags-grid">
         <label class="ia-flag-item">

@@ -16,11 +16,18 @@ import urllib.request
 
 MODEL_GEMMA_BATCH = "gemma-4-31b-it"
 MODEL_GEMINI_ESPECIALISTA = "gemini-3.5-flash-lite"
+MODEL_GEMINI_EMBEDDING = "gemini-embedding-2-preview"
 PROMPT_VERSAO = "v8.1-gemma4"
 
+MODEL_LIMITS: dict[str, dict[str, int]] = {
+    MODEL_GEMMA_BATCH: {"rpm": 25, "tpm": 14000, "rpd": 12000, "soft_cap": 10200},
+    MODEL_GEMINI_ESPECIALISTA: {"rpm": 10, "tpm": 200000, "rpd": 400, "soft_cap": 340},
+    MODEL_GEMINI_EMBEDDING: {"rpm": 75, "tpm": 25000, "rpd": 800, "soft_cap": 680},
+}
+
 SOFT_CAPS_DEFAULT = {
-    MODEL_GEMMA_BATCH: 8500,
-    MODEL_GEMINI_ESPECIALISTA: 340,
+    modelo: limits["soft_cap"]
+    for modelo, limits in MODEL_LIMITS.items()
 }
 
 TIPOS_ATOS_CANONICOS = {
@@ -43,7 +50,56 @@ TIPOS_ATOS_CANONICOS = {
 _LOCAL_QUOTA_MEM: dict[str, int] = {
     MODEL_GEMMA_BATCH: 0,
     MODEL_GEMINI_ESPECIALISTA: 0,
+    MODEL_GEMINI_EMBEDDING: 0,
 }
+
+# Janela deslizante de 60s para controle de RPM e TPM por modelo: list[(timestamp, tokens_estimados)]
+_RATE_WINDOW_LOG: dict[str, list[tuple[float, int]]] = {}
+
+
+def estimar_tokens_texto(texto: str) -> int:
+    """Estimativa conservadora (~4 chars/token) para controle preventivo de TPM."""
+    if not texto:
+        return 0
+    return max(1, (len(texto) + 3) // 4)
+
+
+def _aguardar_janela_rpm_tpm(
+    modelo: str,
+    tokens_est: int,
+    sleep_fn: Callable[[float], None] = time.sleep,
+    clock_fn: Callable[[], float] = time.monotonic,
+) -> float:
+    """Garante respeito à janela deslizante de 60s para RPM e TPM configurados."""
+    limits = MODEL_LIMITS.get(modelo)
+    if not limits:
+        return 0.0
+
+    rpm = limits["rpm"]
+    tpm = limits["tpm"]
+    tokens_req = min(max(1, tokens_est), tpm)
+    espera_total = 0.0
+
+    for _ in range(3):
+        agora = clock_fn()
+        hist = [entry for entry in _RATE_WINDOW_LOG.get(modelo, []) if (agora - entry[0]) < 60.0]
+        _RATE_WINDOW_LOG[modelo] = hist
+
+        usadas_rpm = len(hist)
+        usados_tpm = sum(t for _, t in hist)
+        if usadas_rpm < rpm and (usados_tpm + tokens_req) <= tpm:
+            break
+
+        mais_antigo = hist[0][0] if hist else agora
+        wait_s = max(0.05, 60.05 - (agora - mais_antigo))
+        sleep_fn(min(wait_s, 61.0))
+        espera_total += wait_s
+
+    agora_reg = clock_fn()
+    hist_atual = [entry for entry in _RATE_WINDOW_LOG.get(modelo, []) if (agora_reg - entry[0]) < 60.0]
+    hist_atual.append((agora_reg, tokens_req))
+    _RATE_WINDOW_LOG[modelo] = hist_atual
+    return espera_total
 
 
 def _default_http_post(url: str, json_payload: dict[str, Any], headers: dict[str, str], timeout: int = 35) -> tuple[int, Any]:
@@ -168,7 +224,7 @@ def consumir_cota_supabase(
     post = http_post_fn or _default_http_post
     url_base = _normalizar_supabase_url(supabase_url or os.getenv("SUPABASE_URL"))
     key = (service_key or os.getenv("SUPABASE_SERVICE_ROLE_KEY") or "").strip()
-    cap_padrao = SOFT_CAPS_DEFAULT.get(modelo, 8500)
+    cap_padrao = SOFT_CAPS_DEFAULT.get(modelo, 10200)
 
     if url_base and key:
         endpoint = f"{url_base}/rest/v1/rpc/rpc_consumir_cota_ia"
@@ -232,7 +288,12 @@ def chamar_modelo_google_ai(
     headers = {"Content-Type": "application/json"}
 
     last_status = 0
+    tokens_in_est = estimar_tokens_texto(prompt_texto)
     for tentativa in range(2):
+        # Evita sleep artificial em testes unitários que injetam http_post_fn síncrono customizado
+        if http_post_fn is None or sleep_fn is not time.sleep:
+            _aguardar_janela_rpm_tpm(modelo, tokens_in_est + 450, sleep_fn=sleep_fn)
+
         st, data = post(endpoint, payload, headers, 35)
         last_status = st
         if 200 <= st < 300 and isinstance(data, dict):
@@ -241,10 +302,13 @@ def chamar_modelo_google_ai(
             txt = "".join(str(p.get("text") or "") for p in parts if isinstance(p, dict))
             usage = data.get("usageMetadata") or {}
             tokens = {
-                "in": int(usage.get("promptTokenCount") or 0),
-                "out": int(usage.get("candidatesTokenCount") or 0),
+                "in": int(usage.get("promptTokenCount") or tokens_in_est),
+                "out": int(usage.get("candidatesTokenCount") or estimar_tokens_texto(txt)),
             }
             return st, txt, tokens
+        if st == 402:
+            print(f"[IA-CATALOGER] HTTP 402 (créditos/faturamento Gemini API) em {modelo} — interrompendo sem retry.")
+            return 402, "", {"in": 0, "out": 0}
         if st == 429:
             print(f"[IA-CATALOGER] Modelo {modelo} retornou HTTP 429 (rate limit).")
             return 429, "", {"in": 0, "out": 0}
@@ -263,7 +327,7 @@ def chamar_modelo_google_ai(
 
 
 def montar_prompt_catalogacao(entidade: str, orgao: str, data_circ: str, codigo: str, texto: str) -> str:
-    trecho = str(texto or "").strip()[:5500]
+    trecho = str(texto or "").strip()[:4200]
     return (
         "Você é um catalogador administrativo oficial da Prefeitura Municipal de Ceará-Mirim/RN.\n"
         "Analise o ato oficial publicado no Diário Oficial da FEMURN abaixo e responda SOMENTE com um objeto JSON válido (sem comentários nem texto fora do JSON).\n\n"
@@ -333,8 +397,18 @@ def catalogar_publicacao_hibrida(
         st, raw_txt, _tok = chamar_modelo_google_ai(
             MODEL_GEMMA_BATCH, prompt, key, http_post_fn=http_post_fn, sleep_fn=sleep_fn
         )
+        if 200 <= st < 300 and (_tok.get("in") or _tok.get("out")) and (supabase_url or os.getenv("SUPABASE_URL")):
+            consumir_cota_supabase(
+                MODEL_GEMMA_BATCH,
+                supabase_url=supabase_url,
+                service_key=service_key,
+                delta=0,
+                tokens_in=_tok.get("in", 0),
+                tokens_out=_tok.get("out", 0),
+                http_post_fn=http_post_fn,
+            )
         parsed = extrair_json_defensivo(raw_txt) if 200 <= st < 300 else None
-        # Retry corretivo único se Gemma retornou texto fora do formato JSON (sem gastar além se 429)
+        # Retry corretivo único se Gemma retornou texto fora do formato JSON (sem gastar além se 429/402)
         if parsed is None and 200 <= st < 300 and raw_txt:
             cota_retry = consumir_cota_supabase(
                 MODEL_GEMMA_BATCH,
@@ -353,18 +427,28 @@ def catalogar_publicacao_hibrida(
                     MODEL_GEMMA_BATCH, retry_prompt, key, http_post_fn=http_post_fn, sleep_fn=sleep_fn
                 )
                 if 200 <= st2 < 300:
+                    if (_tok2.get("in") or _tok2.get("out")) and (supabase_url or os.getenv("SUPABASE_URL")):
+                        consumir_cota_supabase(
+                            MODEL_GEMMA_BATCH,
+                            supabase_url=supabase_url,
+                            service_key=service_key,
+                            delta=0,
+                            tokens_in=_tok2.get("in", 0),
+                            tokens_out=_tok2.get("out", 0),
+                            http_post_fn=http_post_fn,
+                        )
                     parsed = extrair_json_defensivo(raw_txt2)
         if parsed is not None:
             resultado_final = parsed
             modelo_usado = MODEL_GEMMA_BATCH
 
-    # 2. Escalonamento pontual para Gemini 3.5 Flash Lite se Gemma falhou OU baixa confiança (< 0.75)
+    # 2. Escalonamento pontual para Gemini 3.5 Flash Lite (10 RPM / 200k TPM / 400 RPD) se Gemma falhou OU baixa confiança
     precisa_especialista = (
         resultado_final is None
         or resultado_final["confianca_ia"] < 0.75
         or resultado_final["tipo_ato_canonico"] == "OUTRO_ATO"
     )
-    if precisa_especialista:
+    if precisa_especialista and locals().get("st", 0) != 402:
         cota_flash = consumir_cota_supabase(
             MODEL_GEMINI_ESPECIALISTA,
             supabase_url=supabase_url,
@@ -377,6 +461,16 @@ def catalogar_publicacao_hibrida(
                 MODEL_GEMINI_ESPECIALISTA, prompt, key, http_post_fn=http_post_fn, sleep_fn=sleep_fn
             )
             if 200 <= st_f < 300:
+                if (_tok_f.get("in") or _tok_f.get("out")) and (supabase_url or os.getenv("SUPABASE_URL")):
+                    consumir_cota_supabase(
+                        MODEL_GEMINI_ESPECIALISTA,
+                        supabase_url=supabase_url,
+                        service_key=service_key,
+                        delta=0,
+                        tokens_in=_tok_f.get("in", 0),
+                        tokens_out=_tok_f.get("out", 0),
+                        http_post_fn=http_post_fn,
+                    )
                 parsed_f = extrair_json_defensivo(raw_f)
                 if parsed_f is not None:
                     resultado_final = parsed_f

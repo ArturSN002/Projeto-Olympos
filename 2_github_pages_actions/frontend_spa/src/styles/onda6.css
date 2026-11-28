@@ -48,6 +48,45 @@
   position: relative;
 }
 
+.btn-chat-header.has-unread {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.mural-card-anexo,
+.chat-msg-anexo {
+  margin-top: 6px;
+}
+
+.chat-composer-wrap {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--border-hairline);
+  background: var(--bg-elevated);
+}
+
+.chat-composer-wrap .chat-composer-bar {
+  border-top: none;
+}
+
+.chat-pending-anexo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 16px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+.chat-attach-btn {
+  flex: 0 0 auto;
+  min-width: 40px;
+  height: 44px;
+  padding: 0 10px;
+}
+
 /* Faixa horizontal de Proximos Eventos da Agenda Intersetorial */
 .mural-calendar-strip {
   background: var(--bg-surface);

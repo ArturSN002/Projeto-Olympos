@@ -78,3 +78,52 @@ export function subscribeChatRoomRealtime(
     }
   };
 }
+
+export function subscribeMuralRealtime(handlers: {
+  onChange?: () => void;
+  onStatusChange?: (status: string) => void;
+}): ChatRoomSubscriptionHandle {
+  const client = window.OlymposSupabase?.getClient?.();
+  if (!client) {
+    return { unsubscribe: () => {} };
+  }
+
+  const channelName = `olympos-mural-realtime-${Date.now()}`;
+  const channel = client
+    .channel(channelName)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'mural_publicacoes'
+      },
+      () => {
+        handlers.onChange?.();
+      }
+    )
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'mural_confirmacoes_leitura'
+      },
+      () => {
+        handlers.onChange?.();
+      }
+    )
+    .subscribe((status: string) => {
+      handlers.onStatusChange?.(status);
+    });
+
+  return {
+    unsubscribe: () => {
+      try {
+        void client.removeChannel(channel);
+      } catch {
+        // best-effort teardown
+      }
+    }
+  };
+}

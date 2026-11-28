@@ -261,6 +261,22 @@ function renderOperadoresHierarquia(): string {
     return setorU !== 'MODERADOR' && cargoU !== 'MODERADOR' && u.ativo !== false;
   });
 
+  let comEncarregadoCount = 0;
+  let comOperadoresCount = 0;
+  const coverageChips = setoresOp
+    .map((s) => {
+      const usuariosSetor = perfisLista.filter(
+        (u) => inferirSetorPorRoleLegado(u.role, u.setor_codigo) === s.codigo && u.ativo !== false
+      );
+      const hasEnc = usuariosSetor.some(
+        (u) => inferirCargoPorRoleLegado(u.role, u.cargo_setor) === 'ENCARREGADO'
+      );
+      if (hasEnc) comEncarregadoCount++;
+      if (usuariosSetor.length > 0) comOperadoresCount++;
+      return `<span class="setor-pill ${hasEnc ? 'is-encarregado' : ''}" title="${esc(s.nome)}">${esc(s.siglaOficio)} • ${hasEnc ? 'OK' : `${usuariosSetor.length} op.`}</span>`;
+    })
+    .join('');
+
   const cardsHtml = setoresOp
     .map((s) => {
       const usuariosSetor = perfisLista.filter(
@@ -286,7 +302,7 @@ function renderOperadoresHierarquia(): string {
           <div class="rbac-num-head">
             <div>
               <div style="font-weight:700; font-size:0.92rem; color:var(--text-primary);">${esc(s.nome)}</div>
-              <div style="font-size:0.75rem; color:var(--text-muted);">Sigla Ofícios: <strong>${esc(s.siglaOficio)}</strong> • Membros: ${membrosCount}</div>
+              <div style="font-size:0.75rem; color:var(--text-muted);">Sigla Ofícios: <strong>${esc(s.siglaOficio)}</strong> • Operadores: ${usuariosSetor.length} (${membrosCount} membros)</div>
             </div>
             <span class="setor-pill ${enc ? 'is-encarregado' : ''}">${enc ? 'Com Encarregado' : 'Sem Encarregado'}</span>
           </div>
@@ -301,6 +317,9 @@ function renderOperadoresHierarquia(): string {
             <button type="button" class="btn btn-secondary btn-sm rbac-btn-set-encarregado" data-setor="${esc(s.codigo)}" ${!schemaReady || candidatos.length === 0 ? 'disabled' : ''}>
               Definir Encarregado
             </button>
+            <button type="button" class="btn btn-primary btn-sm rbac-btn-provisionar-setor" data-setor="${esc(s.codigo)}">
+              + Provisionar Operador
+            </button>
           </div>
         </div>
       `;
@@ -308,10 +327,12 @@ function renderOperadoresHierarquia(): string {
     .join('');
 
   return `
-    <div class="rbac-toolbar">
-      <div style="font-size:0.84rem; color:var(--text-secondary);">
-        Estrutura oficial dos <strong>9 setores operacionais</strong> (além do Moderador único). Cada setor possui no máximo 1 Encarregado ativo; ao promover um novo Encarregado, o anterior passa automaticamente a Membro.
+    <div class="rbac-toolbar" style="flex-direction:column; align-items:stretch; gap:8px;">
+      <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; font-size:0.84rem; color:var(--text-secondary);">
+        <span>Cobertura Multi-Setor (Onda 14): <strong>${comEncarregadoCount} / ${setoresOp.length}</strong> com Encarregado ativo • <strong>${comOperadoresCount} / ${setoresOp.length}</strong> com operadores.</span>
+        <span style="font-size:0.76rem; color:var(--text-muted);">Máx. 1 Encarregado ativo por setor; ao promover, o anterior retorna a Membro.</span>
       </div>
+      <div style="display:flex; flex-wrap:wrap; gap:6px;">${coverageChips}</div>
     </div>
     <div class="rbac-num-grid">${cardsHtml}</div>
   `;
@@ -666,6 +687,25 @@ function bindEvents(root: HTMLElement): void {
       } catch (err: any) {
         toast(`Falha ao restaurar padrão: ${err?.message || 'erro desconhecido'}`, true);
         btnRestore.disabled = false;
+      }
+    });
+  }
+
+  root.querySelectorAll<HTMLButtonElement>('.rbac-btn-provisionar-setor').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const setorCod = btn.getAttribute('data-setor') || '';
+      const app = (window as any).OlymposApp;
+      if (app && typeof app.abrirModalNovoUsuario === 'function') {
+        void app.abrirModalNovoUsuario({ setor: setorCod, cargo: 'ENCARREGADO' });
+      }
+    });
+  });
+
+  if (!root.dataset.usersHook) {
+    root.dataset.usersHook = '1';
+    window.addEventListener('olympos:usuarios-atualizados', () => {
+      if (document.body.contains(root)) {
+        void carregarDadosCompletos().then(() => render(root));
       }
     });
   }

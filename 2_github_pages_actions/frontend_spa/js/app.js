@@ -2570,7 +2570,7 @@ window.OlymposApp = (function() {
   // =========================================================================
   // GESTÃO DE USUÁRIOS E MODAL NOVO USUÁRIO (EXCLUSIVO MODERADOR)
   // =========================================================================
-  async function abrirModalNovoUsuario() {
+  async function abrirModalNovoUsuario(prefill) {
     if (!isModerador(currentUserSession)) {
       showToast('Acesso restrito ao perfil Moderador.', true);
       return;
@@ -2580,6 +2580,19 @@ window.OlymposApp = (function() {
     }
     const modal = document.getElementById('modalNovoUsuario');
     if (modal) {
+      if (prefill && typeof prefill === 'object' && prefill.setor) {
+        const setorCod = String(prefill.setor).trim().toUpperCase();
+        const cargoCod = String(prefill.cargo || 'ENCARREGADO').trim().toUpperCase();
+        const selSetor = document.getElementById('novoUsuarioSetor');
+        const selCargo = document.getElementById('novoUsuarioCargoSetor');
+        const selRole = document.getElementById('novoUsuarioRole');
+        const inDepto = document.getElementById('novoUsuarioDepartamento');
+        const setorInfo = window.OlymposRbac && window.OlymposRbac.SETORES_MAP ? window.OlymposRbac.SETORES_MAP[setorCod] : null;
+        if (selSetor) selSetor.value = setorCod;
+        if (selCargo) selCargo.value = cargoCod;
+        if (selRole && setorInfo && setorInfo.legacyRole) selRole.value = setorInfo.legacyRole;
+        if (inDepto && setorInfo && setorInfo.nome) inDepto.value = setorInfo.nome;
+      }
       modal.classList.remove('hidden');
       const inNome = document.getElementById('novoUsuarioNome');
       if (inNome) inNome.focus();
@@ -2761,6 +2774,7 @@ window.OlymposApp = (function() {
         if (window.OlymposViews && window.OlymposViews.configuracoes && typeof window.OlymposViews.configuracoes.carregarUsuarios === 'function') {
           window.OlymposViews.configuracoes.carregarUsuarios();
         }
+        window.dispatchEvent(new CustomEvent('olympos:usuarios-atualizados', { detail: { email, setorCodigo, cargoSetor } }));
         setTimeout(function() {
           fecharModalNovoUsuario();
           if (btnSubmit) {

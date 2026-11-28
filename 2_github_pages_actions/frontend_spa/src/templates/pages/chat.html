@@ -81,18 +81,35 @@
           </div>
         </div>
 
-        <form id="chatComposerForm" class="chat-composer-bar">
-          <label for="chatComposerInput" class="sr-only">Mensagem do chat</label>
-          <textarea
-            id="chatComposerInput"
-            class="chat-composer-input"
-            rows="1"
-            maxlength="4000"
-            placeholder="Digite sua mensagem institucional... (Enter envia, Shift+Enter quebra linha)"
-            disabled
-          ></textarea>
-          <button type="submit" id="btnChatEnviar" class="btn btn-primary" disabled>Enviar</button>
-        </form>
+        <div class="chat-composer-wrap">
+          <div id="chatPendingAnexoBar" class="chat-pending-anexo hidden"></div>
+          <form id="chatComposerForm" class="chat-composer-bar">
+            <input
+              type="file"
+              id="chatInputAnexo"
+              class="hidden"
+              accept=".pdf,.png,.jpg,.jpeg,.webp,.docx,.xlsx,.txt"
+            />
+            <button
+              type="button"
+              id="btnChatAnexarArquivo"
+              class="btn btn-secondary btn-sm chat-attach-btn"
+              title="Anexar arquivo privado (máx. 5 MB)"
+              aria-label="Anexar arquivo"
+              disabled
+            >📎</button>
+            <label for="chatComposerInput" class="sr-only">Mensagem do chat</label>
+            <textarea
+              id="chatComposerInput"
+              class="chat-composer-input"
+              rows="1"
+              maxlength="4000"
+              placeholder="Digite sua mensagem institucional... (Enter envia, Shift+Enter quebra linha)"
+              disabled
+            ></textarea>
+            <button type="submit" id="btnChatEnviar" class="btn btn-primary" disabled>Enviar</button>
+          </form>
+        </div>
       </div>
     </div>
   </div>

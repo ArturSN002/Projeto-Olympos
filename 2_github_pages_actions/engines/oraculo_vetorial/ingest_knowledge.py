@@ -44,7 +44,12 @@ from zero_pii_gate import assert_source_allowed_for_embedding, zero_pii_sanitize
 DEFAULT_EMBEDDING_MODEL = "gemini-embedding-2-preview"
 FALLBACK_EMBEDDING_MODEL = "gemini-embedding-001"
 EMBEDDING_DIM = 768
-MAX_RPM_FREE_TIER = 25
+EMBEDDING_RPM_LIMIT = 75
+EMBEDDING_TPM_LIMIT = 25000
+EMBEDDING_RPD_LIMIT = 800
+EMBEDDING_SOFT_CAP_RPD = 680
+MAX_RPM_FREE_TIER = EMBEDDING_RPM_LIMIT
+_EMBEDDING_RATE_WINDOW: list[tuple[float, int]] = []
 PROTOTYPES_JSON_PATH = SRC_DIR.parent / "fogo_de_prometheus" / "src" / "persona_prototypes.json"
 DEFAULT_NORMAS_DIR = SRC_DIR / "normas_municipais"
 
@@ -475,6 +480,8 @@ def run_incremental_ingestion(
 
     batch_rows: list[dict[str, Any]] = []
     min_interval = 60.0 / float(MAX_RPM_FREE_TIER)
+    tokens_minuto_est = 0
+    inicio_janela = time.monotonic()
 
     for doc in all_docs:
         fonte_origem = str(doc.get("tabela_origem") or doc.get("source_table") or doc.get("fonte_tipo") or "")
@@ -517,9 +524,19 @@ def run_incremental_ingestion(
                 continue
 
             emb_vec: list[float] | None = None
-            if gemini_api_key:
+            if gemini_api_key and stats["chamadas_gemini_embedding"] < EMBEDDING_SOFT_CAP_RPD:
+                tokens_est = max(1, (len(c_txt) + 3) // 4)
+                agora = time.monotonic()
+                if (agora - inicio_janela) >= 60.0:
+                    inicio_janela = agora
+                    tokens_minuto_est = 0
+                if (tokens_minuto_est + tokens_est) > EMBEDDING_TPM_LIMIT:
+                    sleep_fn(max(0.1, 60.0 - (agora - inicio_janela)))
+                    inicio_janela = time.monotonic()
+                    tokens_minuto_est = 0
                 if stats["chamadas_gemini_embedding"] > 0:
                     sleep_fn(min_interval)
+                tokens_minuto_est += tokens_est
                 stats["chamadas_gemini_embedding"] += 1
                 emb_vec, _ = generate_embedding_768(
                     c_txt,

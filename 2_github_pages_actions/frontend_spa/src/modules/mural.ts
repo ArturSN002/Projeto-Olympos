@@ -7,6 +7,8 @@
 import '../styles/onda6.css';
 import muralHtml from '../templates/pages/mural.html?raw';
 import { renderMuralCalendarStrip, AgendaEventoResumo } from './comunicacao/calendarStrip';
+import { subscribeMuralRealtime, ChatRoomSubscriptionHandle } from './comunicacao/realtimeClient';
+import { uploadComunicacaoAnexo, createAnexoSignedUrl } from './comunicacao/anexosStorage';
 
 export const routeId = 'mural';
 export const htmlTemplate = muralHtml;
@@ -24,6 +26,9 @@ interface MuralPublicacaoItem {
   evento_calendario_id: string | null;
   imagem_url: string | null;
   link_acao: string | null;
+  anexo_path?: string | null;
+  anexo_nome?: string | null;
+  anexo_mime?: string | null;
   fixado: boolean;
   exibir_no_kiosk: boolean;
   publicado_em: string;
@@ -61,6 +66,8 @@ let currentUserRole = '';
 let currentUserDept = '';
 let mounted = false;
 let mountInFlight: Promise<void> | null = null;
+let muralSubscription: ChatRoomSubscriptionHandle | null = null;
+let muralRealtimeTimer: ReturnType<typeof setTimeout> | null = null;
 
 function esc(v: unknown): string {
   if (window.OlymposApp && typeof window.OlymposApp.escapeHtml === 'function') {
@@ -237,6 +244,11 @@ function applyFiltersAndRender(): void {
 
             <div class="mural-card-actions">
               ${
+                item.anexo_path
+                  ? `<button type="button" class="btn btn-secondary btn-sm mural-card-anexo" data-action="open-anexo" data-path="${esc(item.anexo_path)}" title="Baixar/Visualizar anexo privado">📎 ${esc(item.anexo_nome || 'Anexo')}</button>`
+                  : ''
+              }
+              ${
                 safeLink
                   ? `<a href="${esc(safeLink)}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">Abrir Link</a>`
                   : ''
@@ -339,6 +351,8 @@ function openNovaPublicacaoModal(prefill?: { titulo?: string; resumo?: string; c
   if (eventoEl) eventoEl.value = prefill?.eventoId || '';
   if (fixadoCheck) fixadoCheck.checked = false;
   if (kioskCheck) kioskCheck.checked = false;
+  const anexoEl = document.getElementById('muralInputAnexo') as HTMLInputElement | null;
+  if (anexoEl) anexoEl.value = '';
 
   if (tipoEl) {
     const gabOpt = tipoEl.querySelector<HTMLOptionElement>('option[value="COMUNICADO_GABINETE"]');
@@ -408,6 +422,19 @@ async function handleSubmitPublicacao(ev: Event): Promise<void> {
   if (submitBtn) submitBtn.disabled = true;
 
   try {
+    const anexoInput = document.getElementById('muralInputAnexo') as HTMLInputElement | null;
+    const anexoFile = anexoInput?.files?.[0] || null;
+    let anexoPath: string | null = null;
+    let anexoNome: string | null = null;
+    let anexoMime: string | null = null;
+
+    if (anexoFile) {
+      const uploaded = await uploadComunicacaoAnexo(anexoFile, { kind: 'mural', userId: currentUserId });
+      anexoPath = uploaded.path;
+      anexoNome = uploaded.nome;
+      anexoMime = uploaded.mime;
+    }
+
     const { error } = await client.from('mural_publicacoes').insert({
       titulo,
       resumo,
@@ -417,6 +444,9 @@ async function handleSubmitPublicacao(ev: Event): Promise<void> {
       setores_destino: Array.from(new Set(setoresList)),
       evento_calendario_id: eventoId,
       link_acao: safeLink,
+      anexo_path: anexoPath,
+      anexo_nome: anexoNome,
+      anexo_mime: anexoMime,
       fixado,
       exibir_no_kiosk,
       autor_id: currentUserId
@@ -427,10 +457,13 @@ async function handleSubmitPublicacao(ev: Event): Promise<void> {
       return;
     }
 
+    if (anexoInput) anexoInput.value = '';
     const modal = document.getElementById('modalNovaPublicacaoMural');
     if (modal) window.OlymposModalManager?.closeModal?.(modal);
     showToast('Publicação registrada no Mural Compartilhado.');
     await fetchMuralFeed();
+  } catch (err: any) {
+    showToast(err?.message || 'Não foi possível enviar o anexo ou publicar no Mural.', true);
   } finally {
     if (submitBtn) submitBtn.disabled = false;
   }
@@ -574,6 +607,13 @@ function bindEventsOnce(): void {
       void handleToggleCiente(id);
     } else if (action === 'archive-mural') {
       void handleArchivePublicacao(id);
+    } else if (action === 'open-anexo') {
+      const anexoPath = btn.dataset.path || '';
+      if (anexoPath) {
+        void createAnexoSignedUrl(anexoPath, 120)
+          .then((signedUrl) => window.open(signedUrl, '_blank', 'noopener,noreferrer'))
+          .catch((err: any) => showToast(err?.message || 'Erro ao abrir anexo privado.', true));
+      }
     }
   });
 }
@@ -603,6 +643,19 @@ export async function mount(): Promise<void> {
       await refreshMuralData();
       if (mounted) {
         consumeChatPrefill();
+        if (muralSubscription) {
+          muralSubscription.unsubscribe();
+          muralSubscription = null;
+        }
+        muralSubscription = subscribeMuralRealtime({
+          onChange: () => {
+            if (!mounted) return;
+            if (muralRealtimeTimer) clearTimeout(muralRealtimeTimer);
+            muralRealtimeTimer = setTimeout(() => {
+              if (mounted) void fetchMuralFeed();
+            }, 350);
+          }
+        });
       }
     } finally {
       mountInFlight = null;
@@ -613,6 +666,14 @@ export async function mount(): Promise<void> {
 
 export function unmount(): void {
   mounted = false;
+  if (muralRealtimeTimer) {
+    clearTimeout(muralRealtimeTimer);
+    muralRealtimeTimer = null;
+  }
+  if (muralSubscription) {
+    muralSubscription.unsubscribe();
+    muralSubscription = null;
+  }
 }
 
 window.OlymposMural = {
